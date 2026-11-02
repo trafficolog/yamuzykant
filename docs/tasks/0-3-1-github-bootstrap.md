@@ -3,7 +3,7 @@ id: "0.3.1"
 phase: "0"
 epic: "0.3"
 title: "GitHub: метки, вехи, задачи, защита"
-status: ready
+status: done
 gate: G0
 risk: medium
 model_impl: opus
@@ -14,7 +14,7 @@ uc: []
 prototype: ""
 screens: []
 issue: 12
-sync_state: drifted
+sync_state: aligned
 escalations: []
 ---
 
@@ -26,7 +26,7 @@ escalations: []
 ## Что сделать
 - `node tools/gh-sync.mjs` (dry-run) → сводка OWNER → `--apply`
 - Номера issue записаны в карточки
-- `--protection --apply` после 0.1.3
+- `--protection --apply` после 0.1.3 — недоступно на бесплатном тарифе для приватного репозитория; принятый риск в docs/operations/gates/G0.md
 - Окружения `stage`, `production` созданы, список секретов передан OWNER
 
 ## Критерии приёмки

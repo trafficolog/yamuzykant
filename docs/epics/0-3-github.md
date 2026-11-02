@@ -2,7 +2,7 @@
 id: "0.3"
 phase: "0"
 title: "GitHub и процесс"
-status: todo
+status: done
 gate: G0
 ---
 
@@ -16,5 +16,5 @@ gate: G0
 <!-- docs:ops:begin tasks -->
 | Задача | Статус | Риск | Исполнитель → Ревьюер |
 |---|---|---|---|
-| [0.3.1 GitHub: метки, вехи, задачи, защита](../tasks/0-3-1-github-bootstrap.md) | ready | medium | opus → opus |
+| [0.3.1 GitHub: метки, вехи, задачи, защита](../tasks/0-3-1-github-bootstrap.md) | done | medium | opus → opus |
 <!-- docs:ops:end -->

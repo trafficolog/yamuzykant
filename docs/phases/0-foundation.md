@@ -1,7 +1,7 @@
 ---
 id: "0"
 title: "Фундамент"
-status: todo
+status: in_progress
 gate: G0
 ---
 
@@ -15,5 +15,5 @@ gate: G0
 |---|---|---|
 | [0.1 Репозиторий, окружения, CI/CD](../epics/0-1-repo-ci.md) | 6 | 0 |
 | [0.2 Дизайн-система в коде и эталоны](../epics/0-2-design-system.md) | 5 | 0 |
-| [0.3 GitHub и процесс](../epics/0-3-github.md) | 1 | 0 |
+| [0.3 GitHub и процесс](../epics/0-3-github.md) | 1 | 1 |
 <!-- docs:ops:end -->
