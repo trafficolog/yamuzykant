@@ -17,6 +17,27 @@
 
 Нужно заранее: аккаунт GitHub и `gh` CLI с авторизацией, PHP 8.3, Composer, Node 22.22+, Docker (для PostgreSQL, Redis, Meilisearch), Playwright-браузеры (`npx playwright install`).
 
+## Локальный запуск
+
+Нужны Docker с Compose v2, PHP 8.3+ с расширениями `pdo_pgsql` (для приложения и живых тестов) и `pdo_sqlite` (для `composer test`), Composer, Node 22.22+. Команды выполняются из корня репозитория.
+
+```bash
+docker compose up -d --wait                       # pgsql 16, redis 7, meilisearch, mailpit, minio; ждёт healthy
+docker compose --profile init run --rm minio-init # создаёт бакет в MinIO; можно запускать повторно
+cp .env.example .env                              # значения совпадают с compose.yaml, правки не нужны
+composer install
+php artisan key:generate
+php artisan migrate --seed
+npm install
+npm run dev                      # Vite; отдельно: php artisan serve
+```
+
+Адреса: Mailpit — http://127.0.0.1:8025 (письма), MinIO — http://127.0.0.1:9001 (консоль, логин и пароль из `AWS_*` в `.env`), Meilisearch — http://127.0.0.1:7700.
+
+Короткий вариант через Makefile (нужен `make`, на Windows например через Chocolatey или Scoop): `make up` сам создаёт `.env` и ключ, если их нет, поднимает сервисы и создаёт бакет, затем `make fresh` (`migrate:fresh --seed`), `make down`, `make e2e`. Список целей — `make help`.
+
+Тесты: `composer test` не требует Docker. Тестовый конфиг указывает SQLite в памяти, поэтому для `composer test` нужен `pdo_sqlite` (сейчас обычные тесты к БД не обращаются, драйвер нужен для тестов с `RefreshDatabase`). Живые тесты сервисов запускаются отдельно: `composer test:docker` или `make test-docker`. Для них `docker compose` должен быть запущен (`make up`).
+
 ## Что внутри
 
 ```
