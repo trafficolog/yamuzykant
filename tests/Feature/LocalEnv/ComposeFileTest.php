@@ -123,6 +123,27 @@ it('.env.example указывает приложение на сервисы com
     expect($env['AWS_BUCKET'])->not->toBeEmpty();
 });
 
+it('minio-init вынесен в профиль init: обычный up его не запускает, а создание бакета идемпотентно', function () {
+    $services = localEnvComposeServices();
+
+    expect($services['minio-init'])->toContain('profiles: ["init"]');
+    expect($services['minio-init'])->toContain('mb --ignore-existing');
+});
+
+it('up поднимает сервисы без minio-init, а бакет создаётся отдельным запуском профиля init', function () {
+    $makefile = file_get_contents(base_path('Makefile'));
+
+    expect($makefile)->toContain("\tdocker compose up -d --wait\n");
+    expect($makefile)->toContain("\tdocker compose --profile init run --rm minio-init\n");
+});
+
+it('README содержит те же команды запуска, что и Makefile, без make', function () {
+    $readme = file_get_contents(base_path('README.md'));
+
+    expect($readme)->toContain('docker compose up -d --wait');
+    expect($readme)->toContain('docker compose --profile init run --rm minio-init');
+});
+
 it('Makefile содержит цели up, down, fresh, e2e', function () {
     $makefile = file_get_contents(base_path('Makefile'));
 
