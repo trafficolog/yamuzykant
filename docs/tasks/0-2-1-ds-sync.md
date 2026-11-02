@@ -3,7 +3,7 @@ id: "0.2.1"
 phase: "0"
 epic: "0.2"
 title: "Подключение дизайн-системы: ds:sync и @ds"
-status: in_progress
+status: review
 gate: G0
 risk: medium
 model_impl: sonnet
