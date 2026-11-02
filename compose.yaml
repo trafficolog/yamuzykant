@@ -62,7 +62,8 @@ services:
       retries: 20
 
   minio:
-    image: chainguard/minio:latest
+    # Chainguard публикует бесплатные образы без версионных тегов, поэтому закреплён digest.
+    image: chainguard/minio@sha256:090010a3f73f6aa2dff606c61cd0de3640b22748abe19f4e48cce6dc9de7a53f
     restart: unless-stopped
     command: ["server", "/data", "--console-address", ":9001"]
     environment:
@@ -82,7 +83,7 @@ services:
 
   # Одноразовый сервис: создаёт бакет для S3-диска и завершается.
   minio-init:
-    image: chainguard/minio-client:latest
+    image: chainguard/minio-client@sha256:2fc4412391f1ce7372db8dd8bee17b38d76f7bb898bac195915bfe6979aa5784
     restart: "no"
     depends_on:
       minio:

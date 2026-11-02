@@ -63,11 +63,28 @@ it('compose.yaml описывает pgsql 16, redis 7, meilisearch 1.x, mailpit 
     expect($image('redis'))->toMatch('/^redis:7/');
     expect($image('meilisearch'))->toMatch('/^getmeili\/meilisearch:v1\./');
     expect($image('mailpit'))->toMatch('/^axllent\/mailpit/');
-    // minio/minio недоступен из Docker Hub на машине исполнителя (pull access denied), поэтому образ Chainguard.
-    expect($image('minio'))->toMatch('/minio/');
-
     foreach (['pgsql', 'redis', 'meilisearch', 'mailpit', 'minio'] as $name) {
         expect(str_contains($services[$name], "\n    healthcheck:\n"))->toBeTrue("у сервиса {$name} нет healthcheck");
+    }
+});
+
+it('образы MinIO закреплены по digest из реестра Chainguard, а не по плавающему тегу', function () {
+    $services = localEnvComposeServices();
+    $image = fn (string $name): string => preg_match('/^    image: (\S+)$/m', $services[$name], $m) === 1 ? $m[1] : '';
+
+    // minio/minio недоступен из Docker Hub на машине исполнителя (pull access denied), поэтому образы Chainguard.
+    expect($image('minio'))->toMatch('/^chainguard\/minio@sha256:[0-9a-f]{64}$/');
+    expect($image('minio-init'))->toMatch('/^chainguard\/minio-client@sha256:[0-9a-f]{64}$/');
+});
+
+it('ни один образ compose не использует :latest и не идёт без тега или digest', function () {
+    foreach (localEnvComposeServices() as $name => $block) {
+        preg_match('/^    image: (\S+)$/m', $block, $m);
+        $image = $m[1] ?? '';
+
+        expect($image)->not->toBe('', "у сервиса {$name} не указан image");
+        expect($image)->not->toEndWith(':latest', "у сервиса {$name} плавающий тег latest");
+        expect($image)->toMatch('/^[a-z0-9\/.-]+(:[\w.-]+|@sha256:[0-9a-f]{64})$/', "у сервиса {$name} образ без тега или digest");
     }
 });
 
