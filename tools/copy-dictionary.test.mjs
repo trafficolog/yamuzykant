@@ -24,6 +24,34 @@ test('findForbidden ловит «Ля 440» и «Ля440» (неразрывны
     assert.deepEqual(words('Ля 440'), ['ля440']);
 });
 
+test('«Ля440» с левой границей слова: без ложных срабатываний внутри слов', () => {
+    assert.deepEqual(words('для 440 Гц'), []);
+    assert.deepEqual(words('земля 440'), []);
+    assert.deepEqual(words('Земля440'), []);
+});
+
+test('«Ля440» с левой границей: срабатывает в начале строки, после пробела, знака и NBSP', () => {
+    for (const text of ['Ля440', 'ля 440', 'Ля 440', 'ЛЯ 440', 'Цена: Ля440', 'Цена (Ля440)', 'цена Ля440']) {
+        assert.deepEqual(words(text), ['ля440'], text);
+    }
+});
+
+test('findForbidden ловит формы слова «гир»', () => {
+    for (const text of ['гирами', 'гиров', 'гирах', 'гиру', 'гира', 'гирам']) {
+        assert.ok(words(text).includes('гир'), text);
+    }
+});
+
+test('findForbidden не ловит «гир» внутри других слов', () => {
+    assert.deepEqual(words('гитара, гирлянда, гиря, гирокомпас'), []);
+});
+
+test('findForbidden ловит «Кофр-доставка» с U+2011 и с пробелом', () => {
+    assert.deepEqual(words('Кофр‑доставка'), ['кофр-доставка']);
+    assert.deepEqual(words('Кофр доставка'), ['кофр-доставка']);
+    assert.deepEqual(words('Кофр-доставка'), ['кофр-доставка']);
+});
+
 test('findForbidden ловит бренд-варианты ЯМузыканта', () => {
     assert.deepEqual(words('Ладмастер и Ладмир'), ['ладмастер', 'ладмир']);
 });

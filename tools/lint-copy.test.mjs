@@ -102,6 +102,34 @@ test('copy-allow внутри строкового литерала не счи�
     assert.match(r.stderr, at('resources/js/Pages/Home.tsx', 1));
 });
 
+test('маркер copy-allow внутри строкового литерала не освобождает строку (PHP, PHP с #, шаблон)', () => {
+    const r = lint({
+        'lang/ru/messages.php': "<?php\n\nreturn ['a' => 'сетап // copy-allow: причина'];\n",
+        'app/Http/Controllers/Foo.php': '<?php\n\nreturn "гир # copy-allow: причина";\n',
+        'resources/js/Pages/Home.tsx': 'const s = `сетап // copy-allow: причина`;\n',
+    });
+    assert.equal(r.status, 1);
+    assert.match(r.stderr, at('lang/ru/messages.php', 3));
+    assert.match(r.stderr, at('app/Http/Controllers/Foo.php', 3));
+    assert.match(r.stderr, at('resources/js/Pages/Home.tsx', 1));
+});
+
+test('настоящий комментарий после строкового литерала освобождает строку', () => {
+    const r = lint({
+        'resources/js/Pages/Home.tsx':
+            "const s = 'сетап';  // copy-allow: цитата из договора\n",
+    });
+    assert.equal(r.status, 0, r.stderr);
+});
+
+test('copy-allow с причиной из одного короткого слова не освобождает строку', () => {
+    const r = lint({
+        'resources/js/Pages/Home.tsx': '<p>Ваш сетап</p>{/* copy-allow: причина */}\n',
+    });
+    assert.equal(r.status, 1);
+    assert.match(r.stderr, at('resources/js/Pages/Home.tsx', 1));
+});
+
 test('resources/js/ds и тестовые файлы не проверяются', () => {
     const r = lint({
         'resources/js/ds/components/Header.tsx': "export const t = 'Сетап';\n",
