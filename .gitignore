@@ -20,3 +20,7 @@ npm-debug.log
 
 # Worktree-копии агентов Claude Code
 /.claude/worktrees/
+
+# Локальные снимки Playwright с Windows и macOS; эталоны только linux (0.2.3)
+/tests/e2e/**/*-win32.png
+/tests/e2e/**/*-darwin.png

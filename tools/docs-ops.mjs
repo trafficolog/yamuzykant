@@ -6,7 +6,8 @@
 //   set <id> <status>    сменить статус карточки (и sync_state=aligned при done)
 //   session <id>         создать файл сессии из шаблона
 import { readFileSync, writeFileSync, readdirSync, existsSync, mkdirSync } from 'node:fs';
-import { join } from 'node:path';
+import { join, resolve } from 'node:path';
+import { pathToFileURL } from 'node:url';
 import { execFileSync } from 'node:child_process';
 
 const D = 'docs';
@@ -46,6 +47,13 @@ const byId = Object.fromEntries(tasks.map(t => [t.fm?.id, t]));
 const gateStatus = g => gates.find(x => x.fm?.id === g)?.fm?.status ?? 'locked';
 const openGate = () => GATES.find(g => gateStatus(g) !== 'signed');
 
+// resources/js/ds — генерируемая копия ДС: меняется только PR «chore(ds): sync».
+export function checkDsPr(files, title) {
+  const touchesDs = files.some(f => f.replaceAll('\\', '/').startsWith('resources/js/ds/'));
+  if (touchesDs && !String(title).startsWith('chore(ds): sync')) return 'resources/js/ds меняется только через npm run ds:sync (PR chore(ds): sync)';
+  return null;
+}
+
 function check(pr) {
   const errs = [], ids = new Set();
   for (const d of [...phases, ...epics, ...tasks]) {
@@ -82,6 +90,11 @@ function check(pr) {
       const body = execFileSync('gh', ['pr', 'view', String(pr), '--json', 'comments,reviews', '-q', '[.comments[].body, .reviews[].body] | join("\\n")'], { encoding: 'utf8' });
       if (!/REVIEW:\s*approve/i.test(body)) errs.push(`PR #${pr}: нет вердикта «REVIEW: approve»`);
     } catch { errs.push(`PR #${pr}: не удалось прочитать через gh`); }
+    try {
+      const info = JSON.parse(execFileSync('gh', ['pr', 'view', String(pr), '--json', 'files,title'], { encoding: 'utf8' }));
+      const dsErr = checkDsPr((info.files || []).map(f => f.path), info.title);
+      if (dsErr) errs.push(`PR #${pr}: ${dsErr}`);
+    } catch { errs.push(`PR #${pr}: не удалось получить файлы через gh`); }
   }
   if (errs.length) { console.error(errs.join('\n')); process.exit(1); }
   console.log(`ok: фаз ${phases.length}, эпиков ${epics.length}, задач ${tasks.length}, открыт гейт ${openGate() ?? '—'}`);
@@ -131,6 +144,7 @@ function session(id) {
   console.log(out);
 }
 
+function main() {
 const [cmd, a, b] = process.argv.slice(2);
 if (cmd === 'check') check(a === '--pr' ? b : null);
 else if (cmd === 'refresh') refresh();
@@ -138,3 +152,6 @@ else if (cmd === 'next') { const e = eligible(); console.log(a === '--json' ? JS
 else if (cmd === 'set' && a && b) setStatus(a, b);
 else if (cmd === 'session' && a) session(a);
 else { console.log('check [--pr N] | refresh | next [--json] | set <id> <status> | session <id>'); process.exit(1); }
+}
+// Запуск из CLI; при импорте (тесты) команды не выполняются.
+if (process.argv[1] && import.meta.url === pathToFileURL(resolve(process.argv[1])).href) main();
