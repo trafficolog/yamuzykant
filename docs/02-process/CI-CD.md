@@ -8,13 +8,13 @@
 | `.github/workflows/deploy.yml` | push в `main` после зелёного CI | сборка и выкатка на `stage` |
 | `.github/workflows/release.yml` | тег `v*` | сборка, выкатка на `production` после подтверждения OWNER в окружении, GitHub Release |
 
-До задачи `0.1.1` (в репозитории ещё нет Laravel) job `detect` выдаёт `app=false`, и jobs `php`, `js`, `e2e` пропускаются (для обязательных проверок пропуск = успех); `docs` работает сразу. `deploy.yml` пропускает выкатку, пока нет `deploy/deploy.sh`.
+Каркас приложения в `main` с задачи 0.1.1, поэтому все четыре job работают на каждом PR. `deploy.yml` пропускает выкатку, пока нет `deploy/deploy.sh`. Защиты `main` нет (бесплатный тариф, принятый риск в `docs/operations/gates/G0.md`): правило «мерж только при зелёных docs, php, js, e2e и `REVIEW: approve`» соблюдает оркестратор.
 
 ## 2. Состав CI
 
-- **docs:** `node tools/docs-ops.mjs check` (структура карточек, зависимости, гейты), `node tools/lint-copy.mjs`.
-- **php:** PHP 8.3, сервисы PostgreSQL 16, Redis 7, Meilisearch → `composer install` → `pint --test` → `phpstan analyse` (Larastan 8) → `pest --coverage --min=75` (+ домен ≥ 90 % через отдельный `--coverage-filter`).
-- **js:** Node 20 → `npm ci` → `eslint` → `tsc --noEmit` → `vitest run --coverage` → `vite build && vite build --ssr`.
+- **docs:** `node tools/docs-ops.mjs check` (структура карточек, зависимости, гейты), `node tools/lint-copy.mjs --styles`, сверка `resources/js/ds` с выводом `node tools/ds-sync.mjs` (ручная правка копии ДС роняет job). Оркестратор перед мержем запускает `docs-ops check --pr N`: PR, который меняет `resources/js/ds`, проходит только с заголовком `chore(ds): sync`.
+- **php:** PHP 8.3 (`composer.json` → `config.platform.php = 8.3.0`), сервисы PostgreSQL 16, Redis 7, Meilisearch → `composer install` → `pint --test` → `phpstan analyse` (Larastan 8) → `pest --coverage --min=75` (+ `app/Domain` ≥ 90 % через `.github/scripts/coverage-gate.mjs`). Pest в CI работает на PostgreSQL, локально — на sqlite.
+- **js:** Node 22 (≥ 22.22 — требование jsdom и undici) → `npm ci` → `eslint` → `tsc --noEmit` → `vitest run --coverage` → `vite build && vite build --ssr`.
 - **e2e:** PHP + Node + сервисы → миграции и сиды → `php artisan serve` + SSR + Reverb + queue worker → `playwright test`: UC, visual, a11y, copy. Артефакты: HTML-отчёт, diff-изображения визуальных тестов.
 - **Кэш:** composer, npm, браузеры Playwright.
 - **Конкурентность:** `concurrency: ci-${{ github.ref }}`, отмена устаревших запусков на PR.
