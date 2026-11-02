@@ -3,7 +3,7 @@ id: "0.1.2"
 phase: "0"
 epic: "0.1"
 title: "Локальное окружение Docker Compose"
-status: todo
+status: in_progress
 gate: G0
 risk: low
 model_impl: haiku
