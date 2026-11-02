@@ -13,7 +13,7 @@ depends_on: ["3.1.1", "2.1.2"]
 uc: ["V1", "D1"]
 prototype: "Десктоп - Лот.dc.html"
 screens: ["lot"]
-issue: null
+issue: 30
 sync_state: drifted
 escalations: []
 ---

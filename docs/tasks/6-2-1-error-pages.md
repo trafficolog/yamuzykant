@@ -13,7 +13,7 @@ depends_on: ["0.2.4"]
 uc: []
 prototype: "Десктоп - Ошибка.dc.html"
 screens: ["error"]
-issue: null
+issue: 55
 sync_state: drifted
 escalations: []
 ---

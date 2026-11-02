@@ -13,7 +13,7 @@ depends_on: ["0.2.4"]
 uc: ["H1"]
 prototype: "Десктоп - Помощь.dc.html"
 screens: ["help"]
-issue: null
+issue: 46
 sync_state: drifted
 escalations: []
 ---

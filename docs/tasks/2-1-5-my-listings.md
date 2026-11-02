@@ -13,7 +13,7 @@ depends_on: ["2.1.4", "1.1.3"]
 uc: ["L3", "L4"]
 prototype: "Десктоп - Кабинет.dc.html"
 screens: ["account"]
-issue: null
+issue: 24
 sync_state: drifted
 escalations: []
 ---

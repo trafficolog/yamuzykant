@@ -13,7 +13,7 @@ depends_on: ["5.3.1"]
 uc: ["O6"]
 prototype: "Админ - Журнал.dc.html"
 screens: ["console-log"]
-issue: null
+issue: 51
 sync_state: drifted
 escalations: []
 ---

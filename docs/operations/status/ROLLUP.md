@@ -5,67 +5,67 @@
 
 | Задача | Гейт | Статус | Риск | Исполнитель → Ревьюер | Issue |
 |---|---|---|---|---|---|
-| 0.1.1 Каркас Laravel + Inertia + React + SSR | G0 | ready | medium | sonnet → sonnet | — |
-| 0.1.2 Локальное окружение Docker Compose | G0 | todo | low | haiku → sonnet | — |
-| 0.1.3 CI на GitHub Actions | G0 | todo | high | opus → opus | — |
-| 0.1.4 Окружение stage и автодеплой | G1 | todo | high | opus → opus | — |
-| 0.1.5 Логи, ошибки, health | G1 | todo | medium | sonnet → sonnet | — |
-| 0.1.6 Фича-флаги Pennant | G0 | todo | low | haiku → sonnet | — |
-| 0.2.1 Подключение дизайн-системы: ds:sync и @ds | G0 | todo | medium | sonnet → sonnet | — |
-| 0.2.2 Проверка текстов: lint:copy и copy.spec | G0 | todo | low | haiku → sonnet | — |
-| 0.2.3 Эталоны макетов и визуальные тесты | G0 | todo | medium | sonnet → sonnet | — |
-| 0.2.4 PublicLayout: шапка и подвал | G0 | todo | medium | sonnet → sonnet | — |
-| 0.2.5 Консоль сотрудников: каркас Filament | G2 | todo | medium | sonnet → sonnet | — |
-| 0.3.1 GitHub: метки, вехи, задачи, защита | G0 | ready | medium | opus → opus | — |
-| 1.1.1 Вход по коду на почту: бэкенд | G1 | todo | high | opus → opus | — |
-| 1.1.2 Окно входа | G1 | todo | medium | sonnet → sonnet | — |
-| 1.1.3 Профиль, город и уведомления | G1 | todo | medium | sonnet → sonnet | — |
-| 1.1.4 Выбор города | G1 | todo | low | haiku → sonnet | — |
-| 1.1.5 Вход через Яндекс ID: бэкенд | G1 | todo | high | opus → opus | — |
-| 1.2.1 Справочники: категории, модели, города | G1 | todo | medium | sonnet → sonnet | — |
-| 1.2.2 Подсказка модели | G1 | todo | low | haiku → sonnet | — |
-| 2.1.1 Объявление: модель и жизненный цикл | G1 | todo | high | opus → opus | — |
-| 2.1.2 Загрузка и обработка фото | G1 | todo | high | opus → opus | — |
-| 2.1.3 Форма «Продать инструмент» | G1 | todo | medium | sonnet → sonnet | — |
-| 2.1.4 Черновик, публикация, экран «Опубликовано» | G1 | todo | medium | sonnet → sonnet | — |
-| 2.1.5 Мои объявления: изменить, снизить цену, снять | G1 | todo | medium | sonnet → sonnet | — |
-| 2.1.6 Лимит активных объявлений | G1 | todo | low | haiku → sonnet | — |
-| 3.1.1 Поисковый индекс объявлений | G1 | todo | medium | sonnet → sonnet | — |
-| 3.1.2 Барахолка: выдача и фильтры | G1 | todo | medium | sonnet → sonnet | — |
-| 3.1.3 Барахолка: пусто, загрузка, ошибка | G1 | todo | low | haiku → sonnet | — |
-| 3.1.4 Главная | G1 | todo | medium | sonnet → sonnet | — |
-| 3.1.5 Страница объявления | G1 | todo | medium | sonnet → sonnet | — |
-| 3.1.6 Страница продавца | G1 | todo | low | haiku → sonnet | — |
-| 3.1.7 SEO: SSR, разметка, sitemap | G2 | todo | low | haiku → sonnet | — |
-| 4.1.1 Сообщения: домен и realtime | G1 | todo | high | opus → opus | — |
-| 4.1.2 Сообщения: список и чат | G1 | todo | medium | sonnet → sonnet | — |
-| 4.1.3 Антиспам в сообщениях | G1 | todo | medium | sonnet → sonnet | — |
-| 4.2.1 Предложение цены: домен | G2 | todo | high | opus → opus | — |
-| 4.2.2 Предложение цены: окно и карточка | G2 | todo | medium | sonnet → sonnet | — |
-| 4.3.1 Избранное | G1 | todo | low | haiku → sonnet | — |
-| 4.3.2 Сохранённые поиски | G2 | todo | medium | sonnet → sonnet | — |
-| 4.4.1 Письма: шаблон, код входа, новое сообщение | G1 | todo | low | haiku → sonnet | — |
-| 4.4.2 Центр уведомлений в шапке | G2 | todo | low | haiku → sonnet | — |
-| 5.1.1 Автопроверки объявлений | G1 | todo | medium | sonnet → sonnet | — |
-| 5.1.2 Модерация в консоли | G2 | todo | high | opus → opus | — |
-| 5.1.3 Решения модерации и уведомление продавца | G2 | todo | medium | sonnet → sonnet | — |
-| 5.2.1 Жалобы | G2 | todo | medium | sonnet → sonnet | — |
-| 5.2.2 Помощь и обращение в поддержку | G2 | todo | low | haiku → sonnet | — |
-| 5.2.3 Обращения и жалобы в консоли | G2 | todo | medium | sonnet → sonnet | — |
-| 5.3.1 Сотрудники: 2FA, роли, права | G2 | todo | high | opus → opus | — |
-| 5.3.2 Пользователи и ограничения | G2 | todo | high | opus → opus | — |
-| 5.3.3 Справочники в консоли | G2 | todo | low | haiku → sonnet | — |
-| 5.3.4 Журнал действий | G2 | todo | medium | sonnet → sonnet | — |
-| 5.3.5 Обзор консоли | G2 | todo | low | haiku → sonnet | — |
-| 6.1.1 Мобильная шапка и нижняя панель | G1 | todo | medium | sonnet → sonnet | — |
-| 6.1.2 Мобильная раскладка экранов | G3 | todo | medium | sonnet → sonnet | — |
-| 6.2.1 Страницы ошибок и техработ | G3 | todo | low | haiku → sonnet | — |
-| 6.2.2 Бюджет производительности | G3 | todo | medium | sonnet → sonnet | — |
-| 6.2.3 Доступность: общий проход | G3 | todo | low | haiku → sonnet | — |
-| 6.3.1 Модель угроз R1 | G3 | todo | high | opus → opus | — |
-| 6.3.2 152-ФЗ: согласия, удаление аккаунта | G3 | todo | high | opus → opus | — |
-| 6.3.3 Резервные копии и восстановление | G3 | todo | medium | sonnet → sonnet | — |
-| 6.4.1 Production и release.yml | G3 | todo | high | opus → opus | — |
-| 6.4.2 Нагрузочное тестирование | G3 | todo | medium | sonnet → sonnet | — |
-| 6.4.3 Алерты и дежурство | G3 | todo | low | haiku → sonnet | — |
-| 6.4.4 Запуск R1 и 48 часов наблюдения | G3 | todo | high | opus → opus | — |
+| 0.1.1 Каркас Laravel + Inertia + React + SSR | G0 | ready | medium | sonnet → sonnet | #1 |
+| 0.1.2 Локальное окружение Docker Compose | G0 | todo | low | haiku → sonnet | #2 |
+| 0.1.3 CI на GitHub Actions | G0 | todo | high | opus → opus | #3 |
+| 0.1.4 Окружение stage и автодеплой | G1 | todo | high | opus → opus | #4 |
+| 0.1.5 Логи, ошибки, health | G1 | todo | medium | sonnet → sonnet | #5 |
+| 0.1.6 Фича-флаги Pennant | G0 | todo | low | haiku → sonnet | #6 |
+| 0.2.1 Подключение дизайн-системы: ds:sync и @ds | G0 | todo | medium | sonnet → sonnet | #7 |
+| 0.2.2 Проверка текстов: lint:copy и copy.spec | G0 | todo | low | haiku → sonnet | #8 |
+| 0.2.3 Эталоны макетов и визуальные тесты | G0 | todo | medium | sonnet → sonnet | #9 |
+| 0.2.4 PublicLayout: шапка и подвал | G0 | todo | medium | sonnet → sonnet | #10 |
+| 0.2.5 Консоль сотрудников: каркас Filament | G2 | todo | medium | sonnet → sonnet | #11 |
+| 0.3.1 GitHub: метки, вехи, задачи, защита | G0 | ready | medium | opus → opus | #12 |
+| 1.1.1 Вход по коду на почту: бэкенд | G1 | todo | high | opus → opus | #13 |
+| 1.1.2 Окно входа | G1 | todo | medium | sonnet → sonnet | #14 |
+| 1.1.3 Профиль, город и уведомления | G1 | todo | medium | sonnet → sonnet | #15 |
+| 1.1.4 Выбор города | G1 | todo | low | haiku → sonnet | #16 |
+| 1.1.5 Вход через Яндекс ID: бэкенд | G1 | todo | high | opus → opus | #17 |
+| 1.2.1 Справочники: категории, модели, города | G1 | todo | medium | sonnet → sonnet | #18 |
+| 1.2.2 Подсказка модели | G1 | todo | low | haiku → sonnet | #19 |
+| 2.1.1 Объявление: модель и жизненный цикл | G1 | todo | high | opus → opus | #20 |
+| 2.1.2 Загрузка и обработка фото | G1 | todo | high | opus → opus | #21 |
+| 2.1.3 Форма «Продать инструмент» | G1 | todo | medium | sonnet → sonnet | #22 |
+| 2.1.4 Черновик, публикация, экран «Опубликовано» | G1 | todo | medium | sonnet → sonnet | #23 |
+| 2.1.5 Мои объявления: изменить, снизить цену, снять | G1 | todo | medium | sonnet → sonnet | #24 |
+| 2.1.6 Лимит активных объявлений | G1 | todo | low | haiku → sonnet | #25 |
+| 3.1.1 Поисковый индекс объявлений | G1 | todo | medium | sonnet → sonnet | #26 |
+| 3.1.2 Барахолка: выдача и фильтры | G1 | todo | medium | sonnet → sonnet | #27 |
+| 3.1.3 Барахолка: пусто, загрузка, ошибка | G1 | todo | low | haiku → sonnet | #28 |
+| 3.1.4 Главная | G1 | todo | medium | sonnet → sonnet | #29 |
+| 3.1.5 Страница объявления | G1 | todo | medium | sonnet → sonnet | #30 |
+| 3.1.6 Страница продавца | G1 | todo | low | haiku → sonnet | #31 |
+| 3.1.7 SEO: SSR, разметка, sitemap | G2 | todo | low | haiku → sonnet | #32 |
+| 4.1.1 Сообщения: домен и realtime | G1 | todo | high | opus → opus | #33 |
+| 4.1.2 Сообщения: список и чат | G1 | todo | medium | sonnet → sonnet | #34 |
+| 4.1.3 Антиспам в сообщениях | G1 | todo | medium | sonnet → sonnet | #35 |
+| 4.2.1 Предложение цены: домен | G2 | todo | high | opus → opus | #36 |
+| 4.2.2 Предложение цены: окно и карточка | G2 | todo | medium | sonnet → sonnet | #37 |
+| 4.3.1 Избранное | G1 | todo | low | haiku → sonnet | #38 |
+| 4.3.2 Сохранённые поиски | G2 | todo | medium | sonnet → sonnet | #39 |
+| 4.4.1 Письма: шаблон, код входа, новое сообщение | G1 | todo | low | haiku → sonnet | #40 |
+| 4.4.2 Центр уведомлений в шапке | G2 | todo | low | haiku → sonnet | #41 |
+| 5.1.1 Автопроверки объявлений | G1 | todo | medium | sonnet → sonnet | #42 |
+| 5.1.2 Модерация в консоли | G2 | todo | high | opus → opus | #43 |
+| 5.1.3 Решения модерации и уведомление продавца | G2 | todo | medium | sonnet → sonnet | #44 |
+| 5.2.1 Жалобы | G2 | todo | medium | sonnet → sonnet | #45 |
+| 5.2.2 Помощь и обращение в поддержку | G2 | todo | low | haiku → sonnet | #46 |
+| 5.2.3 Обращения и жалобы в консоли | G2 | todo | medium | sonnet → sonnet | #47 |
+| 5.3.1 Сотрудники: 2FA, роли, права | G2 | todo | high | opus → opus | #48 |
+| 5.3.2 Пользователи и ограничения | G2 | todo | high | opus → opus | #49 |
+| 5.3.3 Справочники в консоли | G2 | todo | low | haiku → sonnet | #50 |
+| 5.3.4 Журнал действий | G2 | todo | medium | sonnet → sonnet | #51 |
+| 5.3.5 Обзор консоли | G2 | todo | low | haiku → sonnet | #52 |
+| 6.1.1 Мобильная шапка и нижняя панель | G1 | todo | medium | sonnet → sonnet | #53 |
+| 6.1.2 Мобильная раскладка экранов | G3 | todo | medium | sonnet → sonnet | #54 |
+| 6.2.1 Страницы ошибок и техработ | G3 | todo | low | haiku → sonnet | #55 |
+| 6.2.2 Бюджет производительности | G3 | todo | medium | sonnet → sonnet | #56 |
+| 6.2.3 Доступность: общий проход | G3 | todo | low | haiku → sonnet | #57 |
+| 6.3.1 Модель угроз R1 | G3 | todo | high | opus → opus | #58 |
+| 6.3.2 152-ФЗ: согласия, удаление аккаунта | G3 | todo | high | opus → opus | #59 |
+| 6.3.3 Резервные копии и восстановление | G3 | todo | medium | sonnet → sonnet | #60 |
+| 6.4.1 Production и release.yml | G3 | todo | high | opus → opus | #61 |
+| 6.4.2 Нагрузочное тестирование | G3 | todo | medium | sonnet → sonnet | #62 |
+| 6.4.3 Алерты и дежурство | G3 | todo | low | haiku → sonnet | #63 |
+| 6.4.4 Запуск R1 и 48 часов наблюдения | G3 | todo | high | opus → opus | #64 |

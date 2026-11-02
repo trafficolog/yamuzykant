@@ -13,7 +13,7 @@ depends_on: ["2.1.1"]
 uc: ["S2", "S3"]
 prototype: ""
 screens: []
-issue: null
+issue: 26
 sync_state: drifted
 escalations: []
 ---

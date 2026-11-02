@@ -13,7 +13,7 @@ depends_on: ["5.2.1", "5.2.2", "5.3.1"]
 uc: ["O2"]
 prototype: "Админ - Обращения.dc.html"
 screens: ["console-tickets"]
-issue: null
+issue: 47
 sync_state: drifted
 escalations: []
 ---

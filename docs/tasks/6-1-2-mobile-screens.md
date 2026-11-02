@@ -13,7 +13,7 @@ depends_on: ["6.1.1", "3.1.2", "3.1.5", "2.1.3", "4.1.2", "2.1.5"]
 uc: []
 prototype: "design/ds/ui_kits/marketplace/mobile.html"
 screens: []
-issue: null
+issue: 54
 sync_state: drifted
 escalations: []
 ---

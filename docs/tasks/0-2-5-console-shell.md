@@ -13,7 +13,7 @@ depends_on: ["0.1.1"]
 uc: []
 prototype: "Админ - Меню.dc.html, Админ - Шапка.dc.html"
 screens: ["console-overview"]
-issue: null
+issue: 11
 sync_state: drifted
 escalations: []
 ---

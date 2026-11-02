@@ -13,7 +13,7 @@ depends_on: ["1.1.3", "4.1.1"]
 uc: ["N1"]
 prototype: "Письма и уведомления.dc.html"
 screens: ["emails"]
-issue: null
+issue: 40
 sync_state: drifted
 escalations: []
 ---

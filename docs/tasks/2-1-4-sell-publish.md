@@ -13,7 +13,7 @@ depends_on: ["2.1.3", "5.1.1"]
 uc: ["L1"]
 prototype: "Десктоп - Продать.dc.html"
 screens: ["sell"]
-issue: null
+issue: 23
 sync_state: drifted
 escalations: []
 ---

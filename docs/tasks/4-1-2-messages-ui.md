@@ -13,7 +13,7 @@ depends_on: ["4.1.1"]
 uc: ["D1"]
 prototype: "Десктоп - Сообщения.dc.html"
 screens: ["messages"]
-issue: null
+issue: 34
 sync_state: drifted
 escalations: []
 ---

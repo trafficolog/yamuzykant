@@ -13,7 +13,7 @@ depends_on: ["0.2.4", "1.2.1"]
 uc: ["S1"]
 prototype: "Шапка.dc.html"
 screens: ["header"]
-issue: null
+issue: 16
 sync_state: drifted
 escalations: []
 ---

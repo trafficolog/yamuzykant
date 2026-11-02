@@ -13,7 +13,7 @@ depends_on: ["0.2.1"]
 uc: []
 prototype: "Все из manifest.json"
 screens: ["*"]
-issue: null
+issue: 9
 sync_state: drifted
 escalations: []
 ---

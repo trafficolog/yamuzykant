@@ -13,7 +13,7 @@ depends_on: ["5.3.1", "1.2.1"]
 uc: ["O4"]
 prototype: "Админ - Справочники.dc.html"
 screens: ["console-dictionaries"]
-issue: null
+issue: 50
 sync_state: drifted
 escalations: []
 ---

@@ -13,7 +13,7 @@ depends_on: ["0.1.2"]
 uc: ["O4"]
 prototype: "Админ - Справочники.dc.html"
 screens: []
-issue: null
+issue: 18
 sync_state: drifted
 escalations: []
 ---

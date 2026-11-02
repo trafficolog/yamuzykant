@@ -13,7 +13,7 @@ depends_on: ["5.1.1", "0.2.5", "5.3.1"]
 uc: ["O1"]
 prototype: "Десктоп - Модерация.dc.html"
 screens: ["console-moderation"]
-issue: null
+issue: 43
 sync_state: drifted
 escalations: []
 ---

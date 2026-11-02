@@ -13,7 +13,7 @@ depends_on: ["3.1.1", "0.2.4", "1.1.4"]
 uc: ["S2", "S3"]
 prototype: "Десктоп - Каталог.dc.html"
 screens: ["flea"]
-issue: null
+issue: 27
 sync_state: drifted
 escalations: []
 ---
