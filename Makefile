@@ -15,8 +15,9 @@ help: ## Показать цели
 	cp .env.example .env
 	php artisan key:generate --ansi
 
-up: .env ## Поднять сервисы и дождаться healthy
+up: .env ## Поднять сервисы, дождаться healthy и создать бакет
 	docker compose up -d --wait
+	docker compose --profile init run --rm minio-init
 
 down: ## Остановить сервисы
 	docker compose down

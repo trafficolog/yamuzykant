@@ -81,9 +81,11 @@ services:
       timeout: 3s
       retries: 20
 
-  # Одноразовый сервис: создаёт бакет для S3-диска и завершается.
+  # Одноразовый сервис: создаёт бакет для S3-диска и завершается. Не входит в обычный up,
+  # запуск: docker compose --profile init run --rm minio-init (идемпотентно, make up делает это сам).
   minio-init:
     image: chainguard/minio-client@sha256:2fc4412391f1ce7372db8dd8bee17b38d76f7bb898bac195915bfe6979aa5784
+    profiles: ["init"]
     restart: "no"
     depends_on:
       minio:

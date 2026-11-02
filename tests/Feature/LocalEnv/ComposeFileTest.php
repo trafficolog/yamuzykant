@@ -127,7 +127,8 @@ it('minio-init вынесен в профиль init: обычный up его �
     $services = localEnvComposeServices();
 
     expect($services['minio-init'])->toContain('profiles: ["init"]');
-    expect($services['minio-init'])->toContain('mb --ignore-existing');
+    // В YAML команда записана списком: ["mb", "--ignore-existing", ...].
+    expect($services['minio-init'])->toContain('"mb", "--ignore-existing"');
 });
 
 it('up поднимает сервисы без minio-init, а бакет создаётся отдельным запуском профиля init', function () {
