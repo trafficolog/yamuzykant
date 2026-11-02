@@ -13,12 +13,32 @@ const EXT = new Set(['.ts', '.tsx', '.js', '.jsx', '.php', '.json', '.md', '.vue
 const COLOR = /#[0-9a-f]{3,8}\b|rgba?\(|hsla?\(/i;
 const COLOR_DIRS = [/resources[\/\\]js[\/\\](Pages|Components|Layouts)[\/\\]/];
 
-// Исключение: комментарий `copy-allow: причина`. Причина — хотя бы одно слово из трёх букв.
+// Текст комментария строки — только вне строковых литералов ('…', "…", `…`, с экранированием).
+// Маркер внутри литерала комментарием не считается. Возвращает null, если комментария нет.
+function commentText(line) {
+    let quote = null;
+    for (let i = 0; i < line.length; i++) {
+        const c = line[i];
+        if (quote) {
+            if (c === '\\') i++;
+            else if (c === quote) quote = null;
+            continue;
+        }
+        if (c === '"' || c === "'" || c === '`') quote = c;
+        else if (c === '#' || line.startsWith('//', i) || line.startsWith('/*', i) || line.startsWith('<!--', i))
+            return line.slice(i);
+    }
+    return null;
+}
+
+// Исключение: комментарий `copy-allow: причина` вне литерала. Причина — два слова или 10 символов.
 function isAllowed(line) {
-    const m = line.match(/(?:\/\/|#|\/\*|<!--)\s*copy-allow:(.*)$/);
+    const comment = commentText(line);
+    const m = comment?.match(/copy-allow:(.*)$/);
     if (!m) return false;
-    const reason = m[1].replace(/\*\/|-->|\}/g, '').trim();
-    return /\p{L}{3,}/u.test(reason);
+    const reason = (m[1] ?? '').replace(/\*\/|-->|\}/g, '').trim();
+    const words = reason.split(/\s+/).filter((w) => /\p{L}/u.test(w));
+    return words.length >= 2 || reason.length >= 10;
 }
 
 const files = [];
