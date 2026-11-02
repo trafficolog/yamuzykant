@@ -1,0 +1,15 @@
+includes:
+    - vendor/larastan/larastan/extension.neon
+
+parameters:
+    level: 8
+    # config/ — стандартные файлы Laravel (env() возвращает mixed), tests/ — Pest-замыкания
+    # с `$this`, которые PHPStan без отдельного расширения не разбирает.
+    paths:
+        - app
+        - bootstrap
+        - database
+        - routes
+    excludePaths:
+        - bootstrap/cache (?)
+        - bootstrap/ssr (?)

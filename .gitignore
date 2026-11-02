@@ -10,3 +10,10 @@
 /test-results/
 /coverage/
 .DS_Store
+/.phpunit.cache
+.phpunit.result.cache
+/storage/pail
+/public/storage
+/.idea
+/.vscode
+npm-debug.log
