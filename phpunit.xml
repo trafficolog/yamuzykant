@@ -20,6 +20,12 @@
             <directory>app</directory>
         </include>
     </source>
+    <groups>
+        <!-- Живые тесты сервисов compose: запускаются только через composer test:docker (group docker). -->
+        <exclude>
+            <group>docker</group>
+        </exclude>
+    </groups>
     <php>
         <env name="APP_ENV" value="testing"/>
         <env name="APP_MAINTENANCE_DRIVER" value="file"/>
