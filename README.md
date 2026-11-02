@@ -19,7 +19,7 @@
 
 ## Локальный запуск
 
-Нужны Docker с Compose v2, PHP 8.3+ с расширениями `pdo_pgsql` (для приложения и живых тестов) и `pdo_sqlite` (для `composer test`), Composer, Node 20+. Команды выполняются из корня репозитория.
+Нужны Docker с Compose v2, PHP 8.3+ с расширениями `pdo_pgsql` (для приложения и живых тестов) и `pdo_sqlite` (для `composer test`), Composer, Node 22.22+. Команды выполняются из корня репозитория.
 
 ```bash
 docker compose up -d --wait                       # pgsql 16, redis 7, meilisearch, mailpit, minio; ждёт healthy
