@@ -15,7 +15,7 @@
    ```
 3. Агент остановится и спросит вас только в точках из `ORCHESTRATOR.md §6`: секреты, подтверждение гейтов, юридические тексты, всё, что помечено «уточнить».
 
-Нужно заранее: аккаунт GitHub и `gh` CLI с авторизацией, PHP 8.3, Composer, Node 20+, Docker (для PostgreSQL, Redis, Meilisearch), Playwright-браузеры (`npx playwright install`).
+Нужно заранее: аккаунт GitHub и `gh` CLI с авторизацией, PHP 8.3, Composer, Node 22.22+, Docker (для PostgreSQL, Redis, Meilisearch), Playwright-браузеры (`npx playwright install`).
 
 ## Локальный запуск
 

@@ -2,7 +2,7 @@
 id: "0.2"
 phase: "0"
 title: "Дизайн-система в коде и эталоны"
-status: todo
+status: in_progress
 gate: G0
 ---
 
@@ -16,7 +16,7 @@ gate: G0
 <!-- docs:ops:begin tasks -->
 | Задача | Статус | Риск | Исполнитель → Ревьюер |
 |---|---|---|---|
-| [0.2.1 Подключение дизайн-системы: ds:sync и @ds](../tasks/0-2-1-ds-sync.md) | todo | medium | sonnet → sonnet |
+| [0.2.1 Подключение дизайн-системы: ds:sync и @ds](../tasks/0-2-1-ds-sync.md) | review | medium | sonnet → sonnet |
 | [0.2.2 Проверка текстов: lint:copy и copy.spec](../tasks/0-2-2-lint-copy.md) | todo | low | haiku → sonnet |
 | [0.2.3 Эталоны макетов и визуальные тесты](../tasks/0-2-3-references.md) | todo | medium | sonnet → sonnet |
 | [0.2.4 PublicLayout: шапка и подвал](../tasks/0-2-4-public-layout.md) | todo | medium | sonnet → sonnet |
