@@ -12,13 +12,15 @@ jobs:
     environment: stage
     steps:
       - uses: actions/checkout@v4
-        with: { ref: ${{ github.event.workflow_run.head_sha }} }
+        with:
+          ref: ${{ github.event.workflow_run.head_sha }}
       - name: Пропуск, пока нет deploy/deploy.sh (до задачи 0.1.4)
         id: has
         run: echo "ok=$([ -f deploy/deploy.sh ] && echo true || echo false)" >> $GITHUB_OUTPUT
       - if: steps.has.outputs.ok == 'true'
         uses: webfactory/ssh-agent@v0.9.0
-        with: { ssh-private-key: ${{ secrets.DEPLOY_SSH_KEY }} }
+        with:
+          ssh-private-key: ${{ secrets.DEPLOY_SSH_KEY }}
       - if: steps.has.outputs.ok == 'true'
         run: ./deploy/deploy.sh stage ${{ github.event.workflow_run.head_sha }}
         env:
