@@ -3,7 +3,7 @@ id: "0.1.6"
 phase: "0"
 epic: "0.1"
 title: "Фича-флаги Pennant"
-status: todo
+status: in_progress
 gate: G0
 risk: low
 model_impl: haiku
