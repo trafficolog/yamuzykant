@@ -1,11 +1,11 @@
 import { expect, test } from '@playwright/test';
 
-// Эталон /_ds снимается в Linux-контейнере Playwright вместе с остальными эталонами в задаче 0.2.3
-// (зависимость от 0.2.3). До этого тест пропущен: Windows-снимок CI на Linux не подошёл бы.
-// Снять эталон: npx playwright test --grep @visual --update-snapshots (в контейнере Playwright).
+// Эталон витрины /_ds снят с реализации в Linux-контейнере Playwright той же версии, что в CI
+// (mcr.microsoft.com/playwright:v<версия>-noble), файл ds.visual.spec.ts-snapshots/*-linux.png.
+// Снимки win32 и darwin в git не попадают (.gitignore): локально на Windows и macOS тест не проходит
+// и запускается в контейнере. Эталон принимает OWNER на гейте G0.
 test.describe('@visual витрина /_ds', () => {
     test.use({ viewport: { width: 1440, height: 900 } });
-    test.skip(true, 'Ожидает эталон linux из 0.2.3');
 
     test('/_ds на 1440', async ({ page }) => {
         await page.goto('/_ds');

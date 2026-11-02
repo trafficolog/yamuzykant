@@ -1,8 +1,15 @@
 import { defineConfig, devices } from '@playwright/test';
+import { tmpdir } from 'node:os';
+import { join } from 'node:path';
 
 const PORT = 8000;
 const SSR_PORT = 13714;
+const PROTOTYPES_PORT = 8123;
 const baseURL = `http://127.0.0.1:${PORT}`;
+
+// Визуальные тесты по эталонам design/screens (0.2.3). Витрина /_ds остаётся в проекте chromium
+// со снимками рядом с тестом.
+const referenceSpecs = /visual\/(?!ds\.visual)[^/]+\.spec\.ts$/;
 
 export default defineConfig({
     testDir: 'tests/e2e',
@@ -14,9 +21,32 @@ export default defineConfig({
         baseURL,
         trace: 'retain-on-failure',
     },
-    projects: [{ name: 'chromium', use: { ...devices['Desktop Chrome'] } }],
+    projects: [
+        {
+            name: 'chromium',
+            testIgnore: referenceSpecs,
+            use: { ...devices['Desktop Chrome'] },
+        },
+        {
+            // Эталоны design/screens/{id}@{viewport}.png Playwright сам найти не может: он заменяет «@»
+            // в имени снимка. Хелпер копирует эталон во временную папку, где его ждёт toHaveScreenshot;
+            // сами эталоны тест не меняет даже с --update-snapshots (_helpers.ts).
+            name: 'references',
+            testMatch: referenceSpecs,
+            snapshotDir: join(tmpdir(), 'ym-references'),
+            snapshotPathTemplate: '{snapshotDir}/{testFileName}/{arg}{ext}',
+            use: { ...devices['Desktop Chrome'] },
+        },
+    ],
     // Для e2e нужны собранные бандлы: `npm run build && npm run build:ssr`.
     webServer: [
+        {
+            // Прототипам нужен http, не file://.
+            command: `npx http-server design/prototypes -a 127.0.0.1 -p ${PROTOTYPES_PORT} -s -c-1`,
+            url: `http://127.0.0.1:${PROTOTYPES_PORT}/support.js`,
+            reuseExistingServer: !process.env.CI,
+            timeout: 30_000,
+        },
         {
             command: `php artisan serve --host=127.0.0.1 --port=${PORT}`,
             url: `${baseURL}/health`,

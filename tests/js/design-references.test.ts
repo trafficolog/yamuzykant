@@ -22,6 +22,19 @@ const manifest = JSON.parse(readFileSync('design/screens/manifest.json', 'utf8')
 
 const MIN_BYTES = 30 * 1024;
 const MIN_HEIGHT = 900;
+// Прототип целиком умещается в один экран (компонент или app-shell на 100vh): fullPage-снимок не выше
+// viewport, и «высота > 900» к нему неприменима. Такие снимки проверяются на «не короче viewport»,
+// «шапка» (почти вся белая) — на размер от 15 КБ. Список согласован в PR задачи 0.2.3.
+const SINGLE_SCREEN = new Set([
+    'header@1440',
+    'header@390',
+    'footer@1440',
+    'emails@1440',
+    'console-tickets@1440',
+]);
+const LIGHT_FILES = new Set(['header@1440', 'header@390']);
+const MIN_BYTES_LIGHT = 15 * 1024;
+
 const PNG_SIGNATURE = '89504e470d0a1a0a';
 
 const cases = manifest.screens.flatMap((screen) =>
@@ -45,11 +58,17 @@ describe('эталоны design/screens', () => {
     it.each(cases)('$id@$viewport.name: снимок не пустой (> 30 КБ, высота > 900 px)', (c) => {
         const bytes = readFileSync(c.file);
         expect(bytes.subarray(0, 8).toString('hex')).toBe(PNG_SIGNATURE);
-        expect(statSync(c.file).size).toBeGreaterThan(MIN_BYTES);
+        const key = `${c.id}@${c.viewport.name}`;
+        const minBytes = LIGHT_FILES.has(key) ? MIN_BYTES_LIGHT : MIN_BYTES;
+        expect(statSync(c.file).size).toBeGreaterThan(minBytes);
 
         const width = bytes.readUInt32BE(16);
         const height = bytes.readUInt32BE(20);
         expect(width).toBe(c.viewport.width);
-        expect(height).toBeGreaterThan(MIN_HEIGHT);
+        if (SINGLE_SCREEN.has(key)) {
+            expect(height).toBeGreaterThanOrEqual(c.viewport.height);
+        } else {
+            expect(height).toBeGreaterThan(MIN_HEIGHT);
+        }
     });
 });
