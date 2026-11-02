@@ -3,7 +3,7 @@ id: "0.2.2"
 phase: "0"
 epic: "0.2"
 title: "Проверка текстов: lint:copy и copy.spec"
-status: todo
+status: in_progress
 gate: G0
 risk: low
 model_impl: haiku

@@ -3,7 +3,7 @@ id: "0.2.3"
 phase: "0"
 epic: "0.2"
 title: "Эталоны макетов и визуальные тесты"
-status: todo
+status: in_progress
 gate: G0
 risk: medium
 model_impl: sonnet
