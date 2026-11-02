@@ -2,12 +2,41 @@
 
 declare(strict_types=1);
 
-use Symfony\Component\Yaml\Yaml;
-
-/** Разбирает compose.yaml в массив. */
-function localEnvCompose(): array
+/**
+ * Блоки сервисов из compose.yaml: имя => текст блока (строки с отступом).
+ * YAML-парсер не подключаем: для проверки структуры хватает разбора по отступам.
+ */
+function localEnvComposeServices(): array
 {
-    return Yaml::parseFile(base_path('compose.yaml'));
+    $blocks = [];
+    $inServices = false;
+    $name = null;
+
+    foreach (file(base_path('compose.yaml'), FILE_IGNORE_NEW_LINES) as $line) {
+        if (preg_match('/^[a-z]/', $line) === 1) {
+            $inServices = $line === 'services:';
+            $name = null;
+
+            continue;
+        }
+
+        if (! $inServices) {
+            continue;
+        }
+
+        if (preg_match('/^  ([a-z][a-z-]*):$/', $line, $m) === 1) {
+            $name = $m[1];
+            $blocks[$name] = '';
+
+            continue;
+        }
+
+        if ($name !== null) {
+            $blocks[$name] .= $line."\n";
+        }
+    }
+
+    return $blocks;
 }
 
 /** Пары NAME => value из .env.example (без кавычек). */
@@ -24,18 +53,21 @@ function localEnvExample(): array
 }
 
 it('compose.yaml описывает pgsql 16, redis 7, meilisearch 1.x, mailpit и minio, у каждого есть healthcheck', function () {
-    $services = localEnvCompose()['services'];
+    $services = localEnvComposeServices();
 
     expect(array_keys($services))->toContain('pgsql', 'redis', 'meilisearch', 'mailpit', 'minio');
 
-    expect($services['pgsql']['image'])->toMatch('/^postgres:16/');
-    expect($services['redis']['image'])->toMatch('/^redis:7/');
-    expect($services['meilisearch']['image'])->toMatch('/^getmeili\/meilisearch:v1\./');
-    expect($services['mailpit']['image'])->toMatch('/^axllent\/mailpit/');
-    expect($services['minio']['image'])->toMatch('/^minio\/minio/');
+    $image = fn (string $name): string => preg_match('/^    image: (\S+)$/m', $services[$name], $m) === 1 ? $m[1] : '';
+
+    expect($image('pgsql'))->toMatch('/^postgres:16/');
+    expect($image('redis'))->toMatch('/^redis:7/');
+    expect($image('meilisearch'))->toMatch('/^getmeili\/meilisearch:v1\./');
+    expect($image('mailpit'))->toMatch('/^axllent\/mailpit/');
+    // minio/minio недоступен из Docker Hub на машине исполнителя (pull access denied), поэтому образ Chainguard.
+    expect($image('minio'))->toMatch('/minio/');
 
     foreach (['pgsql', 'redis', 'meilisearch', 'mailpit', 'minio'] as $name) {
-        expect($services[$name])->toHaveKey('healthcheck', "у сервиса {$name} нет healthcheck");
+        expect(str_contains($services[$name], "\n    healthcheck:\n"))->toBeTrue("у сервиса {$name} нет healthcheck");
     }
 });
 
@@ -48,7 +80,7 @@ it('значения по умолчанию в compose.yaml совпадают 
     expect($matches)->not->toBeEmpty();
 
     foreach ($matches as [, $name, $default]) {
-        expect($env)->toHaveKey($name, "переменная {$name} из compose.yaml не описана в .env.example");
+        expect(array_key_exists($name, $env))->toBeTrue("переменная {$name} из compose.yaml не описана в .env.example");
         expect($env[$name])->toBe($default, "у {$name} в compose.yaml и .env.example разные значения");
     }
 });

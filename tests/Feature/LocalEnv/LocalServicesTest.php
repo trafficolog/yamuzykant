@@ -46,11 +46,13 @@ it('Meilisearch отвечает на /health и принимает MEILISEARCH_
     $host = rtrim((string) env('MEILISEARCH_HOST'), '/');
     $key = (string) env('MEILISEARCH_KEY');
 
-    Http::get("{$host}/health")->assertOk()->assertJsonPath('status', 'available');
+    $health = Http::get("{$host}/health");
+    expect($health->status())->toBe(200);
+    expect($health->json('status'))->toBe('available');
 
     // Мастер-ключ включён: без ключа доступ закрыт, с ключом открыт.
-    Http::get("{$host}/indexes")->assertUnauthorized();
-    Http::withToken($key)->get("{$host}/indexes")->assertOk();
+    expect(Http::get("{$host}/indexes")->status())->toBe(401);
+    expect(Http::withToken($key)->get("{$host}/indexes")->status())->toBe(200);
 });
 
 it('письмо приложения через SMTP появляется в Mailpit', function () {
