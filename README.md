@@ -19,7 +19,7 @@
 
 ## Локальный запуск
 
-Нужны Docker с Compose v2, PHP 8.3+ с `pdo_pgsql`, Composer, Node 20+. Команды выполняются из корня репозитория.
+Нужны Docker с Compose v2, PHP 8.3+ с расширениями `pdo_pgsql` (для приложения и живых тестов) и `pdo_sqlite` (для `composer test`), Composer, Node 20+. Команды выполняются из корня репозитория.
 
 ```bash
 docker compose up -d --wait      # pgsql 16, redis 7, meilisearch, mailpit, minio; ждёт healthy
@@ -33,9 +33,9 @@ npm run dev                      # Vite; отдельно: php artisan serve
 
 Адреса: Mailpit — http://127.0.0.1:8025 (письма), MinIO — http://127.0.0.1:9001 (консоль, логин и пароль из `AWS_*` в `.env`), Meilisearch — http://127.0.0.1:7700.
 
-Короткий вариант через Makefile (нужен `make`, на Windows например через Chocolatey или Scoop): `make up`, `make fresh` (`migrate:fresh --seed`), `make down`, `make e2e`. Список целей — `make help`.
+Короткий вариант через Makefile (нужен `make`, на Windows например через Chocolatey или Scoop): `make up` сам создаёт `.env` и ключ, если их нет, затем `make fresh` (`migrate:fresh --seed`), `make down`, `make e2e`. Список целей — `make help`.
 
-Тесты: `composer test` не требует Docker. Тесты живых сервисов (`composer test:docker`) нужен запущенный `docker compose`, или `make test-docker`.
+Тесты: `composer test` не требует Docker. Тестовый конфиг указывает SQLite в памяти, поэтому для `composer test` нужен `pdo_sqlite` (сейчас обычные тесты к БД не обращаются, драйвер нужен для тестов с `RefreshDatabase`). Живые тесты сервисов запускаются отдельно: `composer test:docker` или `make test-docker`. Для них `docker compose` должен быть запущен (`make up`).
 
 ## Что внутри
 
