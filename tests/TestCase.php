@@ -14,5 +14,8 @@ abstract class TestCase extends BaseTestCase
 
         // Тесты PHP не должны зависеть от собранных Vite-бандлов (public/build).
         $this->withoutVite();
+
+        // Окружение из .env (pgsql из compose) не должно попадать в SQLite-тесты: они идут в памяти.
+        config(['database.connections.sqlite.database' => ':memory:']);
     }
 }
