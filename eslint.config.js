@@ -23,6 +23,7 @@ export default tseslint.config(
             'coverage/**',
         ],
     },
+    { settings: { react: { version: '18' } } },
     js.configs.recommended,
     ...tseslint.configs.strict,
     react.configs.flat.recommended,
@@ -34,7 +35,6 @@ export default tseslint.config(
         languageOptions: {
             globals: { ...globals.browser },
         },
-        settings: { react: { version: '18' } },
         rules: {
             'react-hooks/rules-of-hooks': 'error',
             'react-hooks/exhaustive-deps': 'warn',
