@@ -1,0 +1,68 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+  <link rel="stylesheet" href="_ds/design-system-b66810d8-d429-49ea-bb35-5b22a7aa4f3a/tokens/webfonts.css">
+  <link rel="stylesheet" href="_ds/design-system-b66810d8-d429-49ea-bb35-5b22a7aa4f3a/tokens/tokens.css">
+  <link rel="stylesheet" href="_ds/design-system-b66810d8-d429-49ea-bb35-5b22a7aa4f3a/tokens/page.css">
+  <link rel="stylesheet" href="_ds/design-system-b66810d8-d429-49ea-bb35-5b22a7aa4f3a/tokens/components.css">
+  <link rel="stylesheet" href="_ds/design-system-b66810d8-d429-49ea-bb35-5b22a7aa4f3a/tokens/forms.css">
+  <link rel="stylesheet" href="ym-compat.css">
+  <script src="_ds/design-system-b66810d8-d429-49ea-bb35-5b22a7aa4f3a/_ds_bundle.js"></script>
+  <script src="plain-language.js"></script>
+</helmet>
+<nav aria-label="Разделы администрирования" style="height: 100%; min-height: 100%; box-sizing: border-box; display: flex; flex-direction: column; gap: 2px; padding: var(--space-5) var(--space-3); border-right: 1px solid var(--line); background: var(--surface-raised); font-family: var(--font-text);">
+  <sc-for list="{{ nav }}" as="n" hint-placeholder-count="10">
+    <a href="{{ n.href }}" aria-current="{{ n.current }}" class="lm-adm-nav" style="{{ n.style }}" style-hover="background: var(--surface-recessed); color: var(--ink);">
+      <x-import component-from-global-scope="DesignSystem_b66810.Icon" name="{{ n.icon }}" size="{{ 20 }}" hint-size="20px,20px"></x-import>
+      <span style="flex: 1; min-width: 0; line-height: 20px; padding: var(--space-1) 0;">{{ n.label }}</span>
+      <sc-if value="{{ n.hasCount }}" hint-placeholder-val="{{ false }}">
+        <span class="caption" style="min-width: 24px; padding: 2px 6px; box-sizing: border-box; border-radius: var(--radius-full); background: var(--lad); color: var(--on-lad); text-align: center; font-weight: 600; font-variant-numeric: tabular-nums;">{{ n.count }}</span>
+      </sc-if>
+    </a>
+  </sc-for>
+  <p class="caption" style="margin: auto 0 0; padding: var(--space-4) var(--space-3) 0; color: var(--ink-muted); text-wrap: pretty;">{{ note }}</p>
+</nav>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props="{&quot;$preview&quot;:{&quot;width&quot;:280,&quot;height&quot;:640},&quot;active&quot;:{&quot;editor&quot;:&quot;enum&quot;,&quot;options&quot;:[&quot;overview&quot;,&quot;mod&quot;,&quot;reports&quot;,&quot;users&quot;,&quot;verify&quot;,&quot;money&quot;,&quot;dict&quot;,&quot;shop&quot;,&quot;staff&quot;,&quot;log&quot;],&quot;default&quot;:&quot;overview&quot;,&quot;tsType&quot;:&quot;string&quot;},&quot;role&quot;:{&quot;editor&quot;:&quot;enum&quot;,&quot;options&quot;:[&quot;admin&quot;,&quot;moderator&quot;,&quot;support&quot;,&quot;partners&quot;],&quot;default&quot;:&quot;admin&quot;,&quot;tsType&quot;:&quot;'admin' | 'moderator' | 'support' | 'partners'&quot;}}">
+const NAV = [
+  ['overview', 'layout-grid', 'Обзор', null, ['admin', 'moderator', 'support', 'partners'], 'Админ - Обзор.dc.html'],
+  ['mod', 'badge-check', 'Модерация', 4, ['admin', 'moderator'], 'Десктоп - Модерация.dc.html'],
+  ['reports', 'triangle-alert', 'Жалобы и обращения', 19, ['admin', 'moderator', 'support'], 'Админ - Обращения.dc.html'],
+  ['users', 'user', 'Пользователи', null, ['admin', 'support', 'partners'], 'Админ - Пользователи.dc.html'],
+  ['verify', 'store', 'Проверка партнёров', 4, ['admin', 'partners'], 'Админ - Проверка.dc.html'],
+  ['money', 'star', 'Тарифы и баллы', null, ['admin', 'partners'], 'Админ - Деньги.dc.html'],
+  ['dict', 'sliders-horizontal', 'Справочники', null, ['admin', 'moderator'], 'Админ - Справочники.dc.html'],
+  ['shop', 'boxes', 'Витрина и рассылки', null, ['admin', 'partners'], 'Админ - Витрина.dc.html'],
+  ['staff', 'shield-check', 'Сотрудники и права', null, ['admin'], 'Админ - Сотрудники.dc.html'],
+  ['log', 'history', 'Журнал действий', null, ['admin'], 'Админ - Журнал.dc.html']
+];
+const NOTES = {
+  admin: 'Администратор видит все разделы и журнал действий.',
+  moderator: 'Модератор видит объявления, жалобы на них и справочники.',
+  support: 'Поддержка видит обращения, жалобы и карточки пользователей.',
+  partners: 'Менеджер видит компании, мастеров, тарифы и витрину.'
+};
+class Component extends DCLogic {
+  renderVals() {
+    const role = NOTES[this.props.role] ? this.props.role : 'admin';
+    const active = this.props.active || 'overview';
+    return {
+      note: NOTES[role],
+      nav: NAV.filter(n => n[4].includes(role)).map(([id, icon, label, count, , href]) => {
+        const on = id === active;
+        return { icon, label, href, count: String(count || ''), hasCount: !!count, current: on ? 'page' : undefined,
+          style: 'display: flex; align-items: center; gap: var(--space-3); min-height: 44px; padding: 0 var(--space-3); border-radius: var(--radius-sm); background: ' + (on ? 'var(--surface-recessed)' : 'transparent') + '; color: ' + (on ? 'var(--ink)' : 'var(--ink-muted)') + '; font: ' + (on ? '600' : '500') + ' var(--text-s)/22px var(--font-text); text-decoration: none;' };
+      })
+    };
+  }
+}
+</script>
+</body>
+</html>

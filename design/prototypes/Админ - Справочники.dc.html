@@ -1,0 +1,184 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+  <link rel="stylesheet" href="_ds/design-system-b66810d8-d429-49ea-bb35-5b22a7aa4f3a/tokens/webfonts.css">
+  <link rel="stylesheet" href="_ds/design-system-b66810d8-d429-49ea-bb35-5b22a7aa4f3a/tokens/tokens.css">
+  <link rel="stylesheet" href="_ds/design-system-b66810d8-d429-49ea-bb35-5b22a7aa4f3a/tokens/page.css">
+  <link rel="stylesheet" href="_ds/design-system-b66810d8-d429-49ea-bb35-5b22a7aa4f3a/tokens/components.css">
+  <link rel="stylesheet" href="_ds/design-system-b66810d8-d429-49ea-bb35-5b22a7aa4f3a/tokens/forms.css">
+  <link rel="stylesheet" href="ym-compat.css">
+  <script src="_ds/design-system-b66810d8-d429-49ea-bb35-5b22a7aa4f3a/_ds_bundle.js"></script>
+  <script src="plain-language.js"></script>
+  <style>
+    /* Hallmark · page: staff console — catalog dictionaries · theme: ЯМузыкант DS tokens · pre-emit critique: P4 H4 E4 S4 R4 V4 */
+    html, body { margin: 0; background: var(--surface); color: var(--ink); overflow-x: clip; }
+    a { color: var(--lad); text-decoration: none; }
+    a:not([class*="lm-"]):hover { color: var(--lad-strong); text-decoration: underline; }
+  </style>
+</helmet>
+<div class="lm-root" data-screen-label="Админ — Справочники" style="min-height: 100vh; background: var(--surface); font-family: var(--font-text);">
+  <dc-import name="Админ - Шапка" role="{{ role }}" hint-size="100%,64px"></dc-import>
+  <div style="display: grid; grid-template-columns: minmax(200px, 240px) minmax(0, 1fr); min-height: calc(100vh - 65px);">
+    <dc-import name="Админ - Меню" active="dict" role="{{ role }}" hint-size="100%,100%"></dc-import>
+
+    <main style="display: flex; flex-direction: column; gap: var(--space-6); padding: var(--space-6) var(--space-8) var(--space-12); min-width: 0;">
+      <div style="display: flex; flex-direction: column; gap: var(--space-1);">
+        <h1 class="h1 lm-title" style="margin: 0;">Справочники</h1>
+        <span class="body-s" style="color: var(--ink-muted);">Категории и модели, по которым ищут, фильтруют и считают цены продаж</span>
+      </div>
+
+      <div role="tablist" aria-label="Справочники" style="display: flex; gap: var(--space-6); border-bottom: 1px solid var(--line);">
+        <sc-for list="{{ tabs }}" as="t" hint-placeholder-count="3">
+          <button type="button" role="tab" aria-selected="{{ t.on }}" onClick="{{ t.pick }}" style="{{ t.style }}" style-hover="color: var(--ink);">{{ t.label }}<span class="body-s" style="margin-left: var(--space-2); color: var(--ink-muted); font-weight: 400;">{{ t.count }}</span></button>
+        </sc-for>
+      </div>
+
+      <sc-if value="{{ isCats }}" hint-placeholder-val="{{ true }}">
+        <section aria-label="Категории" style="display: flex; flex-direction: column; gap: var(--space-3);">
+          <sc-for list="{{ cats }}" as="c" hint-placeholder-count="5">
+            <div style="display: flex; flex-direction: column; border: 1px solid var(--line); border-radius: var(--radius-lg); background: var(--surface-raised); overflow: hidden;">
+              <div style="display: flex; align-items: center; gap: var(--space-3); padding: var(--space-3) var(--space-4);">
+                <button type="button" aria-expanded="{{ c.open }}" onClick="{{ c.toggle }}" style="flex: 1; min-width: 0; display: flex; align-items: center; gap: var(--space-3); min-height: 44px; border: 0; background: none; color: var(--ink); font: inherit; cursor: pointer; text-align: left;">
+                  <span style="display: flex; color: var(--ink-muted);"><x-import component-from-global-scope="DesignSystem_b66810.Icon" name="{{ c.icon }}" size="{{ 20 }}" hint-size="20px,20px"></x-import></span>
+                  <span class="body" style="font-weight: 600;">{{ c.name }}</span>
+                  <span class="body-s" style="color: var(--ink-muted); font-variant-numeric: tabular-nums;">{{ c.meta }}</span>
+                  <span style="{{ c.chev }}"><x-import component-from-global-scope="DesignSystem_b66810.Icon" name="chevron-down" size="{{ 18 }}" hint-size="18px,18px"></x-import></span>
+                </button>
+                <x-import component-from-global-scope="DesignSystem_b66810.FilterChip" selected="{{ c.visible }}" onChange="{{ c.toggleVis }}" hint-size="120px,40px">{{ c.visLabel }}</x-import>
+              </div>
+              <sc-if value="{{ c.open }}" hint-placeholder-val="{{ false }}">
+                <div style="display: flex; flex-direction: column; border-top: 1px solid var(--line); padding: 0 var(--space-4) var(--space-3) var(--space-12);">
+                  <sc-for list="{{ c.subs }}" as="sb" hint-placeholder-count="3">
+                    <div style="display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: var(--space-3); align-items: center; min-height: 44px; border-bottom: 1px solid var(--line);">
+                      <span class="body-s">{{ sb.name }}</span>
+                      <span class="caption" style="color: var(--ink-muted); font-variant-numeric: tabular-nums;">{{ sb.n }}</span>
+                    </div>
+                  </sc-for>
+                  <div style="display: flex; gap: var(--space-2); padding-top: var(--space-3);">
+                    <label style="flex: 1; display: flex;"><span class="lm-sr">Новая подкатегория</span><input value="{{ c.draft }}" onInput="{{ c.onDraft }}" onChange="{{ c.onDraft }}" placeholder="Новая подкатегория" style="flex: 1; min-width: 0; min-height: 40px; box-sizing: border-box; padding: 0 var(--space-3); border: 1px solid var(--line-control); border-radius: var(--radius-sm); background: var(--surface-raised); color: var(--ink); font: 400 var(--text-s)/1 var(--font-text);"></input></label>
+                    <x-import component-from-global-scope="DesignSystem_b66810.Button" variant="outline" size="s" icon="plus" disabled="{{ c.cantAdd }}" onClick="{{ c.add }}" hint-size="110px,40px">Добавить</x-import>
+                  </div>
+                </div>
+              </sc-if>
+            </div>
+          </sc-for>
+        </section>
+      </sc-if>
+
+      <sc-if value="{{ isModels }}" hint-placeholder-val="{{ false }}">
+        <section aria-label="Модели" style="display: flex; flex-direction: column; gap: var(--space-4);">
+          <x-import component-from-global-scope="DesignSystem_b66810.Field" id="mq" label="Поиск модели" placeholder="Например, Stratocaster" value="{{ mq }}" onChange="{{ onMq }}" hint-size="100%,72px"></x-import>
+          <div role="table" aria-label="Модели" style="display: flex; flex-direction: column; border-top: 1px solid var(--line);">
+            <sc-for list="{{ models }}" as="m" hint-placeholder-count="6">
+              <div role="row" style="display: grid; grid-template-columns: minmax(0, 2fr) minmax(0, 1fr) minmax(56px, auto) minmax(110px, auto); gap: var(--space-3); align-items: center; min-height: 56px; border-bottom: 1px solid var(--line);">
+                <span role="cell" style="display: flex; flex-direction: column; min-width: 0;">
+                  <span class="body-s" style="font-weight: 600;">{{ m.name }}</span>
+                  <span class="caption" style="color: var(--ink-muted);">{{ m.years }}</span>
+                </span>
+                <span role="cell" class="body-s" style="color: var(--ink-muted);">{{ m.cat }}</span>
+                <span role="cell" class="body-s" style="font-variant-numeric: tabular-nums; text-align: right;">{{ m.lots }}</span>
+                <span role="cell" style="display: flex; justify-content: flex-end;"><x-import component-from-global-scope="DesignSystem_b66810.Badge" tone="{{ m.tone }}" hint-size="100px,24px">{{ m.guide }}</x-import></span>
+              </div>
+            </sc-for>
+          </div>
+          <span class="caption" style="color: var(--ink-muted);">Цены продаж показываются, когда по модели набралось 5 продаж.</span>
+        </section>
+      </sc-if>
+
+      <sc-if value="{{ isSugg }}" hint-placeholder-val="{{ false }}">
+        <section aria-label="Предложено продавцами" style="display: flex; flex-direction: column; gap: var(--space-3);">
+          <p class="body-s" style="margin: 0; color: var(--ink-muted); max-width: 64ch; text-wrap: pretty;">Модели, которые продавцы вписали вручную при продаже. Добавьте в справочник или объедините с существующей.</p>
+          <sc-for list="{{ sugg }}" as="g" hint-placeholder-count="3">
+            <div style="display: flex; align-items: center; justify-content: space-between; gap: var(--space-4); flex-wrap: wrap; padding: var(--space-4); border: 1px solid var(--line); border-radius: var(--radius-lg); background: var(--surface-raised);">
+              <span style="display: flex; flex-direction: column; gap: 2px; min-width: 0;">
+                <span class="body" style="font-weight: 600;">{{ g.name }}</span>
+                <span class="body-s" style="color: var(--ink-muted);">{{ g.meta }}</span>
+                <sc-if value="{{ g.hasMatch }}" hint-placeholder-val="{{ false }}">
+                  <span class="body-s" style="color: var(--warning);">Похоже на: {{ g.match }}</span>
+                </sc-if>
+              </span>
+              <span style="display: flex; gap: var(--space-2); flex-wrap: wrap;">
+                <sc-if value="{{ g.hasMatch }}" hint-placeholder-val="{{ false }}">
+                  <x-import component-from-global-scope="DesignSystem_b66810.Button" variant="primary" size="s" onClick="{{ g.merge }}" hint-size="120px,40px">Объединить</x-import>
+                </sc-if>
+                <x-import component-from-global-scope="DesignSystem_b66810.Button" variant="{{ g.addVariant }}" size="s" onClick="{{ g.add }}" hint-size="140px,40px">Добавить модель</x-import>
+                <x-import component-from-global-scope="DesignSystem_b66810.Button" variant="ghost" size="s" onClick="{{ g.skip }}" hint-size="100px,40px">Отклонить</x-import>
+              </span>
+            </div>
+          </sc-for>
+          <sc-if value="{{ suggEmpty }}" hint-placeholder-val="{{ false }}">
+            <p class="body-s" style="margin: 0; color: var(--ink-muted);">Новых предложений нет.</p>
+          </sc-if>
+        </section>
+      </sc-if>
+    </main>
+  </div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props="{&quot;role&quot;:{&quot;editor&quot;:&quot;enum&quot;,&quot;options&quot;:[&quot;admin&quot;,&quot;moderator&quot;],&quot;default&quot;:&quot;admin&quot;,&quot;tsType&quot;:&quot;'admin' | 'moderator'&quot;}}">
+const CATS = [
+  { id: 'g', icon: 'guitar', name: 'Гитары', subs: [['Электрогитары', 4218], ['Акустические', 1904], ['Бас-гитары', 1122], ['Классические', 640]] },
+  { id: 'p', icon: 'cable', name: 'Педали и усилители', subs: [['Педали эффектов', 3010], ['Комбоусилители', 1288], ['Усилители-головы', 402]] },
+  { id: 'k', icon: 'piano', name: 'Клавишные', subs: [['Синтезаторы', 980], ['Цифровые пианино', 712], ['MIDI-клавиатуры', 530]] },
+  { id: 's', icon: 'mic', name: 'Студия и запись', subs: [['Микрофоны', 1340], ['Звуковые карты', 860], ['Мониторы', 520]] },
+  { id: 'd', icon: 'drum', name: 'Ударные', subs: [['Установки', 410], ['Тарелки', 690]] }
+];
+const MODELS = [
+  ['Fender American Vintage ’57 Stratocaster', '2007–2012', 'Электрогитары', 3, 41],
+  ['Fender Player Stratocaster', 'с 2018', 'Электрогитары', 4, 128],
+  ['Gibson Les Paul Studio', '2012–2018', 'Электрогитары', 2, 37],
+  ['Boss DS-1 Distortion', 'с 1978', 'Педали эффектов', 9, 212],
+  ['Roland Juno-106', '1984–1985', 'Синтезаторы', 1, 19],
+  ['Strymon Timeline', 'с 2011', 'Педали эффектов', 4, 3]
+];
+const SUGG = [
+  ['Fender Stratocaster American Vintage 57', 'от Андрея К. · 1 объявление', 'Fender American Vintage ’57 Stratocaster'],
+  ['Ibanez AZ2204', 'от 3 продавцов · Электрогитары', ''],
+  ['Boss DS1', 'от Игоря Л. · 1 объявление', 'Boss DS-1 Distortion']
+];
+class Component extends DCLogic {
+  state = { tab: 'cats', cats: CATS, open: { g: true }, hidden: {}, drafts: {}, mq: '', sugg: SUGG };
+  renderVals() {
+    const s = this.state;
+    const role = this.props.role === 'moderator' ? 'moderator' : 'admin';
+    const tabStyle = on => 'display: flex; align-items: baseline; min-height: 44px; padding: 0; margin-bottom: -1px; background: none; border: 0; border-bottom: 2px solid ' + (on ? 'var(--lad)' : 'transparent') + '; color: ' + (on ? 'var(--ink)' : 'var(--ink-muted)') + '; font: ' + (on ? '600' : '500') + ' var(--text-m)/24px var(--font-text); cursor: pointer; white-space: nowrap;';
+    const q = s.mq.trim().toLowerCase();
+    return {
+      role,
+      tabs: [['cats', 'Категории', s.cats.length], ['models', 'Модели', '1 204'], ['sugg', 'Предложено продавцами', s.sugg.length]].map(([k, label, count]) => ({ label, count: String(count), on: s.tab === k, style: tabStyle(s.tab === k), pick: () => this.setState({ tab: k }) })),
+      isCats: s.tab === 'cats', isModels: s.tab === 'models', isSugg: s.tab === 'sugg',
+      cats: s.cats.map(c => {
+        const open = !!s.open[c.id], vis = !s.hidden[c.id], draft = s.drafts[c.id] || '';
+        const total = c.subs.reduce((a, x) => a + x[1], 0);
+        return {
+          icon: c.icon, name: c.name, open, visible: vis, visLabel: vis ? 'Показывается' : 'Скрыта',
+          meta: c.subs.length + ' подкатегорий · ' + total.toLocaleString('ru-RU') + ' объявлений',
+          chev: 'display: flex; color: var(--ink-muted); margin-left: auto; transition: transform 220ms var(--lm-ease-out); transform: rotate(' + (open ? '180deg' : '0deg') + ');',
+          toggle: () => this.setState(st => ({ open: { ...st.open, [c.id]: !st.open[c.id] } })),
+          toggleVis: () => this.setState(st => ({ hidden: { ...st.hidden, [c.id]: !st.hidden[c.id] } })),
+          subs: c.subs.map(([name, n]) => ({ name, n: n ? n.toLocaleString('ru-RU') + ' объявл.' : 'новая' })),
+          draft, onDraft: e => { const v = e.target.value; this.setState(st => ({ drafts: { ...st.drafts, [c.id]: v } })); },
+          cantAdd: draft.trim().length < 2,
+          add: () => { if (draft.trim().length < 2) return; this.setState(st => ({ cats: st.cats.map(x => x.id === c.id ? { ...x, subs: x.subs.concat([[draft.trim(), 0]]) } : x), drafts: { ...st.drafts, [c.id]: '' } })); }
+        };
+      }),
+      mq: s.mq, onMq: e => this.setState({ mq: e.target.value }),
+      models: MODELS.filter(m => !q || m[0].toLowerCase().includes(q)).map(([name, years, cat, lots, sales]) => ({ name, years, cat, lots: String(lots), guide: sales >= 5 ? 'Цены: ' + sales + ' продаж' : 'Мало продаж', tone: sales >= 5 ? 'lad' : 'neutral' })),
+      sugg: s.sugg.map(([name, meta, match], i) => {
+        const drop = () => this.setState(st => ({ sugg: st.sugg.filter((_, j) => j !== i) }));
+        return { name, meta, match, hasMatch: !!match, addVariant: match ? 'outline' : 'primary', merge: drop, add: drop, skip: drop };
+      }),
+      suggEmpty: s.sugg.length === 0
+    };
+  }
+}
+</script>
+</body>
+</html>

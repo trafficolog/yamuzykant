@@ -1,0 +1,157 @@
+name: CI
+on:
+  pull_request:
+  push:
+    branches: [main]
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  PHP_VERSION: '8.3'
+  NODE_VERSION: '20'
+
+jobs:
+  detect:
+    runs-on: ubuntu-latest
+    outputs:
+      app: ${{ steps.d.outputs.app }}
+      e2e: ${{ steps.d.outputs.e2e }}
+    steps:
+      - uses: actions/checkout@v4
+      - id: d
+        run: |
+          echo "app=$([ -f composer.json ] && [ -f package.json ] && echo true || echo false)" >> $GITHUB_OUTPUT
+          echo "e2e=$([ -f playwright.config.ts ] && echo true || echo false)" >> $GITHUB_OUTPUT
+
+  docs:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with: { node-version: ${{ env.NODE_VERSION }} }
+      - run: node tools/docs-ops.mjs check
+      - run: node tools/lint-copy.mjs --styles
+      - name: Запрет правок копии ДС вне ds-sync
+        if: github.event_name == 'pull_request' && !startsWith(github.head_ref, 'chore/ds-sync')
+        run: |
+          git fetch origin ${{ github.base_ref }} --depth=1
+          if git diff --name-only origin/${{ github.base_ref }}...HEAD | grep -q '^resources/js/ds/'; then
+            echo "resources/js/ds меняется только через npm run ds:sync в ветке chore/ds-sync-*"; exit 1; fi
+
+  php:
+    needs: detect
+    if: needs.detect.outputs.app == 'true'
+    runs-on: ubuntu-latest
+    services:
+      pgsql:
+        image: postgres:16
+        env: { POSTGRES_DB: testing, POSTGRES_USER: app, POSTGRES_PASSWORD: secret }
+        ports: ['5432:5432']
+        options: --health-cmd pg_isready --health-interval 5s --health-retries 10
+      redis:
+        image: redis:7
+        ports: ['6379:6379']
+      meilisearch:
+        image: getmeili/meilisearch:v1.10
+        env: { MEILI_MASTER_KEY: testing, MEILI_NO_ANALYTICS: 'true' }
+        ports: ['7700:7700']
+    env:
+      DB_CONNECTION: pgsql
+      DB_HOST: 127.0.0.1
+      DB_DATABASE: testing
+      DB_USERNAME: app
+      DB_PASSWORD: secret
+      REDIS_HOST: 127.0.0.1
+      MEILISEARCH_HOST: http://127.0.0.1:7700
+      MEILISEARCH_KEY: testing
+      MAIL_MAILER: array
+      LOGIN_CODE_FAKE: "123456"
+      YANDEX_OAUTH_FAKE: "true"
+    steps:
+      - uses: actions/checkout@v4
+      - uses: shivammathur/setup-php@v2
+        with: { php-version: ${{ env.PHP_VERSION }}, extensions: pdo_pgsql, redis, intl, gd, imagick, coverage: pcov }
+      - uses: actions/cache@v4
+        with: { path: vendor, key: composer-${{ hashFiles('composer.lock') }} }
+      - run: composer install --no-interaction --prefer-dist
+      - run: cp .env.example .env && php artisan key:generate
+      - run: vendor/bin/pint --test
+      - run: vendor/bin/phpstan analyse --memory-limit=1G
+      - run: vendor/bin/pest --parallel --coverage --min=75
+      - run: vendor/bin/pest --coverage --min=90 --coverage-filter=app/Domain tests/Unit
+
+  js:
+    needs: detect
+    if: needs.detect.outputs.app == 'true'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with: { node-version: ${{ env.NODE_VERSION }}, cache: npm }
+      - run: npm ci
+      - run: npm run lint
+      - run: npm run typecheck
+      - run: npm run test:js -- --coverage
+      - run: npm run build && npm run build:ssr
+
+  e2e:
+    needs: [detect, php, js]
+    if: needs.detect.outputs.app == 'true' && needs.detect.outputs.e2e == 'true'
+    runs-on: ubuntu-latest
+    services:
+      pgsql:
+        image: postgres:16
+        env: { POSTGRES_DB: e2e, POSTGRES_USER: app, POSTGRES_PASSWORD: secret }
+        ports: ['5432:5432']
+        options: --health-cmd pg_isready --health-interval 5s --health-retries 10
+      redis:
+        image: redis:7
+        ports: ['6379:6379']
+      meilisearch:
+        image: getmeili/meilisearch:v1.10
+        env: { MEILI_MASTER_KEY: testing, MEILI_NO_ANALYTICS: 'true' }
+        ports: ['7700:7700']
+    env:
+      APP_ENV: e2e
+      DB_CONNECTION: pgsql
+      DB_HOST: 127.0.0.1
+      DB_DATABASE: e2e
+      DB_USERNAME: app
+      DB_PASSWORD: secret
+      REDIS_HOST: 127.0.0.1
+      MEILISEARCH_HOST: http://127.0.0.1:7700
+      MEILISEARCH_KEY: testing
+      MAIL_MAILER: array
+      LOGIN_CODE_FAKE: "123456"
+      YANDEX_OAUTH_FAKE: "true"
+      QUEUE_CONNECTION: redis
+    steps:
+      - uses: actions/checkout@v4
+      - uses: shivammathur/setup-php@v2
+        with: { php-version: ${{ env.PHP_VERSION }}, extensions: pdo_pgsql, redis, intl, gd, imagick }
+      - uses: actions/setup-node@v4
+        with: { node-version: ${{ env.NODE_VERSION }}, cache: npm }
+      - run: composer install --no-interaction --prefer-dist && npm ci
+      - run: cp .env.example .env && php artisan key:generate && php artisan migrate --seed --force
+      - run: npm run build && npm run build:ssr
+      - uses: actions/cache@v4
+        with: { path: ~/.cache/ms-playwright, key: pw-${{ hashFiles('package-lock.json') }} }
+      - run: npx playwright install --with-deps chromium
+      - name: Сервисы приложения
+        run: |
+          php artisan serve --port=8000 > storage/logs/serve.log 2>&1 &
+          php artisan inertia:start-ssr > storage/logs/ssr.log 2>&1 &
+          php artisan reverb:start > storage/logs/reverb.log 2>&1 &
+          php artisan queue:work > storage/logs/queue.log 2>&1 &
+          npx wait-on http://127.0.0.1:8000/health
+      - run: npx playwright test
+        env: { E2E_BASE_URL: http://127.0.0.1:8000 }
+      - if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: playwright-report
+          path: |
+            playwright-report
+            test-results
+            storage/logs

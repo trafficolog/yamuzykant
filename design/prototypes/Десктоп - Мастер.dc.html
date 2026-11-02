@@ -1,0 +1,268 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+  <link rel="stylesheet" href="_ds/design-system-b66810d8-d429-49ea-bb35-5b22a7aa4f3a/tokens/webfonts.css">
+  <link rel="stylesheet" href="_ds/design-system-b66810d8-d429-49ea-bb35-5b22a7aa4f3a/tokens/tokens.css">
+  <link rel="stylesheet" href="_ds/design-system-b66810d8-d429-49ea-bb35-5b22a7aa4f3a/tokens/page.css">
+  <link rel="stylesheet" href="_ds/design-system-b66810d8-d429-49ea-bb35-5b22a7aa4f3a/tokens/components.css">
+  <link rel="stylesheet" href="_ds/design-system-b66810d8-d429-49ea-bb35-5b22a7aa4f3a/tokens/forms.css">
+  <link rel="stylesheet" href="ym-compat.css">
+  <script src="_ds/design-system-b66810d8-d429-49ea-bb35-5b22a7aa4f3a/_ds_bundle.js"></script>
+  <script src="plain-language.js"></script>
+  <style>
+    /* Hallmark · page: master profile + booking · theme: ЯМузыкант DS tokens (copper) · pre-emit critique: P4 H4 E4 S4 R4 V4 */
+    html, body { margin: 0; background: var(--surface); color: var(--ink); overflow-x: clip; }
+    a { color: var(--lad); text-decoration: none; }
+    a:not([class*="lm-"]):hover { color: var(--lad-strong); text-decoration: underline; }
+  </style>
+</helmet>
+<div class="lm-root" data-screen-label="Десктоп — Мастер" style="min-height: 100vh; background: var(--surface); font-family: var(--font-text);">
+  <dc-import name="Шапка" active="masters" messages="{{ 3 }}" hint-size="100%,117px"></dc-import>
+
+  <main style="max-width: var(--content-max); margin: 0 auto; padding: var(--space-6) var(--space-10) 0; box-sizing: border-box; display: flex; flex-direction: column; gap: var(--space-8);">
+    <nav aria-label="Хлебные крошки" style="display: flex; align-items: center; gap: var(--space-2); flex-wrap: wrap;">
+      <a href="Десктоп - Главная.dc.html" class="body-s" style="color: var(--ink-muted); min-height: 32px; display: flex; align-items: center; white-space: nowrap;">Главная</a>
+      <span aria-hidden="true" style="color: var(--ink-faint); display: flex;"><x-import component-from-global-scope="DesignSystem_b66810.Icon" name="chevron-right" size="{{ 14 }}" hint-size="14px,14px"></x-import></span>
+      <a href="Десктоп - Мастера.dc.html" class="body-s" style="color: var(--ink-muted); min-height: 32px; display: flex; align-items: center; white-space: nowrap;">Мастера</a>
+      <span aria-hidden="true" style="color: var(--ink-faint); display: flex;"><x-import component-from-global-scope="DesignSystem_b66810.Icon" name="chevron-right" size="{{ 14 }}" hint-size="14px,14px"></x-import></span>
+      <span class="body-s" aria-current="page" style="color: var(--ink); white-space: nowrap;">Алексей Воронцов</span>
+    </nav>
+
+    <div style="display: grid; grid-template-columns: minmax(0, 1fr) minmax(320px, 380px); gap: var(--space-10); align-items: start;">
+      <div style="display: flex; flex-direction: column; gap: var(--space-12); min-width: 0;">
+
+        <section aria-labelledby="who" style="display: flex; gap: var(--space-6); align-items: flex-start;">
+          <span aria-hidden="true" style="flex: none; width: 96px; height: 96px; border-radius: var(--radius-full); background: var(--copper-soft); color: var(--copper-strong); display: flex; align-items: center; justify-content: center; font: 600 var(--text-2xl)/1 var(--font-text);">АВ</span>
+          <div style="display: flex; flex-direction: column; gap: var(--space-3); min-width: 0;">
+            <div style="display: flex; flex-direction: column; gap: var(--space-1);">
+              <h1 id="who" class="h1 lm-title" style="margin: 0; overflow-wrap: anywhere;">Алексей Воронцов</h1>
+              <span class="body" style="color: var(--ink-muted);">Мастерская «Лад и строй» · гитары и бас-гитары</span>
+            </div>
+            <div style="display: flex; flex-wrap: wrap; align-items: center; gap: var(--space-2) var(--space-5);">
+              <x-import component-from-global-scope="DesignSystem_b66810.Rating" value="{{ 4.9 }}" count="{{ 212 }}" hint-size="90px,20px"></x-import>
+              <span class="body-s" style="display: flex; align-items: center; gap: var(--space-1); color: var(--ink-muted); white-space: nowrap;"><x-import component-from-global-scope="DesignSystem_b66810.Icon" name="map-pin" size="{{ 16 }}" hint-size="16px,16px"></x-import>Москва, м. Бауманская · 2,4 км</span>
+              <span class="body-s" style="display: flex; align-items: center; gap: var(--space-1); color: var(--ink-muted); white-space: nowrap;"><x-import component-from-global-scope="DesignSystem_b66810.Icon" name="history" size="{{ 16 }}" hint-size="16px,16px"></x-import>Опыт 18 лет</span>
+              <span class="body-s" style="display: flex; align-items: center; gap: var(--space-1); color: var(--ink-muted); white-space: nowrap;"><x-import component-from-global-scope="DesignSystem_b66810.Icon" name="clock" size="{{ 16 }}" hint-size="16px,16px"></x-import>Отвечает за час</span>
+            </div>
+            <div style="display: flex; flex-wrap: wrap; gap: var(--space-2);">
+              <x-import component-from-global-scope="DesignSystem_b66810.Badge" tone="copper" icon="badge-check" hint-size="160px,24px">Мастер проверен</x-import>
+              <x-import component-from-global-scope="DesignSystem_b66810.Badge" tone="copper" icon="scan-barcode" hint-size="200px,24px">Делает проверку перед покупкой</x-import>
+            </div>
+          </div>
+        </section>
+
+        <section aria-labelledby="svc-h" style="display: flex; flex-direction: column; gap: var(--space-4);">
+          <div style="display: flex; align-items: flex-end; justify-content: space-between; gap: var(--space-4); flex-wrap: wrap;">
+            <h2 id="svc-h" class="h3" style="margin: 0;">Услуги и цены</h2>
+            <span class="body-s" style="color: var(--ink-muted);">Итог мастер назовёт после осмотра</span>
+          </div>
+          <div role="radiogroup" aria-label="Услуга" style="display: flex; flex-direction: column; border-top: 1px solid var(--line);">
+            <sc-for list="{{ services }}" as="s" hint-placeholder-count="7">
+              <button type="button" role="radio" aria-checked="{{ s.on }}" onClick="{{ s.pick }}" style="{{ s.style }}" style-hover="background: var(--surface-recessed);">
+                <span aria-hidden="true" style="{{ s.dot }}"></span>
+                <span style="display: flex; flex-direction: column; gap: 2px; min-width: 0; text-align: left;">
+                  <span class="body" style="font-weight: 500;">{{ s.name }}</span>
+                  <span class="body-s" style="color: var(--ink-muted); text-wrap: pretty;">{{ s.note }}</span>
+                </span>
+                <span class="body-s" style="color: var(--ink-muted); white-space: nowrap;">{{ s.time }}</span>
+                <span class="body" style="font-weight: 600; white-space: nowrap; font-variant-numeric: tabular-nums; text-align: right;">{{ s.price }}</span>
+              </button>
+            </sc-for>
+          </div>
+        </section>
+
+        <section aria-labelledby="work-h" style="display: flex; flex-direction: column; gap: var(--space-4);">
+          <h2 id="work-h" class="h3" style="margin: 0;">Работы</h2>
+          <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(180px, 1fr)); gap: var(--space-4);">
+            <sc-for list="{{ works }}" as="w" hint-placeholder-count="4">
+              <figure style="margin: 0; display: flex; flex-direction: column; gap: var(--space-2);">
+                <div style="aspect-ratio: 1 / 1; border-radius: var(--radius-lg); background: var(--surface-recessed); color: var(--ink-faint); display: flex; align-items: center; justify-content: center;">
+                  <x-import component-from-global-scope="DesignSystem_b66810.Icon" name="camera" size="{{ 40 }}" hint-size="40px,40px"></x-import>
+                </div>
+                <figcaption style="display: flex; flex-direction: column; gap: 2px;">
+                  <span class="body-s" style="font-weight: 500;">{{ w.title }}</span>
+                  <span class="caption" style="color: var(--ink-muted);">{{ w.gear }}</span>
+                </figcaption>
+              </figure>
+            </sc-for>
+          </div>
+        </section>
+
+        <section aria-labelledby="rev-h" style="display: flex; flex-direction: column; gap: var(--space-4);">
+          <div style="display: flex; align-items: flex-end; justify-content: space-between; gap: var(--space-4); flex-wrap: wrap;">
+            <h2 id="rev-h" class="h3" style="margin: 0;">Отзывы</h2>
+            <span class="body-s" style="color: var(--ink-muted);">Оставляют те, кто записывался через ЯМузыкант</span>
+          </div>
+          <div role="list" style="display: flex; flex-direction: column; border-top: 1px solid var(--line);">
+            <sc-for list="{{ reviews }}" as="r" hint-placeholder-count="3">
+              <article role="listitem" style="display: flex; flex-direction: column; gap: var(--space-2); padding: var(--space-5) 0; border-bottom: 1px solid var(--line);">
+                <div style="display: flex; align-items: center; justify-content: space-between; gap: var(--space-4);">
+                  <span style="display: flex; align-items: center; gap: var(--space-3);">
+                    <span class="body" style="font-weight: 600;">{{ r.who }}</span>
+                    <x-import component-from-global-scope="DesignSystem_b66810.Rating" value="{{ r.stars }}" hint-size="40px,20px"></x-import>
+                  </span>
+                  <span class="body-s" style="color: var(--ink-muted); white-space: nowrap;">{{ r.date }}</span>
+                </div>
+                <p class="body" style="margin: 0; max-width: 68ch; text-wrap: pretty;">{{ r.text }}</p>
+                <span class="caption" style="color: var(--ink-muted);">{{ r.what }}</span>
+              </article>
+            </sc-for>
+          </div>
+          <div>
+            <x-import component-from-global-scope="DesignSystem_b66810.Button" variant="outline" size="s" hint-size="200px,40px">Все 212 отзывов</x-import>
+          </div>
+        </section>
+
+        <section aria-labelledby="ws-h" style="display: flex; flex-direction: column; gap: var(--space-4);">
+          <h2 id="ws-h" class="h3" style="margin: 0;">О мастерской</h2>
+          <div style="display: flex; flex-direction: column; border-top: 1px solid var(--line);">
+            <sc-for list="{{ rows }}" as="row" hint-placeholder-count="5">
+              <div style="display: grid; grid-template-columns: minmax(140px, 200px) minmax(0, 1fr); gap: var(--space-4); padding: var(--space-4) 0; border-bottom: 1px solid var(--line);">
+                <span class="body-s" style="color: var(--ink-muted);">{{ row.k }}</span>
+                <span class="body" style="text-wrap: pretty;">{{ row.v }}</span>
+              </div>
+            </sc-for>
+          </div>
+        </section>
+      </div>
+
+      <aside aria-labelledby="book-h" style="position: sticky; top: var(--space-4); display: flex; flex-direction: column; gap: var(--space-4);">
+        <div style="display: flex; flex-direction: column; gap: var(--space-5); padding: var(--space-6); border: 1px solid var(--line); border-radius: var(--radius-lg); background: var(--surface-raised);">
+          <sc-if value="{{ sent }}" hint-placeholder-val="{{ false }}">
+            <div style="display: flex; flex-direction: column; gap: var(--space-3);">
+              <span style="width: 48px; height: 48px; border-radius: var(--radius-full); background: var(--copper-soft); color: var(--copper-strong); display: flex; align-items: center; justify-content: center;"><x-import component-from-global-scope="DesignSystem_b66810.Icon" name="circle-check" size="{{ 24 }}" hint-size="24px,24px"></x-import></span>
+              <h2 class="h3" style="margin: 0;">Заявка отправлена</h2>
+              <p class="body-s" style="margin: 0; color: var(--ink-muted); text-wrap: pretty;">{{ sentText }}</p>
+              <x-import component-from-global-scope="DesignSystem_b66810.Button" variant="primary" icon="message-circle" block="{{ true }}" href="Десктоп - Сообщения.dc.html" hint-size="100%,48px">Открыть чат с мастером</x-import>
+              <x-import component-from-global-scope="DesignSystem_b66810.Button" variant="ghost" block="{{ true }}" onClick="{{ reset }}" hint-size="100%,48px">Изменить заявку</x-import>
+            </div>
+          </sc-if>
+          <sc-if value="{{ editing }}" hint-placeholder-val="{{ true }}">
+            <div style="display: flex; flex-direction: column; gap: var(--space-5);">
+              <div style="display: flex; flex-direction: column; gap: var(--space-1);">
+                <h2 id="book-h" class="h3" style="margin: 0;">Записаться</h2>
+                <span class="body-s" style="color: var(--ink-muted);">{{ pickedName }}</span>
+              </div>
+              <div style="display: flex; flex-direction: column; gap: var(--space-2);">
+                <span class="label" style="font-weight: 600;">Когда удобно привезти</span>
+                <div role="radiogroup" aria-label="Время" style="display: flex; flex-wrap: wrap; gap: var(--space-2);">
+                  <sc-for list="{{ slots }}" as="t" hint-placeholder-count="6">
+                    <x-import component-from-global-scope="DesignSystem_b66810.FilterChip" radio="{{ true }}" selected="{{ t.on }}" onChange="{{ t.pick }}" hint-size="120px,40px">{{ t.label }}</x-import>
+                  </sc-for>
+                </div>
+              </div>
+              <x-import component-from-global-scope="DesignSystem_b66810.Field" id="gear" label="Инструмент" placeholder="Например, Fender Stratocaster 2009" value="{{ gear }}" onChange="{{ onGear }}" hint-size="100%,72px"></x-import>
+              <div style="display: flex; align-items: baseline; justify-content: space-between; gap: var(--space-3); padding-top: var(--space-4); border-top: 1px solid var(--line);">
+                <span class="body-s" style="color: var(--ink-muted);">Ориентир</span>
+                <span class="h3" style="font-variant-numeric: tabular-nums; white-space: nowrap;">{{ pickedPrice }}</span>
+              </div>
+              <x-import component-from-global-scope="DesignSystem_b66810.Button" variant="primary" size="l" block="{{ true }}" disabled="{{ cantSend }}" onClick="{{ send }}" hint-size="100%,56px">Отправить заявку</x-import>
+              <span class="caption" style="color: var(--ink-muted); text-wrap: pretty;">{{ hint }}</span>
+            </div>
+          </sc-if>
+        </div>
+        <x-import component-from-global-scope="DesignSystem_b66810.Alert" tone="info" icon="info" title="Оплата в мастерской" hint-size="100%,96px">Платите мастеру после работы. ЯМузыкант не берёт комиссию за запись.</x-import>
+      </aside>
+    </div>
+
+    <section aria-labelledby="near-h" style="display: flex; flex-direction: column; gap: var(--space-5); padding-top: var(--space-8); border-top: 1px solid var(--line);">
+      <div style="display: flex; align-items: flex-end; justify-content: space-between; gap: var(--space-4); flex-wrap: wrap;">
+        <h2 id="near-h" class="h3" style="margin: 0;">Другие мастера по гитарам рядом</h2>
+        <a href="Десктоп - Мастера.dc.html" class="body-s" style="min-height: 44px; display: flex; align-items: center; white-space: nowrap;">Все мастера</a>
+      </div>
+      <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: var(--space-6);">
+        <sc-for list="{{ near }}" as="n" hint-placeholder-count="3">
+          <a href="Десктоп - Мастер.dc.html" class="lm-near" style="display: flex; gap: var(--space-4); align-items: center; padding: var(--space-4) var(--space-5); border: 1px solid var(--line); border-radius: var(--radius-lg); background: var(--surface-raised); color: var(--ink); text-decoration: none;" style-hover="border-color: var(--copper); background: var(--surface-recessed);">
+            <span aria-hidden="true" style="flex: none; width: 48px; height: 48px; border-radius: var(--radius-full); background: var(--copper-soft); color: var(--copper-strong); display: flex; align-items: center; justify-content: center; font: 600 var(--text-s)/1 var(--font-text);">{{ n.ini }}</span>
+            <span style="display: flex; flex-direction: column; gap: 2px; min-width: 0;">
+              <span class="body" style="font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">{{ n.name }}</span>
+              <span class="body-s" style="color: var(--ink-muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">{{ n.meta }}</span>
+            </span>
+          </a>
+        </sc-for>
+      </div>
+    </section>
+  </main>
+
+  <div style="margin-top: var(--space-16);">
+    <dc-import name="Подвал" hint-size="100%,420px"></dc-import>
+  </div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script>
+const SERVICES = [
+  ['setup', 'Настройка', 'Прогиб грифа, высота струн, строй по ладам', '1 день', 2500],
+  ['inspect', 'Проверка перед покупкой', 'Осмотр, серийный номер, электрика, отчёт с фото', '1–2 часа', 1900],
+  ['frets', 'Перешлифовка ладов', 'Выравнивание и полировка, настройка после', '3–5 дней', 9000],
+  ['refret', 'Замена ладов', 'Полная или частичная, с перешлифовкой', '1–2 недели', 22000],
+  ['nut', 'Новый верхний порожек', 'Кость или Tusq, нарезка под ваши струны', '1 день', 3500],
+  ['pickups', 'Установка звукоснимателей', 'Пайка, подбор высоты, проверка', '1 день', 2000],
+  ['crack', 'Ремонт трещин и сколов', 'Цена после осмотра', 'по осмотру', 0]
+];
+const SLOTS = ['Пн, 13 окт', 'Вт, 14 окт', 'Ср, 15 окт', 'Чт, 16 окт', 'Пт, 17 окт', 'Сб, 18 окт'];
+const rub = n => n.toLocaleString('ru-RU') + ' ₽';
+
+class Component extends DCLogic {
+  state = { svc: 'setup', slot: null, gear: '', sent: false };
+  renderVals() {
+    const s = this.state;
+    const cur = SERVICES.find(x => x[0] === s.svc);
+    const priceText = x => x[4] ? 'от ' + rub(x[4]) : 'по осмотру';
+    const cant = !s.slot || !s.gear.trim();
+    return {
+      services: SERVICES.map(x => {
+        const on = x[0] === s.svc;
+        return {
+          name: x[1], note: x[2], time: x[3], price: priceText(x), on,
+          pick: () => this.setState({ svc: x[0] }),
+          style: 'display: grid; grid-template-columns: 20px minmax(0, 1fr) auto minmax(110px, auto); gap: var(--space-4); align-items: center; width: 100%; min-height: 64px; padding: var(--space-3) var(--space-3); border: 0; border-bottom: 1px solid var(--line); background: ' + (on ? 'var(--copper-soft)' : 'transparent') + '; color: var(--ink); font: inherit; cursor: pointer;',
+          dot: 'width: 20px; height: 20px; border-radius: var(--radius-full); box-sizing: border-box; border: ' + (on ? '6px solid var(--copper)' : '2px solid var(--line-control)') + '; background: var(--surface-raised);'
+        };
+      }),
+      works: [
+        { title: 'Перешлифовка ладов', gear: 'Gibson Les Paul Standard 1998' },
+        { title: 'Новый порожек из кости', gear: 'Fender Telecaster 2012' },
+        { title: 'Ремонт трещины головки', gear: 'Gibson SG 2015' },
+        { title: 'Замена ладов', gear: 'Fender Jazz Bass 1978' }
+      ],
+      reviews: [
+        { who: 'Михаил', stars: 5, date: '1 окт', text: 'Привёз Strat с жужжанием на 12-м ладу. Нашёл причину за 10 минут, на следующий день гитара строила идеально.', what: 'Настройка · Fender Stratocaster' },
+        { who: 'Елена', stars: 5, date: '22 сент', text: 'Заказала проверку перед покупкой. Получила отчёт с фото — выяснилось, что звукосниматели не родные. Сэкономила нервы и деньги.', what: 'Проверка перед покупкой · Gibson Les Paul' },
+        { who: 'Артём', stars: 4, date: '9 сент', text: 'Перешлифовка сделана отлично, но заняла 6 дней вместо обещанных 4.', what: 'Перешлифовка ладов · Ibanez RG' }
+      ],
+      rows: [
+        { k: 'Адрес', v: 'Москва, ул. Бауманская, 11, стр. 2' },
+        { k: 'Часы работы', v: 'Пн–Сб 11:00–20:00' },
+        { k: 'Гарантия', v: '3 месяца на работу, 6 месяцев на замену ладов' },
+        { k: 'Инструменты', v: 'Электро- и акустические гитары, бас-гитары' },
+        { k: 'Не берёт', v: 'Ламповые усилители, смычковые' }
+      ],
+      sent: s.sent, editing: !s.sent,
+      sentText: cur[1] + ', ' + (s.slot || '') + '. Мастер подтвердит время в сообщениях, обычно в течение часа.',
+      reset: () => this.setState({ sent: false }),
+      pickedName: cur[1] + ' · ' + cur[3],
+      pickedPrice: priceText(cur),
+      slots: SLOTS.map(t => ({ label: t, on: s.slot === t, pick: () => this.setState({ slot: t }) })),
+      gear: s.gear,
+      onGear: e => this.setState({ gear: e.target.value }),
+      cantSend: cant,
+      hint: cant ? 'Выберите день и укажите инструмент.' : 'Заявка уйдёт мастеру в сообщения. Отменить можно там же.',
+      send: () => { if (!cant) this.setState({ sent: true }); },
+      near: [
+        { ini: 'СЛ', name: 'Сергей Лаптев', meta: '«Струна и гриф» · 4,8 · 3,1 км' },
+        { ini: 'ДС', name: 'Дмитрий Соколов', meta: '«Гитарная клиника» · 4,7 · 4,6 км' },
+        { ini: 'ПГ', name: 'Павел Гончаров', meta: 'Сервис на Соколе · 4,6 · 7,9 км' }
+      ]
+    };
+  }
+}
+</script>
+</body>
+</html>

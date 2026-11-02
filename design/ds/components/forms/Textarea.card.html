@@ -1,0 +1,17 @@
+<!-- @dsCard group="Формы" viewport="900x440" name="Textarea" -->
+<!DOCTYPE html><html lang="ru"><head><meta charset="utf-8"><meta name="color-scheme" content="only light"><link rel="stylesheet" href="../../styles.css">
+<script src="https://unpkg.com/react@18.3.1/umd/react.development.js" integrity="sha384-hD6/rw4ppMLGNu3tX5cjIb+uRZ7UkRJ6BPkLpg4hAu/6onKUg4lLsHAs9EBPT82L" crossorigin="anonymous"></script>
+<script src="https://unpkg.com/react-dom@18.3.1/umd/react-dom.development.js" integrity="sha384-u6aeetuaXnQ38mYT8rp6sbXaQe3NL9t+IBXmnYxwkUI2Hw4bsp2Wvmx4yRQF1uAm" crossorigin="anonymous"></script>
+<script src="../../_ds_bundle.js"></script>
+<style>html,body{background:var(--surface)}body{margin:0;padding:16px 20px}.g{display:grid;grid-template-columns:repeat(auto-fill,minmax(min(100%,260px),1fr));gap:4px 24px}.s{display:grid;gap:2px}.k{font:500 11px/14px var(--font-mono);color:var(--ink-faint)}</style></head><body class="ym-root" data-theme="light"><div id="r"></div>
+<script>
+var L = window.DesignSystem_b66810, h = React.createElement;
+function S(k, el) { return h('div', { className: 's', key: k }, h('span', { className: 'k' }, k), el); }
+ReactDOM.createRoot(document.getElementById('r')).render(h('div', { className: 'g' },
+S('плейсхолдер', h(L.Textarea,{id:'t1',label:'Описание',placeholder:'Что с грифом, ладами, электрикой; что в комплекте',rows:3})),
+S('наведение', h(L.Textarea,{id:'t2',label:'Сообщение продавцу',rows:3,defaultValue:'Здравствуйте! Гитара ещё продаётся?',demo:'hover'})),
+S('фокус', h(L.Textarea,{id:'t3',label:'Что случилось с инструментом',rows:3,demo:'focus',defaultValue:'Фонит при касании струн'})),
+S('счётчик символов', h(L.Textarea,{id:'t4',label:'Описание',rows:3,maxLength:300,hint:'Без телефонов и ссылок',defaultValue:'Гриф шлифовали один раз, лады в отличном состоянии. Оригинальные звукосниматели, родной кейс.'})),
+S('неактивно', h(L.Textarea,{id:'t5',label:'Ответ мастера',rows:3,disabled:true,defaultValue:'Мастер ответит после осмотра'})),
+S('ошибка', h(L.Textarea,{id:'t6',label:'Описание',rows:3,error:'Добавьте хотя бы пару предложений'}))));
+</script></body></html>

@@ -1,0 +1,340 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+  <link rel="stylesheet" href="_ds/design-system-b66810d8-d429-49ea-bb35-5b22a7aa4f3a/tokens/webfonts.css">
+  <link rel="stylesheet" href="_ds/design-system-b66810d8-d429-49ea-bb35-5b22a7aa4f3a/tokens/tokens.css">
+  <link rel="stylesheet" href="_ds/design-system-b66810d8-d429-49ea-bb35-5b22a7aa4f3a/tokens/page.css">
+  <link rel="stylesheet" href="_ds/design-system-b66810d8-d429-49ea-bb35-5b22a7aa4f3a/tokens/components.css">
+  <link rel="stylesheet" href="_ds/design-system-b66810d8-d429-49ea-bb35-5b22a7aa4f3a/tokens/forms.css">
+  <link rel="stylesheet" href="ym-compat.css">
+  <script src="_ds/design-system-b66810d8-d429-49ea-bb35-5b22a7aa4f3a/_ds_bundle.js"></script>
+  <script src="plain-language.js"></script>
+</helmet>
+<header style="font-family: var(--font-text); position: relative; z-index: 20;">
+  <div style="background: var(--surface-recessed); color: var(--ink); border-bottom: 1px solid var(--line);">
+    <div style="max-width: var(--content-max); margin: 0 auto; padding: 0 var(--space-10); box-sizing: border-box; display: flex; align-items: center; justify-content: space-between; gap: var(--space-6); min-height: 44px;">
+      <nav aria-label="Разделы" style="display: flex; align-items: center; gap: var(--space-6); overflow-x: auto; scrollbar-width: none; min-width: 0;">
+        <a href="Десктоп - Каталог.dc.html" aria-current="{{ nav.catalog }}" style="{{ st.catalog }}">Каталог</a>
+        <a href="Десктоп - Каталог.dc.html?view=flea" aria-current="{{ nav.flea }}" style="{{ st.flea }}">Барахолка</a>
+        <a href="Десктоп - Аксессуары.dc.html" aria-current="{{ nav.parts }}" style="{{ st.parts }}">Аксессуары</a>
+        <a href="Десктоп - Мастера.dc.html" aria-current="{{ nav.masters }}" style="{{ st.masters }}">Мастера</a>
+        <a href="Десктоп - Цены продаж.dc.html" aria-current="{{ nav.guide }}" style="{{ st.guide }}">Цены продаж</a>
+      </nav>
+      <div style="display: flex; align-items: center; gap: var(--space-1); flex: none;">
+        <x-import component-from-global-scope="DesignSystem_b66810.IconButton" icon="message-circle" label="Сообщения" href="Десктоп - Сообщения.dc.html" count="{{ messages }}" show-label="{{ false }}" hint-size="44px,44px"></x-import>
+        <x-import component-from-global-scope="DesignSystem_b66810.IconButton" icon="heart" label="Избранное" show-label="{{ false }}" hint-size="44px,44px"></x-import>
+        <x-import component-from-global-scope="DesignSystem_b66810.IconButton" icon="bell" label="Уведомления" show-label="{{ false }}" hint-size="44px,44px"></x-import>
+      </div>
+    </div>
+  </div>
+  <div style="background: var(--surface-raised); border-bottom: 1px solid var(--line);">
+    <div style="max-width: var(--content-max); margin: 0 auto; padding: var(--space-3) var(--space-10); box-sizing: border-box; display: flex; flex-wrap: wrap; align-items: center; gap: var(--space-3) var(--space-4);">
+      <a href="Десктоп - Главная.dc.html" aria-label="ЯМузыкант, на главную" style="display: flex; align-items: center; gap: 8px; text-decoration: none; flex: none;">
+        <span aria-hidden="true" class="ym-wordmark" style="font-size: 24px;"><b>Я</b>Музыкант<i></i></span>
+      </a>
+      <div style="flex: none; display: flex;"><x-import component-from-global-scope="DesignSystem_b66810.Button" variant="{{ catVariant }}" icon="{{ catIcon }}" aria-expanded="{{ ariaOpen }}" aria-controls="lm-cat-menu" onClick="{{ toggle }}" hint-size="150px,48px">Категории</x-import></div>
+      <div style="flex: 1 1 320px; min-width: 0; display: grid; grid-template-columns: minmax(0, 1fr);">
+        <sc-if value="{{ search }}" hint-placeholder-val="{{ true }}">
+          <x-import component-from-global-scope="DesignSystem_b66810.SearchBar" id="lm-header-search" placeholder="Гитары, педали, синтезаторы, мастера" hint-size="100%,48px"></x-import>
+        </sc-if>
+      </div>
+      <div style="flex: none; margin-left: auto; display: flex; align-items: center; gap: var(--space-2);">
+        <x-import component-from-global-scope="DesignSystem_b66810.Button" variant="ghost" icon="map-pin" hint-size="120px,48px">{{ city }}</x-import>
+        <x-import component-from-global-scope="DesignSystem_b66810.Button" variant="primary" icon="plus" href="Десктоп - Продать.dc.html" hint-size="230px,48px">Продать инструмент</x-import>
+        <x-import component-from-global-scope="DesignSystem_b66810.Button" variant="ghost" icon="user" aria-haspopup="dialog" onClick="{{ openAuth }}" hint-size="110px,48px">{{ userLabel }}</x-import>
+      </div>
+    </div>
+  </div>
+  <sc-if value="{{ open }}" hint-placeholder-val="{{ false }}">
+    <div aria-hidden="true" onClick="{{ close }}" style="position: fixed; inset: 0; z-index: -1; background: color-mix(in srgb, var(--ink) 40%, transparent);"></div>
+    <div id="lm-cat-menu" role="dialog" aria-label="Все категории" style="position: absolute; top: 100%; left: 0; right: 0; background: var(--surface-raised); border-radius: 0 0 var(--radius-xl) var(--radius-xl); box-shadow: var(--shadow-3); max-height: calc(100vh - 140px); overflow-y: auto;">
+      <div style="max-width: var(--content-max); margin: 0 auto; padding: var(--space-8) var(--space-10) var(--space-10); box-sizing: border-box; display: grid; grid-template-columns: minmax(220px, 280px) minmax(0, 1fr); gap: var(--space-10); align-items: start;">
+        <nav aria-label="Категории" style="display: flex; flex-direction: column; gap: var(--space-1);">
+          <sc-for list="{{ cats }}" as="c" hint-placeholder-count="10">
+            <a href="#" onMouseEnter="{{ c.onEnter }}" onFocus="{{ c.onEnter }}" onClick="{{ c.onEnter }}" aria-current="{{ c.current }}" style="{{ c.rowStyle }}">
+              <span style="width: 32px; height: 32px; flex: none; border-radius: var(--radius-sm); background: var(--surface-recessed); color: var(--ink-muted); display: flex; align-items: center; justify-content: center;">
+                <x-import component-from-global-scope="DesignSystem_b66810.Icon" name="{{ c.icon }}" size="{{ 18 }}" hint-size="18px,18px"></x-import>
+              </span>
+              <span style="flex: 1; min-width: 0;">{{ c.name }}</span>
+              <span style="color: var(--ink-faint); display: flex;"><x-import component-from-global-scope="DesignSystem_b66810.Icon" name="chevron-right" size="{{ 16 }}" hint-size="16px,16px"></x-import></span>
+            </a>
+          </sc-for>
+        </nav>
+
+        <div style="display: flex; flex-direction: column; gap: var(--space-6); min-width: 0;">
+          <a href="#" style="display: inline-flex; align-items: center; gap: var(--space-2); align-self: flex-start; color: var(--ink); text-decoration: none;">
+            <span class="h2" style="margin: 0;">{{ cur.name }}</span>
+            <x-import component-from-global-scope="DesignSystem_b66810.Icon" name="chevron-right" size="{{ 24 }}" hint-size="24px,24px"></x-import>
+          </a>
+          <div style="display: flex; flex-wrap: wrap; gap: var(--space-8) var(--space-10); align-items: flex-start;">
+          <div style="flex: 1 1 420px; min-width: 0; display: grid; grid-template-columns: repeat(auto-fill, minmax(180px, 1fr)); gap: var(--space-8) var(--space-6);">
+                <sc-for list="{{ cur.groups }}" as="g" hint-placeholder-count="4">
+                  <div style="display: flex; flex-direction: column; gap: var(--space-2);">
+                    <a href="#" style="display: inline-flex; align-items: center; gap: var(--space-1); font: 600 var(--text-m)/22px var(--font-text); color: var(--ink); text-decoration: none; margin-bottom: var(--space-1);">{{ g.title }}<x-import component-from-global-scope="DesignSystem_b66810.Icon" name="chevron-right" size="{{ 16 }}" hint-size="16px,16px"></x-import></a>
+                    <sc-for list="{{ g.items }}" as="it" hint-placeholder-count="4">
+                      <a href="#" class="body-s" style="color: var(--ink); text-decoration: none; min-height: 24px; display: flex; align-items: center;" style-hover="color: var(--lad);">{{ it }}</a>
+                    </sc-for>
+                    <sc-if value="{{ g.more }}" hint-placeholder-val="{{ false }}">
+                      <a href="#" class="body-s" style="color: var(--ink-muted); text-decoration: none; min-height: 24px; display: flex; align-items: center;">{{ g.moreLabel }}</a>
+                    </sc-if>
+                  </div>
+                </sc-for>
+          </div>
+
+        <aside style="flex: 0 1 260px; min-width: 220px; box-sizing: border-box; display: flex; flex-direction: column; gap: var(--space-2); padding: var(--space-5) var(--space-6); border-radius: var(--radius-lg); background: var(--lad-soft);">
+          <h3 style="margin: 0 0 var(--space-1); font: 600 var(--text-m)/22px var(--font-text); color: var(--ink);">Сервисы</h3>
+          <sc-for list="{{ cur.services }}" as="s" hint-placeholder-count="4">
+            <a href="#" class="body-s" style="color: var(--ink); text-decoration: none; min-height: 28px; display: flex; align-items: center; gap: var(--space-2);" style-hover="color: var(--lad-strong);">
+              <span style="color: var(--lad); display: flex;"><x-import component-from-global-scope="DesignSystem_b66810.Icon" name="{{ s.icon }}" size="{{ 16 }}" hint-size="16px,16px"></x-import></span>{{ s.label }}
+            </a>
+          </sc-for>
+        </aside>
+          </div>
+        </div>
+      </div>
+    </div>
+  </sc-if>
+  <sc-if value="{{ authOpen }}" hint-placeholder-val="{{ false }}">
+    <div style="position: fixed; inset: 0; z-index: 100; display: flex; align-items: flex-start; justify-content: center; padding: var(--space-16) var(--space-4); box-sizing: border-box; overflow-y: auto;">
+      <div aria-hidden="true" onClick="{{ closeAuth }}" style="position: fixed; inset: 0; background: color-mix(in srgb, var(--ink) 40%, transparent);"></div>
+      <div role="dialog" aria-modal="true" aria-labelledby="lm-auth-title" style="position: relative; width: 100%; max-width: 440px; box-sizing: border-box; background: var(--surface-raised); border-radius: var(--radius-xl); box-shadow: var(--shadow-3); padding: var(--space-6); display: flex; flex-direction: column; gap: var(--space-5);">
+        <h2 id="lm-auth-title" class="lm-sr">{{ authTitle }}</h2>
+        <div style="display: flex; align-items: flex-end; gap: var(--space-2);">
+          <div role="tablist" aria-label="Вход или регистрация" style="flex: 1; display: grid; grid-template-columns: 1fr 1fr; border-bottom: 1px solid var(--line);">
+            <button type="button" role="tab" aria-selected="{{ tabLogin.sel }}" onClick="{{ tabLogin.go }}" style="{{ tabLogin.style }}">Вход</button>
+            <button type="button" role="tab" aria-selected="{{ tabReg.sel }}" onClick="{{ tabReg.go }}" style="{{ tabReg.style }}">Регистрация</button>
+          </div>
+          <div style="margin: 0 calc(-1 * var(--space-2)) var(--space-1) 0;">
+            <x-import component-from-global-scope="DesignSystem_b66810.IconButton" icon="x" label="Закрыть" show-label="{{ false }}" onClick="{{ closeAuth }}" hint-size="44px,44px"></x-import>
+          </div>
+        </div>
+
+        <div style="display: flex; flex-direction: column; gap: var(--space-3);">
+          <span class="body-s" style="color: var(--ink-muted);">{{ servicesLabel }}</span>
+          <div style="display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: var(--space-2);">
+            <x-import component-from-global-scope="DesignSystem_b66810.Button" variant="outline" size="s" block="{{ true }}" hint-size="100%,40px">VK ID</x-import>
+            <x-import component-from-global-scope="DesignSystem_b66810.Button" variant="outline" size="s" block="{{ true }}" hint-size="100%,40px">Яндекс ID</x-import>
+            <x-import component-from-global-scope="DesignSystem_b66810.Button" variant="outline" size="s" block="{{ true }}" hint-size="100%,40px">Сбер ID</x-import>
+          </div>
+        </div>
+
+        <div style="display: flex; align-items: center; gap: var(--space-3);" aria-hidden="true">
+          <span style="flex: 1; height: 1px; background: var(--line);"></span>
+          <span class="body-s" style="color: var(--ink-muted);">или по почте</span>
+          <span style="flex: 1; height: 1px; background: var(--line);"></span>
+        </div>
+
+        <sc-if value="{{ isLogin }}" hint-placeholder-val="{{ true }}">
+          <form onSubmit="{{ submit }}" style="display: flex; flex-direction: column; gap: var(--space-4); margin: 0;">
+            <x-import component-from-global-scope="DesignSystem_b66810.Field" id="lm-auth-login" label="Почта или телефон" autoComplete="username" value="{{ email }}" onChange="{{ setEmail }}" hint-size="100%,76px"></x-import>
+            <x-import component-from-global-scope="DesignSystem_b66810.Field" id="lm-auth-pass" label="Пароль" type="{{ pwType }}" autoComplete="current-password" value="{{ pw }}" onChange="{{ setPw }}" hint-size="100%,76px"></x-import>
+            <div style="display: flex; align-items: center; justify-content: space-between; gap: var(--space-3);">
+              <label class="body-s" style="display: flex; align-items: center; gap: var(--space-2); min-height: 44px; cursor: pointer; color: var(--ink);">
+                <input type="checkbox" checked="{{ showPw }}" onChange="{{ toggleShowPw }}" style="width: 20px; height: 20px; margin: 0; accent-color: var(--lad); cursor: pointer;">
+                Показать пароль
+              </label>
+              <a href="#" class="body-s" style="color: var(--lad); min-height: 44px; display: flex; align-items: center;">Забыли пароль?</a>
+            </div>
+            <x-import component-from-global-scope="DesignSystem_b66810.Button" type="submit" variant="primary" block="{{ true }}" disabled="{{ loginDisabled }}" hint-size="100%,48px">Войти</x-import>
+            <x-import component-from-global-scope="DesignSystem_b66810.Button" variant="outline" block="{{ true }}" hint-size="100%,48px">Войти по коду из СМС</x-import>
+          </form>
+        </sc-if>
+
+        <sc-if value="{{ isReg }}" hint-placeholder-val="{{ false }}">
+          <form onSubmit="{{ submit }}" style="display: flex; flex-direction: column; gap: var(--space-4); margin: 0;">
+            <fieldset style="border: 0; margin: 0; padding: 0; display: flex; flex-direction: column; gap: var(--space-2);">
+              <legend class="label" style="padding: 0; margin-bottom: var(--space-2); font-weight: 600;">Тип аккаунта</legend>
+              <div role="radiogroup" aria-label="Тип аккаунта" style="display: flex; flex-wrap: wrap; gap: var(--space-2);">
+                <x-import component-from-global-scope="DesignSystem_b66810.FilterChip" radio="{{ true }}" selected="{{ accPrivate }}" onChange="{{ setPrivate }}" hint-size="140px,40px">Частное лицо</x-import>
+                <x-import component-from-global-scope="DesignSystem_b66810.FilterChip" radio="{{ true }}" selected="{{ accShop }}" onChange="{{ setShop }}" hint-size="200px,40px">Магазин или мастерская</x-import>
+              </div>
+              <span class="body-s" style="color: var(--ink-muted);">Тип аккаунта потом не поменять.</span>
+            </fieldset>
+            <x-import component-from-global-scope="DesignSystem_b66810.Field" id="lm-reg-email" label="Почта" type="email" autoComplete="email" value="{{ email }}" onChange="{{ setEmail }}" hint-size="100%,76px"></x-import>
+            <div style="display: flex; flex-direction: column; gap: var(--space-2);">
+              <x-import component-from-global-scope="DesignSystem_b66810.Field" id="lm-reg-pass" label="Пароль" type="{{ pwType }}" autoComplete="new-password" value="{{ pw }}" onChange="{{ setPw }}" hint-size="100%,76px"></x-import>
+              <label class="body-s" style="display: flex; align-items: center; gap: var(--space-2); min-height: 44px; cursor: pointer; color: var(--ink);">
+                <input type="checkbox" checked="{{ showPw }}" onChange="{{ toggleShowPw }}" style="width: 20px; height: 20px; margin: 0; accent-color: var(--lad); cursor: pointer;">
+                Показать пароль
+              </label>
+              <ul aria-label="Требования к паролю" style="margin: 0; padding: 0; list-style: none; display: grid; grid-template-columns: 1fr 1fr; gap: var(--space-1) var(--space-4);">
+                <sc-for list="{{ rules }}" as="r" hint-placeholder-count="4">
+                  <li class="body-s" style="{{ r.style }}">
+                    <x-import component-from-global-scope="DesignSystem_b66810.Icon" name="{{ r.icon }}" size="{{ 16 }}" hint-size="16px,16px"></x-import>
+                    <span>{{ r.label }}</span>
+                  </li>
+                </sc-for>
+              </ul>
+            </div>
+            <div style="display: flex; flex-direction: column; gap: var(--space-2);">
+              <label class="body-s" style="display: flex; align-items: flex-start; gap: var(--space-3); cursor: pointer; color: var(--ink); padding: var(--space-1) 0;">
+                <input type="checkbox" checked="{{ news }}" onChange="{{ toggleNews }}" style="width: 20px; height: 20px; margin: 0; flex: none; accent-color: var(--lad); cursor: pointer;">
+                <span style="text-wrap: pretty;">Присылать подборки лотов и новости. Можно отключить в профиле.</span>
+              </label>
+              <label class="body-s" style="display: flex; align-items: flex-start; gap: var(--space-3); cursor: pointer; color: var(--ink); padding: var(--space-1) 0;">
+                <input type="checkbox" checked="{{ terms }}" onChange="{{ toggleTerms }}" style="width: 20px; height: 20px; margin: 0; flex: none; accent-color: var(--lad); cursor: pointer;">
+                <span style="text-wrap: pretty;">Принимаю <a href="#" style="color: var(--lad);">пользовательское соглашение</a> и <a href="#" style="color: var(--lad);">политику обработки данных</a></span>
+              </label>
+            </div>
+            <x-import component-from-global-scope="DesignSystem_b66810.Button" type="submit" variant="primary" block="{{ true }}" disabled="{{ regDisabled }}" hint-size="100%,48px">Зарегистрироваться</x-import>
+          </form>
+        </sc-if>
+      </div>
+    </div>
+  </sc-if>
+</header>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props="{&quot;$preview&quot;:{&quot;width&quot;:1440,&quot;height&quot;:120},&quot;active&quot;:{&quot;editor&quot;:&quot;enum&quot;,&quot;options&quot;:[&quot;catalog&quot;,&quot;flea&quot;,&quot;parts&quot;,&quot;masters&quot;,&quot;guide&quot;,&quot;none&quot;],&quot;default&quot;:&quot;catalog&quot;,&quot;tsType&quot;:&quot;string&quot;},&quot;search&quot;:{&quot;editor&quot;:&quot;boolean&quot;,&quot;default&quot;:true,&quot;tsType&quot;:&quot;boolean&quot;},&quot;city&quot;:{&quot;editor&quot;:&quot;text&quot;,&quot;default&quot;:&quot;Москва&quot;,&quot;tsType&quot;:&quot;string&quot;},&quot;cart&quot;:{&quot;editor&quot;:&quot;int&quot;,&quot;default&quot;:1,&quot;tsType&quot;:&quot;number&quot;},&quot;messages&quot;:{&quot;editor&quot;:&quot;int&quot;,&quot;default&quot;:3,&quot;tsType&quot;:&quot;number&quot;}}">
+const SV = (kind) => [
+  { icon: 'badge-check', label: 'Проверка мастером перед покупкой' },
+  { icon: 'sliders-horizontal', label: 'Цены продаж: ' + kind },
+  { icon: 'shield-check', label: 'Как работает безопасная сделка' },
+  { icon: 'truck', label: 'Доставка в защитной упаковке' },
+  { icon: 'plus', label: 'Продать ' + kind }
+];
+const CATS = [
+  { name: 'Гитары', icon: 'guitar', services: SV('гитары'), groups: [
+    { title: 'Электрогитары', items: ['Stratocaster-тип', 'Telecaster-тип', 'Les Paul-тип', 'Суперстраты', 'Полуакустические'], more: 4 },
+    { title: 'Акустические гитары', items: ['Вестерн', 'Классические', 'Электроакустические', 'Укулеле'] },
+    { title: 'Бас-гитары', items: ['4-струнные', '5-струнные', 'Безладовые', 'Акустические бас-гитары'] },
+    { title: 'Звукосниматели и электроника', items: ['Синглы', 'Хамбакеры', 'Активные'], more: 3 }
+  ] },
+  { name: 'Педали и усилители', icon: 'cable', services: SV('педали'), groups: [
+    { title: 'Педали эффектов', items: ['Овердрайв и дисторшн', 'Фузз', 'Дилэй и ревербератор', 'Модуляция', 'Луперы'], more: 6 },
+    { title: 'Процессоры и мультиэффекты', items: ['Напольные', 'Моделирующие'], more: 2 },
+    { title: 'Гитарные усилители', items: ['Ламповые комбо', 'Транзисторные комбо', 'Головы', 'Кабинеты'] },
+    { title: 'Басовые усилители', items: ['Комбо', 'Головы', 'Кабинеты'] }
+  ] },
+  { name: 'Клавишные и синтезаторы', icon: 'piano', services: SV('синтезатор'), groups: [
+    { title: 'Синтезаторы', items: ['Аналоговые', 'Цифровые', 'Модульные и Eurorack', 'Винтажные'] },
+    { title: 'Цифровые пианино', items: ['Домашние', 'Сценические'], more: 2 },
+    { title: 'MIDI-клавиатуры', items: ['25–37 клавиш', '49–61 клавиша', '88 клавиш'] },
+    { title: 'Драм-машины и семплеры', items: ['Драм-машины', 'Семплеры', 'Грувбоксы'] }
+  ] },
+  { name: 'Студия и запись', icon: 'mic', services: SV('оборудование'), groups: [
+    { title: 'Микрофоны', items: ['Конденсаторные', 'Динамические', 'Ленточные'] },
+    { title: 'Звуковые карты', items: ['USB', 'Thunderbolt'], more: 2 },
+    { title: 'Мониторы и наушники', items: ['Студийные мониторы', 'Закрытые наушники', 'Открытые наушники'] },
+    { title: 'Микшеры и пульты', items: ['Аналоговые', 'Цифровые', 'Портастудии'] }
+  ] },
+  { name: 'Ударные', icon: 'drum', services: SV('ударные'), groups: [
+    { title: 'Акустические установки', items: ['Полные установки', 'Малые барабаны', 'Тарелки'], more: 3 },
+    { title: 'Электронные установки', items: ['Установки', 'Пэды', 'Звуковые модули'] },
+    { title: 'Перкуссия', items: ['Кахоны', 'Джембе'], more: 5 },
+    { title: 'Стойки и аксессуары', items: ['Стойки', 'Педали', 'Палочки'] }
+  ] },
+  { name: 'Духовые', icon: 'mic', services: SV('духовые'), groups: [
+    { title: 'Деревянные', items: ['Саксофоны', 'Флейты', 'Кларнеты'] },
+    { title: 'Медные', items: ['Трубы', 'Тромбоны'], more: 2 },
+    { title: 'Губные гармоники', items: ['Диатонические', 'Хроматические', 'Мелодики'] }
+  ] },
+  { name: 'Смычковые', icon: 'guitar', services: SV('смычковые'), groups: [
+    { title: 'Инструменты', items: ['Скрипки', 'Альты', 'Виолончели', 'Контрабасы'] },
+    { title: 'Смычки и аксессуары', items: ['Смычки', 'Канифоль', 'Футляры'] }
+  ] },
+  { name: 'DJ-оборудование', icon: 'headphones', services: SV('DJ-оборудование'), groups: [
+    { title: 'Контроллеры', items: ['2-канальные', '4-канальные', 'Автономные'] },
+    { title: 'Проигрыватели', items: ['Виниловые', 'CDJ и медиаплееры'] },
+    { title: 'DJ-микшеры', items: ['Клубные', 'Баттл-микшеры'] }
+  ] },
+  { name: 'Аксессуары и запчасти', icon: 'package', services: SV('аксессуары'), groups: [
+    { title: 'Струны', items: ['Для электрогитар', 'Для акустики', 'Для бас-гитар'] },
+    { title: 'Кейсы и чехлы', items: ['Жёсткие кейсы', 'Мягкие чехлы', 'Рэки'] },
+    { title: 'Кабели и стойки', items: ['Инструментальные кабели', 'Патч-кабели', 'Стойки'] },
+    { title: 'Запчасти', items: ['Колки', 'Порожки', 'Бриджи'], more: 8 }
+  ] },
+  { name: 'Мастера и ремонт', icon: 'wrench', services: [
+    { icon: 'badge-check', label: 'Проверка перед покупкой' },
+    { icon: 'locate-fixed', label: 'Мастера рядом с вами' },
+    { icon: 'calendar-clock', label: 'Записаться на ремонт' },
+    { icon: 'shield-check', label: 'Оплата ремонта через безопасную сделку' }
+  ], groups: [
+    { title: 'Гитары', items: ['Настройка', 'Перешлифовка ладов', 'Электрика', 'Ремонт трещин'] },
+    { title: 'Усилители и педали', items: ['Ламповые усилители', 'Транзисторные', 'Педали'] },
+    { title: 'Клавишные', items: ['Ремонт клавиатуры', 'Сервис синтезаторов'] },
+    { title: 'Ударные и духовые', items: ['Ударные', 'Духовые'] }
+  ] }
+];
+class Component extends DCLogic {
+  state = { open: false, cat: 0, auth: false, tab: 'login', email: '', pw: '', showPw: false, acc: 'private', news: false, terms: false, authed: false };
+  onKey = e => { if (e.key === 'Escape' && (this.state.open || this.state.auth)) this.setState({ open: false, auth: false }); };
+  authVals() {
+    const s = this.state;
+    const tabBase = 'min-height: 48px; border: 0; background: none; cursor: pointer; font: 600 var(--text-l)/24px var(--font-text); margin-bottom: -1px; padding: 0 var(--space-2); border-bottom: 2px solid ';
+    const tab = id => ({
+      sel: s.tab === id ? 'true' : 'false',
+      go: () => this.setState({ tab: id }),
+      style: tabBase + (s.tab === id ? 'var(--lad); color: var(--ink);' : 'transparent; color: var(--ink-muted); font-weight: 500;')
+    });
+    const pw = s.pw;
+    const rules = [
+      ['Не короче 8 символов', pw.length >= 8], ['Заглавная буква', /[A-ZА-ЯЁ]/.test(pw)],
+      ['Строчная буква', /[a-zа-яё]/.test(pw)], ['Цифра', /\d/.test(pw)]
+    ].map(([label, ok]) => ({ label, ok, icon: ok ? 'check' : 'x', style: 'display: flex; align-items: center; gap: var(--space-2); color: ' + (ok ? 'var(--lad-strong)' : 'var(--ink-muted)') + ';' }));
+    const pwOk = rules.every(r => r.ok);
+    const emailOk = /.+@.+\..+/.test(s.email);
+    return {
+      authOpen: s.auth, isLogin: s.tab === 'login', isReg: s.tab === 'reg',
+      authTitle: s.tab === 'login' ? 'Вход' : 'Регистрация',
+      servicesLabel: s.tab === 'login' ? 'Войти через сервис' : 'Зарегистрироваться через сервис',
+      tabLogin: tab('login'), tabReg: tab('reg'),
+      email: s.email, pw, showPw: s.showPw, pwType: s.showPw ? 'text' : 'password',
+      setEmail: e => this.setState({ email: e.target.value }),
+      setPw: e => this.setState({ pw: e.target.value }),
+      toggleShowPw: () => this.setState(x => ({ showPw: !x.showPw })),
+      accPrivate: s.acc === 'private', accShop: s.acc === 'shop',
+      setPrivate: () => this.setState({ acc: 'private' }), setShop: () => this.setState({ acc: 'shop' }),
+      rules, news: s.news, terms: s.terms,
+      toggleNews: () => this.setState(x => ({ news: !x.news })),
+      toggleTerms: () => this.setState(x => ({ terms: !x.terms })),
+      loginDisabled: !(s.email.trim() && pw),
+      regDisabled: !(emailOk && pwOk && s.terms),
+      submit: e => { e.preventDefault(); this.setState({ auth: false, authed: true, pw: '' }); },
+      openAuth: () => { if (!this.state.authed) this.setState({ auth: true, open: false, tab: 'login' }); },
+      closeAuth: () => this.setState({ auth: false }),
+      userLabel: s.authed ? 'Кабинет' : 'Войти'
+    };
+  }
+  componentDidMount() { document.addEventListener('keydown', this.onKey); }
+  componentWillUnmount() { document.removeEventListener('keydown', this.onKey); }
+  renderVals() {
+    const { open, cat } = this.state;
+    const row = 'display: flex; align-items: center; gap: var(--space-3); min-height: 44px; padding: var(--space-1) var(--space-3); border-radius: var(--radius-sm); font: 500 var(--text-m)/22px var(--font-text); color: var(--ink); text-decoration: none; background: ';
+    const cats = CATS.map((c, i) => ({
+      name: c.name, icon: c.icon,
+      current: i === cat ? 'true' : undefined,
+      rowStyle: row + (i === cat ? 'var(--surface-recessed); font-weight: 600;' : 'transparent;'),
+      onEnter: e => { if (e && e.type === 'click') e.preventDefault(); if (this.state.cat !== i) this.setState({ cat: i }); }
+    }));
+    const cur = CATS[cat];
+    const groups = cur.groups.map(g => ({ ...g, moreLabel: g.more ? 'Ещё ' + g.more : '' }));
+    const a = this.props.active ?? 'catalog';
+    const base = 'display: inline-flex; align-items: center; min-height: 44px; font: 500 var(--text-m)/18px var(--font-text); color: var(--ink); text-decoration: none; white-space: nowrap; box-sizing: border-box; border-bottom: 2px solid ';
+    const nav = {}, st = {};
+    ['catalog', 'flea', 'parts', 'masters', 'guide'].forEach(k => {
+      const on = k === a;
+      nav[k] = on ? 'page' : undefined;
+      st[k] = base + (on ? 'var(--accent); font-weight: 600;' : 'transparent; color: var(--ink-muted);');
+    });
+    const search = this.props.search ?? true;
+    return {
+      ...this.authVals(),
+      open, cats, cur: { name: cur.name, services: cur.services, groups },
+      ariaOpen: open ? 'true' : 'false',
+      catIcon: open ? 'x' : 'layout-grid',
+      catVariant: open ? 'inverse' : 'muted',
+      toggle: () => this.setState(s => ({ open: !s.open })),
+      close: () => this.setState({ open: false }),
+      nav, st, search, city: this.props.city ?? 'Москва', cart: this.props.cart, messages: this.props.messages };
+  }
+}
+</script>
+</body>
+</html>

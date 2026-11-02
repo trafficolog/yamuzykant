@@ -1,0 +1,336 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+  <link rel="stylesheet" href="_ds/design-system-b66810d8-d429-49ea-bb35-5b22a7aa4f3a/tokens/webfonts.css">
+  <link rel="stylesheet" href="_ds/design-system-b66810d8-d429-49ea-bb35-5b22a7aa4f3a/tokens/tokens.css">
+  <link rel="stylesheet" href="_ds/design-system-b66810d8-d429-49ea-bb35-5b22a7aa4f3a/tokens/page.css">
+  <link rel="stylesheet" href="_ds/design-system-b66810d8-d429-49ea-bb35-5b22a7aa4f3a/tokens/components.css">
+  <link rel="stylesheet" href="_ds/design-system-b66810d8-d429-49ea-bb35-5b22a7aa4f3a/tokens/forms.css">
+  <link rel="stylesheet" href="ym-compat.css">
+  <script src="_ds/design-system-b66810d8-d429-49ea-bb35-5b22a7aa4f3a/_ds_bundle.js"></script>
+  <script src="plain-language.js"></script>
+  <style>
+    /* Hallmark · page: seller / shop profile · theme: ЯМузыкант DS tokens (nickel) · pre-emit critique: P4 H4 E4 S4 R4 V4 */
+    html, body { margin: 0; background: var(--surface); color: var(--ink); overflow-x: clip; }
+    a { color: var(--lad); text-decoration: none; }
+    a:not([class*="lm-"]):hover { color: var(--lad-strong); text-decoration: underline; }
+  </style>
+</helmet>
+<div class="lm-root" data-screen-label="Десктоп — Продавец" style="min-height: 100vh; background: var(--surface); font-family: var(--font-text);">
+  <dc-import name="Шапка" active="flea" messages="{{ 3 }}" hint-size="100%,117px"></dc-import>
+
+  <main style="max-width: var(--content-max); margin: 0 auto; padding: var(--space-6) var(--space-10) 0; box-sizing: border-box; display: flex; flex-direction: column; gap: var(--space-8);">
+    <nav aria-label="Хлебные крошки" style="display: flex; align-items: center; gap: var(--space-2); flex-wrap: wrap;">
+      <a href="Десктоп - Главная.dc.html" class="body-s" style="color: var(--ink-muted); min-height: 32px; display: flex; align-items: center; white-space: nowrap;">Главная</a>
+      <span aria-hidden="true" style="color: var(--ink-faint); display: flex;"><x-import component-from-global-scope="DesignSystem_b66810.Icon" name="chevron-right" size="{{ 14 }}" hint-size="14px,14px"></x-import></span>
+      <a href="Десктоп - Лот.dc.html" class="body-s" style="color: var(--ink-muted); min-height: 32px; display: flex; align-items: center; white-space: nowrap;">Объявление</a>
+      <span aria-hidden="true" style="color: var(--ink-faint); display: flex;"><x-import component-from-global-scope="DesignSystem_b66810.Icon" name="chevron-right" size="{{ 14 }}" hint-size="14px,14px"></x-import></span>
+      <span class="body-s" aria-current="page" style="color: var(--ink); white-space: nowrap;">{{ p.name }}</span>
+    </nav>
+
+    <section aria-labelledby="who" style="display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: var(--space-8); align-items: start; padding-bottom: var(--space-8); border-bottom: 1px solid var(--line);">
+      <div style="display: flex; gap: var(--space-6); align-items: flex-start; min-width: 0;">
+        <span aria-hidden="true" style="flex: none; width: 96px; height: 96px; border-radius: var(--radius-full); background: var(--nickel-soft); color: var(--nickel); display: flex; align-items: center; justify-content: center; font: 600 var(--text-2xl)/1 var(--font-text);">{{ p.initials }}</span>
+        <div style="display: flex; flex-direction: column; gap: var(--space-3); min-width: 0;">
+          <div style="display: flex; flex-direction: column; gap: var(--space-1);">
+            <h1 id="who" class="h1 lm-title" style="margin: 0; overflow-wrap: anywhere;">{{ p.name }}</h1>
+            <span class="body" style="color: var(--ink-muted);">{{ p.kindLine }}</span>
+          </div>
+          <div style="display: flex; flex-wrap: wrap; align-items: center; gap: var(--space-2) var(--space-5);">
+            <x-import component-from-global-scope="DesignSystem_b66810.Rating" value="{{ p.rating }}" count="{{ p.reviews }}" hint-size="90px,20px"></x-import>
+            <sc-for list="{{ p.facts }}" as="f" hint-placeholder-count="3">
+              <span class="body-s" style="display: flex; align-items: center; gap: var(--space-1); color: var(--ink-muted); white-space: nowrap;">
+                <x-import component-from-global-scope="DesignSystem_b66810.Icon" name="{{ f.icon }}" size="{{ 16 }}" hint-size="16px,16px"></x-import>{{ f.text }}
+              </span>
+            </sc-for>
+          </div>
+          <div style="display: flex; flex-wrap: wrap; gap: var(--space-2);">
+            <sc-for list="{{ p.badges }}" as="b" hint-placeholder-count="2">
+              <x-import component-from-global-scope="DesignSystem_b66810.Badge" tone="{{ b.tone }}" icon="{{ b.icon }}" hint-size="140px,24px">{{ b.label }}</x-import>
+            </sc-for>
+          </div>
+        </div>
+      </div>
+      <div style="display: flex; flex-direction: column; gap: var(--space-2); min-width: 240px;">
+        <x-import component-from-global-scope="DesignSystem_b66810.Button" variant="primary" icon="message-circle" block="{{ true }}" href="Десктоп - Сообщения.dc.html" hint-size="100%,48px">Написать</x-import>
+        <x-import component-from-global-scope="DesignSystem_b66810.Button" variant="outline" icon="{{ followIcon }}" block="{{ true }}" onClick="{{ toggleFollow }}" hint-size="100%,48px">{{ followLabel }}</x-import>
+        <span class="caption" style="color: var(--ink-muted); text-align: center;">{{ followNote }}</span>
+      </div>
+    </section>
+
+    <div role="tablist" aria-label="Разделы" style="display: flex; gap: var(--space-6); border-bottom: 1px solid var(--line); margin-top: calc(-1 * var(--space-4));">
+      <sc-for list="{{ tabs }}" as="t" hint-placeholder-count="3">
+        <button type="button" role="tab" aria-selected="{{ t.on }}" onClick="{{ t.pick }}" style="{{ t.style }}" style-hover="color: var(--ink);">{{ t.label }}<span class="body-s" style="color: var(--ink-muted); font-weight: 400;">{{ t.count }}</span></button>
+      </sc-for>
+    </div>
+
+    <sc-if value="{{ isLots }}" hint-placeholder-val="{{ true }}">
+      <section aria-label="Объявления" style="display: flex; flex-direction: column; gap: var(--space-5);">
+        <div style="display: flex; align-items: center; justify-content: space-between; gap: var(--space-4); flex-wrap: wrap;">
+          <div role="radiogroup" aria-label="Категория" style="display: flex; flex-wrap: wrap; gap: var(--space-2);">
+            <sc-for list="{{ cats }}" as="c" hint-placeholder-count="4">
+              <x-import component-from-global-scope="DesignSystem_b66810.FilterChip" radio="{{ true }}" selected="{{ c.on }}" count="{{ c.count }}" onChange="{{ c.pick }}" hint-size="140px,40px">{{ c.label }}</x-import>
+            </sc-for>
+          </div>
+          <div role="radiogroup" aria-label="Сортировка" style="display: flex; gap: var(--space-2);">
+            <sc-for list="{{ sorts }}" as="s" hint-placeholder-count="2">
+              <x-import component-from-global-scope="DesignSystem_b66810.FilterChip" radio="{{ true }}" selected="{{ s.on }}" onChange="{{ s.pick }}" hint-size="120px,40px">{{ s.label }}</x-import>
+            </sc-for>
+          </div>
+        </div>
+        <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(var(--card-min), 1fr)); gap: var(--space-6);">
+          <sc-for list="{{ lots }}" as="l" hint-placeholder-count="8">
+            <x-import component-from-global-scope="DesignSystem_b66810.ListingCard" dc-props="{{ l }}" hint-size="100%,380px"></x-import>
+          </sc-for>
+        </div>
+      </section>
+    </sc-if>
+
+    <sc-if value="{{ isReviews }}" hint-placeholder-val="{{ false }}">
+      <section aria-label="Отзывы" style="display: grid; grid-template-columns: minmax(240px, 300px) minmax(0, 1fr); gap: var(--space-10); align-items: start;">
+        <div style="display: flex; flex-direction: column; gap: var(--space-4); padding: var(--space-6); border-radius: var(--radius-lg); background: var(--surface-recessed);">
+          <span class="mono-l" style="font-size: var(--text-4xl); line-height: 1; font-variant-numeric: tabular-nums;">{{ p.ratingText }}</span>
+          <span class="body-s" style="color: var(--ink-muted);">{{ p.reviewsText }}</span>
+          <div style="display: flex; flex-direction: column; gap: var(--space-2);">
+            <sc-for list="{{ dist }}" as="d" hint-placeholder-count="5">
+              <div style="display: grid; grid-template-columns: 16px minmax(0, 1fr) 36px; gap: var(--space-2); align-items: center;">
+                <span class="body-s" style="font-variant-numeric: tabular-nums;">{{ d.star }}</span>
+                <span aria-hidden="true" style="position: relative; display: block; height: 6px; border-radius: var(--radius-full); background: var(--surface-raised);"><span style="{{ d.bar }}"></span></span>
+                <span class="caption" style="color: var(--ink-muted); text-align: right; font-variant-numeric: tabular-nums;">{{ d.n }}</span>
+              </div>
+            </sc-for>
+          </div>
+          <p class="caption" style="margin: 0; color: var(--ink-muted); text-wrap: pretty;">Отзыв можно оставить после переписки по объявлению — так оценки не накручивают.</p>
+        </div>
+        <div role="list" style="display: flex; flex-direction: column; border-top: 1px solid var(--line);">
+          <sc-for list="{{ reviews }}" as="r" hint-placeholder-count="5">
+            <article role="listitem" style="display: flex; flex-direction: column; gap: var(--space-2); padding: var(--space-5) 0; border-bottom: 1px solid var(--line);">
+              <div style="display: flex; align-items: center; justify-content: space-between; gap: var(--space-4);">
+                <span style="display: flex; align-items: center; gap: var(--space-3);">
+                  <span aria-hidden="true" style="width: 32px; height: 32px; border-radius: var(--radius-full); background: var(--surface-recessed); color: var(--ink-muted); display: flex; align-items: center; justify-content: center; font: 600 var(--text-xs)/1 var(--font-text);">{{ r.ini }}</span>
+                  <span class="body" style="font-weight: 600;">{{ r.who }}</span>
+                  <x-import component-from-global-scope="DesignSystem_b66810.Rating" value="{{ r.stars }}" hint-size="40px,20px"></x-import>
+                </span>
+                <span class="body-s" style="color: var(--ink-muted); white-space: nowrap;">{{ r.date }}</span>
+              </div>
+              <p class="body" style="margin: 0; max-width: 68ch; text-wrap: pretty;">{{ r.text }}</p>
+              <span class="caption" style="color: var(--ink-muted);">{{ r.lot }}</span>
+              <sc-if value="{{ r.hasReply }}" hint-placeholder-val="{{ false }}">
+                <div style="display: flex; flex-direction: column; gap: var(--space-1); margin-top: var(--space-2); padding: var(--space-3) var(--space-4); border-radius: var(--radius-md); background: var(--surface-recessed); max-width: 68ch;">
+                  <span class="body-s" style="font-weight: 600;">{{ r.replyBy }}</span>
+                  <span class="body-s">{{ r.reply }}</span>
+                </div>
+              </sc-if>
+            </article>
+          </sc-for>
+        </div>
+      </section>
+    </sc-if>
+
+    <sc-if value="{{ isAbout }}" hint-placeholder-val="{{ false }}">
+      <section aria-label="О продавце" style="display: grid; grid-template-columns: minmax(0, 1fr) minmax(280px, 380px); gap: var(--space-10); align-items: start;">
+        <div style="display: flex; flex-direction: column; gap: var(--space-8); min-width: 0;">
+          <p class="body-l" style="margin: 0; max-width: 64ch; text-wrap: pretty;">{{ p.about }}</p>
+          <div style="display: flex; flex-direction: column; border-top: 1px solid var(--line);">
+            <sc-for list="{{ p.rows }}" as="row" hint-placeholder-count="4">
+              <div style="display: grid; grid-template-columns: minmax(160px, 220px) minmax(0, 1fr); gap: var(--space-4); padding: var(--space-4) 0; border-bottom: 1px solid var(--line);">
+                <span class="body-s" style="color: var(--ink-muted);">{{ row.k }}</span>
+                <span class="body" style="text-wrap: pretty;">{{ row.v }}</span>
+              </div>
+            </sc-for>
+          </div>
+        </div>
+        <aside style="display: flex; flex-direction: column; gap: var(--space-4);">
+          <sc-if value="{{ p.isShop }}" hint-placeholder-val="{{ true }}">
+            <div style="display: flex; flex-direction: column; gap: var(--space-3); padding: var(--space-6); border: 1px solid var(--line); border-radius: var(--radius-lg); background: var(--surface-raised);">
+              <h2 class="h3" style="margin: 0;">Реквизиты</h2>
+              <sc-for list="{{ p.legal }}" as="lg" hint-placeholder-count="3">
+                <div style="display: flex; flex-direction: column; gap: 2px;">
+                  <span class="caption" style="color: var(--ink-muted);">{{ lg.k }}</span>
+                  <span class="body-s" style="font-family: var(--font-mono);">{{ lg.v }}</span>
+                </div>
+              </sc-for>
+            </div>
+          </sc-if>
+          <x-import component-from-global-scope="DesignSystem_b66810.Alert" tone="info" icon="shield-check" title="Общайтесь внутри ЯМузыканта" hint-size="100%,96px">Не переходите в другие мессенджеры и не платите по ссылкам из переписки.</x-import>
+          <x-import component-from-global-scope="DesignSystem_b66810.Button" variant="ghost" aria-haspopup="dialog" onClick="{{ rep.open }}" hint-size="200px,40px">Пожаловаться</x-import>
+        </aside>
+      </section>
+    </sc-if>
+  </main>
+  <sc-if value="{{ rep.isOpen }}" hint-placeholder-val="{{ false }}">
+    <div style="position: fixed; inset: 0; z-index: 100; display: flex; align-items: flex-start; justify-content: center; padding: var(--space-12) var(--space-4); box-sizing: border-box; overflow-y: auto;">
+      <div aria-hidden="true" onClick="{{ rep.close }}" style="position: fixed; inset: 0; background: color-mix(in srgb, var(--ink) 40%, transparent);"></div>
+      <div role="dialog" aria-modal="true" aria-labelledby="rep-h" style="position: relative; width: 100%; max-width: 500px; box-sizing: border-box; display: flex; flex-direction: column; gap: var(--space-5); padding: var(--space-6); background: var(--surface-raised); border-radius: var(--radius-xl); box-shadow: var(--shadow-3);">
+        <div style="display: flex; align-items: flex-start; justify-content: space-between; gap: var(--space-3);">
+          <div style="display: flex; flex-direction: column; gap: var(--space-1);">
+            <h2 id="rep-h" class="h3" style="margin: 0;">{{ rep.title }}</h2>
+            <span class="body-s" style="color: var(--ink-muted);">{{ rep.who }}</span>
+          </div>
+          <div style="margin: calc(-1 * var(--space-2)) calc(-1 * var(--space-2)) 0 0;">
+            <x-import component-from-global-scope="DesignSystem_b66810.IconButton" icon="x" label="Закрыть" show-label="{{ false }}" onClick="{{ rep.close }}" hint-size="44px,44px"></x-import>
+          </div>
+        </div>
+        <sc-if value="{{ rep.sent }}" hint-placeholder-val="{{ false }}">
+          <div style="display: flex; flex-direction: column; gap: var(--space-4);">
+            <span style="width: 48px; height: 48px; border-radius: var(--radius-full); background: var(--lad-soft); color: var(--lad); display: flex; align-items: center; justify-content: center;"><x-import component-from-global-scope="DesignSystem_b66810.Icon" name="shield-check" size="{{ 24 }}" hint-size="24px,24px"></x-import></span>
+            <p class="body" style="margin: 0; text-wrap: pretty;">Обращение № 4128 принято. Проверим в течение суток — ответ придёт в чат поддержки.</p>
+            <p class="body-s" style="margin: 0; color: var(--ink-muted); text-wrap: pretty;">Продавец не узнает, кто отправил жалобу. Пока идёт проверка, не переводите ему деньги.</p>
+            <div style="display: flex; flex-wrap: wrap; gap: var(--space-3);">
+              <x-import component-from-global-scope="DesignSystem_b66810.Button" variant="outline" icon="message-circle" href="Десктоп - Сообщения.dc.html?chat=support" hint-size="200px,48px">Чат поддержки</x-import>
+              <x-import component-from-global-scope="DesignSystem_b66810.Button" variant="ghost" onClick="{{ rep.close }}" hint-size="120px,48px">Готово</x-import>
+            </div>
+          </div>
+        </sc-if>
+        <sc-if value="{{ rep.editing }}" hint-placeholder-val="{{ true }}">
+          <div style="display: flex; flex-direction: column; gap: var(--space-5);">
+            <div role="radiogroup" aria-label="Причина" style="display: flex; flex-direction: column; border-top: 1px solid var(--line);">
+              <sc-for list="{{ rep.reasons }}" as="r" hint-placeholder-count="5">
+                <button type="button" role="radio" aria-checked="{{ r.on }}" onClick="{{ r.pick }}" style="display: grid; grid-template-columns: 20px minmax(0, 1fr); gap: var(--space-3); align-items: start; width: 100%; padding: var(--space-3) var(--space-1); border: 0; border-bottom: 1px solid var(--line); background: none; color: var(--ink); font: inherit; text-align: left; cursor: pointer;" style-hover="background: var(--surface-recessed);">
+                  <span aria-hidden="true" style="{{ r.dot }}"></span>
+                  <span style="display: flex; flex-direction: column; gap: 2px;">
+                    <span class="body" style="font-weight: 500;">{{ r.label }}</span>
+                    <span class="body-s" style="color: var(--ink-muted); text-wrap: pretty;">{{ r.hint }}</span>
+                  </span>
+                </button>
+              </sc-for>
+            </div>
+            <div style="display: flex; flex-direction: column; gap: var(--space-2);">
+              <label for="rep-text" class="label" style="font-weight: 600;">Что произошло</label>
+              <textarea id="rep-text" rows="3" value="{{ rep.text }}" onInput="{{ rep.onText }}" onChange="{{ rep.onText }}" placeholder="Коротко опишите ситуацию" style="width: 100%; box-sizing: border-box; padding: var(--space-3) var(--space-4); border: 1px solid var(--line-control); border-radius: var(--radius-sm); background: var(--surface-raised); color: var(--ink); font: 400 var(--text-m)/24px var(--font-text); resize: vertical;"></textarea>
+            </div>
+            <x-import component-from-global-scope="DesignSystem_b66810.FilterChip" selected="{{ rep.attach }}" icon="message-circle" onChange="{{ rep.toggleAttach }}" hint-size="240px,40px">Приложить переписку из чата</x-import>
+            <x-import component-from-global-scope="DesignSystem_b66810.Button" variant="primary" block="{{ true }}" disabled="{{ rep.cant }}" onClick="{{ rep.send }}" hint-size="100%,48px">Отправить жалобу</x-import>
+            <span class="caption" style="color: var(--ink-muted); margin-top: calc(-1 * var(--space-3)); text-align: center;">{{ rep.hintBottom }}</span>
+          </div>
+        </sc-if>
+      </div>
+    </div>
+  </sc-if>
+
+  <div style="margin-top: var(--space-16);">
+    <dc-import name="Подвал" hint-size="100%,420px"></dc-import>
+  </div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props="{&quot;kind&quot;:{&quot;editor&quot;:&quot;enum&quot;,&quot;options&quot;:[&quot;shop&quot;,&quot;person&quot;],&quot;default&quot;:&quot;shop&quot;,&quot;tsType&quot;:&quot;'shop' | 'person'&quot;}}">
+const PROFILES = {
+  shop: {
+    name: 'Гитарный угол', initials: 'ГУ', isShop: true, kindLine: 'Магазин · новые и б/у инструменты',
+    rating: 4.9, reviews: 432,
+    facts: [{ icon: 'map-pin', text: 'Москва, м. Курская' }, { icon: 'history', text: 'На ЯМузыканте с 2025' }, { icon: 'clock', text: 'Отвечает за час' }],
+    badges: [{ label: 'Компания проверена', tone: 'lad', icon: 'badge-check' }, { label: 'Быстро отправляет', tone: 'nickel', icon: 'truck' }],
+    about: 'Продаём гитары, педали и усилители с 2014 года. Каждый б/у инструмент перед продажей проходит настройку в нашей мастерской. Можно прийти и поиграть перед покупкой.',
+    rows: [
+      { k: 'Адрес', v: 'Москва, ул. Земляной Вал, 24, вход со двора' },
+      { k: 'Часы работы', v: 'Пн–Пт 11:00–20:00, Сб–Вс 12:00–18:00' },
+      { k: 'Передача', v: 'Самовывоз, доставка по России в защитной упаковке' },
+      { k: 'Возврат', v: '14 дней для новых товаров по закону о защите прав потребителей' }
+    ],
+    legal: [{ k: 'Организация', v: 'ООО «Гитарный угол»' }, { k: 'ОГРН', v: '1147746123456' }, { k: 'ИНН', v: '7709123456' }],
+    follow: 'Новые поступления придут в уведомления'
+  },
+  person: {
+    name: 'Алексей К.', initials: 'АК', isShop: false, kindLine: 'Частный продавец',
+    rating: 5.0, reviews: 14,
+    facts: [{ icon: 'map-pin', text: 'Москва' }, { icon: 'history', text: 'На ЯМузыканте с 2026' }, { icon: 'clock', text: 'Отвечает за день' }],
+    badges: [{ label: 'Телефон подтверждён', tone: 'lad', icon: 'badge-check' }],
+    about: 'Играю 15 лет, продаю то, что перестал использовать. Всё можно посмотреть и опробовать при встрече.',
+    rows: [
+      { k: 'Передача', v: 'Встреча в Москве, доставка в защитной упаковке' },
+      { k: 'Продано', v: '9 объявлений закрыто как проданные' }
+    ],
+    legal: [],
+    follow: 'Сообщим, когда появится новое объявление'
+  }
+};
+const LOTS = [
+  ['Fender American Vintage ’57 Stratocaster', 184500, 'excellent', 'Гитары', 'guitar', 2, { inspected: true, rare: true }],
+  ['Gibson Les Paul Studio 2016', 149000, 'very-good', 'Гитары', 'guitar', 5, {}],
+  ['Fender Player Stratocaster HSS', 67900, 'new', 'Гитары', 'guitar', 1, { partner: true }],
+  ['Squier Classic Vibe ’60s Jazzmaster', 42000, 'mint', 'Гитары', 'guitar', 9, {}],
+  ['Fender Blues Junior IV', 64500, 'excellent', 'Усилители', 'cable', 3, {}],
+  ['Boss DS-1 Distortion', 5800, 'good', 'Педали', 'cable', 12, {}],
+  ['Electro-Harmonix Big Muff Pi', 8900, 'very-good', 'Педали', 'cable', 6, {}],
+  ['Strymon Timeline', 38500, 'excellent', 'Педали', 'cable', 4, { inspected: true }],
+  ['MXR Phase 90', 7400, 'mint', 'Педали', 'cable', 8, {}],
+  ['Ernie Ball Regular Slinky 10–46, 3 комплекта', 2190, 'new', 'Аксессуары', 'cable', 0, { partner: true }]
+];
+const REVIEWS = [
+  ['Дмитрий', 'ДМ', 5, '3 окт', 'Договорились в чате о проверке у мастера, всё совпало с описанием. Гитару упаковали в кейс и коробку.', 'По объявлению: Fender American Vintage ’57 Stratocaster', 'Спасибо, играйте с удовольствием.'],
+  ['Ольга', 'ОЛ', 5, '27 сент', 'Пришла поиграть перед покупкой, никто не торопил. Подобрали струны под мою гитару.', 'По объявлению: Squier Classic Vibe ’60s Jazzmaster', ''],
+  ['Игорь', 'ИГ', 4, '19 сент', 'Отправили на следующий день, но трек-номер прислали только после напоминания.', 'По объявлению: Boss DS-1 Distortion', 'Учли, теперь номер приходит автоматически в чат.'],
+  ['Сергей', 'СЕ', 5, '8 сент', 'Честно указали потёртость на корпусе, сделали фото крупно. Цена адекватная.', 'По объявлению: Fender Blues Junior IV', '']
+];
+const plural = (n, a, b, c) => { const m = n % 10, h = n % 100; return m === 1 && h !== 11 ? a : m >= 2 && m <= 4 && (h < 10 || h >= 20) ? b : c; };
+
+class Component extends DCLogic {
+  state = { tab: 'lots', cat: 'Все', sort: 'new', follow: false, rOpen: false, rWhy: null, rText: '', rAttach: true, rSent: false };
+  onEsc = e => { if (e.key === 'Escape' && this.state.rOpen) this.setState({ rOpen: false }); };
+  componentDidMount() { document.addEventListener('keydown', this.onEsc); }
+  componentWillUnmount() { document.removeEventListener('keydown', this.onEsc); }
+  repVals(name) {
+    const s = this.state;
+    const R = [
+      ['fraud', 'Мошенничество', 'Просит предоплату, ссылку на оплату или перейти в другой мессенджер'],
+      ['fake', 'Объявление не соответствует', 'Фото чужие, инструмент другой, серийный номер не совпадает'],
+      ['banned', 'Запрещённый товар', 'Краденое, подделка под бренд, товар не по теме ЯМузыканта'],
+      ['rude', 'Грубость или угрозы', 'Оскорбления в чате или отзывах'],
+      ['other', 'Другое', 'Опишите ниже']
+    ];
+    const needText = s.rWhy === 'other' || s.rWhy === 'fake';
+    const cant = !s.rWhy || (needText && s.rText.trim().length < 5);
+    return {
+      isOpen: s.rOpen, sent: s.rSent, editing: !s.rSent,
+      title: s.rSent ? 'Жалоба отправлена' : 'Пожаловаться',
+      who: 'На продавца: ' + name,
+      open: () => this.setState({ rOpen: true, rSent: false, rWhy: null, rText: '' }),
+      close: () => this.setState({ rOpen: false }),
+      reasons: R.map(([k, label, hint]) => ({ label, hint, on: s.rWhy === k, pick: () => this.setState({ rWhy: k }),
+        dot: 'margin-top: 2px; width: 20px; height: 20px; border-radius: var(--radius-full); box-sizing: border-box; border: ' + (s.rWhy === k ? '6px solid var(--lad)' : '2px solid var(--line-control)') + '; background: var(--surface-raised);' })),
+      text: s.rText, onText: e => this.setState({ rText: e.target.value }),
+      attach: s.rAttach, toggleAttach: () => this.setState(x => ({ rAttach: !x.rAttach })),
+      cant, send: () => { if (!cant) this.setState({ rSent: true }); },
+      hintBottom: !s.rWhy ? 'Выберите причину.' : needText && cant ? 'Опишите, что не так.' : 'Продавец не узнает, кто пожаловался.'
+    };
+  }
+  renderVals() {
+    const s = this.state;
+    const kind = this.props.kind === 'person' ? 'person' : 'shop';
+    const P = PROFILES[kind];
+    const all = kind === 'shop' ? LOTS : LOTS.filter((_, i) => [1, 5, 7].includes(i));
+    const cats = ['Все', ...Array.from(new Set(all.map(l => l[3])))];
+    const cur = cats.includes(s.cat) ? s.cat : 'Все';
+    let lots = all.filter(l => cur === 'Все' || l[3] === cur);
+    lots = [...lots].sort((a, b) => s.sort === 'cheap' ? a[1] - b[1] : a[5] - b[5]);
+    const rv = kind === 'shop' ? REVIEWS : REVIEWS.slice(0, 2);
+    const dist = kind === 'shop' ? [389, 30, 8, 3, 2] : [14, 0, 0, 0, 0];
+    const max = Math.max(...dist);
+    const tabStyle = on => 'display: flex; align-items: baseline; gap: var(--space-2); min-height: 48px; padding: 0; margin-bottom: -1px; background: none; border: 0; border-bottom: 2px solid ' + (on ? 'var(--lad)' : 'transparent') + '; color: ' + (on ? 'var(--ink)' : 'var(--ink-muted)') + '; font: ' + (on ? '600' : '500') + ' var(--text-m)/24px var(--font-text); cursor: pointer; white-space: nowrap;';
+    const T = [['lots', 'Объявления', String(all.length)], ['reviews', 'Отзывы', String(P.reviews)], ['about', kind === 'shop' ? 'О магазине' : 'О продавце', '']];
+    return {
+      rep: this.repVals(P.name),
+      p: { ...P, ratingText: P.rating.toFixed(1).replace('.', ','), reviewsText: P.reviews + ' ' + plural(P.reviews, 'отзыв', 'отзыва', 'отзывов') },
+      tabs: T.map(([k, label, count]) => ({ label, count, on: s.tab === k, style: tabStyle(s.tab === k), pick: () => this.setState({ tab: k }) })),
+      isLots: s.tab === 'lots', isReviews: s.tab === 'reviews', isAbout: s.tab === 'about',
+      followLabel: s.follow ? 'Вы подписаны' : 'Подписаться', followIcon: s.follow ? 'check' : 'bell',
+      followNote: P.follow,
+      toggleFollow: () => this.setState(st => ({ follow: !st.follow })),
+      cats: cats.map(c => ({ label: c, on: c === cur, count: c === 'Все' ? all.length : all.filter(l => l[3] === c).length, pick: () => this.setState({ cat: c }) })),
+      sorts: [['new', 'Сначала новые'], ['cheap', 'Сначала дешевле']].map(([k, label]) => ({ label, on: s.sort === k, pick: () => this.setState({ sort: k }) })),
+      lots: lots.map((l, i) => ({ id: 'l' + i, title: l[0], price: l[1], condition: l[2], icon: l[4], city: 'Москва', posted: l[5] === 0 ? 'сегодня' : l[5] + ' ' + plural(l[5], 'день', 'дня', 'дней') + ' назад', href: 'Десктоп - Лот.dc.html', partner: kind === 'shop' && !!l[6].partner, inspected: !!l[6].inspected, rare: !!l[6].rare })),
+      dist: dist.map((n, i) => ({ star: String(5 - i), n: String(n), bar: 'position: absolute; inset: 0 auto 0 0; width: ' + (max ? n / max * 100 : 0).toFixed(1) + '%; border-radius: var(--radius-full); background: var(--brass);' })),
+      reviews: rv.map(r => ({ who: r[0], ini: r[1], stars: r[2], date: r[3], text: r[4], lot: r[5], reply: r[6], hasReply: !!r[6], replyBy: 'Ответ продавца' }))
+    };
+  }
+}
+</script>
+</body>
+</html>

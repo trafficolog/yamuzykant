@@ -1,0 +1,71 @@
+/* ЯМузыкант — слой совместимости макетов с обновлённой дизайн-системой.
+ * Старые имена токенов и классов из макетов → новые токены ДС. Новых значений не вводит.
+ * Подключать последним, после tokens/*.css дизайн-системы. */
+:root, [data-theme="light"], [data-theme="dark"] {
+  --lad: var(--accent-text);
+  --lad-strong: var(--ink);
+  --lad-soft: var(--accent-soft);
+  --on-lad: var(--on-inverse);
+  --copper: var(--service);
+  --copper-strong: var(--service-strong);
+  --copper-soft: var(--service-soft);
+  --on-copper: var(--on-service);
+  --brass: var(--guide);
+  --brass-text: var(--guide-text);
+  --brass-soft: var(--guide-soft);
+  --on-brass: var(--on-guide);
+  --nickel: var(--parts);
+  --nickel-soft: var(--parts-soft);
+  --on-nickel: var(--on-parts);
+  --font-display: var(--font-text);
+  --text-mono: var(--text-s);
+  --lm-ease-out: var(--ym-ease-out);
+  --lm-ease-in-out: var(--ym-ease-in-out);
+  --lm-dur-micro: var(--ym-dur-micro);
+  --lm-dur-short: var(--ym-dur-short);
+}
+/* Стили текста: старые классы макетов → шкала type-* */
+.display-xl { font: 800 40px/44px var(--font-text); letter-spacing: -0.02em; }
+.display-l { font: 700 28px/34px var(--font-text); letter-spacing: -0.01em; }
+.display-m { font: 700 22px/28px var(--font-text); letter-spacing: -0.01em; }
+.h1 { font: 700 28px/34px var(--font-text); letter-spacing: -0.01em; }
+.h2 { font: 700 22px/28px var(--font-text); letter-spacing: -0.01em; }
+.h3 { font: 700 18px/24px var(--font-text); }
+.body-l { font: 400 17px/26px var(--font-text); }
+.body { font: 400 15px/22px var(--font-text); }
+.body-s { font: 400 13px/18px var(--font-text); }
+.label { font: 500 14px/18px var(--font-text); }
+.label-l { font: 600 15px/22px var(--font-text); }
+.caption { font: 500 12px/16px var(--font-text); }
+.eyebrow { font: 600 12px/16px var(--font-text); letter-spacing: 0.06em; text-transform: uppercase; }
+.price-xl { font: 800 32px/36px var(--font-text); letter-spacing: -0.02em; font-variant-numeric: tabular-nums; }
+.price { font: 800 20px/24px var(--font-text); letter-spacing: -0.01em; font-variant-numeric: tabular-nums; }
+.mono, .mono-l { font: 500 13px/20px var(--font-mono); font-variant-numeric: tabular-nums; }
+/* Утилиты */
+.lm-root, .lm-root * { box-sizing: border-box; }
+.lm-num { font-variant-numeric: tabular-nums; }
+.lm-mono { font-family: var(--font-mono); font-size: var(--text-xs); line-height: 1.5; font-weight: 500; font-variant-numeric: tabular-nums; }
+.lm-muted { color: var(--ink-muted); }
+.lm-faint { color: var(--ink-faint); }
+.lm-sr { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
+.lm-title { margin: 0; text-wrap: balance; overflow-wrap: anywhere; min-width: 0; }
+/* Знак по ДС: «ЯМузыкант» одним цветом текста, мятная только точка */
+.ym-wordmark b { color: inherit; }
+/* Ссылки-компоненты ДС (кнопки, переключатели) не подчёркиваются общим hover страниц */
+a[class*="ym-"][class*="ym-"]:hover { text-decoration: none; }
+/* Старые имена вариантов компонентов (tone="copper" и т.п.) → новые */
+.ym-btn--copper { background: var(--service); color: var(--on-service); }
+.ym-btn--copper.is-hover, .ym-btn--copper:active { background: var(--service-strong); }
+.ym-btn--copper:hover:not([disabled]) { background: var(--service-strong); }
+.ym-badge--lad { background: var(--accent-soft); color: var(--accent-text); border-color: transparent; }
+.ym-badge--copper { background: var(--service-soft); color: var(--service); border-color: transparent; }
+.ym-badge--brass { background: var(--guide-soft); color: var(--guide-text); border-color: transparent; }
+.ym-badge--nickel { background: var(--parts-soft); color: var(--parts); border-color: transparent; }
+.ym-trust__t--copper .ym-icon { color: var(--service); }
+.ym-trust__t--nickel .ym-icon { color: var(--parts); }
+.ym-trust__t--brass .ym-icon { color: var(--guide-text); }
+.ym-trust__t--lad .ym-icon { color: var(--accent-text); }
+.ym-avatar--copper { background: var(--service-soft); color: var(--service); }
+.ym-tl--copper .ym-tl__step--done .ym-tl__bar { background: var(--service); }
+.ym-tl--copper .ym-tl__step--current .ym-tl__bar { background: var(--service); }
+.ym-alert--copper { background: var(--service-soft); } .ym-alert--copper > .ym-icon { color: var(--service); }

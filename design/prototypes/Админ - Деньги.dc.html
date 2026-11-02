@@ -1,0 +1,236 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+  <link rel="stylesheet" href="_ds/design-system-b66810d8-d429-49ea-bb35-5b22a7aa4f3a/tokens/webfonts.css">
+  <link rel="stylesheet" href="_ds/design-system-b66810d8-d429-49ea-bb35-5b22a7aa4f3a/tokens/tokens.css">
+  <link rel="stylesheet" href="_ds/design-system-b66810d8-d429-49ea-bb35-5b22a7aa4f3a/tokens/page.css">
+  <link rel="stylesheet" href="_ds/design-system-b66810d8-d429-49ea-bb35-5b22a7aa4f3a/tokens/components.css">
+  <link rel="stylesheet" href="_ds/design-system-b66810d8-d429-49ea-bb35-5b22a7aa4f3a/tokens/forms.css">
+  <link rel="stylesheet" href="ym-compat.css">
+  <script src="_ds/design-system-b66810d8-d429-49ea-bb35-5b22a7aa4f3a/_ds_bundle.js"></script>
+  <script src="plain-language.js"></script>
+  <style>
+    /* Hallmark · page: staff console — plans, points, payments · theme: ЯМузыкант DS tokens · pre-emit critique: P4 H4 E4 S4 R4 V4 */
+    html, body { margin: 0; background: var(--surface); color: var(--ink); overflow-x: clip; }
+    a { color: var(--lad); text-decoration: none; }
+    a:not([class*="lm-"]):hover { color: var(--lad-strong); text-decoration: underline; }
+  </style>
+</helmet>
+<div class="lm-root" data-screen-label="Админ — Тарифы и баллы" style="min-height: 100vh; background: var(--surface); font-family: var(--font-text);">
+  <dc-import name="Админ - Шапка" role="{{ role }}" hint-size="100%,64px"></dc-import>
+  <div style="display: grid; grid-template-columns: minmax(200px, 240px) minmax(0, 1fr); min-height: calc(100vh - 65px);">
+    <dc-import name="Админ - Меню" active="money" role="{{ role }}" hint-size="100%,100%"></dc-import>
+
+    <main style="display: flex; flex-direction: column; gap: var(--space-6); padding: var(--space-6) var(--space-8) var(--space-12); min-width: 0;">
+      <div style="display: flex; align-items: flex-end; justify-content: space-between; gap: var(--space-4); flex-wrap: wrap;">
+        <div style="display: flex; flex-direction: column; gap: var(--space-1);">
+          <h1 class="h1 lm-title" style="margin: 0;">Тарифы и баллы</h1>
+          <span class="body-s" style="color: var(--ink-muted);">Октябрь 2026 · все суммы с НДС</span>
+        </div>
+        <span class="caption" style="color: var(--ink-muted);">Все цифры — примеры, уточнить</span>
+      </div>
+
+      <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 180px), 1fr)); gap: var(--space-3);">
+        <sc-for list="{{ kpis }}" as="k" hint-placeholder-count="4">
+          <div style="display: flex; flex-direction: column; gap: var(--space-1); padding: var(--space-4) var(--space-5); border-radius: var(--radius-md); background: var(--surface-recessed);">
+            <span class="body-s" style="color: var(--ink-muted);">{{ k.label }}</span>
+            <span class="mono-l" style="font-variant-numeric: tabular-nums; white-space: nowrap;">{{ k.value }}</span>
+            <span class="caption" style="color: var(--ink-muted);">{{ k.note }}</span>
+          </div>
+        </sc-for>
+      </div>
+
+      <div role="tablist" aria-label="Разделы" style="display: flex; gap: var(--space-6); border-bottom: 1px solid var(--line);">
+        <sc-for list="{{ tabs }}" as="t" hint-placeholder-count="3">
+          <button type="button" role="tab" aria-selected="{{ t.on }}" onClick="{{ t.pick }}" style="{{ t.style }}" style-hover="color: var(--ink);">{{ t.label }}</button>
+        </sc-for>
+      </div>
+
+      <sc-if value="{{ isPlans }}" hint-placeholder-val="{{ true }}">
+        <section aria-label="Тарифы" style="display: flex; flex-direction: column; gap: var(--space-4);">
+          <div role="table" aria-label="Тарифы" style="display: flex; flex-direction: column; border-top: 1px solid var(--line);">
+            <div role="row" class="caption" style="display: grid; grid-template-columns: minmax(72px, 1fr) repeat(3, minmax(72px, 120px)) minmax(56px, 80px) minmax(104px, auto); gap: var(--space-3); align-items: center; min-height: 40px; border-bottom: 1px solid var(--line); color: var(--ink-muted);">
+              <span role="columnheader">Тариф</span><span role="columnheader">Цена, ₽/мес</span><span role="columnheader">Объявлений</span><span role="columnheader">Баллов/мес</span><span role="columnheader">Подписок</span><span role="columnheader"></span>
+            </div>
+            <sc-for list="{{ plans }}" as="p" hint-placeholder-count="3">
+              <div role="row" style="display: grid; grid-template-columns: minmax(72px, 1fr) repeat(3, minmax(72px, 120px)) minmax(56px, 80px) minmax(104px, auto); gap: var(--space-3); align-items: center; min-height: 64px; border-bottom: 1px solid var(--line);">
+                <span role="cell" class="body" style="font-weight: 600;">{{ p.name }}</span>
+                <sc-for list="{{ p.fields }}" as="f" hint-placeholder-count="3">
+                  <label role="cell" style="display: flex;"><span class="lm-sr">{{ f.label }}</span><input inputmode="numeric" value="{{ f.value }}" onChange="{{ f.onChange }}" onInput="{{ f.onChange }}" style="{{ f.style }}"></input></label>
+                </sc-for>
+                <span role="cell" class="body-s" style="font-variant-numeric: tabular-nums;">{{ p.subs }}</span>
+                <span role="cell" style="display: flex; justify-content: flex-end;">
+                  <x-import component-from-global-scope="DesignSystem_b66810.Button" variant="{{ p.btn }}" size="s" disabled="{{ p.clean }}" onClick="{{ p.save }}" hint-size="110px,40px">{{ p.btnLabel }}</x-import>
+                </span>
+              </div>
+            </sc-for>
+          </div>
+          <x-import component-from-global-scope="DesignSystem_b66810.Alert" tone="info" icon="info" title="Новые цены — со следующего периода" hint-size="100%,80px">Действующие подписки продлятся по старой цене до конца оплаченного месяца. Партнёры получат письмо за 14 дней.</x-import>
+        </section>
+      </sc-if>
+
+      <sc-if value="{{ isPay }}" hint-placeholder-val="{{ false }}">
+        <section aria-label="Платежи" style="display: flex; flex-direction: column; gap: var(--space-4);">
+          <div role="radiogroup" aria-label="Тип" style="display: flex; flex-wrap: wrap; gap: var(--space-2);">
+            <sc-for list="{{ payFilters }}" as="f" hint-placeholder-count="4">
+              <x-import component-from-global-scope="DesignSystem_b66810.FilterChip" radio="{{ true }}" selected="{{ f.on }}" count="{{ f.count }}" onChange="{{ f.pick }}" hint-size="120px,40px">{{ f.label }}</x-import>
+            </sc-for>
+          </div>
+          <div role="table" aria-label="Платежи" style="display: flex; flex-direction: column; border-top: 1px solid var(--line);">
+            <sc-for list="{{ pays }}" as="r" hint-placeholder-count="6">
+              <div role="row" style="display: grid; grid-template-columns: 72px minmax(0, 1.4fr) minmax(0, 1fr) minmax(100px, auto) minmax(110px, auto); gap: var(--space-4); align-items: center; min-height: 56px; border-bottom: 1px solid var(--line);">
+                <span role="cell" class="body-s" style="font-family: var(--font-mono); color: var(--ink-muted);">{{ r.date }}</span>
+                <span role="cell" style="display: flex; flex-direction: column; min-width: 0;">
+                  <span class="body-s" style="font-weight: 600; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">{{ r.who }}</span>
+                  <span class="caption" style="color: var(--ink-muted); font-family: var(--font-mono);">{{ r.id }}</span>
+                </span>
+                <span role="cell" class="body-s" style="color: var(--ink-muted);">{{ r.what }}</span>
+                <span role="cell" style="{{ r.amountStyle }}">{{ r.amount }}</span>
+                <span role="cell" style="display: flex; justify-content: flex-end; gap: var(--space-2); align-items: center;">
+                  <x-import component-from-global-scope="DesignSystem_b66810.Badge" tone="{{ r.tone }}" hint-size="90px,24px">{{ r.status }}</x-import>
+                  <sc-if value="{{ r.canRefund }}" hint-placeholder-val="{{ false }}">
+                    <x-import component-from-global-scope="DesignSystem_b66810.Button" variant="ghost" size="s" onClick="{{ r.refund }}" hint-size="100px,32px">Вернуть</x-import>
+                  </sc-if>
+                </span>
+              </div>
+            </sc-for>
+          </div>
+        </section>
+      </sc-if>
+
+      <sc-if value="{{ isPoints }}" hint-placeholder-val="{{ false }}">
+        <section aria-label="Баллы" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 340px), 1fr)); gap: var(--space-8); align-items: start;">
+          <div style="display: flex; flex-direction: column; gap: var(--space-4); padding: var(--space-5); border: 1px solid var(--line); border-radius: var(--radius-lg); background: var(--surface-raised);">
+            <h2 class="h3" style="margin: 0;">Начислить или списать</h2>
+            <x-import component-from-global-scope="DesignSystem_b66810.Field" id="pt-user" label="Пользователь" placeholder="ID, телефон или ИНН" value="{{ ptUser }}" onChange="{{ onPtUser }}" hint-size="100%,72px"></x-import>
+            <div role="radiogroup" aria-label="Операция" style="display: flex; gap: var(--space-2);">
+              <sc-for list="{{ ptOps }}" as="o" hint-placeholder-count="2">
+                <x-import component-from-global-scope="DesignSystem_b66810.FilterChip" radio="{{ true }}" selected="{{ o.on }}" onChange="{{ o.pick }}" hint-size="120px,40px">{{ o.label }}</x-import>
+              </sc-for>
+            </div>
+            <x-import component-from-global-scope="DesignSystem_b66810.Field" id="pt-n" label="Сколько баллов" inputMode="numeric" value="{{ ptN }}" onChange="{{ onPtN }}" hint-size="100%,72px"></x-import>
+            <div style="display: flex; flex-direction: column; gap: var(--space-2);">
+              <label for="pt-why" class="label" style="font-weight: 600;">Причина</label>
+              <textarea id="pt-why" rows="2" value="{{ ptWhy }}" onInput="{{ onPtWhy }}" onChange="{{ onPtWhy }}" placeholder="Например, компенсация за сбой продвижения 3 окт" style="width: 100%; box-sizing: border-box; padding: var(--space-3) var(--space-4); border: 1px solid var(--line-control); border-radius: var(--radius-sm); background: var(--surface-raised); color: var(--ink); font: 400 var(--text-s)/22px var(--font-text); resize: vertical;"></textarea>
+            </div>
+            <x-import component-from-global-scope="DesignSystem_b66810.Button" variant="primary" block="{{ true }}" disabled="{{ ptCant }}" onClick="{{ ptApply }}" hint-size="100%,48px">{{ ptLabel }}</x-import>
+            <span class="caption" style="color: var(--ink-muted);">Операция попадёт в журнал действий и в историю кошелька пользователя.</span>
+          </div>
+          <div style="display: flex; flex-direction: column; gap: var(--space-3);">
+            <h2 class="h3" style="margin: 0;">Цены продвижения</h2>
+            <div style="display: flex; flex-direction: column; border-top: 1px solid var(--line);">
+              <sc-for list="{{ promo }}" as="pr" hint-placeholder-count="5">
+                <div style="display: grid; grid-template-columns: minmax(0, 1fr) 96px; gap: var(--space-4); align-items: center; min-height: 56px; border-bottom: 1px solid var(--line);">
+                  <span style="display: flex; flex-direction: column; gap: 2px; min-width: 0;">
+                    <span class="body-s" style="font-weight: 600;">{{ pr.name }}</span>
+                    <span class="caption" style="color: var(--ink-muted);">{{ pr.used }}</span>
+                  </span>
+                  <label style="display: flex; align-items: center; gap: var(--space-1);"><span class="lm-sr">Цена в баллах: {{ pr.name }}</span><input inputmode="numeric" value="{{ pr.price }}" onChange="{{ pr.onChange }}" onInput="{{ pr.onChange }}" style="width: 100%; min-height: 40px; box-sizing: border-box; padding: 0 var(--space-3); border: 1px solid var(--line-control); border-radius: var(--radius-sm); background: var(--surface-raised); color: var(--ink); font: 500 var(--text-s)/1 var(--font-mono); text-align: right;"></input></label>
+                </div>
+              </sc-for>
+            </div>
+            <span class="caption" style="color: var(--ink-muted);">Цена в баллах, 1 балл = 1 ₽. Изменения применяются к новым покупкам сразу.</span>
+          </div>
+          <div style="display: flex; flex-direction: column; gap: var(--space-3); grid-column: 1 / -1;">
+            <h2 class="h3" style="margin: 0;">Последние ручные операции</h2>
+            <div style="display: flex; flex-direction: column; border-top: 1px solid var(--line);">
+              <sc-for list="{{ ptLog }}" as="l" hint-placeholder-count="3">
+                <div style="display: grid; grid-template-columns: 72px minmax(0, 1fr) auto; gap: var(--space-4); align-items: center; min-height: 48px; border-bottom: 1px solid var(--line);">
+                  <span class="body-s" style="font-family: var(--font-mono); color: var(--ink-muted);">{{ l.t }}</span>
+                  <span class="body-s">{{ l.what }}</span>
+                  <span style="{{ l.style }}">{{ l.n }}</span>
+                </div>
+              </sc-for>
+            </div>
+          </div>
+        </section>
+      </sc-if>
+    </main>
+  </div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props="{&quot;role&quot;:{&quot;editor&quot;:&quot;enum&quot;,&quot;options&quot;:[&quot;admin&quot;,&quot;partners&quot;],&quot;default&quot;:&quot;admin&quot;,&quot;tsType&quot;:&quot;'admin' | 'partners'&quot;}}">
+const PLANS = [
+  { id: 'start', name: 'Старт', price: 990, limit: 10, points: 300, subs: 118 },
+  { id: 'biz', name: 'Бизнес', price: 2990, limit: 50, points: 1000, subs: 64 },
+  { id: 'pro', name: 'Про', price: 7990, limit: 200, points: 4000, subs: 9 }
+];
+const PAYS = [
+  ['9 окт', 'ООО «Звук и дерево»', 'П-26-30412', 'Тариф «Бизнес», октябрь', 2990, 'ok', 'plan'],
+  ['9 окт', 'Андрей К.', 'П-26-30409', 'Пополнение баллов', 500, 'ok', 'points'],
+  ['8 окт', 'ИП Белов А. В.', 'П-26-30388', 'Тариф «Старт», октябрь', 990, 'wait', 'plan'],
+  ['8 окт', 'Виктор Л.', 'П-26-30371', 'Пополнение баллов', 1000, 'fail', 'points'],
+  ['7 окт', 'ООО «Гитарный угол»', 'П-26-30355', 'Тариф «Бизнес», октябрь', 2990, 'ok', 'plan'],
+  ['5 окт', 'Мария Ш.', 'П-26-30290', 'Возврат баллов', -1000, 'refund', 'refund']
+];
+const PROMO = [['up', 'Поднять в поиске', 49, 'куплено 812 раз за месяц'], ['urgent', 'Пометка «Срочно»', 69, '233 раза'], ['color', 'Выделить цветом', 99, '410 раз'], ['top', 'Закрепить в топе на 3 дня', 199, '127 раз'], ['home', 'Показ на главной', 299, '38 раз']];
+const ST = { ok: ['Оплачен', 'lad'], wait: ['Ожидает', 'warning'], fail: ['Отклонён банком', 'danger'], refund: ['Возврат', 'neutral'] };
+const rub = n => (n < 0 ? '−' : '') + Math.abs(n).toLocaleString('ru-RU') + ' ₽';
+const pts = n => n.toLocaleString('ru-RU') + ' ' + ((m, h) => m === 1 && h !== 11 ? 'балл' : m >= 2 && m <= 4 && (h < 10 || h >= 20) ? 'балла' : 'баллов')(n % 10, n % 100);
+class Component extends DCLogic {
+  state = { tab: 'plans', plans: PLANS, edits: {}, saved: {}, pf: 'all', pays: PAYS, promo: Object.fromEntries(PROMO.map(p => [p[0], String(p[2])])), ptUser: '', ptOp: 'add', ptN: '', ptWhy: '',
+    ptLog: [['8 окт', 'Начислено ООО «Гитарный угол» · компенсация за сбой показа на главной', 299], ['3 окт', 'Списано Мария Ш. · баллы по мошенническим объявлениям', -1000]] };
+  renderVals() {
+    const s = this.state;
+    const role = this.props.role === 'partners' ? 'partners' : 'admin';
+    const tabStyle = on => 'min-height: 44px; padding: 0; margin-bottom: -1px; background: none; border: 0; border-bottom: 2px solid ' + (on ? 'var(--lad)' : 'transparent') + '; color: ' + (on ? 'var(--ink)' : 'var(--ink-muted)') + '; font: ' + (on ? '600' : '500') + ' var(--text-m)/24px var(--font-text); cursor: pointer; white-space: nowrap;';
+    const inStyle = dirty => 'width: 100%; min-height: 40px; box-sizing: border-box; padding: 0 var(--space-3); border: 1px solid ' + (dirty ? 'var(--lad)' : 'var(--line-control)') + '; border-radius: var(--radius-sm); background: var(--surface-raised); color: var(--ink); font: 500 var(--text-s)/1 var(--font-mono); text-align: right; font-variant-numeric: tabular-nums;';
+    const payMatch = (r, k) => k === 'all' || (k === 'problem' ? (r[5] === 'fail' || r[5] === 'wait') : r[6] === k);
+    const ptNum = parseInt(String(s.ptN).replace(/\D/g, ''), 10) || 0;
+    const revenue = s.pays.filter(r => r[5] === 'ok').reduce((a, r) => a + r[4], 0);
+    return {
+      role,
+      kpis: [
+        { label: 'Выручка за месяц', value: '486 000 ₽', note: 'тарифы — 71 %' },
+        { label: 'Активных подписок', value: String(s.plans.reduce((a, p) => a + p.subs, 0)), note: 'продлений 31 из 35' },
+        { label: 'Баллов потрачено', value: '41 300', note: 'на продвижение' },
+        { label: 'Проблемных платежей', value: String(s.pays.filter(r => r[5] === 'fail' || r[5] === 'wait').length), note: 'нужно проверить' }
+      ],
+      tabs: [['plans', 'Тарифы'], ['pay', 'Платежи'], ['points', 'Баллы и продвижение']].map(([k, label]) => ({ label, on: s.tab === k, style: tabStyle(s.tab === k), pick: () => this.setState({ tab: k }) })),
+      isPlans: s.tab === 'plans', isPay: s.tab === 'pay', isPoints: s.tab === 'points',
+      plans: s.plans.map(p => {
+        const e = s.edits[p.id] || {};
+        const dirty = Object.keys(e).length > 0;
+        const fld = (k, label) => ({ label: label + ' — ' + p.name, value: e[k] ?? String(p[k]), style: inStyle(e[k] !== undefined),
+          onChange: ev => { const v = ev.target.value.replace(/\D/g, ''); this.setState(st => ({ edits: { ...st.edits, [p.id]: { ...(st.edits[p.id] || {}), [k]: v } }, saved: { ...st.saved, [p.id]: false } })); } });
+        return {
+          name: p.name, subs: String(p.subs), clean: !dirty,
+          fields: [fld('price', 'Цена'), fld('limit', 'Лимит'), fld('points', 'Баллы')],
+          btn: dirty ? 'primary' : 'ghost', btnLabel: dirty ? 'Сохранить' : s.saved[p.id] ? 'Сохранено' : 'Без изменений',
+          save: () => this.setState(st => ({ plans: st.plans.map(x => x.id === p.id ? { ...x, ...Object.fromEntries(Object.entries(e).map(([k, v]) => [k, parseInt(v, 10) || 0])) } : x), edits: { ...st.edits, [p.id]: undefined }, saved: { ...st.saved, [p.id]: true } }))
+        };
+      }),
+      payFilters: [['all', 'Все'], ['plan', 'Тарифы'], ['points', 'Баллы'], ['problem', 'Проблемные']].map(([k, label]) => ({ label, on: s.pf === k, count: s.pays.filter(r => payMatch(r, k)).length, pick: () => this.setState({ pf: k }) })),
+      pays: s.pays.map((r, i) => ({ r, i })).filter(({ r }) => payMatch(r, s.pf)).map(({ r, i }) => ({
+        date: r[0], who: r[1], id: r[2], what: r[3], amount: rub(r[4]),
+        amountStyle: 'font: 600 var(--text-s)/1 var(--font-mono); font-variant-numeric: tabular-nums; white-space: nowrap; text-align: right; ' + (r[4] < 0 ? 'color: var(--ink-muted);' : ''),
+        status: ST[r[5]][0], tone: ST[r[5]][1], canRefund: r[5] === 'ok' && r[6] === 'points',
+        refund: () => this.setState(st => ({ pays: st.pays.map((x, j) => j === i ? [...x.slice(0, 5), 'refund', 'refund'] : x) }))
+      })),
+      ptUser: s.ptUser, onPtUser: e => this.setState({ ptUser: e.target.value }),
+      ptOps: [['add', 'Начислить'], ['sub', 'Списать']].map(([k, label]) => ({ label, on: s.ptOp === k, pick: () => this.setState({ ptOp: k }) })),
+      ptN: s.ptN, onPtN: e => { const d = e.target.value.replace(/\D/g, ''); this.setState({ ptN: d ? parseInt(d, 10).toLocaleString('ru-RU') : '' }); },
+      ptWhy: s.ptWhy, onPtWhy: e => this.setState({ ptWhy: e.target.value }),
+      ptCant: !s.ptUser.trim() || !ptNum || s.ptWhy.trim().length < 5,
+      ptLabel: ptNum ? (s.ptOp === 'add' ? 'Начислить ' : 'Списать ') + pts(ptNum) : (s.ptOp === 'add' ? 'Начислить' : 'Списать'),
+      ptApply: () => {
+        if (!s.ptUser.trim() || !ptNum || s.ptWhy.trim().length < 5) return;
+        const n = s.ptOp === 'add' ? ptNum : -ptNum;
+        this.setState(st => ({ ptLog: [['сейчас', (n > 0 ? 'Начислено ' : 'Списано ') + st.ptUser.trim() + ' · ' + st.ptWhy.trim(), n]].concat(st.ptLog), ptUser: '', ptN: '', ptWhy: '' }));
+      },
+      ptLog: s.ptLog.map(([t, what, n]) => ({ t, what, n: (n > 0 ? '+' : '−') + pts(Math.abs(n)), style: 'font: 600 var(--text-s)/1 var(--font-mono); white-space: nowrap; color: ' + (n > 0 ? 'var(--lad-strong)' : 'var(--ink-muted)') + ';' })),
+      promo: PROMO.map(([id, name, , used]) => ({ name, used, price: s.promo[id], onChange: e => { const v = e.target.value.replace(/\D/g, ''); this.setState(st => ({ promo: { ...st.promo, [id]: v } })); } })),
+      revenue
+    };
+  }
+}
+</script>
+</body>
+</html>

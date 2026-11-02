@@ -1,0 +1,232 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+  <link rel="stylesheet" href="_ds/design-system-b66810d8-d429-49ea-bb35-5b22a7aa4f3a/tokens/webfonts.css">
+  <link rel="stylesheet" href="_ds/design-system-b66810d8-d429-49ea-bb35-5b22a7aa4f3a/tokens/tokens.css">
+  <link rel="stylesheet" href="_ds/design-system-b66810d8-d429-49ea-bb35-5b22a7aa4f3a/tokens/page.css">
+  <link rel="stylesheet" href="_ds/design-system-b66810d8-d429-49ea-bb35-5b22a7aa4f3a/tokens/components.css">
+  <link rel="stylesheet" href="_ds/design-system-b66810d8-d429-49ea-bb35-5b22a7aa4f3a/tokens/forms.css">
+  <link rel="stylesheet" href="ym-compat.css">
+  <script src="_ds/design-system-b66810d8-d429-49ea-bb35-5b22a7aa4f3a/_ds_bundle.js"></script>
+  <script src="plain-language.js"></script>
+  <style>
+    /* Hallmark · page: sell form · theme: ЯМузыкант DS tokens · pre-emit critique: P4 H4 E4 S4 R4 V4 */
+    html, body { margin: 0; background: var(--surface); color: var(--ink); overflow-x: clip; }
+    a { color: var(--lad); text-decoration: none; }
+    a:not([class*="lm-"]):hover { color: var(--lad-strong); text-decoration: underline; }
+  </style>
+</helmet>
+<div class="lm-root" data-screen-label="Десктоп — Продать инструмент" style="min-height: 100vh; background: var(--surface); font-family: var(--font-text);">
+  <dc-import name="Шапка" active="none" messages="{{ 3 }}" hint-size="100%,117px"></dc-import>
+
+  <main style="max-width: var(--content-max); margin: 0 auto; padding: var(--space-6) var(--space-10) 0; box-sizing: border-box;">
+    <nav aria-label="Хлебные крошки" style="display: flex; align-items: center; gap: var(--space-2); flex-wrap: wrap; margin-bottom: var(--space-4);">
+      <a href="Десктоп - Главная.dc.html" class="body-s" style="color: var(--ink-muted); min-height: 32px; display: flex; align-items: center; white-space: nowrap;">Главная</a>
+      <span aria-hidden="true" style="color: var(--ink-faint); display: flex;"><x-import component-from-global-scope="DesignSystem_b66810.Icon" name="chevron-right" size="{{ 14 }}" hint-size="14px,14px"></x-import></span>
+      <span class="body-s" aria-current="page" style="color: var(--ink); white-space: nowrap;">Продать инструмент</span>
+    </nav>
+
+    <div style="display: flex; flex-direction: column; gap: var(--space-2); margin-bottom: var(--space-8);">
+      <h1 class="h1 lm-title" style="margin: 0;">Продать инструмент</h1>
+      <p class="body-s" style="margin: 0; color: var(--ink-muted);">Четыре шага. Покупатели напишут вам в сообщения на ЯМузыканте.</p>
+    </div>
+
+    <sc-if value="{{ published }}" hint-placeholder-val="{{ false }}">
+      <section style="display: flex; flex-direction: column; align-items: flex-start; gap: var(--space-4); max-width: 720px; padding: var(--space-8); border-radius: var(--radius-lg); background: var(--lad-soft);">
+        <span style="width: 64px; height: 64px; border-radius: var(--radius-full); background: var(--surface-raised); color: var(--lad); display: flex; align-items: center; justify-content: center;">
+          <x-import component-from-global-scope="DesignSystem_b66810.Icon" name="circle-check" size="{{ 32 }}" hint-size="32px,32px"></x-import>
+        </span>
+        <h2 class="h2" style="margin: 0;">Лот отправлен на проверку</h2>
+        <p class="body" style="margin: 0; text-wrap: pretty;">Модератор посмотрит фото и описание — обычно это занимает до часа. Когда лот появится на Барахолке, пришлём уведомление.</p>
+        <div style="display: flex; flex-wrap: wrap; gap: var(--space-3);">
+          <x-import component-from-global-scope="DesignSystem_b66810.Button" variant="primary" href="Десктоп - Лот.dc.html" hint-size="160px,48px">Открыть лот</x-import>
+          <x-import component-from-global-scope="DesignSystem_b66810.Button" variant="outline" onClick="{{ again }}" hint-size="200px,48px">Продать ещё один</x-import>
+        </div>
+      </section>
+    </sc-if>
+
+    <sc-if value="{{ editing }}" hint-placeholder-val="{{ true }}">
+      <div style="display: grid; grid-template-columns: minmax(0, 1fr) minmax(300px, 360px); gap: var(--space-10); align-items: start;">
+        <form onSubmit="{{ publish }}" style="display: flex; flex-direction: column; gap: var(--space-10); min-width: 0;">
+
+          <section aria-labelledby="s1" style="display: flex; flex-direction: column; gap: var(--space-5);">
+            <div style="display: flex; flex-direction: column; gap: var(--space-1);">
+              <span class="label" style="color: var(--ink-muted);">Шаг 1 из 4</span>
+              <h2 id="s1" class="h3" style="margin: 0;">Что продаёте</h2>
+            </div>
+            <div role="radiogroup" aria-label="Вид инструмента" style="display: flex; flex-wrap: wrap; gap: var(--space-2);">
+              <sc-for list="{{ kinds }}" as="k" hint-placeholder-count="8">
+                <x-import component-from-global-scope="DesignSystem_b66810.FilterChip" radio="{{ true }}" selected="{{ k.on }}" icon="{{ k.icon }}" onChange="{{ k.pick }}" hint-size="120px,40px">{{ k.label }}</x-import>
+              </sc-for>
+            </div>
+            <x-import component-from-global-scope="DesignSystem_b66810.Field" id="f-title" label="Бренд и модель" placeholder="Например, Fender American Vintage ’57 Stratocaster" hint="Как пишет производитель, латиницей" value="{{ title }}" onChange="{{ onTitle }}" hint-size="100%,96px"></x-import>
+            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 200px), 1fr)); gap: var(--space-4);">
+              <x-import component-from-global-scope="DesignSystem_b66810.Field" id="f-year" label="Год выпуска" placeholder="2009" inputMode="numeric" value="{{ year }}" onChange="{{ onYear }}" hint-size="100%,96px"></x-import>
+              <x-import component-from-global-scope="DesignSystem_b66810.Field" id="f-serial" label="Серийный номер" placeholder="V091187" hint="Покупатели не увидят его целиком" value="{{ serial }}" onChange="{{ onSerial }}" hint-size="100%,96px"></x-import>
+            </div>
+          </section>
+
+          <section aria-labelledby="s2" style="display: flex; flex-direction: column; gap: var(--space-5);">
+            <div style="display: flex; flex-direction: column; gap: var(--space-1);">
+              <span class="label" style="color: var(--ink-muted);">Шаг 2 из 4</span>
+              <h2 id="s2" class="h3" style="margin: 0;">Фото</h2>
+              <p class="body-s" style="margin: 0; color: var(--ink-muted);">Минимум 3 фото при дневном свете. Фото серийного номера обязательно.</p>
+            </div>
+            <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(140px, 1fr)); gap: var(--space-3);">
+              <sc-for list="{{ photos }}" as="p" hint-placeholder-count="6">
+                <button type="button" aria-label="{{ p.aria }}" onClick="{{ p.toggle }}" style="{{ p.style }}" style-hover="border-color: var(--lad);">
+                  <x-import component-from-global-scope="DesignSystem_b66810.Icon" name="{{ p.icon }}" size="{{ 28 }}" hint-size="28px,28px"></x-import>
+                  <span class="body-s" style="font-weight: 500; text-align: center;">{{ p.label }}</span>
+                  <sc-if value="{{ p.required }}" hint-placeholder-val="{{ false }}">
+                    <span class="caption" style="color: var(--copper-strong);">обязательно</span>
+                  </sc-if>
+                </button>
+              </sc-for>
+            </div>
+          </section>
+
+          <section aria-labelledby="s3" style="display: flex; flex-direction: column; gap: var(--space-5);">
+            <div style="display: flex; flex-direction: column; gap: var(--space-1);">
+              <span class="label" style="color: var(--ink-muted);">Шаг 3 из 4</span>
+              <h2 id="s3" class="h3" style="margin: 0;">Состояние и описание</h2>
+            </div>
+            <div role="radiogroup" aria-label="Состояние" style="display: flex; flex-wrap: wrap; gap: var(--space-2);">
+              <sc-for list="{{ conds }}" as="c" hint-placeholder-count="8">
+                <x-import component-from-global-scope="DesignSystem_b66810.FilterChip" radio="{{ true }}" selected="{{ c.on }}" onChange="{{ c.pick }}" hint-size="120px,40px">{{ c.label }}</x-import>
+              </sc-for>
+            </div>
+            <p class="body-s" style="margin: 0; color: var(--ink-muted);">{{ condHint }}</p>
+            <div style="display: flex; flex-direction: column; gap: var(--space-2);">
+              <label for="f-desc" class="label" style="font-weight: 600;">Описание</label>
+              <textarea id="f-desc" rows="5" value="{{ desc }}" onInput="{{ onDesc }}" onChange="{{ onDesc }}" placeholder="Что ремонтировали, что в комплекте, есть ли сколы и потёртости" style="width: 100%; box-sizing: border-box; padding: var(--space-3) var(--space-4); border: 1px solid var(--line-control); border-radius: var(--radius-sm); background: var(--surface-raised); color: var(--ink); font: 400 var(--text-m)/24px var(--font-text); resize: vertical;"></textarea>
+            </div>
+          </section>
+
+          <section aria-labelledby="s4" style="display: flex; flex-direction: column; gap: var(--space-5);">
+            <div style="display: flex; flex-direction: column; gap: var(--space-1);">
+              <span class="label" style="color: var(--ink-muted);">Шаг 4 из 4</span>
+              <h2 id="s4" class="h3" style="margin: 0;">Цена и получение</h2>
+            </div>
+            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 260px), 1fr)); gap: var(--space-6); align-items: start;">
+              <div style="display: flex; flex-direction: column; gap: var(--space-3);">
+                <x-import component-from-global-scope="DesignSystem_b66810.Field" id="f-price" label="Цена" suffix="₽" inputMode="numeric" placeholder="184 500" value="{{ priceText }}" onChange="{{ onPrice }}" hint-size="100%,96px"></x-import>
+                <x-import component-from-global-scope="DesignSystem_b66810.FilterChip" selected="{{ haggle }}" icon="handshake" onChange="{{ toggleHaggle }}" hint-size="180px,40px">Готов к торгу</x-import>
+              </div>
+              <sc-if value="{{ showGuide }}" hint-placeholder-val="{{ false }}">
+                <x-import component-from-global-scope="DesignSystem_b66810.PriceGuide" low="{{ 168000 }}" high="{{ 196000 }}" price="{{ price }}" basis="по 41 продаже за 12 месяцев" hint-size="100%,150px"></x-import>
+              </sc-if>
+            </div>
+            <fieldset style="border: 0; margin: 0; padding: 0; display: flex; flex-direction: column; gap: var(--space-3);">
+              <legend class="label" style="padding: 0; margin-bottom: var(--space-3); font-weight: 600;">Как передадите</legend>
+              <div style="display: flex; flex-wrap: wrap; gap: var(--space-2);">
+                <sc-for list="{{ handover }}" as="h" hint-placeholder-count="2">
+                  <x-import component-from-global-scope="DesignSystem_b66810.FilterChip" selected="{{ h.on }}" icon="{{ h.icon }}" onChange="{{ h.toggle }}" hint-size="220px,40px">{{ h.label }}</x-import>
+                </sc-for>
+              </div>
+            </fieldset>
+          </section>
+
+          <div style="display: flex; flex-direction: column; gap: var(--space-3); padding-top: var(--space-6); border-top: 1px solid var(--line);">
+            <sc-if value="{{ hasMissing }}" hint-placeholder-val="{{ true }}">
+              <p class="body-s" style="margin: 0; color: var(--ink-muted);">{{ missingText }}</p>
+            </sc-if>
+            <div style="display: flex; flex-wrap: wrap; gap: var(--space-3);">
+              <x-import component-from-global-scope="DesignSystem_b66810.Button" variant="primary" size="l" type="submit" disabled="{{ cantPublish }}" hint-size="220px,56px">Опубликовать</x-import>
+              <x-import component-from-global-scope="DesignSystem_b66810.Button" variant="ghost" size="l" hint-size="220px,56px">Сохранить черновик</x-import>
+            </div>
+          </div>
+        </form>
+
+        <aside style="display: flex; flex-direction: column; gap: var(--space-4); position: sticky; top: var(--space-4);">
+          <h2 class="label" style="margin: 0; font-weight: 600; color: var(--ink-muted);">Так лот увидят покупатели</h2>
+          <div style="max-width: 280px;">
+            <x-import component-from-global-scope="DesignSystem_b66810.ListingCard" dc-props="{{ preview }}" hint-size="100%,380px"></x-import>
+          </div>
+          <x-import component-from-global-scope="DesignSystem_b66810.Alert" tone="copper" icon="wrench" title="Проверка мастером" hint-size="100%,96px">Лоты с отчётом мастера продаются быстрее. Закажете после публикации.</x-import>
+        </aside>
+      </div>
+    </sc-if>
+  </main>
+
+  <div style="margin-top: var(--space-16);">
+    <dc-import name="Подвал" hint-size="100%,420px"></dc-import>
+  </div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props="{}">
+const KINDS = [['Гитары', 'guitar'], ['Педали и усилители', 'cable'], ['Клавишные', 'piano'], ['Студия и запись', 'mic'], ['Ударные', 'drum'], ['Духовые', 'mic'], ['Смычковые', 'guitar'], ['DJ', 'headphones']];
+const CONDS = [
+  ['new', 'Новое', 'Не играли, в заводской упаковке.'],
+  ['mint', 'Как новое', 'Играли, но следов нет.'],
+  ['excellent', 'Отличное', 'Мелкие следы, заметные только вблизи.'],
+  ['very-good', 'Очень хорошее', 'Небольшие потёртости, всё работает.'],
+  ['good', 'Хорошее', 'Заметные следы игры, всё работает.'],
+  ['fair', 'Удовлетворительное', 'Сильный износ, может понадобиться ремонт.'],
+  ['poor', 'Плохое', 'Нужен ремонт.'],
+  ['parts', 'На запчасти', 'Не работает или не комплектный.']
+];
+const SLOTS = [['scan-barcode', 'Серийный номер', true], ['guitar', 'Общий вид'], ['camera', 'Корпус крупно'], ['camera', 'Гриф и лады'], ['camera', 'Электроника'], ['package', 'Кейс и комплект']];
+const fmt = n => n.toLocaleString('ru-RU');
+
+class Component extends DCLogic {
+  state = { kind: 'Гитары', title: '', year: '', serial: '', photos: {}, cond: null, desc: '', price: '', haggle: true, meet: true, ship: true, published: false };
+  set = k => e => { const v = e && e.target ? e.target.value : e; this.setState({ [k]: v }); };
+  renderVals() {
+    const s = this.state;
+    const nPhotos = Object.values(s.photos).filter(Boolean).length;
+    const price = parseInt(String(s.price).replace(/\D/g, ''), 10) || 0;
+    const missing = [];
+    if (!s.title.trim()) missing.push('модель');
+    if (nPhotos < 3) missing.push('ещё ' + (3 - nPhotos) + ' фото');
+    if (!s.photos[0]) missing.push('фото серийного номера');
+    if (!s.cond) missing.push('состояние');
+    if (!price) missing.push('цену');
+    if (!s.meet && !s.ship) missing.push('способ передачи');
+    const tile = 'aspect-ratio: 1 / 1; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: var(--space-2); padding: var(--space-3); border-radius: var(--radius-md); cursor: pointer; font: inherit; box-sizing: border-box; ';
+    const cond = CONDS.find(c => c[0] === s.cond);
+    return {
+      published: s.published, editing: !s.published,
+      kinds: KINDS.map(([label, icon]) => ({ label, icon, on: s.kind === label, pick: () => this.setState({ kind: label }) })),
+      title: s.title, year: s.year, serial: s.serial, desc: s.desc, priceText: s.price,
+      onTitle: this.set('title'), onYear: this.set('year'), onSerial: this.set('serial'), onDesc: this.set('desc'),
+      onPrice: e => { const d = e.target.value.replace(/\D/g, ''); this.setState({ price: d ? fmt(parseInt(d, 10)) : '' }); },
+      photos: SLOTS.map(([icon, label, req], i) => {
+        const on = !!s.photos[i];
+        return {
+          icon: on ? 'circle-check' : icon, label: on ? label + ' · добавлено' : label, required: !!req && !on,
+          aria: (on ? 'Убрать фото: ' : 'Добавить фото: ') + label,
+          style: tile + (on ? 'background: var(--lad-soft); color: var(--lad-strong); border: 1px solid var(--lad);' : 'background: var(--surface-recessed); color: var(--ink-muted); border: 1px dashed var(--line-control);'),
+          toggle: () => this.setState(st => ({ photos: { ...st.photos, [i]: !st.photos[i] } }))
+        };
+      }),
+      conds: CONDS.map(([k, label]) => ({ label, on: s.cond === k, pick: () => this.setState({ cond: k }) })),
+      condHint: cond ? cond[2] : 'Выберите по шкале — покупатели сравнивают лоты по ней.',
+      price, showGuide: s.title.trim().length > 3,
+      haggle: s.haggle, toggleHaggle: () => this.setState(st => ({ haggle: !st.haggle })),
+      handover: [
+        { label: 'Встреча в Москве', icon: 'map-pin', on: s.meet, toggle: () => this.setState(st => ({ meet: !st.meet })) },
+        { label: 'Доставка в защитной упаковке', icon: 'truck', on: s.ship, toggle: () => this.setState(st => ({ ship: !st.ship })) }
+      ],
+      hasMissing: missing.length > 0,
+      missingText: 'Чтобы опубликовать, добавьте: ' + missing.join(', ') + '.',
+      cantPublish: missing.length > 0,
+      publish: e => { if (e && e.preventDefault) e.preventDefault(); if (!missing.length) { this.setState({ published: true }); window.scrollTo(0, 0); } },
+      again: () => this.setState({ title: '', year: '', serial: '', photos: {}, cond: null, desc: '', price: '', published: false }),
+      preview: {
+        id: 'preview', title: s.title.trim() || 'Бренд и модель', price: price || 0,
+        condition: s.cond || 'excellent', city: 'Москва', posted: 'только что',
+        shipping: s.ship ? 0 : undefined, icon: KINDS.find(k => k[0] === s.kind)[1], href: '#'
+      }
+    };
+  }
+}
+</script>
+</body>
+</html>

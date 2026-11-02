@@ -1,0 +1,18 @@
+<!-- @dsCard group="Торговля" viewport="1000x880" name="ListingCard" -->
+<!DOCTYPE html><html lang="ru"><head><meta charset="utf-8"><meta name="color-scheme" content="only light"><link rel="stylesheet" href="../../styles.css">
+<script src="https://unpkg.com/react@18.3.1/umd/react.development.js" integrity="sha384-hD6/rw4ppMLGNu3tX5cjIb+uRZ7UkRJ6BPkLpg4hAu/6onKUg4lLsHAs9EBPT82L" crossorigin="anonymous"></script>
+<script src="https://unpkg.com/react-dom@18.3.1/umd/react-dom.development.js" integrity="sha384-u6aeetuaXnQ38mYT8rp6sbXaQe3NL9t+IBXmnYxwkUI2Hw4bsp2Wvmx4yRQF1uAm" crossorigin="anonymous"></script>
+<script src="../../_ds_bundle.js"></script>
+<style>html,body{background:var(--surface)}body{padding:8px 16px}.c-h{font:600 12px/16px var(--font-text);color:var(--ink-faint);margin:16px 16px 0;text-transform:none}</style></head><body class="ym-root" data-theme="light"><div id="r12"></div><div class="c-h">ConditionMeter: как новое · отличное · очень хорошее · хорошее · удовлетворительное · плохое · на запчасти</div><div id="m1" style="display:flex;gap:20px;padding:8px 16px"></div>
+<script>
+var L = window.DesignSystem_b66810, h = React.createElement; L.icons = Object.keys(L.ICONS);
+function mount(id, f) { var el = document.getElementById(id); try { ReactDOM.createRoot(el).render(f()); } catch (e) { el.textContent = 'Ошибка примера: ' + e.message; } }
+mount('r12', function () { return h('div',{className:'ym-grid'},
+ h(L.ListingCard,{title:'Fender American Vintage ’57 Stratocaster 2009, Sunburst',price:184500,condition:'excellent',city:'Москва',shipping:0,inspected:true}),
+ h(L.ListingCard,{title:'Gibson Les Paul Studio 2014, Wine Red',price:149000,oldPrice:162000,condition:'very-good',city:'Санкт-Петербург',shipping:1200,favorite:true}),
+ h(L.ListingCard,{title:'Boss DS-1 Distortion, Made in Japan 1986',price:14500,city:'Екатеринбург',condition:'parts',rare:true,icon:'cable'}),
+ h(L.ListingCard,{title:'Roland Juno-106, 1984',price:189000,condition:'fair',city:'Новосибирск',inspected:true,safe:false,icon:'piano'}),
+ h(L.ListingCard,{title:'Yamaha Pacifica 112V, Sonic Blue',price:32990,condition:'new',partner:true,rating:4.8,reviews:1240,delivery:'Завтра'}),
+ h(L.ListingCard,{title:'Boss RC-30 Loop Station',price:12000,condition:'very-good',city:'Москва',distance:'1,8 км',posted:'2 ч назад',icon:'cable'})); });
+mount('m1', function () { return h(React.Fragment, null, ['mint','excellent','very-good','good','fair','poor','parts'].map(function (c) { return h(L.ConditionMeter, { key: c, condition: c }); })); });
+</script></body></html>

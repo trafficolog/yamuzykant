@@ -1,0 +1,249 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+  <link rel="stylesheet" href="_ds/design-system-b66810d8-d429-49ea-bb35-5b22a7aa4f3a/tokens/webfonts.css">
+  <link rel="stylesheet" href="_ds/design-system-b66810d8-d429-49ea-bb35-5b22a7aa4f3a/tokens/tokens.css">
+  <link rel="stylesheet" href="_ds/design-system-b66810d8-d429-49ea-bb35-5b22a7aa4f3a/tokens/page.css">
+  <link rel="stylesheet" href="_ds/design-system-b66810d8-d429-49ea-bb35-5b22a7aa4f3a/tokens/components.css">
+  <link rel="stylesheet" href="_ds/design-system-b66810d8-d429-49ea-bb35-5b22a7aa4f3a/tokens/forms.css">
+  <link rel="stylesheet" href="ym-compat.css">
+  <script src="_ds/design-system-b66810d8-d429-49ea-bb35-5b22a7aa4f3a/_ds_bundle.js"></script>
+  <script src="plain-language.js"></script>
+  <style>
+    /* Hallmark · page: staff console — users · theme: ЯМузыкант DS tokens · pre-emit critique: P4 H4 E4 S4 R4 V4 */
+    html, body { margin: 0; background: var(--surface); color: var(--ink); overflow-x: clip; }
+    a { color: var(--lad); text-decoration: none; }
+    a:not([class*="lm-"]):hover { color: var(--lad-strong); text-decoration: underline; }
+  </style>
+</helmet>
+<div class="lm-root" data-screen-label="Админ — Пользователи" style="min-height: 100vh; background: var(--surface); font-family: var(--font-text);">
+  <dc-import name="Админ - Шапка" role="{{ role }}" hint-size="100%,64px"></dc-import>
+  <div style="display: grid; grid-template-columns: minmax(200px, 240px) minmax(0, 1fr); min-height: calc(100vh - 65px);">
+    <dc-import name="Админ - Меню" active="users" role="{{ role }}" hint-size="100%,100%"></dc-import>
+
+    <div style="display: flex; flex-wrap: wrap; align-items: stretch; min-width: 0;">
+      <section aria-labelledby="u-h" style="flex: 1 1 280px; display: flex; flex-direction: column; gap: var(--space-4); padding: var(--space-5); min-width: 0; box-sizing: border-box;">
+        <div style="display: flex; align-items: baseline; justify-content: space-between; gap: var(--space-4); flex-wrap: wrap;">
+          <h1 id="u-h" class="h2" style="margin: 0;">Пользователи</h1>
+          <span class="body-s" style="color: var(--ink-muted);">{{ countLine }}</span>
+        </div>
+        <x-import component-from-global-scope="DesignSystem_b66810.Field" id="uq" label="Поиск" placeholder="Имя, телефон, ИНН или номер объявления" value="{{ q }}" onChange="{{ onQ }}" hint-size="100%,72px"></x-import>
+        <div role="radiogroup" aria-label="Фильтр" style="display: flex; flex-wrap: wrap; gap: var(--space-2);">
+          <sc-for list="{{ filters }}" as="f" hint-placeholder-count="6">
+            <x-import component-from-global-scope="DesignSystem_b66810.FilterChip" radio="{{ true }}" selected="{{ f.on }}" count="{{ f.count }}" onChange="{{ f.pick }}" hint-size="110px,40px">{{ f.label }}</x-import>
+          </sc-for>
+        </div>
+        <div role="list" style="display: flex; flex-direction: column; border-top: 1px solid var(--line);">
+          <sc-for list="{{ list }}" as="u" hint-placeholder-count="7">
+            <button type="button" role="listitem" aria-current="{{ u.current }}" onClick="{{ u.pick }}" style="{{ u.style }}" style-hover="background: var(--surface-recessed);">
+              <span aria-hidden="true" style="{{ u.avatar }}">{{ u.ini }}</span>
+              <span style="display: flex; flex-direction: column; gap: 2px; min-width: 0; text-align: left;">
+                <span class="body" style="font-weight: 600; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">{{ u.name }}</span>
+                <span class="body-s" style="color: var(--ink-muted); overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">{{ u.meta }}</span>
+                <span style="display: flex; gap: var(--space-1); flex-wrap: wrap;">
+                  <sc-for list="{{ u.badges }}" as="b" hint-placeholder-count="1">
+                    <x-import component-from-global-scope="DesignSystem_b66810.Badge" tone="{{ b.tone }}" hint-size="90px,24px">{{ b.label }}</x-import>
+                  </sc-for>
+                </span>
+              </span>
+            </button>
+          </sc-for>
+          <sc-if value="{{ listEmpty }}" hint-placeholder-val="{{ false }}">
+            <p class="body-s" style="margin: 0; padding: var(--space-6) 0; color: var(--ink-muted);">Никого не нашли. Проверьте номер телефона или ИНН.</p>
+          </sc-if>
+        </div>
+      </section>
+
+      <aside aria-labelledby="c-h" style="flex: 1.3 1 320px; max-width: 100%; min-width: 0; box-sizing: border-box; display: flex; flex-direction: column; gap: var(--space-5); padding: var(--space-5); border-left: 1px solid var(--line); background: var(--surface-raised);">
+        <div style="display: flex; gap: var(--space-4); align-items: flex-start;">
+          <span aria-hidden="true" style="{{ c.avatarL }}">{{ c.ini }}</span>
+          <div style="display: flex; flex-direction: column; gap: var(--space-1); min-width: 0;">
+            <span class="caption" style="font-family: var(--font-mono); color: var(--ink-muted);">ID {{ c.id }} · с {{ c.since }}</span>
+            <h2 id="c-h" class="h3" style="margin: 0; overflow-wrap: anywhere;">{{ c.name }}</h2>
+            <span class="body-s" style="color: var(--ink-muted);">{{ c.kind }} · {{ c.city }}</span>
+          </div>
+        </div>
+
+        <sc-if value="{{ c.isBlocked }}" hint-placeholder-val="{{ false }}">
+          <div role="status" style="display: flex; flex-direction: column; gap: var(--space-2); padding: var(--space-3) var(--space-4); border-radius: var(--radius-md); background: var(--danger-soft);">
+            <span class="body-s" style="font-weight: 600; color: var(--danger);">{{ c.blockTitle }}</span>
+            <span class="body-s">{{ c.blockText }}</span>
+            <div><x-import component-from-global-scope="DesignSystem_b66810.Button" variant="outline" size="s" onClick="{{ unblock }}" hint-size="140px,40px">Снять ограничение</x-import></div>
+          </div>
+        </sc-if>
+
+        <div style="display: flex; flex-wrap: wrap; gap: var(--space-2);">
+          <sc-for list="{{ c.roles }}" as="r" hint-placeholder-count="2">
+            <x-import component-from-global-scope="DesignSystem_b66810.Badge" tone="{{ r.tone }}" icon="{{ r.icon }}" hint-size="110px,24px">{{ r.label }}</x-import>
+          </sc-for>
+        </div>
+
+        <div style="display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: var(--space-2);">
+          <sc-for list="{{ c.stats }}" as="s" hint-placeholder-count="4">
+            <div style="display: flex; flex-direction: column; gap: 2px; padding: var(--space-3) var(--space-4); border-radius: var(--radius-md); background: var(--surface-recessed);">
+              <span class="caption" style="color: var(--ink-muted);">{{ s.k }}</span>
+              <span style="{{ s.style }}">{{ s.v }}</span>
+            </div>
+          </sc-for>
+        </div>
+
+        <div style="display: flex; flex-direction: column; border-top: 1px solid var(--line);">
+          <sc-for list="{{ c.checks }}" as="ch" hint-placeholder-count="3">
+            <span class="body-s" style="display: flex; align-items: center; justify-content: space-between; gap: var(--space-3); min-height: 40px; border-bottom: 1px solid var(--line);">
+              <span style="color: var(--ink-muted);">{{ ch.k }}</span>
+              <span style="{{ ch.style }}">{{ ch.v }}</span>
+            </span>
+          </sc-for>
+        </div>
+
+        <div role="tablist" aria-label="Разделы карточки" style="display: flex; gap: var(--space-5); border-bottom: 1px solid var(--line);">
+          <sc-for list="{{ tabs }}" as="t" hint-placeholder-count="3">
+            <button type="button" role="tab" aria-selected="{{ t.on }}" onClick="{{ t.pick }}" style="{{ t.style }}" style-hover="color: var(--ink);">{{ t.label }}</button>
+          </sc-for>
+        </div>
+        <div style="display: flex; flex-direction: column;">
+          <sc-for list="{{ rows }}" as="h" hint-placeholder-count="4">
+            <div style="display: grid; grid-template-columns: 64px minmax(0, 1fr); gap: var(--space-3); padding: var(--space-3) 0; border-bottom: 1px solid var(--line);">
+              <span class="caption" style="font-family: var(--font-mono); color: var(--ink-muted); padding-top: 2px;">{{ h.t }}</span>
+              <span style="display: flex; flex-direction: column; gap: 2px; min-width: 0;">
+                <span class="body-s" style="font-weight: 500;">{{ h.title }}</span>
+                <span class="caption" style="color: var(--ink-muted); text-wrap: pretty;">{{ h.sub }}</span>
+              </span>
+            </div>
+          </sc-for>
+          <sc-if value="{{ rowsEmpty }}" hint-placeholder-val="{{ false }}">
+            <p class="body-s" style="margin: 0; padding: var(--space-4) 0; color: var(--ink-muted);">Пусто.</p>
+          </sc-if>
+        </div>
+
+        <sc-if value="{{ c.canAct }}" hint-placeholder-val="{{ true }}">
+          <div style="display: flex; flex-direction: column; gap: var(--space-3); padding-top: var(--space-4); border-top: 1px solid var(--line);">
+            <h3 class="label" style="margin: 0; font-weight: 600;">Действия</h3>
+            <div role="radiogroup" aria-label="Мера" style="display: flex; flex-wrap: wrap; gap: var(--space-2);">
+              <sc-for list="{{ measures }}" as="m" hint-placeholder-count="3">
+                <x-import component-from-global-scope="DesignSystem_b66810.FilterChip" radio="{{ true }}" selected="{{ m.on }}" onChange="{{ m.pick }}" hint-size="140px,40px">{{ m.label }}</x-import>
+              </sc-for>
+            </div>
+            <sc-if value="{{ hasMeasure }}" hint-placeholder-val="{{ false }}">
+              <div style="display: flex; flex-direction: column; gap: var(--space-3);">
+                <span class="body-s" style="color: var(--ink-muted); text-wrap: pretty;">{{ measureHint }}</span>
+                <sc-if value="{{ needsTerm }}" hint-placeholder-val="{{ false }}">
+                  <div role="radiogroup" aria-label="Срок" style="display: flex; flex-wrap: wrap; gap: var(--space-2);">
+                    <sc-for list="{{ terms }}" as="tm" hint-placeholder-count="4">
+                      <x-import component-from-global-scope="DesignSystem_b66810.FilterChip" radio="{{ true }}" selected="{{ tm.on }}" onChange="{{ tm.pick }}" hint-size="90px,40px">{{ tm.label }}</x-import>
+                    </sc-for>
+                  </div>
+                </sc-if>
+                <label for="m-why" class="lm-sr">Причина</label>
+                <textarea id="m-why" rows="2" value="{{ why }}" onInput="{{ onWhy }}" onChange="{{ onWhy }}" placeholder="Причина — увидит пользователь и другие сотрудники" style="width: 100%; box-sizing: border-box; padding: var(--space-3) var(--space-4); border: 1px solid var(--line-control); border-radius: var(--radius-sm); background: var(--surface-raised); color: var(--ink); font: 400 var(--text-s)/22px var(--font-text); resize: vertical;"></textarea>
+                <x-import component-from-global-scope="DesignSystem_b66810.Button" variant="primary" block="{{ true }}" disabled="{{ cantApply }}" onClick="{{ apply }}" hint-size="100%,48px">{{ applyLabel }}</x-import>
+              </div>
+            </sc-if>
+            <x-import component-from-global-scope="DesignSystem_b66810.Button" variant="ghost" size="s" icon="message-circle" href="Админ - Обращения.dc.html" hint-size="200px,40px">Написать пользователю</x-import>
+          </div>
+        </sc-if>
+      </aside>
+    </div>
+  </div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props="{&quot;role&quot;:{&quot;editor&quot;:&quot;enum&quot;,&quot;options&quot;:[&quot;admin&quot;,&quot;support&quot;,&quot;partners&quot;],&quot;default&quot;:&quot;admin&quot;,&quot;tsType&quot;:&quot;'admin' | 'support' | 'partners'&quot;}}">
+const U = [
+  { id: '1048213', name: 'Сергей В.', ini: 'СВ', kind: 'Частное лицо', city: 'Москва', since: '4 окт 2026', phone: '+7 9•• •••-••-17', type: 'person', roles: ['seller'], lots: 3, sold: 0, rating: '—', reports: 2, status: 'review',
+    checks: [['Телефон', 'подтверждён', 'ok'], ['Почта', 'не указана', 'muted'], ['Устройств', '3 за 5 дней', 'bad']],
+    history: [['9 окт', 'Жалоба № 4127', 'Просит предоплату по ссылке · от Дмитрия М.'], ['8 окт', 'Объявление отклонено', 'ОБ-26-18187 · фото с другого сайта'], ['4 окт', 'Регистрация', 'по телефону']],
+    lotsList: [['8 окт', 'Gibson Les Paul Standard 2019', '189 000 ₽ · скрыто'], ['6 окт', 'Fender Telecaster 2020', '95 000 ₽ · на проверке'], ['5 окт', 'Marshall DSL40', '42 000 ₽ · опубликовано']],
+    tickets: [['9 окт', '№ 4127 · жалоба', 'Открыто · просрочено 2 ч']] },
+  { id: '1003317', name: 'ООО «Гитарный угол»', ini: 'ГУ', kind: 'Компания · ИНН 7709123456', city: 'Москва', since: '12 мар 2025', phone: '+7 495 •••-••-30', type: 'company', roles: ['buyer', 'shop'], lots: 47, sold: 212, rating: '4,9', reports: 0, status: 'ok',
+    checks: [['ИНН и ОГРН', 'проверены', 'ok'], ['Тариф', '«Бизнес» · до 1 ноя', 'ok'], ['Лимит', '47 из 50 объявлений', 'warn']],
+    history: [['8 окт', 'Обращение № 4126', 'Смена тарифа на «Про»'], ['1 окт', 'Продление тарифа', '«Бизнес» · 2 990 ₽'], ['12 мар 2025', 'Компания проверена', 'Денис Р.']],
+    lotsList: [['9 окт', 'Fender Player Telecaster, Butterscotch', '87 990 ₽ · опубликовано'], ['7 окт', 'Strymon Timeline', '38 500 ₽ · опубликовано']],
+    tickets: [['8 окт', '№ 4126 · вопрос', 'Открыто']] },
+  { id: '1012094', name: 'Алексей Воронцов', ini: 'АВ', kind: 'Частное лицо · мастер', city: 'Москва', since: '2 фев 2024', phone: '+7 9•• •••-••-82', type: 'master', roles: ['buyer', 'master'], lots: 0, sold: 0, rating: '4,9', reports: 0, status: 'ok',
+    checks: [['Телефон', 'подтверждён', 'ok'], ['Анкета мастера', 'проверена', 'ok'], ['Заказов за год', '73', 'muted']],
+    history: [['3 окт', 'Заказ ЛМ-26-00317', 'Перешлифовка ладов · 7 800 ₽'], ['2 фев 2024', 'Роль «Мастер» подтверждена', 'Денис Р.']], lotsList: [], tickets: [] },
+  { id: '1039876', name: 'Виктор Л.', ini: 'ВЛ', kind: 'Частное лицо', city: 'Самара', since: '11 авг 2026', phone: '+7 9•• •••-••-03', type: 'person', roles: ['buyer'], lots: 0, sold: 0, rating: '—', reports: 3, status: 'warned',
+    checks: [['Телефон', 'подтверждён', 'ok'], ['Предупреждений', '1', 'bad'], ['Последний вход', 'сегодня', 'muted']],
+    history: [['7 окт', 'Жалоба № 4122', 'Оскорбления в чате · от Олега Р.'], ['21 сент', 'Предупреждение', 'Грубость в переписке · Игорь П.']], lotsList: [], tickets: [['7 окт', '№ 4122 · жалоба', 'Открыто · просрочено 1 д']] },
+  { id: '1021560', name: 'Андрей К.', ini: 'АК', kind: 'Частное лицо', city: 'Москва', since: '19 янв 2025', phone: '+7 9•• •••-••-64', type: 'person', roles: ['buyer', 'seller'], lots: 2, sold: 9, rating: '5,0', reports: 0, status: 'ok',
+    checks: [['Телефон', 'подтверждён', 'ok'], ['Почта', 'подтверждена', 'ok'], ['Отзывы', '14 · 5,0', 'ok']],
+    history: [['9 сент', 'Объявление опубликовано', 'Fender American Vintage ’57 Stratocaster']], lotsList: [['9 сент', 'Fender American Vintage ’57 Stratocaster', '184 500 ₽ · опубликовано']], tickets: [] },
+  { id: '1050402', name: 'Мария Ш.', ini: 'МШ', kind: 'Частное лицо', city: 'Казань', since: '1 сент 2026', phone: '+7 9•• •••-••-29', type: 'person', roles: ['buyer', 'seller'], lots: 0, sold: 0, rating: '—', reports: 4, status: 'blocked', blockUntil: 'бессрочно', blockWhy: 'Мошенничество: предоплата по ссылке, 4 жалобы',
+    checks: [['Телефон', 'подтверждён', 'ok'], ['Блокировка', 'бессрочно', 'bad'], ['Связанные аккаунты', '2', 'bad']],
+    history: [['15 сент', 'Заблокирована', 'Мошенничество · Ольга Т.'], ['14 сент', 'Жалоба № 4058', 'Предоплата по ссылке']], lotsList: [['13 сент', 'Fender Jazz Bass 1978', '45 000 ₽ · снято']], tickets: [] }
+];
+const ROLE = { buyer: ['Покупатель', 'heart', 'neutral'], seller: ['Продавец', 'tag', 'nickel'], shop: ['Магазин', 'store', 'lad'], master: ['Мастер', 'wrench', 'copper'] };
+const FILTERS = [['all', 'Все'], ['person', 'Частные'], ['company', 'Компании'], ['master', 'Мастера'], ['reported', 'С жалобами'], ['blocked', 'Ограничены']];
+const MEASURES = [['warn', 'Предупредить'], ['limit', 'Запретить публикацию'], ['block', 'Заблокировать']];
+const TERMS = ['3 дня', '7 дней', '30 дней', 'бессрочно'];
+const avatarBg = t => t === 'company' ? 'var(--lad-soft); color: var(--lad-strong)' : t === 'master' ? 'var(--copper-soft); color: var(--copper-strong)' : 'var(--nickel-soft); color: var(--nickel)';
+class Component extends DCLogic {
+  state = { users: U, sel: '1048213', filter: 'all', q: '', tab: 'history', measure: null, term: '7 дней', why: '' };
+  upd(fn) { this.setState(s => ({ users: s.users.map(u => u.id === s.sel ? fn(u) : u) })); }
+  renderVals() {
+    const s = this.state;
+    const role = ['admin', 'support', 'partners'].includes(this.props.role) ? this.props.role : 'admin';
+    const q = s.q.trim().toLowerCase();
+    const match = (u, k) => k === 'all' || (k === 'reported' ? u.reports > 0 : k === 'blocked' ? (u.status === 'blocked' || u.status === 'limited') : u.type === k);
+    const qm = u => !q || (u.name + ' ' + u.id + ' ' + u.kind + ' ' + u.phone).toLowerCase().includes(q);
+    const vis = s.users.filter(u => match(u, s.filter) && qm(u));
+    const c = s.users.find(u => u.id === s.sel) || s.users[0];
+    const tone = v => v === 'ok' ? 'color: var(--lad-strong); font-weight: 500;' : v === 'bad' ? 'color: var(--danger); font-weight: 600;' : v === 'warn' ? 'color: var(--warning); font-weight: 600;' : 'color: var(--ink);';
+    const statusBadge = u => u.status === 'blocked' ? [{ label: 'Заблокирован', tone: 'danger' }] : u.status === 'limited' ? [{ label: 'Без публикации', tone: 'warning' }] : u.status === 'warned' ? [{ label: 'Предупреждён', tone: 'warning' }] : u.status === 'review' ? [{ label: 'На проверке', tone: 'warning' }] : u.reports ? [{ label: 'Жалоб: ' + u.reports, tone: 'warning' }] : [];
+    const tabRows = s.tab === 'lots' ? c.lotsList : s.tab === 'tickets' ? c.tickets : c.history;
+    const tabStyle = on => 'min-height: 44px; padding: 0; margin-bottom: -1px; background: none; border: 0; border-bottom: 2px solid ' + (on ? 'var(--lad)' : 'transparent') + '; color: ' + (on ? 'var(--ink)' : 'var(--ink-muted)') + '; font: ' + (on ? '600' : '500') + ' var(--text-s)/22px var(--font-text); cursor: pointer; white-space: nowrap;';
+    const restricted = c.status === 'blocked' || c.status === 'limited';
+    return {
+      role,
+      countLine: 'Найдено ' + vis.length + ' из 48 213',
+      q: s.q, onQ: e => this.setState({ q: e.target.value }),
+      filters: FILTERS.map(([k, label]) => ({ label, on: s.filter === k, count: s.users.filter(u => match(u, k)).length, pick: () => this.setState({ filter: k }) })),
+      list: vis.map(u => ({
+        name: u.name, ini: u.ini, meta: u.kind + ' · ' + u.city, badges: statusBadge(u),
+        current: u.id === c.id ? 'true' : undefined,
+        pick: () => this.setState({ sel: u.id, measure: null, why: '', tab: 'history' }),
+        avatar: 'flex: none; width: 40px; height: 40px; border-radius: var(--radius-full); display: flex; align-items: center; justify-content: center; font: 600 var(--text-xs)/1 var(--font-text); background: ' + avatarBg(u.type) + ';',
+        style: 'display: grid; grid-template-columns: 40px minmax(0, 1fr); gap: var(--space-3); align-items: center; width: 100%; padding: var(--space-3) var(--space-3); border: 0; border-bottom: 1px solid var(--line); border-left: 3px solid ' + (u.id === c.id ? 'var(--lad)' : 'transparent') + '; background: ' + (u.id === c.id ? 'var(--surface-recessed)' : 'transparent') + '; color: var(--ink); font: inherit; cursor: pointer; box-sizing: border-box;'
+      })),
+      listEmpty: vis.length === 0,
+      c: {
+        ...c,
+        avatarL: 'flex: none; width: 56px; height: 56px; border-radius: var(--radius-full); display: flex; align-items: center; justify-content: center; font: 600 var(--text-m)/1 var(--font-text); background: ' + avatarBg(c.type) + ';',
+        isBlocked: restricted,
+        blockTitle: c.status === 'blocked' ? 'Заблокирован · ' + (c.blockUntil || '') : 'Публикация запрещена · ' + (c.blockUntil || ''),
+        blockText: c.blockWhy || '',
+        roles: c.roles.map(r => ({ label: ROLE[r][0], icon: ROLE[r][1], tone: ROLE[r][2] })),
+        stats: [['Объявлений', String(c.lots)], ['Продано', String(c.sold)], ['Рейтинг', c.rating], ['Жалоб', String(c.reports)]].map(([k, v]) => ({ k, v, style: 'font: 600 var(--text-l)/1.2 var(--font-mono); font-variant-numeric: tabular-nums; ' + (k === 'Жалоб' && c.reports > 0 ? 'color: var(--danger);' : '') })),
+        checks: c.checks.map(([k, v, t]) => ({ k, v, style: tone(t) })),
+        canAct: !restricted
+      },
+      tabs: [['history', 'История'], ['lots', 'Объявления'], ['tickets', 'Обращения']].map(([k, label]) => ({ label, on: s.tab === k, style: tabStyle(s.tab === k), pick: () => this.setState({ tab: k }) })),
+      rows: tabRows.map(([t, title, sub]) => ({ t, title, sub })), rowsEmpty: tabRows.length === 0,
+      measures: MEASURES.map(([k, label]) => ({ label, on: s.measure === k, pick: () => this.setState({ measure: k }) })),
+      hasMeasure: !!s.measure, needsTerm: s.measure === 'limit' || s.measure === 'block',
+      measureHint: s.measure === 'warn' ? 'Пользователь получит предупреждение в чат поддержки. Объявления остаются.' : s.measure === 'limit' ? 'Объявления скроются, новые публиковать нельзя. Покупать и переписываться можно.' : s.measure === 'block' ? 'Вход закрыт, объявления сняты, переписка сохраняется для разбора споров.' : '',
+      terms: TERMS.map(t => ({ label: t, on: s.term === t, pick: () => this.setState({ term: t }) })),
+      why: s.why, onWhy: e => this.setState({ why: e.target.value }),
+      cantApply: s.why.trim().length < 5,
+      applyLabel: s.measure === 'warn' ? 'Отправить предупреждение' : s.measure === 'limit' ? 'Запретить публикацию' : 'Заблокировать',
+      apply: () => {
+        if (s.why.trim().length < 5) return;
+        const st = s.measure === 'warn' ? 'warned' : s.measure === 'limit' ? 'limited' : 'blocked';
+        const title = s.measure === 'warn' ? 'Предупреждение' : s.measure === 'limit' ? 'Публикация запрещена' : 'Заблокирован';
+        this.upd(u => ({ ...u, status: st, blockUntil: s.measure === 'warn' ? u.blockUntil : s.term, blockWhy: s.why.trim(), history: [['сейчас', title + (s.measure === 'warn' ? '' : ' · ' + s.term), s.why.trim() + ' · Ольга Т.']].concat(u.history) }));
+        this.setState({ measure: null, why: '', tab: 'history' });
+      },
+      unblock: () => this.upd(u => ({ ...u, status: 'ok', blockUntil: '', blockWhy: '', history: [['сейчас', 'Ограничение снято', 'Ольга Т.']].concat(u.history) }))
+    };
+  }
+}
+</script>
+</body>
+</html>

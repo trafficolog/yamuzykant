@@ -1,0 +1,171 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+  <link rel="stylesheet" href="_ds/design-system-b66810d8-d429-49ea-bb35-5b22a7aa4f3a/tokens/webfonts.css">
+  <link rel="stylesheet" href="_ds/design-system-b66810d8-d429-49ea-bb35-5b22a7aa4f3a/tokens/tokens.css">
+  <link rel="stylesheet" href="_ds/design-system-b66810d8-d429-49ea-bb35-5b22a7aa4f3a/tokens/page.css">
+  <link rel="stylesheet" href="_ds/design-system-b66810d8-d429-49ea-bb35-5b22a7aa4f3a/tokens/components.css">
+  <link rel="stylesheet" href="_ds/design-system-b66810d8-d429-49ea-bb35-5b22a7aa4f3a/tokens/forms.css">
+  <link rel="stylesheet" href="ym-compat.css">
+  <script src="_ds/design-system-b66810d8-d429-49ea-bb35-5b22a7aa4f3a/_ds_bundle.js"></script>
+  <script src="plain-language.js"></script>
+  <style>
+    /* Hallmark · page: accessories · theme: ЯМузыкант DS tokens · pre-emit critique: P4 H4 E4 S4 R4 V4 */
+    html, body { margin: 0; background: var(--surface); color: var(--ink); overflow-x: clip; }
+    a { color: var(--lad); text-decoration: none; }
+    a:not([class*="lm-"]):hover { color: var(--lad-strong); text-decoration: underline; }
+    [data-eq-card] .ym-acc { flex: 1; min-width: 0; width: 100%; box-sizing: border-box; }
+  </style>
+</helmet>
+<div class="lm-root" data-screen-label="Десктоп — Аксессуары" style="min-height: 100vh; background: var(--surface); font-family: var(--font-text);">
+  <dc-import name="Шапка" active="parts" cart="{{ cartCount }}" messages="{{ 3 }}" hint-size="100%,117px"></dc-import>
+
+  <main style="max-width: var(--content-max); margin: 0 auto; padding: var(--space-6) var(--space-10) 0; box-sizing: border-box;">
+    <nav aria-label="Хлебные крошки" style="display: flex; align-items: center; gap: var(--space-2); flex-wrap: wrap; margin-bottom: var(--space-4);">
+      <a href="Десктоп - Главная.dc.html" class="body-s" style="color: var(--ink-muted); min-height: 32px; display: flex; align-items: center; white-space: nowrap;">Главная</a>
+      <span aria-hidden="true" style="color: var(--ink-faint); display: flex;"><x-import component-from-global-scope="DesignSystem_b66810.Icon" name="chevron-right" size="{{ 14 }}" hint-size="14px,14px"></x-import></span>
+      <span class="body-s" aria-current="page" style="color: var(--ink); white-space: nowrap;">Аксессуары и запчасти</span>
+    </nav>
+
+    <div style="display: flex; flex-direction: column; gap: var(--space-2); margin-bottom: var(--space-6);">
+      <h1 class="h1 lm-title" style="margin: 0;">Аксессуары и запчасти</h1>
+      <p class="body-s" style="margin: 0; color: var(--ink-muted);">Выберите инструмент — покажем, что к нему подходит.</p>
+    </div>
+
+    <section aria-labelledby="my-h" style="display: flex; flex-direction: column; gap: var(--space-4); padding: var(--space-5) var(--space-6); border-radius: var(--radius-lg); background: var(--surface-recessed);">
+      <div style="display: flex; align-items: center; justify-content: space-between; gap: var(--space-4); flex-wrap: wrap;">
+        <h2 id="my-h" class="h4" style="margin: 0;">Мои инструменты</h2>
+        <x-import component-from-global-scope="DesignSystem_b66810.Button" variant="ghost" size="s" icon="plus" hint-size="200px,40px">Добавить инструмент</x-import>
+      </div>
+      <div role="radiogroup" aria-labelledby="my-h" style="display: grid; grid-template-columns: repeat(auto-fill, minmax(min(100%, 260px), 1fr)); gap: var(--space-3);">
+        <sc-for list="{{ gear }}" as="g" hint-placeholder-count="3">
+          <button type="button" role="radio" aria-checked="{{ g.checked }}" onClick="{{ g.pick }}" style="{{ g.style }}" style-hover="border-color: var(--lad);">
+            <span style="width: 48px; height: 48px; flex: none; border-radius: var(--radius-md); background: var(--surface-recessed); color: var(--ink-muted); display: flex; align-items: center; justify-content: center;">
+              <x-import component-from-global-scope="DesignSystem_b66810.Icon" name="{{ g.icon }}" size="{{ 24 }}" hint-size="24px,24px"></x-import>
+            </span>
+            <span style="display: flex; flex-direction: column; gap: 2px; min-width: 0; text-align: left;">
+              <span class="body" style="font-weight: 600; color: var(--ink); white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">{{ g.name }}</span>
+              <span class="body-s" style="color: var(--ink-muted); white-space: nowrap;">{{ g.meta }}</span>
+            </span>
+          </button>
+        </sc-for>
+      </div>
+    </section>
+
+    <section style="margin-top: var(--space-10); display: flex; flex-direction: column; gap: var(--space-6);">
+      <div style="display: flex; align-items: center; justify-content: space-between; gap: var(--space-4); flex-wrap: wrap;">
+        <div role="radiogroup" aria-label="Категория" style="display: flex; flex-wrap: wrap; gap: var(--space-2); min-width: 0;">
+          <sc-for list="{{ catChips }}" as="c" hint-placeholder-count="6">
+            <x-import component-from-global-scope="DesignSystem_b66810.FilterChip" radio="{{ true }}" selected="{{ c.on }}" count="{{ c.count }}" onChange="{{ c.pick }}" hint-size="120px,40px">{{ c.label }}</x-import>
+          </sc-for>
+        </div>
+        <x-import component-from-global-scope="DesignSystem_b66810.FilterChip" selected="{{ onlyFits }}" icon="badge-check" onChange="{{ toggleFits }}" hint-size="220px,40px">Только точно подходящие</x-import>
+      </div>
+
+      <div style="display: flex; align-items: baseline; justify-content: space-between; gap: var(--space-4); flex-wrap: wrap;">
+        <h2 class="h2 lm-title" style="margin: 0;">{{ listTitle }}</h2>
+        <span class="body-s" style="color: var(--ink-muted); font-variant-numeric: tabular-nums;">{{ found }}</span>
+      </div>
+
+      <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(min(100%, 300px), 1fr)); gap: var(--space-4) var(--space-6);">
+        <sc-for list="{{ items }}" as="it" hint-placeholder-count="9">
+          <div data-eq-card="" style="display: flex; min-width: 0;">
+            <x-import component-from-global-scope="DesignSystem_b66810.AccessoryCard" dc-props="{{ it }}" hint-size="100%,120px"></x-import>
+          </div>
+        </sc-for>
+      </div>
+
+      <sc-if value="{{ empty }}" hint-placeholder-val="{{ false }}">
+        <div style="display: flex; flex-direction: column; align-items: center; gap: var(--space-4); padding: var(--space-12) var(--space-6); text-align: center;">
+          <span style="width: 80px; height: 80px; border-radius: var(--radius-full); background: var(--surface-recessed); color: var(--ink-muted); display: flex; align-items: center; justify-content: center;">
+            <x-import component-from-global-scope="DesignSystem_b66810.Icon" name="cable" size="{{ 40 }}" hint-size="40px,40px"></x-import>
+          </span>
+          <p class="body" style="margin: 0; max-width: 360px; text-wrap: pretty;">Точно подходящих товаров здесь нет — есть те, где совместимость нужно уточнить.</p>
+          <x-import component-from-global-scope="DesignSystem_b66810.Button" variant="outline" size="s" onClick="{{ toggleFits }}" hint-size="180px,40px">Показать все товары</x-import>
+        </div>
+      </sc-if>
+
+      <sc-if value="{{ needsMaster }}" hint-placeholder-val="{{ false }}">
+        <div onClick="{{ goMasters }}">
+          <x-import component-from-global-scope="DesignSystem_b66810.Alert" tone="copper" icon="wrench" title="Нужна установка?" action="Найти мастера" hint-size="100%,96px">{{ masterText }}</x-import>
+        </div>
+      </sc-if>
+    </section>
+  </main>
+
+  <div style="margin-top: var(--space-16);">
+    <dc-import name="Подвал" hint-size="100%,260px"></dc-import>
+  </div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props="{}">
+const GEAR = [
+  { id: 'strat', name: 'Fender American Vintage ’57 Stratocaster', meta: 'Электрогитара · 2009', icon: 'guitar', short: 'Fender Stratocaster' },
+  { id: 'ds1', name: 'Boss DS-1 Distortion', meta: 'Педаль · 1986', icon: 'cable', short: 'Boss DS-1' },
+  { id: 'juno', name: 'Roland Juno-106', meta: 'Синтезатор · 1984', icon: 'piano', short: 'Roland Juno-106' }
+];
+const CATS = ['Струны', 'Чехлы и кейсы', 'Звукосниматели', 'Блоки питания', 'Кабели', 'Запчасти'];
+const ITEMS = [
+  ['strat', 'Струны', 'Ernie Ball Regular Slinky 10–46', 790, 'fits', 'cable'],
+  ['strat', 'Струны', "D'Addario EXL110, 3 комплекта", 2190, 'fits', 'cable'],
+  ['strat', 'Струны', 'Elixir Nanoweb 10–46', 1890, 'fits', 'cable'],
+  ['strat', 'Струны', 'Fender 250R 10–46', 690, 'fits', 'cable'],
+  ['strat', 'Чехлы и кейсы', 'Кейс Fender Classic Series Strat/Tele', 18900, 'fits', 'package'],
+  ['strat', 'Чехлы и кейсы', 'Чехол Fender Performance', 8990, 'fits', 'package'],
+  ['strat', 'Звукосниматели', 'Fender Pure Vintage ’57/’62, комплект', 22900, 'fits', 'cable'],
+  ['strat', 'Звукосниматели', 'Seymour Duncan SSL-1, комплект', 16900, 'check', 'cable'],
+  ['strat', 'Запчасти', 'Тремоло Fender American Vintage', 9800, 'fits', 'hammer'],
+  ['strat', 'Запчасти', 'Колки Kluson Vintage, 6 шт.', 6400, 'fits', 'hammer'],
+  ['strat', 'Запчасти', 'Порожек из кости, 42 мм', 1200, 'check', 'hammer'],
+  ['strat', 'Кабели', 'Кабель Fender Deluxe 3 м', 2490, 'fits', 'cable'],
+  ['ds1', 'Блоки питания', 'Boss PSA-230S, 9 В', 1990, 'fits', 'cable'],
+  ['ds1', 'Блоки питания', 'Truetone 1 Spot, 9 В', 2900, 'fits', 'cable'],
+  ['ds1', 'Кабели', 'Патч-кабели, 5 шт.', 1490, 'fits', 'cable'],
+  ['ds1', 'Запчасти', 'Футсвич 3PDT для true bypass', 690, 'check', 'hammer'],
+  ['juno', 'Чехлы и кейсы', 'Кейс для синтезатора 61 клавиша', 14900, 'fits', 'package'],
+  ['juno', 'Запчасти', 'Чип голоса 80017A, восстановленный', 5900, 'check', 'hammer'],
+  ['juno', 'Кабели', 'MIDI-кабель 3 м', 790, 'fits', 'cable'],
+  ['juno', 'Кабели', 'Сетевой кабель IEC', 490, 'fits', 'cable'],
+  ['juno', 'Запчасти', 'Кнопки панели, комплект 16 шт.', 2400, 'fits', 'hammer']
+].map(([gear, cat, title, price, fit, icon], i) => ({ id: 'a' + i, gear, cat, title, price, fit, icon }));
+const plural = (n, a, b, c) => { const m = n % 10, h = n % 100; return m === 1 && h !== 11 ? a : m >= 2 && m <= 4 && (h < 10 || h >= 20) ? b : c; };
+
+class Component extends DCLogic {
+  state = { gear: 'strat', cat: 'Струны', onlyFits: false, cart: {} };
+  renderVals() {
+    const { gear, cat, onlyFits, cart } = this.state;
+    const g = GEAR.find(x => x.id === gear);
+    const forGear = ITEMS.filter(x => x.gear === gear);
+    const card = 'display: flex; align-items: center; gap: var(--space-3); min-height: 72px; padding: var(--space-3); border-radius: var(--radius-md); cursor: pointer; font: inherit; box-sizing: border-box; background: var(--surface-raised); border: 2px solid ';
+    const cats = CATS.filter(c => forGear.some(x => x.cat === c));
+    const curCat = cats.includes(cat) ? cat : cats[0];
+    const pass = x => !onlyFits || x.fit === 'fits';
+    const items = forGear.filter(x => x.cat === curCat && pass(x)).map(x => ({
+      title: x.title, price: x.price, fit: x.fit, icon: x.icon, href: '#',
+      inCart: !!cart[x.id],
+      onAdd: next => this.setState(s => ({ cart: { ...s.cart, [x.id]: next } }))
+    }));
+    return {
+      gear: GEAR.map(x => ({ ...x, checked: x.id === gear ? 'true' : 'false', style: card + (x.id === gear ? 'var(--lad);' : 'var(--line);'), pick: () => this.setState({ gear: x.id }) })),
+      catChips: cats.map(c => ({ label: c, on: c === curCat, count: forGear.filter(x => x.cat === c && pass(x)).length, pick: () => this.setState({ cat: c }) })),
+      needsMaster: curCat === 'Звукосниматели' || curCat === 'Запчасти',
+      masterText: curCat === 'Звукосниматели' ? 'Мастер поставит звукосниматели и настроит инструмент под них.' : 'Мастер установит деталь и проверит, что всё работает.',
+      goMasters: e => { if (e && e.target && e.target.closest && e.target.closest('button')) location.href = 'Десктоп - Мастера.dc.html'; },
+      onlyFits, toggleFits: () => this.setState(s => ({ onlyFits: !s.onlyFits })),
+      items, empty: items.length === 0,
+      listTitle: curCat + ' для ' + g.short,
+      found: items.length + ' ' + plural(items.length, 'товар', 'товара', 'товаров'),
+      cartCount: 1 + Object.values(cart).filter(Boolean).length
+    };
+  }
+}
+</script>
+</body>
+</html>

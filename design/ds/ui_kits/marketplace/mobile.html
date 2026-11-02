@@ -1,0 +1,37 @@
+<!-- @dsCard group="Marketplace" viewport="390x844" name="Marketplace mobile" subtitle="Тот же кит на 390 px: шапка в две строки, 2 колонки лотов, нижнее меню" -->
+<!DOCTYPE html><html lang="ru" data-theme="light"><head><meta charset="utf-8"><meta name="color-scheme" content="only light"><meta name="viewport" content="width=device-width, initial-scale=1"><title>ЯМузыкант — маркетплейс</title>
+<link rel="stylesheet" href="../../styles.css"><link rel="stylesheet" href="kit.css">
+<script src="https://unpkg.com/react@18.3.1/umd/react.development.js" integrity="sha384-hD6/rw4ppMLGNu3tX5cjIb+uRZ7UkRJ6BPkLpg4hAu/6onKUg4lLsHAs9EBPT82L" crossorigin="anonymous"></script>
+<script src="https://unpkg.com/react-dom@18.3.1/umd/react-dom.development.js" integrity="sha384-u6aeetuaXnQ38mYT8rp6sbXaQe3NL9t+IBXmnYxwkUI2Hw4bsp2Wvmx4yRQF1uAm" crossorigin="anonymous"></script>
+<script src="https://unpkg.com/@babel/standalone@7.29.0/babel.min.js" integrity="sha384-m08KidiNqLdpJqLq95G/LEi8Qvjl/xUYll3QILypMoQ65QorJ9Lvtp2RXYGBFj1y" crossorigin="anonymous"></script>
+<script src="../../_ds_bundle.js"></script><script src="data.js"></script>
+<script type="text/babel" src="Shell.jsx"></script><script type="text/babel" src="Home.jsx"></script><script type="text/babel" src="Section.jsx"></script><script type="text/babel" src="Lot.jsx"></script><script type="text/babel" src="Model.jsx"></script><script type="text/babel" src="Masters.jsx"></script><script type="text/babel" src="Account.jsx"></script>
+</head><body class="ym-root"><div id="root"></div>
+<script type="text/babel">
+const { Header, IconButton } = window.DesignSystem_b66810;
+window.YaMusician = window.YaMusician || window.DesignSystem_b66810;
+function TabBar({ s, go, acc }) {
+  const items = [["home","layout-grid","Главная",() => go("home")],["search","search","Поиск",() => go("section")],["sell","plus","Продать",() => acc("selling")],["messages","message-circle","Сообщения",() => acc("messages")],["account","user","Профиль",() => acc("overview")]];
+  const cur = s === "account" ? "account" : s === "home" ? "home" : "search";
+  return <nav className="k-tabbar" aria-label="Нижнее меню">{items.map(([k, ic, l, f]) => <div key={k} className="k-tabbar__i" aria-current={k === cur ? "page" : undefined}><IconButton icon={ic} label={l} count={k === "messages" ? 3 : undefined} onClick={f} /></div>)}</nav>;
+}
+const DIR = { home:"catalog", section:"catalog", flea:"flea", lot:"flea", model:"catalog", masters:"masters", account:"none" };
+function App() {
+  const [s, setS] = React.useState(() => localStorage.getItem("ym-kit-screen") || "home");
+  const go = n => { setS(n); localStorage.setItem("ym-kit-screen", n); window.scrollTo(0, 0); };
+  const [tab, setTab] = React.useState("overview");
+  const acc = t => { setTab(t); go("account"); };
+  const onNav = e => { const b = e.target.closest("button"); if (b && e.currentTarget.contains(b)) { const l = (b.getAttribute("aria-label") || b.textContent).trim();
+      const m = { "Войти":"overview", "Избранное":"overview", "Продать гир":"selling" }; const k = Object.keys(m).find(x => l.startsWith(x)) || (l.startsWith("Сообщения") ? "messages" : l.startsWith("Корзина") ? "buying" : null); if (k) { e.preventDefault(); acc(m[k] || k); } return; }
+    const a = e.target.closest("a"); if (!a || !e.currentTarget.contains(a)) return; e.preventDefault();
+    const t = a.textContent.trim(); const map = { "Каталог":"section", "Барахолка":"flea", "Мастера":"masters", "Аксессуары":"model", "Цены на б/у":"model", "ЯМузыкант":"home", "Гитары":"section" }; go(map[t] || (a.classList.contains("ym-wordmark") ? "home" : "section")); };
+  const screens = { home: <HomeScreen go={go} />, section: <SectionScreen go={go} view="catalog" />, flea: <SectionScreen key="flea" go={go} view="flea" />, lot: <LotScreen go={go} />, model: <ModelScreen go={go} />, masters: <MastersScreen go={go} />, account: <AccountScreen go={go} tab={tab} setTab={setTab} /> };
+  return <>
+    <div onClickCapture={onNav}><Header active={DIR[s]} cart={1} messages={3} /></div>
+    <main data-screen-label={s}>{screens[s] || screens.home}</main>
+    <KitFooter />
+    <TabBar s={s} go={go} acc={acc} />
+  </>;
+}
+ReactDOM.createRoot(document.getElementById("root")).render(<App />);
+</script></body></html>

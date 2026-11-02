@@ -1,0 +1,541 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+  <link rel="stylesheet" href="_ds/design-system-b66810d8-d429-49ea-bb35-5b22a7aa4f3a/tokens/webfonts.css">
+  <link rel="stylesheet" href="_ds/design-system-b66810d8-d429-49ea-bb35-5b22a7aa4f3a/tokens/tokens.css">
+  <link rel="stylesheet" href="_ds/design-system-b66810d8-d429-49ea-bb35-5b22a7aa4f3a/tokens/page.css">
+  <link rel="stylesheet" href="_ds/design-system-b66810d8-d429-49ea-bb35-5b22a7aa4f3a/tokens/components.css">
+  <link rel="stylesheet" href="_ds/design-system-b66810d8-d429-49ea-bb35-5b22a7aa4f3a/tokens/forms.css">
+  <link rel="stylesheet" href="ym-compat.css">
+  <script src="_ds/design-system-b66810d8-d429-49ea-bb35-5b22a7aa4f3a/_ds_bundle.js"></script>
+  <script src="plain-language.js"></script>
+  <style>
+    /* Hallmark · page: messages · theme: ЯМузыкант DS tokens · pre-emit critique: P4 H4 E4 S4 R4 V4 */
+    html, body { margin: 0; background: var(--surface); color: var(--ink); overflow-x: clip; }
+    a { color: var(--lad); text-decoration: none; }
+    a:not([class*="lm-"]):hover { color: var(--lad-strong); text-decoration: underline; }
+    [data-chat-list]::-webkit-scrollbar, [data-thread]::-webkit-scrollbar { width: 8px; }
+    [data-chat-list]::-webkit-scrollbar-thumb, [data-thread]::-webkit-scrollbar-thumb { background: var(--line-control); border-radius: 4px; }
+  </style>
+</helmet>
+<div class="lm-root" data-screen-label="Десктоп — Сообщения" style="background: var(--surface); font-family: var(--font-text);">
+  <div style="height: 100vh; min-height: 720px; display: flex; flex-direction: column;">
+  <dc-import name="Шапка" active="none" messages="{{ unreadTotal }}" hint-size="100%,117px"></dc-import>
+
+  <main style="flex: 1; width: 100%; max-width: var(--content-max); margin: 0 auto; padding: var(--space-6) var(--space-10); box-sizing: border-box; display: grid; grid-template-columns: minmax(320px, 400px) minmax(0, 1fr); grid-template-rows: minmax(0, 1fr); gap: var(--space-4); min-height: 0;">
+    <h1 class="lm-sr">Сообщения</h1>
+
+    <section aria-label="Список чатов" style="display: flex; flex-direction: column; min-height: 0; background: var(--surface-raised); border: 1px solid var(--line); border-radius: var(--radius-lg); overflow: hidden;">
+      <div style="display: flex; align-items: center; justify-content: space-between; gap: var(--space-3); padding: var(--space-4) var(--space-5) var(--space-3);">
+        <h2 class="h3" style="margin: 0;">Сообщения</h2>
+        <button type="button" onClick="{{ toggleSelect }}" class="label" style="border: 0; background: none; padding: 0 var(--space-2); margin-right: calc(-1 * var(--space-2)); min-height: 44px; color: var(--lad); cursor: pointer; white-space: nowrap;" style-hover="color: var(--lad-strong);">{{ selectLabel }}</button>
+      </div>
+
+      <sc-if value="{{ notSelecting }}" hint-placeholder-val="{{ true }}">
+        <div role="radiogroup" aria-label="Тип чатов" style="display: flex; gap: var(--space-2); padding: 0 var(--space-5) var(--space-3); overflow-x: auto; scrollbar-width: none;">
+          <sc-for list="{{ tabs }}" as="t" hint-placeholder-count="4">
+            <x-import component-from-global-scope="DesignSystem_b66810.FilterChip" radio="{{ true }}" selected="{{ t.on }}" count="{{ t.count }}" onChange="{{ t.pick }}" hint-size="96px,40px">{{ t.label }}</x-import>
+          </sc-for>
+        </div>
+      </sc-if>
+
+      <sc-if value="{{ selecting }}" hint-placeholder-val="{{ false }}">
+        <div style="display: flex; align-items: center; justify-content: space-between; gap: var(--space-3); padding: 0 var(--space-3) var(--space-2) var(--space-5); min-height: 52px; border-bottom: 1px solid var(--line);">
+          <label style="display: flex; align-items: center; gap: var(--space-3); min-height: 44px; cursor: pointer;">
+            <input type="checkbox" checked="{{ allChecked }}" onChange="{{ toggleAll }}" style="width: 20px; height: 20px; margin: 0; accent-color: var(--lad); cursor: pointer;">
+            <span class="body-s">{{ pickedLabel }}</span>
+          </label>
+          <div style="display: flex; align-items: center; gap: var(--space-1);">
+            <button type="button" aria-label="Отметить прочитанными" title="Отметить прочитанными" disabled="{{ noneChecked }}" onClick="{{ markRead }}" style="width: 44px; height: 44px; border: 0; border-radius: var(--radius-full); background: none; color: var(--ink); display: flex; align-items: center; justify-content: center; cursor: pointer; padding: 0;" style-hover="background: var(--surface-recessed);">
+              <x-import component-from-global-scope="DesignSystem_b66810.Icon" name="circle-check" size="{{ 20 }}" hint-size="20px,20px"></x-import>
+            </button>
+            <button type="button" aria-label="Удалить чаты" title="Удалить чаты" disabled="{{ noneChecked }}" onClick="{{ removeChecked }}" style="width: 44px; height: 44px; border: 0; border-radius: var(--radius-full); background: none; color: var(--danger); display: flex; align-items: center; justify-content: center; cursor: pointer; padding: 0;" style-hover="background: var(--surface-recessed);">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" aria-hidden="true" style="stroke-width: 2; stroke-linecap: round; stroke-linejoin: round;"><path d="M3 6h18"></path><path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6"></path><path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2"></path><path d="M10 11v6"></path><path d="M14 11v6"></path></svg>
+            </button>
+          </div>
+        </div>
+      </sc-if>
+
+      <div data-chat-list="" role="list" style="flex: 1; min-height: 0; overflow-y: auto; scrollbar-width: thin; scrollbar-color: var(--line-control) transparent; border-top: 1px solid var(--line);">
+        <sc-for list="{{ list }}" as="c" hint-placeholder-count="7">
+          <div role="listitem" style="display: flex; align-items: stretch;">
+            <sc-if value="{{ selecting }}" hint-placeholder-val="{{ false }}">
+              <label style="display: flex; align-items: center; padding-left: var(--space-5); cursor: pointer;" aria-label="{{ c.checkLabel }}">
+                <input type="checkbox" checked="{{ c.checked }}" onChange="{{ c.toggleCheck }}" style="width: 20px; height: 20px; margin: 0; accent-color: var(--lad); cursor: pointer;">
+              </label>
+            </sc-if>
+            <button type="button" aria-current="{{ c.current }}" onClick="{{ c.open }}" style="{{ c.rowStyle }}" style-hover="background: var(--surface-recessed);">
+              <span style="position: relative; width: 64px; height: 64px; flex: none;">
+                <span style="{{ c.thumbStyle }}">
+                  <sc-if value="{{ c.isBrand }}" hint-placeholder-val="{{ false }}">
+                    <svg width="32" height="32" viewBox="0 0 48 48" aria-hidden="true" style="display: block;"><path d="M24 6c10 0 17 5 17 12.5 0 3.4-1.1 6.8-2.9 10L9.6 12.2C12.3 8.4 17.6 6 24 6z" fill="var(--lad)"></path><path d="M8 15.6l28.6 16.5C33 37 28 40.4 24 42 17 38 7 29 7 18.5c0-1 .3-2 1-2.9z" fill="var(--copper)"></path></svg>
+                  </sc-if>
+                  <sc-if value="{{ c.notBrand }}" hint-placeholder-val="{{ true }}">
+                    <x-import component-from-global-scope="DesignSystem_b66810.Icon" name="{{ c.icon }}" size="{{ 28 }}" hint-size="28px,28px"></x-import>
+                  </sc-if>
+                </span>
+                <sc-if value="{{ c.hasRole }}" hint-placeholder-val="{{ true }}">
+                  <span title="{{ c.roleLabel }}" style="{{ c.roleStyle }}">
+                    <x-import component-from-global-scope="DesignSystem_b66810.Icon" name="{{ c.roleIcon }}" size="{{ 14 }}" hint-size="14px,14px"></x-import>
+                  </span>
+                </sc-if>
+              </span>
+              <span style="flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 2px; text-align: left; padding: var(--space-1) 0 var(--space-3); border-bottom: 1px solid var(--line);">
+                <span style="display: flex; align-items: baseline; gap: var(--space-2);">
+                  <span style="flex: 1; min-width: 0; display: flex; align-items: center; gap: var(--space-1);">
+                    <span class="body" style="font-weight: 600; color: var(--ink); white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">{{ c.name }}</span>
+                    <sc-if value="{{ c.verified }}" hint-placeholder-val="{{ false }}">
+                      <span title="Официальный аккаунт" style="color: var(--lad); display: flex; flex: none;"><x-import component-from-global-scope="DesignSystem_b66810.Icon" name="badge-check" size="{{ 16 }}" hint-size="16px,16px"></x-import></span>
+                    </sc-if>
+                  </span>
+                  <span class="caption" style="flex: none; color: var(--ink-muted); font-variant-numeric: tabular-nums;">{{ c.date }}</span>
+                </span>
+                <span class="body-s" style="color: var(--ink); white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">{{ c.subject }}</span>
+                <span style="display: flex; align-items: center; gap: var(--space-2);">
+                  <span class="body-s" style="flex: 1; min-width: 0; color: var(--ink-muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">{{ c.preview }}</span>
+                  <sc-if value="{{ c.hasUnread }}" hint-placeholder-val="{{ false }}">
+                    <span aria-label="{{ c.unreadLabel }}" style="flex: none; min-width: 20px; height: 20px; padding: 0 6px; box-sizing: border-box; border-radius: var(--radius-full); background: var(--lad); color: var(--on-lad); font: 600 var(--text-xs)/20px var(--font-text); text-align: center; font-variant-numeric: tabular-nums;">{{ c.unread }}</span>
+                  </sc-if>
+                  <sc-if value="{{ c.readByOther }}" hint-placeholder-val="{{ false }}">
+                    <span title="Прочитано" style="flex: none; color: var(--lad); display: flex;"><x-import component-from-global-scope="DesignSystem_b66810.Icon" name="check" size="{{ 16 }}" hint-size="16px,16px"></x-import></span>
+                  </sc-if>
+                </span>
+              </span>
+            </button>
+          </div>
+        </sc-for>
+        <sc-if value="{{ listEmpty }}" hint-placeholder-val="{{ false }}">
+          <p class="body-s" style="margin: 0; padding: var(--space-8) var(--space-5); color: var(--ink-muted); text-align: center;">Здесь пока нет чатов.</p>
+        </sc-if>
+      </div>
+    </section>
+
+    <section aria-label="Переписка" style="display: flex; flex-direction: column; min-height: 0; min-width: 0; background: var(--surface-raised); border: 1px solid var(--line); border-radius: var(--radius-lg); overflow: hidden;">
+      <sc-if value="{{ noChat }}" hint-placeholder-val="{{ false }}">
+        <div style="flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: var(--space-4); padding: var(--space-8); text-align: center;">
+          <span style="width: 80px; height: 80px; border-radius: var(--radius-full); background: var(--surface-recessed); color: var(--ink-muted); display: flex; align-items: center; justify-content: center;">
+            <x-import component-from-global-scope="DesignSystem_b66810.Icon" name="message-circle" size="{{ 40 }}" hint-size="40px,40px"></x-import>
+          </span>
+          <p class="body" style="margin: 0; max-width: 320px; text-wrap: pretty;">Выберите чат слева — там все ваши переписки с продавцами, мастерами и поддержкой.</p>
+        </div>
+      </sc-if>
+
+      <sc-if value="{{ hasChat }}" hint-placeholder-val="{{ true }}">
+        <header style="display: flex; align-items: center; gap: var(--space-3); padding: var(--space-3) var(--space-3) var(--space-3) var(--space-2); border-bottom: 1px solid var(--line);">
+          <button type="button" aria-label="Закрыть чат" onClick="{{ closeChat }}" style="width: 44px; height: 44px; flex: none; border: 0; border-radius: var(--radius-full); background: none; color: var(--ink); display: flex; align-items: center; justify-content: center; cursor: pointer; padding: 0;" style-hover="background: var(--surface-recessed);">
+            <span style="display: flex; transform: rotate(180deg);"><x-import component-from-global-scope="DesignSystem_b66810.Icon" name="chevron-right" size="{{ 20 }}" hint-size="20px,20px"></x-import></span>
+          </button>
+          <span style="{{ chat.avatarStyle }}">
+            <sc-if value="{{ chat.isBrand }}" hint-placeholder-val="{{ false }}">
+              <svg width="24" height="24" viewBox="0 0 48 48" aria-hidden="true" style="display: block;"><path d="M24 6c10 0 17 5 17 12.5 0 3.4-1.1 6.8-2.9 10L9.6 12.2C12.3 8.4 17.6 6 24 6z" fill="var(--lad)"></path><path d="M8 15.6l28.6 16.5C33 37 28 40.4 24 42 17 38 7 29 7 18.5c0-1 .3-2 1-2.9z" fill="var(--copper)"></path></svg>
+            </sc-if>
+            <sc-if value="{{ chat.notBrand }}" hint-placeholder-val="{{ true }}">{{ chat.initials }}</sc-if>
+          </span>
+          <div style="flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 2px;">
+            <span style="display: flex; align-items: center; gap: var(--space-1); min-width: 0;">
+              <span class="body" style="font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">{{ chat.name }}</span>
+              <sc-if value="{{ chat.verified }}" hint-placeholder-val="{{ false }}">
+                <span style="color: var(--lad); display: flex; flex: none;"><x-import component-from-global-scope="DesignSystem_b66810.Icon" name="badge-check" size="{{ 16 }}" hint-size="16px,16px"></x-import></span>
+              </sc-if>
+            </span>
+            <span class="body-s" style="color: var(--ink-muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">{{ chat.status }}</span>
+          </div>
+          <button type="button" aria-label="Действия с чатом" title="Пожаловаться, заблокировать, удалить" style="width: 44px; height: 44px; flex: none; border: 0; border-radius: var(--radius-full); background: none; color: var(--ink); display: flex; align-items: center; justify-content: center; cursor: pointer; padding: 0;" style-hover="background: var(--surface-recessed);">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" aria-hidden="true" style="stroke-width: 2; stroke-linecap: round; stroke-linejoin: round;"><circle cx="12" cy="5" r="1"></circle><circle cx="12" cy="12" r="1"></circle><circle cx="12" cy="19" r="1"></circle></svg>
+          </button>
+        </header>
+
+        <sc-if value="{{ chat.hasContext }}" hint-placeholder-val="{{ true }}">
+          <a href="{{ chat.ctx.href }}" style="display: flex; align-items: center; gap: var(--space-3); padding: var(--space-3) var(--space-5); border-bottom: 1px solid var(--line); color: var(--ink); text-decoration: none;" style-hover="background: var(--surface-recessed);">
+            <span style="width: 48px; height: 48px; flex: none; border-radius: var(--radius-sm); background: var(--surface-recessed); color: var(--ink-faint); display: flex; align-items: center; justify-content: center;">
+              <x-import component-from-global-scope="DesignSystem_b66810.Icon" name="{{ chat.ctx.icon }}" size="{{ 24 }}" hint-size="24px,24px"></x-import>
+            </span>
+            <span style="flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 2px;">
+              <span class="body" style="font-weight: 500; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">{{ chat.ctx.title }}</span>
+              <span class="body-s" style="color: var(--ink); font-weight: 600; font-variant-numeric: tabular-nums;">{{ chat.ctx.price }}</span>
+            </span>
+            <x-import component-from-global-scope="DesignSystem_b66810.Badge" tone="{{ chat.ctx.tone }}" hint-size="90px,24px">{{ chat.ctx.state }}</x-import>
+          </a>
+        </sc-if>
+
+        <div data-thread="" ref="{{ threadRef }}" aria-live="polite" style="flex: 1; min-height: 0; overflow-y: auto; scrollbar-width: thin; scrollbar-color: var(--line-control) transparent; padding: var(--space-5); display: flex; flex-direction: column; gap: var(--space-3); background: var(--surface);">
+          <sc-for list="{{ chat.items }}" as="m" hint-placeholder-count="5">
+            <sc-if value="{{ m.isDate }}" hint-placeholder-val="{{ false }}">
+              <div class="caption" style="align-self: center; padding: var(--space-2) 0; color: var(--ink-muted);">{{ m.text }}</div>
+            </sc-if>
+            <sc-if value="{{ m.isCard }}" hint-placeholder-val="{{ false }}">
+              <div style="align-self: flex-start; max-width: min(560px, 85%); display: flex; flex-direction: column; gap: var(--space-3); padding: var(--space-4); border-radius: var(--radius-md); background: var(--lad-soft);">
+                <div style="display: flex; flex-direction: column; gap: var(--space-1);">
+                  <p class="body" style="margin: 0; font-weight: 600; color: var(--ink);">{{ m.title }}</p>
+                  <p class="body-s" style="margin: 0; color: var(--ink); text-wrap: pretty;">{{ m.text }}</p>
+                </div>
+                <sc-if value="{{ m.action }}" hint-placeholder-val="{{ false }}">
+                  <a href="{{ m.href }}" class="label" style="display: flex; align-items: center; justify-content: center; min-height: 40px; padding: 0 var(--space-4); border: 1px solid var(--lad); border-radius: var(--radius-full); color: var(--lad-strong); background: var(--surface-raised); text-decoration: none; white-space: nowrap;" style-hover="background: var(--lad-soft);">{{ m.action }}</a>
+                </sc-if>
+              </div>
+            </sc-if>
+            <sc-if value="{{ m.isOffer }}" hint-placeholder-val="{{ false }}">
+              <div style="{{ m.boxStyle }}">
+                <div style="display: flex; align-items: center; justify-content: space-between; gap: var(--space-3);">
+                  <span class="body-s" style="display: flex; align-items: center; gap: var(--space-2); color: var(--ink-muted);"><x-import component-from-global-scope="DesignSystem_b66810.Icon" name="handshake" size="{{ 16 }}" hint-size="16px,16px"></x-import>{{ m.offerTitle }}</span>
+                  <x-import component-from-global-scope="DesignSystem_b66810.Badge" tone="{{ m.tone }}" hint-size="110px,24px">{{ m.statusText }}</x-import>
+                </div>
+                <span style="font: 600 var(--text-2xl)/1.2 var(--font-text); font-variant-numeric: tabular-nums; white-space: nowrap;">{{ m.amountText }}</span>
+                <span class="body-s" style="color: var(--ink-muted);">{{ m.listText }}</span>
+                <sc-if value="{{ m.hasNote }}" hint-placeholder-val="{{ false }}">
+                  <p class="body-s" style="margin: 0; white-space: pre-line;">{{ m.note }}</p>
+                </sc-if>
+                <sc-if value="{{ m.canAnswer }}" hint-placeholder-val="{{ false }}">
+                  <div style="display: flex; flex-wrap: wrap; gap: var(--space-2); padding-top: var(--space-1);">
+                    <x-import component-from-global-scope="DesignSystem_b66810.Button" variant="primary" size="s" onClick="{{ m.accept }}" hint-size="100px,40px">Принять</x-import>
+                    <x-import component-from-global-scope="DesignSystem_b66810.Button" variant="outline" size="s" onClick="{{ m.counter }}" hint-size="150px,40px">Предложить свою</x-import>
+                    <x-import component-from-global-scope="DesignSystem_b66810.Button" variant="ghost" size="s" onClick="{{ m.decline }}" hint-size="110px,40px">Отклонить</x-import>
+                  </div>
+                </sc-if>
+                <span class="caption" style="align-self: flex-end; color: var(--ink-muted); font-variant-numeric: tabular-nums;">{{ m.time }}</span>
+              </div>
+            </sc-if>
+            <sc-if value="{{ m.isIn }}" hint-placeholder-val="{{ false }}">
+              <div style="align-self: flex-start; max-width: min(560px, 75%); display: flex; flex-direction: column; gap: var(--space-1); padding: var(--space-2) var(--space-3); border-radius: var(--radius-md) var(--radius-md) var(--radius-md) var(--radius-xs); background: var(--surface-raised); border: 1px solid var(--line);">
+                <p class="body" style="margin: 0; white-space: pre-line; overflow-wrap: anywhere;">{{ m.text }}</p>
+                <span class="caption" style="align-self: flex-end; color: var(--ink-muted); font-variant-numeric: tabular-nums;">{{ m.time }}</span>
+              </div>
+            </sc-if>
+            <sc-if value="{{ m.isOut }}" hint-placeholder-val="{{ false }}">
+              <div style="align-self: flex-end; max-width: min(560px, 75%); display: flex; flex-direction: column; gap: var(--space-1); padding: var(--space-2) var(--space-3); border-radius: var(--radius-md) var(--radius-md) var(--radius-xs) var(--radius-md); background: var(--inverse); color: var(--on-inverse);">
+                <p class="body" style="margin: 0; white-space: pre-line; overflow-wrap: anywhere;">{{ m.text }}</p>
+                <span class="caption" style="align-self: flex-end; display: flex; align-items: center; gap: var(--space-1); color: var(--ink-muted); font-variant-numeric: tabular-nums;">{{ m.time }}<span style="{{ m.tickStyle }}" title="{{ m.tickLabel }}"><x-import component-from-global-scope="DesignSystem_b66810.Icon" name="check" size="{{ 14 }}" hint-size="14px,14px"></x-import></span></span>
+              </div>
+            </sc-if>
+          </sc-for>
+        </div>
+
+        <sc-if value="{{ chat.hasQuick }}" hint-placeholder-val="{{ false }}">
+          <div role="group" aria-label="Быстрые ответы" style="display: flex; gap: var(--space-2); padding: var(--space-3) var(--space-3) 0; overflow-x: auto; scrollbar-width: none; border-top: 1px solid var(--line);">
+            <sc-for list="{{ chat.quick }}" as="q" hint-placeholder-count="3">
+              <button type="button" onClick="{{ q.use }}" class="body-s" style="flex: none; min-height: 36px; padding: 0 var(--space-3); border: 1px solid var(--line-control); border-radius: var(--radius-full); background: var(--surface-raised); color: var(--ink); cursor: pointer; white-space: nowrap; font-weight: 500;" style-hover="border-color: var(--lad); color: var(--lad-strong);">{{ q.label }}</button>
+            </sc-for>
+          </div>
+        </sc-if>
+        <sc-if value="{{ chat.canReply }}" hint-placeholder-val="{{ true }}">
+          <form onSubmit="{{ send }}" style="display: flex; align-items: flex-end; gap: var(--space-2); padding: var(--space-3); border-top: 1px solid var(--line);">
+            <sc-if value="{{ chat.canOffer }}" hint-placeholder-val="{{ false }}">
+              <button type="button" aria-haspopup="dialog" onClick="{{ openOffer }}" class="label" style="flex: none; min-height: 44px; padding: 0 var(--space-4); border: 1px solid var(--line-control); border-radius: var(--radius-full); background: var(--surface-raised); color: var(--ink); cursor: pointer; white-space: nowrap; display: flex; align-items: center; gap: var(--space-2); font-weight: 500;" style-hover="border-color: var(--lad); color: var(--lad-strong);"><x-import component-from-global-scope="DesignSystem_b66810.Icon" name="handshake" size="{{ 18 }}" hint-size="18px,18px"></x-import>Предложить цену</button>
+            </sc-if>
+            <button type="button" aria-label="Прикрепить фото" title="Прикрепить фото" style="width: 44px; height: 44px; flex: none; border: 0; border-radius: var(--radius-full); background: none; color: var(--ink-muted); display: flex; align-items: center; justify-content: center; cursor: pointer; padding: 0;" style-hover="background: var(--surface-recessed); color: var(--ink);">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" aria-hidden="true" style="stroke-width: 2; stroke-linecap: round; stroke-linejoin: round;"><path d="m21.4 11.1-9.2 9.2a6 6 0 0 1-8.5-8.5l8.6-8.6a4 4 0 0 1 5.7 5.7l-8.6 8.6a2 2 0 0 1-2.8-2.8l8.5-8.5"></path></svg>
+            </button>
+            <label for="msg-input" class="lm-sr">Сообщение</label>
+            <textarea id="msg-input" rows="1" value="{{ draft }}" onInput="{{ onDraft }}" onChange="{{ onDraft }}" onKeyDown="{{ onKey }}" placeholder="Напишите сообщение" style="flex: 1; min-width: 0; min-height: 44px; max-height: 160px; resize: none; box-sizing: border-box; padding: 11px var(--space-4); border: 1px solid var(--line-control); border-radius: var(--radius-lg); background: var(--surface-raised); color: var(--ink); font: 400 var(--text-m)/22px var(--font-text);"></textarea>
+            <button type="submit" aria-label="Отправить" disabled="{{ cantSend }}" style="{{ sendStyle }}">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" aria-hidden="true" style="stroke-width: 2; stroke-linecap: round; stroke-linejoin: round;"><path d="M14.5 21.7a.5.5 0 0 0 .9 0L22 2.6a.5.5 0 0 0-.6-.6L2.3 8.6a.5.5 0 0 0 0 .9l8 3.2a2 2 0 0 1 1.1 1.1z"></path><path d="m21.9 2.1-10.9 11"></path></svg>
+            </button>
+          </form>
+        </sc-if>
+        <sc-if value="{{ chat.readOnly }}" hint-placeholder-val="{{ false }}">
+          <p class="body-s" style="margin: 0; padding: var(--space-4) var(--space-5); border-top: 1px solid var(--line); color: var(--ink-muted); text-align: center;">Это канал новостей ЯМузыканта — ответить здесь нельзя. Вопрос можно задать в чате поддержки.</p>
+        </sc-if>
+      </sc-if>
+    </section>
+  </main>
+  <sc-if value="{{ offerOpen }}" hint-placeholder-val="{{ false }}">
+    <div style="position: fixed; inset: 0; z-index: 100; display: flex; align-items: flex-start; justify-content: center; padding: var(--space-16) var(--space-4); box-sizing: border-box; overflow-y: auto;">
+      <div aria-hidden="true" onClick="{{ closeOffer }}" style="position: fixed; inset: 0; background: color-mix(in srgb, var(--ink) 40%, transparent);"></div>
+      <form role="dialog" aria-modal="true" aria-labelledby="offer-h" onSubmit="{{ sendOffer }}" style="position: relative; width: 100%; max-width: 460px; box-sizing: border-box; margin: 0; display: flex; flex-direction: column; gap: var(--space-5); padding: var(--space-6); background: var(--surface-raised); border-radius: var(--radius-xl); box-shadow: var(--shadow-3);">
+        <div style="display: flex; align-items: center; justify-content: space-between; gap: var(--space-3);">
+          <h2 id="offer-h" class="h3" style="margin: 0;">Предложить цену</h2>
+          <div style="margin-right: calc(-1 * var(--space-2));">
+            <x-import component-from-global-scope="DesignSystem_b66810.IconButton" icon="x" label="Закрыть" show-label="{{ false }}" onClick="{{ closeOffer }}" hint-size="44px,44px"></x-import>
+          </div>
+        </div>
+        <div style="display: flex; flex-direction: column; gap: 2px; padding: var(--space-3) var(--space-4); border-radius: var(--radius-md); background: var(--surface-recessed);">
+          <span class="body-s" style="font-weight: 500; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">{{ offerLot }}</span>
+          <span class="body-s" style="color: var(--ink-muted);">Цена в объявлении <span style="color: var(--ink); font-weight: 600; font-variant-numeric: tabular-nums;">{{ offerList }}</span></span>
+          <sc-if value="{{ hasGuide }}" hint-placeholder-val="{{ false }}">
+            <span class="caption" style="color: var(--ink-muted);">Обычно продают за {{ guide }} — <a href="Десктоп - Цены продаж.dc.html">по ценам продаж</a></span>
+          </sc-if>
+        </div>
+        <x-import component-from-global-scope="DesignSystem_b66810.Field" id="offer-amt" label="Ваша цена" suffix="₽" inputMode="numeric" value="{{ offerAmt }}" onChange="{{ onOfferAmt }}" hint-size="100%,72px"></x-import>
+        <div role="radiogroup" aria-label="Быстрый выбор скидки" style="display: flex; flex-wrap: wrap; gap: var(--space-2); margin-top: calc(-1 * var(--space-2));">
+          <sc-for list="{{ offerChips }}" as="c" hint-placeholder-count="3">
+            <x-import component-from-global-scope="DesignSystem_b66810.FilterChip" radio="{{ true }}" selected="{{ c.on }}" onChange="{{ c.pick }}" hint-size="140px,40px">{{ c.label }}</x-import>
+          </sc-for>
+        </div>
+        <p class="body-s" style="{{ offerHintStyle }}">{{ offerHint }}</p>
+        <div style="display: flex; flex-direction: column; gap: var(--space-2);">
+          <label for="offer-note" class="label" style="font-weight: 600;">Комментарий <span style="color: var(--ink-muted); font-weight: 400;">— необязательно</span></label>
+          <textarea id="offer-note" rows="2" value="{{ offerNote }}" onInput="{{ onOfferNote }}" onChange="{{ onOfferNote }}" placeholder="Например, заберу сегодня сам" style="width: 100%; box-sizing: border-box; padding: var(--space-3) var(--space-4); border: 1px solid var(--line-control); border-radius: var(--radius-sm); background: var(--surface-raised); color: var(--ink); font: 400 var(--text-m)/24px var(--font-text); resize: vertical;"></textarea>
+        </div>
+        <x-import component-from-global-scope="DesignSystem_b66810.Button" type="submit" variant="primary" block="{{ true }}" disabled="{{ cantOffer }}" hint-size="100%,48px">Отправить предложение</x-import>
+        <span class="caption" style="color: var(--ink-muted); text-align: center;">Продавец примет, отклонит или предложит свою цену — ответ придёт в этот чат.</span>
+      </form>
+    </div>
+  </sc-if>
+  </div>
+  <dc-import name="Подвал" hint-size="100%,260px"></dc-import>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props="{}">
+const LOT = 'Десктоп - Лот.dc.html';
+const SAFE = { kind: 'card', title: 'Общайтесь только здесь', text: 'Мошенники уводят в другие мессенджеры и присылают ссылки «для получения денег». Не переходите по ним, не сообщайте коды из СМС, данные карты и паспорта. Если что-то пошло не так, поддержка увидит переписку.', action: 'Как не потерять деньги', href: '#' };
+const CHATS = [
+  { id: 'news', role: 'brand', name: 'ЯМузыкант', verified: true, subject: 'Новости и советы', date: '23 сент', status: 'Официальный канал', readOnly: true, unread: 1,
+    items: [
+      { kind: 'date', text: '6 июля' },
+      { kind: 'card', title: 'Мастер ответил?', text: 'Вы писали мастеру на прошлой неделе. Если не договорились, посмотрите других мастеров рядом.', action: 'Мастера рядом', href: 'Десктоп - Мастера.dc.html' },
+      { kind: 'date', text: '23 сентября' },
+      { kind: 'card', title: 'Проверка перед покупкой', text: 'Мастер осмотрит инструмент до встречи с продавцом и сверит серийный номер. Стоимость — от 1 900 ₽.', action: 'Как это работает', href: '#' }
+    ] },
+  { id: 'lot', role: 'seller', name: 'Андрей К.', subject: 'Fender American Vintage ’57 Stratocaster', date: '9 сент', status: 'в сети 10 ч назад', unread: 1,
+    ctx: { icon: 'guitar', title: 'Fender American Vintage ’57 Stratocaster 2009', price: '184 500 ₽', state: 'Активно', tone: 'lad', href: LOT },
+    items: [
+      SAFE,
+      { kind: 'date', text: '8 сентября' },
+      { kind: 'out', text: 'Добрый вечер.\n1. Гриф шлифовали один раз — у какого мастера?\n2. Звукосниматели родные?\n3. Где в Москве можно посмотреть и попробовать?', time: '19:08', read: true },
+      { kind: 'date', text: '9 сентября' },
+      { kind: 'in', text: 'Здравствуйте. Шлифовали в «Лад и строй», чек есть. Звукосниматели родные. Можно посмотреть у Таганской в выходные.', time: '06:28' }
+    ] },
+  { id: 'master', role: 'master', name: 'Алексей Воронцов', subject: 'Перешлифовка ладов и настройка', date: '3 окт', status: 'Мастерская «Лад и строй» · обычно отвечает за час',
+    ctx: { icon: 'wrench', title: 'Заказ ЛМ-26-00317 · Gibson Les Paul Studio 2014', price: 'Смета 7 800 ₽', state: 'Ремонт', tone: 'copper', href: 'Десктоп - Мастера.dc.html' },
+    items: [
+      { kind: 'date', text: '3 октября' },
+      { kind: 'in', text: 'Посмотрел гитару. Лады с 1 по 7 стёрты, нужна перешлифовка и настройка. Смета — 7 800 ₽, срок до 8 октября.', time: '14:12' },
+      { kind: 'out', text: 'Согласен, делайте. Струны поставьте 10–46, пожалуйста.', time: '14:40', read: true },
+      { kind: 'in', text: 'Хорошо. Напишу, когда будет готово.', time: '14:41' }
+    ] },
+  { id: 'shop', role: 'shop', name: 'Гитарный угол', verified: true, subject: 'Fender Player Telecaster, новая', date: '2 сент', status: 'Магазин-партнёр · Москва',
+    ctx: { icon: 'guitar', title: 'Fender Player Telecaster, Butterscotch', price: '87 990 ₽', state: 'В наличии', tone: 'lad', href: 'Десктоп - Модель.dc.html' },
+    items: [
+      { kind: 'date', text: '2 сентября' },
+      { kind: 'out', text: 'Здравствуйте. Можно забрать сегодня после 19:00?', time: '12:03', read: true },
+      { kind: 'in', text: 'Да, магазин работает до 21:00. Отложили на ваше имя до завтра.', time: '12:10' }
+    ] },
+  { id: 'acc', role: 'shop', name: 'Струнная лавка', subject: "D'Addario EXL110, 3 комплекта", date: '28 авг', status: 'Магазин-партнёр · Санкт-Петербург',
+    ctx: { icon: 'cable', title: "D'Addario EXL110, 3 комплекта", price: '2 190 ₽', state: 'В наличии', tone: 'lad', href: 'Десктоп - Аксессуары.dc.html' },
+    items: [
+      { kind: 'date', text: '28 августа' },
+      { kind: 'out', text: 'Подойдут ли эти струны к Stratocaster с тремоло?', time: '10:20', read: true },
+      { kind: 'in', text: 'Подойдут, это стандартный калибр для Stratocaster.', time: '10:34' }
+    ] },
+  { id: 'sold', role: 'seller', name: 'Ирина С.', subject: 'Fender Player Stratocaster', date: '14 авг', status: 'в сети 3 дня назад',
+    ctx: { icon: 'guitar', title: 'Fender Player Stratocaster 2019', price: '64 500 ₽', state: 'Продано', tone: 'neutral', href: LOT },
+    items: [
+      SAFE,
+      { kind: 'date', text: '14 августа' },
+      { kind: 'out', text: 'Гитара ещё продаётся?', time: '09:15', read: true },
+      { kind: 'in', text: 'Нет, вчера продала. Извините.', time: '11:02' }
+    ] },
+  { id: 'support', role: 'support', name: 'Поддержка ЯМузыканта', verified: true, subject: 'Обращение № 4127 · жалоба на лот', date: '10 авг', status: 'Отвечаем в течение часа, 9:00–21:00',
+    items: [
+      { kind: 'date', text: '10 августа' },
+      { kind: 'out', text: 'Продавец просит перейти в другой мессенджер и прислать предоплату по ссылке.', time: '18:30', read: true },
+      { kind: 'in', text: 'Спасибо, что написали. Лот скрыли, продавца проверяем. Не переходите по ссылке и не отправляйте деньги.', time: '18:41' }
+    ] }
+];
+const ROLES = {
+  brand: { tab: 'support', icon: 'bell', label: 'ЯМузыкант', bg: 'var(--lad-soft)', fg: 'var(--lad)' },
+  seller: { tab: 'sellers', icon: 'user', label: 'Продавец', bg: 'var(--nickel-soft)', fg: 'var(--ink-muted)' },
+  shop: { tab: 'sellers', icon: 'store', label: 'Магазин-партнёр', bg: 'var(--nickel-soft)', fg: 'var(--ink-muted)' },
+  master: { tab: 'masters', icon: 'wrench', label: 'Мастер', bg: 'var(--copper-soft)', fg: 'var(--copper-strong)' },
+  support: { tab: 'support', icon: 'shield-check', label: 'Поддержка', bg: 'var(--lad-soft)', fg: 'var(--lad)' }
+};
+const QUICK = {
+  seller: ['Ещё продаётся?', 'Где можно посмотреть?', 'Готовы уступить в цене?', 'Пришлите фото серийного номера'],
+  shop: ['Есть в наличии?', 'Можно забрать сегодня?', 'Какая гарантия?'],
+  master: ['Когда будет готово?', 'Сколько будет стоить?'],
+  support: ['Спасибо, вопрос решён']
+};
+const TABS = [['all', 'Все'], ['sellers', 'Продавцы'], ['masters', 'Мастера'], ['support', 'Поддержка']];
+const initials = n => n.split(/\s+/).map(w => w[0]).join('').slice(0, 2).toUpperCase();
+const now = () => { const d = new Date(); return String(d.getHours()).padStart(2, '0') + ':' + String(d.getMinutes()).padStart(2, '0'); };
+
+const rubF = n => n.toLocaleString('ru-RU') + ' ₽';
+const listPrice = c => c && c.ctx ? parseInt(String(c.ctx.price).replace(/\D/g, ''), 10) || 0 : 0;
+const GUIDE = { lot: '168 000 – 196 000 ₽' };
+class Component extends DCLogic {
+  threadRef = React.createRef();
+  state = { chats: CHATS, active: null, tab: 'all', selecting: false, checked: {}, drafts: {}, offerOpen: false, offerAmt: '', offerNote: '' };
+  push = (id, item) => this.setState(s => ({ chats: s.chats.map(c => c.id === id ? { ...c, date: 'сегодня', ts: Date.now(), items: [...c.items, item] } : c) }));
+  setItems = (id, fn) => this.setState(s => ({ chats: s.chats.map(c => c.id === id ? { ...c, items: fn(c.items) } : c) }));
+  sendOffer = e => {
+    if (e && e.preventDefault) e.preventDefault();
+    const { active, chats, offerAmt, offerNote } = this.state;
+    const cur = chats.find(c => c.id === active);
+    const list = listPrice(cur);
+    const amount = parseInt(String(offerAmt).replace(/\D/g, ''), 10) || 0;
+    if (!amount || amount >= list) return;
+    this.setState({ offerOpen: false, offerAmt: '', offerNote: '' });
+    this.push(active, { kind: 'offer', dir: 'out', amount, list, status: 'wait', note: offerNote.trim(), time: now() });
+    setTimeout(() => {
+      if (amount >= list * 0.95) {
+        this.setItems(active, items => items.map(x => x.kind === 'offer' && x.dir === 'out' && x.status === 'wait' ? { ...x, status: 'accepted' } : x));
+        this.push(active, { kind: 'card', title: 'Цена согласована: ' + rubF(amount), text: 'Договоритесь о встрече или доставке здесь, в чате. Платите только после осмотра инструмента.' });
+      } else {
+        const counter = Math.round((amount + list) / 2 / 500) * 500;
+        this.setItems(active, items => items.map(x => x.kind === 'offer' && x.dir === 'out' && x.status === 'wait' ? { ...x, status: 'countered' } : x).concat([{ kind: 'offer', dir: 'in', amount: counter, list, status: 'wait', note: 'Могу уступить, но не так много.', time: now() }]));
+      }
+    }, 1400);
+  };
+  offerVals(m, i, cur) {
+    if (m.kind !== 'offer') return { isOffer: false };
+    const out = m.dir === 'out';
+    const S = { wait: ['Ждёт ответа', 'neutral'], countered: ['Есть встречное', 'neutral'], accepted: ['Цена согласована', 'lad'], declined: ['Отклонено', 'neutral'] };
+    const st = S[m.status];
+    const upd = status => this.setItems(cur.id, items => items.map((x, j) => j === i ? { ...x, status } : x));
+    const off = Math.round((1 - m.amount / m.list) * 100);
+    return {
+      isOffer: true, offerTitle: out ? 'Ваше предложение' : 'Предложение продавца',
+      amountText: rubF(m.amount), listText: 'В объявлении ' + rubF(m.list) + (off > 0 ? ' · −' + off + ' %' : ''),
+      statusText: st[0], tone: st[1], note: m.note || '', hasNote: !!m.note,
+      canAnswer: !out && m.status === 'wait',
+      accept: () => { upd('accepted'); this.push(cur.id, { kind: 'card', title: 'Цена согласована: ' + rubF(m.amount), text: 'Договоритесь о встрече или доставке здесь, в чате. Платите только после осмотра инструмента.' }); },
+      decline: () => upd('declined'),
+      counter: () => { upd('countered'); this.setState({ offerOpen: true, offerAmt: '', offerNote: '' }); },
+      boxStyle: 'align-self: ' + (out ? 'flex-end' : 'flex-start') + '; width: min(380px, 85%); box-sizing: border-box; display: flex; flex-direction: column; gap: var(--space-2); padding: var(--space-4); border-radius: var(--radius-md); background: var(--surface-raised); border: ' + (m.status === 'accepted' ? '2px solid var(--lad)' : '1px solid var(--line)') + ';'
+    };
+  }
+  offerModal(cur) {
+    const list = listPrice(cur);
+    const amt = parseInt(String(this.state.offerAmt).replace(/\D/g, ''), 10) || 0;
+    const fmt = n => n.toLocaleString('ru-RU');
+    const warn = amt && (amt >= list || amt < list * 0.7);
+    return {
+      offerLot: cur && cur.ctx ? cur.ctx.title : '', offerList: rubF(list),
+      hasGuide: !!(cur && GUIDE[cur.id]), guide: cur ? GUIDE[cur.id] || '' : '',
+      offerAmt: this.state.offerAmt,
+      onOfferAmt: e => { const d = e.target.value.replace(/\D/g, ''); this.setState({ offerAmt: d ? fmt(parseInt(d, 10)) : '' }); },
+      offerChips: [5, 10, 15].map(p => { const v = Math.round(list * (1 - p / 100) / 500) * 500; return { label: '−' + p + ' % · ' + rubF(v), on: amt === v, pick: () => this.setState({ offerAmt: fmt(v) }) }; }),
+      offerHint: !amt ? 'Укажите сумму меньше цены в объявлении.' : amt >= list ? 'Это не меньше цены в объявлении — просто напишите продавцу, что готовы купить.' : amt < list * 0.7 ? 'Сильно ниже цены — такие предложения обычно отклоняют.' : 'Скидка ' + Math.round((1 - amt / list) * 100) + ' %.',
+      offerHintStyle: 'margin: calc(-1 * var(--space-2)) 0 0; color: ' + (warn ? 'var(--ink)' : 'var(--ink-muted)') + ';' + (warn ? ' font-weight: 500;' : ''),
+      cantOffer: !amt || amt >= list,
+      offerNote: this.state.offerNote,
+      onOfferNote: e => this.setState({ offerNote: e.target.value })
+    };
+  }
+  componentDidMount() {
+    const id = new URLSearchParams(location.search).get('chat');
+    if (id && CHATS.some(c => c.id === id)) this.openChat(id); else this.openChat('lot');
+  }
+  toBottom() {
+    this.pin = true;
+    const go = () => { const el = this.threadRef.current; if (el && this.pin) el.scrollTop = el.scrollHeight; };
+    requestAnimationFrame(go);
+    setTimeout(go, 150); setTimeout(go, 400); setTimeout(go, 900);
+    if (document.fonts && document.fonts.ready) document.fonts.ready.then(go);
+    this.watch();
+  }
+  watch() {
+    const el = this.threadRef.current;
+    if (!el || el === this.watched) return;
+    this.watched = el;
+    if (this.ro) this.ro.disconnect();
+    this.ro = new ResizeObserver(() => { if (this.pin) el.scrollTop = el.scrollHeight; });
+    this.ro.observe(el);
+    Array.from(el.children).forEach(ch => this.ro.observe(ch));
+    this.mo = this.mo || new MutationObserver(() => { Array.from(el.children).forEach(ch => this.ro.observe(ch)); if (this.pin) el.scrollTop = el.scrollHeight; });
+    this.mo.disconnect(); this.mo.observe(el, { childList: true, subtree: true });
+    el.addEventListener('scroll', () => { this.pin = el.scrollHeight - el.scrollTop - el.clientHeight < 40; }, { passive: true });
+  }
+  componentWillUnmount() { if (this.ro) this.ro.disconnect(); if (this.mo) this.mo.disconnect(); }
+  componentDidUpdate() {
+    const c = this.state.chats.find(x => x.id === this.state.active);
+    const key = this.state.active + ':' + (c ? c.items.length : 0);
+    if (key !== this.lastKey) { this.lastKey = key; this.toBottom(); }
+  }
+  openChat(id) {
+    this.setState(s => ({ active: id, chats: s.chats.map(c => c.id === id ? { ...c, unread: 0 } : c) }));
+  }
+  send = e => {
+    if (e && e.preventDefault) e.preventDefault();
+    const { active, drafts } = this.state;
+    const text = (drafts[active] || '').trim();
+    if (!text) return;
+    this.setState(s => ({
+      drafts: { ...s.drafts, [active]: '' },
+      chats: s.chats.map(c => c.id === active ? { ...c, date: 'сегодня', ts: Date.now(), items: [...c.items, { kind: 'out', text, time: now(), read: false }] } : c)
+    }));
+  };
+  renderVals() {
+    const { chats, active, tab, selecting, checked, drafts } = this.state;
+    const TS = { '23 сент': 923, '9 сент': 909, '3 окт': 1003, '2 сент': 902, '28 авг': 828, '14 авг': 814, '10 авг': 810, 'сегодня': 9999 };
+    const visible = chats.filter(c => tab === 'all' || ROLES[c.role].tab === tab).slice().sort((a, b) => (b.ts || TS[b.date] || 0) - (a.ts || TS[a.date] || 0));
+    const row = 'flex: 1; min-width: 0; display: flex; align-items: flex-start; gap: var(--space-3); padding: var(--space-3) var(--space-5) 0; border: 0; text-align: left; cursor: pointer; font: inherit; color: inherit; background: ';
+    const list = visible.map(c => {
+      const r = ROLES[c.role], last = [...c.items].reverse().find(m => m.kind === 'in' || m.kind === 'out' || m.kind === 'card');
+      return {
+        id: c.id, name: c.name, verified: !!c.verified, date: c.date, subject: c.subject,
+        preview: last ? (last.kind === 'out' ? 'Вы: ' : '') + (last.kind === 'card' ? last.title : last.text.replace(/\n/g, ' ')) : '',
+        unread: c.unread || 0, hasUnread: !!c.unread, unreadLabel: (c.unread || 0) + ' непрочитанных',
+        readByOther: !c.unread && !!last && last.kind === 'out' && last.read,
+        isBrand: c.role === 'brand', notBrand: c.role !== 'brand',
+        icon: c.ctx ? c.ctx.icon : r.icon,
+        thumbStyle: 'width: 64px; height: 64px; border-radius: var(--radius-md); display: flex; align-items: center; justify-content: center; background: ' + (c.role === 'brand' ? 'var(--lad-soft)' : c.ctx ? 'var(--surface-recessed)' : r.bg) + '; color: ' + (c.ctx ? 'var(--ink-faint)' : r.fg) + ';',
+        hasRole: c.role !== 'brand', roleIcon: r.icon, roleLabel: r.label,
+        roleStyle: 'position: absolute; right: -4px; bottom: -4px; width: 24px; height: 24px; border-radius: var(--radius-sm); border: 2px solid var(--surface-raised); box-sizing: border-box; display: flex; align-items: center; justify-content: center; background: ' + r.bg + '; color: ' + r.fg + ';',
+        current: c.id === active ? 'true' : undefined,
+        rowStyle: row + (c.id === active && !selecting ? 'var(--surface-recessed);' : 'transparent;'),
+        open: () => selecting ? this.setState(s => ({ checked: { ...s.checked, [c.id]: !s.checked[c.id] } })) : this.openChat(c.id),
+        checked: !!checked[c.id], checkLabel: 'Выбрать чат: ' + c.name,
+        toggleCheck: () => this.setState(s => ({ checked: { ...s.checked, [c.id]: !s.checked[c.id] } }))
+      };
+    });
+    const nChecked = visible.filter(c => checked[c.id]).length;
+    const cur = chats.find(c => c.id === active);
+    const r = cur ? ROLES[cur.role] : null;
+    const draft = cur ? drafts[cur.id] || '' : '';
+    const chat = cur ? {
+      name: cur.name, verified: !!cur.verified, status: cur.status, initials: cur.role === 'brand' ? 'ЛМ' : initials(cur.name),
+      avatarStyle: 'width: 40px; height: 40px; flex: none; border-radius: var(--radius-full); display: flex; align-items: center; justify-content: center; font: 600 var(--text-s)/1 var(--font-text); background: ' + r.bg + '; color: ' + r.fg + ';',
+      hasContext: !!cur.ctx, ctx: cur.ctx || {},
+      isBrand: cur.role === 'brand', notBrand: cur.role !== 'brand',
+      hasQuick: !cur.readOnly && !!QUICK[cur.role] && !draft,
+      quick: (QUICK[cur.role] || []).map(label => ({ label, use: () => this.setState(s => ({ drafts: { ...s.drafts, [s.active]: label } })) })),
+      canReply: !cur.readOnly, readOnly: !!cur.readOnly,
+      canOffer: cur.role === 'seller' && !!cur.ctx && !/продан/i.test(cur.ctx.state || ''),
+      items: cur.items.map((m, i) => ({
+        ...m, ...this.offerVals(m, i, cur), isDate: m.kind === 'date', isCard: m.kind === 'card', isIn: m.kind === 'in', isOut: m.kind === 'out',
+        action: m.action || '', href: m.href || '#',
+        tickLabel: m.read ? 'Прочитано' : 'Отправлено',
+        tickStyle: 'display: flex; color: ' + (m.read ? 'var(--lad)' : 'var(--ink-muted)') + ';'
+      }))
+    } : { name: '', status: '', initials: '', avatarStyle: '', verified: false, isBrand: false, notBrand: true, hasQuick: false, quick: [], hasContext: false, canReply: false, readOnly: false, items: [], ctx: { href: '#', icon: 'guitar', title: '', price: '', state: '', tone: 'neutral' } };
+    const can = draft.trim().length > 0;
+    return {
+      list, listEmpty: list.length === 0,
+      tabs: TABS.map(([k, label]) => ({ label, on: tab === k, count: k === 'all' ? chats.length : chats.filter(c => ROLES[c.role].tab === k).length, pick: () => this.setState({ tab: k }) })),
+      selecting, notSelecting: !selecting,
+      selectLabel: selecting ? 'Отменить' : 'Выбрать',
+      toggleSelect: () => this.setState(s => ({ selecting: !s.selecting, checked: {} })),
+      allChecked: visible.length > 0 && nChecked === visible.length,
+      toggleAll: () => this.setState(s => { const all = visible.every(c => s.checked[c.id]); const n = {}; if (!all) visible.forEach(c => { n[c.id] = true; }); return { checked: n }; }),
+      pickedLabel: nChecked ? 'Выбрано: ' + nChecked : 'Выбрать всё',
+      noneChecked: nChecked === 0,
+      markRead: () => this.setState(s => ({ chats: s.chats.map(c => s.checked[c.id] ? { ...c, unread: 0 } : c), checked: {}, selecting: false })),
+      removeChecked: () => this.setState(s => ({ chats: s.chats.filter(c => !s.checked[c.id]), active: s.checked[s.active] ? null : s.active, checked: {}, selecting: false })),
+      unreadTotal: chats.reduce((n, c) => n + (c.unread || 0), 0),
+      noChat: !cur, hasChat: !!cur, chat,
+      closeChat: () => this.setState({ active: null }),
+      threadRef: this.threadRef,
+      draft, cantSend: !can,
+      onDraft: e => { const v = e.target.value; this.setState(s => ({ drafts: { ...s.drafts, [s.active]: v } })); },
+      onKey: e => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); this.send(); } },
+      send: this.send,
+      offerOpen: this.state.offerOpen,
+      openOffer: () => this.setState({ offerOpen: true, offerAmt: '', offerNote: '' }),
+      closeOffer: () => this.setState({ offerOpen: false }),
+      sendOffer: this.sendOffer,
+      ...this.offerModal(cur),
+      sendStyle: 'width: 44px; height: 44px; flex: none; border: 0; border-radius: var(--radius-full); display: flex; align-items: center; justify-content: center; padding: 0; ' + (can ? 'background: var(--lad); color: var(--on-lad, #fff); cursor: pointer;' : 'background: var(--surface-recessed); color: var(--ink-faint); cursor: default;')
+    };
+  }
+}
+</script>
+</body>
+</html>

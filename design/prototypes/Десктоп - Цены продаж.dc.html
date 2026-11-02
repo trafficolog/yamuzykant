@@ -1,0 +1,240 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+  <link rel="stylesheet" href="_ds/design-system-b66810d8-d429-49ea-bb35-5b22a7aa4f3a/tokens/webfonts.css">
+  <link rel="stylesheet" href="_ds/design-system-b66810d8-d429-49ea-bb35-5b22a7aa4f3a/tokens/tokens.css">
+  <link rel="stylesheet" href="_ds/design-system-b66810d8-d429-49ea-bb35-5b22a7aa4f3a/tokens/page.css">
+  <link rel="stylesheet" href="_ds/design-system-b66810d8-d429-49ea-bb35-5b22a7aa4f3a/tokens/components.css">
+  <link rel="stylesheet" href="_ds/design-system-b66810d8-d429-49ea-bb35-5b22a7aa4f3a/tokens/forms.css">
+  <link rel="stylesheet" href="ym-compat.css">
+  <script src="_ds/design-system-b66810d8-d429-49ea-bb35-5b22a7aa4f3a/_ds_bundle.js"></script>
+  <script src="plain-language.js"></script>
+  <style>
+    /* Hallmark · page: price guide · theme: ЯМузыкант DS tokens (brass) · pre-emit critique: P4 H4 E4 S4 R4 V4 */
+    html, body { margin: 0; background: var(--surface); color: var(--ink); overflow-x: clip; }
+    a { color: var(--lad); text-decoration: none; }
+    a:not([class*="lm-"]):hover { color: var(--lad-strong); text-decoration: underline; }
+    [data-guide] .ym-guide { padding: 0; }
+  </style>
+</helmet>
+<div class="lm-root" data-screen-label="Десктоп — Цены продаж" style="min-height: 100vh; background: var(--surface); font-family: var(--font-text);">
+  <dc-import name="Шапка" active="guide" messages="{{ 3 }}" hint-size="100%,117px"></dc-import>
+
+  <main style="max-width: var(--content-max); margin: 0 auto; padding: var(--space-6) var(--space-10) 0; box-sizing: border-box; display: flex; flex-direction: column; gap: var(--space-12);">
+    <div style="display: flex; flex-direction: column; gap: var(--space-4);">
+      <nav aria-label="Хлебные крошки" style="display: flex; align-items: center; gap: var(--space-2); flex-wrap: wrap;">
+        <a href="Десктоп - Главная.dc.html" class="body-s" style="color: var(--ink-muted); min-height: 32px; display: flex; align-items: center; white-space: nowrap;">Главная</a>
+        <span aria-hidden="true" style="color: var(--ink-faint); display: flex;"><x-import component-from-global-scope="DesignSystem_b66810.Icon" name="chevron-right" size="{{ 14 }}" hint-size="14px,14px"></x-import></span>
+        <span class="body-s" aria-current="page" style="color: var(--ink); white-space: nowrap;">Цены продаж</span>
+      </nav>
+      <div style="display: grid; grid-template-columns: minmax(0, 1fr) minmax(320px, 520px); gap: var(--space-10); align-items: end;">
+        <div style="display: flex; flex-direction: column; gap: var(--space-2); min-width: 0;">
+          <h1 class="h1 lm-title" style="margin: 0;">Цены продаж</h1>
+          <p class="body" style="margin: 0; color: var(--ink-muted); max-width: 560px; text-wrap: pretty;">Сколько на самом деле платят за инструмент — по объявлениям, которые продавцы закрыли как проданные.</p>
+        </div>
+        <x-import component-from-global-scope="DesignSystem_b66810.Field" id="q" label="Модель" placeholder="Например, Stratocaster или Juno-106" value="{{ q }}" onChange="{{ onQ }}" hint-size="100%,72px"></x-import>
+      </div>
+      <div role="radiogroup" aria-label="Модель" style="display: flex; flex-wrap: wrap; gap: var(--space-2);">
+        <sc-for list="{{ modelChips }}" as="m" hint-placeholder-count="6">
+          <x-import component-from-global-scope="DesignSystem_b66810.FilterChip" radio="{{ true }}" selected="{{ m.on }}" icon="{{ m.icon }}" onChange="{{ m.pick }}" hint-size="200px,40px">{{ m.label }}</x-import>
+        </sc-for>
+      </div>
+      <sc-if value="{{ noMatch }}" hint-placeholder-val="{{ false }}">
+        <p class="body-s" style="margin: 0; color: var(--ink-muted);">Такой модели в справочнике пока нет. Цены появятся, когда наберётся 5 продаж.</p>
+      </sc-if>
+    </div>
+
+    <section aria-labelledby="m-h" style="display: grid; grid-template-columns: minmax(0, 1fr) minmax(300px, 380px); gap: var(--space-10); align-items: start;">
+      <div style="display: flex; flex-direction: column; gap: var(--space-6); min-width: 0;">
+        <div style="display: flex; flex-direction: column; gap: var(--space-1);">
+          <h2 id="m-h" class="h2" style="margin: 0;">{{ m.name }}</h2>
+          <span class="body-s" style="color: var(--ink-muted);">{{ m.specs }}</span>
+        </div>
+        <div data-guide="">
+          <x-import component-from-global-scope="DesignSystem_b66810.PriceGuide" low="{{ m.low }}" high="{{ m.high }}" basis="{{ basis }}" hint-size="100%,150px"></x-import>
+        </div>
+        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 180px), 1fr)); gap: var(--space-4);">
+          <sc-for list="{{ stats }}" as="st" hint-placeholder-count="3">
+            <div style="display: flex; flex-direction: column; gap: var(--space-1); padding: var(--space-4) var(--space-5); border-radius: var(--radius-md); background: var(--surface-recessed);">
+              <span class="body-s" style="color: var(--ink-muted);">{{ st.label }}</span>
+              <span class="mono-l" style="font-variant-numeric: tabular-nums; white-space: nowrap;">{{ st.value }}</span>
+              <span class="caption" style="color: var(--ink-muted);">{{ st.note }}</span>
+            </div>
+          </sc-for>
+        </div>
+      </div>
+      <aside style="display: flex; flex-direction: column; gap: var(--space-3); padding: var(--space-6); border: 1px solid var(--line); border-radius: var(--radius-lg); background: var(--surface-raised);">
+        <h3 class="h3" style="margin: 0;">Есть такой же?</h3>
+        <p class="body-s" style="margin: 0; color: var(--ink-muted); text-wrap: pretty;">Подскажем цену при продаже — по состоянию и году выпуска.</p>
+        <x-import component-from-global-scope="DesignSystem_b66810.Button" variant="primary" block="{{ true }}" icon="plus" href="Десктоп - Продать.dc.html" hint-size="100%,48px">Продать инструмент</x-import>
+        <x-import component-from-global-scope="DesignSystem_b66810.Button" variant="outline" block="{{ true }}" href="Десктоп - Каталог.dc.html?view=flea" hint-size="100%,48px">{{ m.lotsLabel }}</x-import>
+        <x-import component-from-global-scope="DesignSystem_b66810.Button" variant="ghost" block="{{ true }}" href="Десктоп - Модель.dc.html" hint-size="100%,48px">Страница модели</x-import>
+      </aside>
+    </section>
+
+    <section aria-labelledby="t-h" style="display: flex; flex-direction: column; gap: var(--space-5);">
+      <div style="display: flex; align-items: flex-end; justify-content: space-between; gap: var(--space-4); flex-wrap: wrap;">
+        <div style="display: flex; flex-direction: column; gap: var(--space-1);">
+          <h2 id="t-h" class="h3" style="margin: 0;">Как менялась цена</h2>
+          <span class="body-s" style="color: var(--ink-muted);">Средняя цена продажи по месяцам</span>
+        </div>
+        <div role="radiogroup" aria-label="Период" style="display: flex; gap: var(--space-2);">
+          <sc-for list="{{ periods }}" as="p" hint-placeholder-count="3">
+            <x-import component-from-global-scope="DesignSystem_b66810.FilterChip" radio="{{ true }}" selected="{{ p.on }}" onChange="{{ p.pick }}" hint-size="100px,40px">{{ p.label }}</x-import>
+          </sc-for>
+        </div>
+      </div>
+      <div role="img" aria-label="{{ chartAria }}" style="display: grid; grid-template-columns: 72px minmax(0, 1fr); gap: var(--space-3); padding: var(--space-6); border-radius: var(--radius-lg); background: var(--surface-recessed);">
+        <div style="display: flex; flex-direction: column; justify-content: space-between; height: 220px; padding-bottom: 24px;">
+          <span class="caption" style="color: var(--ink-muted); font-variant-numeric: tabular-nums; white-space: nowrap;">{{ axisTop }}</span>
+          <span class="caption" style="color: var(--ink-muted); font-variant-numeric: tabular-nums; white-space: nowrap;">{{ axisBottom }}</span>
+        </div>
+        <div style="{{ barsGrid }}">
+          <sc-for list="{{ bars }}" as="b" hint-placeholder-count="12">
+            <div title="{{ b.title }}" style="display: flex; flex-direction: column; align-items: stretch; justify-content: flex-end; gap: var(--space-2); height: 220px; min-width: 0;">
+              <span style="{{ b.style }}"></span>
+              <span class="caption" style="color: var(--ink-muted); text-align: center; white-space: nowrap; height: 16px;">{{ b.label }}</span>
+            </div>
+          </sc-for>
+        </div>
+      </div>
+    </section>
+
+    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 440px), 1fr)); gap: var(--space-10); align-items: start;">
+      <section aria-labelledby="c-h" style="display: flex; flex-direction: column; gap: var(--space-4);">
+        <h2 id="c-h" class="h3" style="margin: 0;">Цена по состоянию</h2>
+        <div role="table" aria-label="Цена по состоянию" style="display: flex; flex-direction: column; border-top: 1px solid var(--line);">
+          <sc-for list="{{ conds }}" as="c" hint-placeholder-count="5">
+            <div role="row" style="display: grid; grid-template-columns: minmax(130px, 1fr) minmax(0, 1.4fr) auto; gap: var(--space-4); align-items: center; min-height: 56px; border-bottom: 1px solid var(--line);">
+              <span role="cell" class="body" style="font-weight: 500;">{{ c.label }}</span>
+              <span role="cell" aria-hidden="true" style="position: relative; display: block; height: 8px; border-radius: var(--radius-full); background: var(--surface-recessed);"><span style="{{ c.bar }}"></span></span>
+              <span role="cell" style="display: flex; flex-direction: column; align-items: flex-end;">
+                <span class="body-s" style="font-weight: 600; white-space: nowrap; font-variant-numeric: tabular-nums;">{{ c.range }}</span>
+                <span class="caption" style="color: var(--ink-muted); white-space: nowrap;">{{ c.count }}</span>
+              </span>
+            </div>
+          </sc-for>
+        </div>
+      </section>
+
+      <section aria-labelledby="r-h" style="display: flex; flex-direction: column; gap: var(--space-4);">
+        <h2 id="r-h" class="h3" style="margin: 0;">Недавно проданы</h2>
+        <div role="list" style="display: flex; flex-direction: column; border-top: 1px solid var(--line);">
+          <sc-for list="{{ recent }}" as="r" hint-placeholder-count="6">
+            <div role="listitem" style="display: grid; grid-template-columns: 72px minmax(0, 1fr) auto; gap: var(--space-4); align-items: center; min-height: 56px; border-bottom: 1px solid var(--line);">
+              <span class="body-s" style="font-family: var(--font-mono); color: var(--ink-muted); white-space: nowrap;">{{ r.date }}</span>
+              <span style="display: flex; flex-direction: column; min-width: 0;">
+                <span class="body-s" style="font-weight: 500; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">{{ r.cond }}</span>
+                <span class="caption" style="color: var(--ink-muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">{{ r.city }}</span>
+              </span>
+              <span class="body" style="font-weight: 600; white-space: nowrap; font-variant-numeric: tabular-nums;">{{ r.price }}</span>
+            </div>
+          </sc-for>
+        </div>
+      </section>
+    </div>
+
+    <section aria-labelledby="h-h" style="display: grid; grid-template-columns: minmax(220px, 1fr) minmax(0, 2fr); gap: var(--space-8); padding-top: var(--space-8); border-top: 1px solid var(--line);">
+      <h2 id="h-h" class="h3" style="margin: 0;">Откуда эти цены</h2>
+      <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 220px), 1fr)); gap: var(--space-6);">
+        <sc-for list="{{ method }}" as="x" hint-placeholder-count="3">
+          <div style="display: flex; flex-direction: column; gap: var(--space-2);">
+            <span style="width: 40px; height: 40px; border-radius: var(--radius-md); background: var(--brass-soft); color: var(--brass-text); display: flex; align-items: center; justify-content: center;"><x-import component-from-global-scope="DesignSystem_b66810.Icon" name="{{ x.icon }}" size="{{ 20 }}" hint-size="20px,20px"></x-import></span>
+            <span class="body" style="font-weight: 600;">{{ x.title }}</span>
+            <span class="body-s" style="color: var(--ink-muted); text-wrap: pretty;">{{ x.text }}</span>
+          </div>
+        </sc-for>
+      </div>
+    </section>
+  </main>
+
+  <div style="margin-top: var(--space-16);">
+    <dc-import name="Подвал" hint-size="100%,420px"></dc-import>
+  </div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script>
+const MODELS = [
+  { id: 'avs', name: 'Fender American Vintage ’57 Stratocaster', specs: 'Электрогитара · США · 2007–2012', icon: 'guitar', low: 168000, high: 196000, med: 184000, n: 41, trend: 4, lots: 3, city: ['Москва', 'Санкт-Петербург', 'Казань', 'Москва', 'Екатеринбург', 'Москва'] },
+  { id: 'ps', name: 'Fender Player Stratocaster', specs: 'Электрогитара · Мексика · с 2018', icon: 'guitar', low: 58000, high: 74000, med: 65500, n: 128, trend: -3, lots: 4, city: ['Москва', 'Новосибирск', 'Москва', 'Краснодар', 'Санкт-Петербург', 'Самара'] },
+  { id: 'lp', name: 'Gibson Les Paul Studio', specs: 'Электрогитара · США · 2012–2018', icon: 'guitar', low: 130000, high: 165000, med: 148000, n: 37, trend: 6, lots: 2, city: ['Санкт-Петербург', 'Москва', 'Москва', 'Ростов-на-Дону', 'Москва', 'Пермь'] },
+  { id: 'ds1', name: 'Boss DS-1 Distortion', specs: 'Педаль · Япония/Тайвань · с 1978', icon: 'cable', low: 4500, high: 7500, med: 5800, n: 212, trend: 0, lots: 9, city: ['Москва', 'Воронеж', 'Москва', 'Уфа', 'Санкт-Петербург', 'Москва'] },
+  { id: 'juno', name: 'Roland Juno-106', specs: 'Синтезатор · Япония · 1984–1985', icon: 'piano', low: 160000, high: 210000, med: 186000, n: 19, trend: 11, lots: 1, city: ['Москва', 'Санкт-Петербург', 'Москва', 'Екатеринбург', 'Москва', 'Казань'] },
+  { id: 'sm7b', name: 'Shure SM7B', specs: 'Микрофон · динамический', icon: 'mic', low: 28000, high: 36000, med: 31500, n: 96, trend: -5, lots: 6, city: ['Москва', 'Москва', 'Санкт-Петербург', 'Нижний Новгород', 'Москва', 'Тюмень'] }
+];
+const CONDS = [['Как новое', 1.07], ['Отличное', 1.0], ['Очень хорошее', 0.92], ['Хорошее', 0.84], ['Удовлетворительное', 0.72]];
+const MONTHS = ['окт', 'ноя', 'дек', 'янв', 'фев', 'мар', 'апр', 'май', 'июн', 'июл', 'авг', 'сен'];
+const PERIODS = [['3', '3 месяца', 3], ['12', '12 месяцев', 12], ['36', '3 года', 12]];
+const rub = n => Math.round(n).toLocaleString('ru-RU') + ' ₽';
+const short = n => n >= 10000 ? (Math.round(n / 1000)).toLocaleString('ru-RU') + ' тыс. ₽' : rub(n);
+const plural = (n, a, b, c) => { const m = n % 10, h = n % 100; return m === 1 && h !== 11 ? a : m >= 2 && m <= 4 && (h < 10 || h >= 20) ? b : c; };
+
+class Component extends DCLogic {
+  state = { id: 'avs', q: '', period: '12' };
+  renderVals() {
+    const s = this.state;
+    const q = s.q.trim().toLowerCase();
+    const list = MODELS.filter(x => !q || x.name.toLowerCase().includes(q));
+    const m = MODELS.find(x => x.id === s.id);
+    const per = PERIODS.find(p => p[0] === s.period);
+    const years = s.period === '36';
+    const seed = m.med;
+    const series = Array.from({ length: per[2] }, (_, i) => {
+      const k = per[2] - 1 - i;
+      const drift = (years ? 3 : 1) * m.trend / 100 * (k / 11);
+      const wob = Math.sin((i + seed / 1000) * 1.7) * 0.025;
+      return m.med * (1 - drift + wob);
+    });
+    const labels = years ? ['2023', '', '', '', '2024', '', '', '', '2025', '', '', '2026'] : MONTHS.slice(12 - per[2]);
+    const lo = Math.min(...series) * 0.94, hi = Math.max(...series) * 1.02;
+    const span = Math.max(1, hi - lo);
+    const gmin = m.low * 0.7, gmax = m.high * 1.1;
+    const pos = v => ((v - gmin) / (gmax - gmin) * 100).toFixed(1);
+    return {
+      q: s.q,
+      onQ: e => this.setState({ q: e.target.value }),
+      modelChips: list.map(x => ({ label: x.name.replace('Fender American Vintage ’57 Stratocaster', 'Fender AV ’57 Stratocaster'), icon: x.icon, on: x.id === m.id, pick: () => this.setState({ id: x.id }) })),
+      noMatch: list.length === 0,
+      m: { ...m, lotsLabel: 'Смотреть лоты · ' + m.lots },
+      basis: 'по ' + m.n + ' ' + plural(m.n, 'продаже', 'продажам', 'продажам') + ' за 12 месяцев',
+      stats: [
+        { label: 'Средняя цена', value: rub(m.med), note: 'за 12 месяцев' },
+        { label: 'Продаж', value: String(m.n), note: 'закрыто как «Продано»' },
+        { label: 'За год', value: (m.trend > 0 ? '+' : m.trend < 0 ? '−' : '') + Math.abs(m.trend) + ' %', note: m.trend > 0 ? 'дорожает' : m.trend < 0 ? 'дешевеет' : 'без изменений' }
+      ],
+      periods: PERIODS.map(([k, label]) => ({ label, on: k === s.period, pick: () => this.setState({ period: k }) })),
+      barsGrid: 'display: grid; grid-template-columns: repeat(' + series.length + ', minmax(0, 1fr)); gap: var(--space-2); align-items: end; min-width: 0;',
+      bars: series.map((v, i) => ({
+        label: labels[i] || '', title: (labels[i] || '') + ' — ' + rub(v),
+        style: 'display: block; border-radius: var(--radius-xs) var(--radius-xs) 0 0; height: ' + Math.round((v - lo) / span * 180 + 8) + 'px; background: ' + (i === series.length - 1 ? 'var(--brass)' : 'color-mix(in srgb, var(--brass) 45%, var(--surface-raised))') + ';'
+      })),
+      axisTop: short(hi), axisBottom: short(lo),
+      chartAria: 'Средняя цена ' + m.name + ': от ' + rub(Math.min(...series)) + ' до ' + rub(Math.max(...series)) + ' за ' + per[1],
+      conds: CONDS.map(([label, k], i) => {
+        const a = m.low * k * 0.98, b = m.high * k * 0.98;
+        const n = Math.max(1, Math.round(m.n * [0.12, 0.34, 0.28, 0.18, 0.08][i]));
+        return { label, range: short(a) + ' – ' + short(b), count: n + ' ' + plural(n, 'продажа', 'продажи', 'продаж'),
+          bar: 'position: absolute; top: 0; bottom: 0; left: ' + pos(a) + '%; width: ' + (pos(b) - pos(a)).toFixed(1) + '%; border-radius: var(--radius-full); background: var(--brass);' };
+      }),
+      recent: ['3 окт', '29 сент', '24 сент', '18 сент', '11 сент', '2 сент'].map((d, i) => ({
+        date: d, cond: 'Б/у · ' + CONDS[[1, 2, 0, 3, 1, 2][i]][0], city: m.city[i],
+        price: rub(Math.round(m.med * [1.01, 0.95, 1.06, 0.88, 1.0, 0.93][i] / 500) * 500)
+      })),
+      method: [
+        { icon: 'tag', title: 'Только проданные', text: 'Когда продавец снимает объявление, мы спрашиваем, продал ли он и за сколько. В расчёт идёт итоговая цена, а не цена в объявлении.' },
+        { icon: 'sliders-horizontal', title: 'Без крайних значений', text: 'Диапазон — средние 80 % продаж. Слишком дешёвые и слишком дорогие сделки не учитываем.' },
+        { icon: 'history', title: 'Минимум 5 продаж', text: 'Пока продаж меньше, цену по модели не показываем — по одной сделке рынок не оценить.' }
+      ]
+    };
+  }
+}
+</script>
+</body>
+</html>

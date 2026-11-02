@@ -1,0 +1,164 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+  <link rel="stylesheet" href="_ds/design-system-b66810d8-d429-49ea-bb35-5b22a7aa4f3a/tokens/webfonts.css">
+  <link rel="stylesheet" href="_ds/design-system-b66810d8-d429-49ea-bb35-5b22a7aa4f3a/tokens/tokens.css">
+  <link rel="stylesheet" href="_ds/design-system-b66810d8-d429-49ea-bb35-5b22a7aa4f3a/tokens/page.css">
+  <link rel="stylesheet" href="_ds/design-system-b66810d8-d429-49ea-bb35-5b22a7aa4f3a/tokens/components.css">
+  <link rel="stylesheet" href="_ds/design-system-b66810d8-d429-49ea-bb35-5b22a7aa4f3a/tokens/forms.css">
+  <link rel="stylesheet" href="ym-compat.css">
+  <script src="_ds/design-system-b66810d8-d429-49ea-bb35-5b22a7aa4f3a/_ds_bundle.js"></script>
+  <script src="plain-language.js"></script>
+  <style>
+    /* Hallmark · page: email & notification templates · theme: ЯМузыкант DS tokens · pre-emit critique: P4 H4 E4 S4 R5 V4 */
+    html, body { margin: 0; background: var(--surface); color: var(--ink); overflow-x: clip; }
+    a { color: var(--lad); text-decoration: none; }
+    a:not([class*="lm-"]):hover { color: var(--lad-strong); text-decoration: underline; }
+  </style>
+</helmet>
+<div class="lm-root" data-screen-label="Письма и уведомления" style="min-height: 100vh; background: var(--surface); font-family: var(--font-text);">
+  <main style="max-width: var(--content-max); margin: 0 auto; padding: var(--space-10); box-sizing: border-box; display: flex; flex-direction: column; gap: var(--space-8);">
+    <div style="display: flex; flex-direction: column; gap: var(--space-2);">
+      <a href="Макеты.dc.html" class="body-s" style="color: var(--ink-muted); min-height: 32px; display: flex; align-items: center;">← Все макеты</a>
+      <h1 class="h1 lm-title" style="margin: 0;">Письма и уведомления</h1>
+      <p class="body" style="margin: 0; color: var(--ink-muted); max-width: 640px; text-wrap: pretty;">Одно событие — три канала: письмо, push и СМС. Тексты короткие, без восклицаний, ссылки ведут только на ladmir.ru.</p>
+    </div>
+
+    <div style="display: grid; grid-template-columns: minmax(240px, 300px) minmax(0, 1fr); gap: var(--space-10); align-items: start;">
+      <nav aria-label="Шаблоны" style="position: sticky; top: var(--space-4); display: flex; flex-direction: column; gap: 2px;">
+        <sc-for list="{{ list }}" as="t" hint-placeholder-count="6">
+          <button type="button" aria-current="{{ t.current }}" onClick="{{ t.pick }}" style="{{ t.style }}" style-hover="background: var(--surface-recessed); color: var(--ink);">
+            <x-import component-from-global-scope="DesignSystem_b66810.Icon" name="{{ t.icon }}" size="{{ 20 }}" hint-size="20px,20px"></x-import>
+            <span style="display: flex; flex-direction: column; gap: 2px; text-align: left;">
+              <span>{{ t.label }}</span>
+              <span class="caption" style="color: var(--ink-muted); font-weight: 400;">{{ t.who }}</span>
+            </span>
+          </button>
+        </sc-for>
+      </nav>
+
+      <div style="display: grid; grid-template-columns: minmax(0, 640px) minmax(260px, 1fr); gap: var(--space-8); align-items: start; min-width: 0;">
+        <section aria-label="Письмо" style="display: flex; flex-direction: column; gap: var(--space-3); min-width: 0;">
+          <div style="display: flex; flex-direction: column; gap: 2px; padding: var(--space-3) var(--space-4); border: 1px solid var(--line); border-radius: var(--radius-md); background: var(--surface-raised);">
+            <span class="body-s"><span style="color: var(--ink-muted);">Тема:</span> <span style="font-weight: 600;">{{ e.subject }}</span></span>
+            <span class="caption" style="color: var(--ink-muted);">{{ e.pre }}</span>
+          </div>
+          <div style="padding: var(--space-6); border-radius: var(--radius-lg); background: var(--surface-recessed);">
+            <article style="max-width: 600px; margin: 0 auto; background: var(--surface-raised); border-radius: var(--radius-md); overflow: hidden;">
+              <div style="padding: var(--space-6) var(--space-8); border-bottom: 1px solid var(--line);">
+                <span class="ym-wordmark" style="font-size: 20px;"><b>Я</b>Музыкант<i></i></span>
+              </div>
+              <div style="display: flex; flex-direction: column; gap: var(--space-4); padding: var(--space-8);">
+                <h2 class="h2" style="margin: 0; text-wrap: balance;">{{ e.title }}</h2>
+                <p class="body" style="margin: 0; text-wrap: pretty;">{{ e.body }}</p>
+                <sc-if value="{{ e.hasCode }}" hint-placeholder-val="{{ false }}">
+                  <span style="align-self: flex-start; padding: var(--space-3) var(--space-5); border-radius: var(--radius-md); background: var(--surface-recessed); font: 600 32px/1 var(--font-mono); letter-spacing: 0.2em;">{{ e.code }}</span>
+                </sc-if>
+                <sc-if value="{{ e.hasCard }}" hint-placeholder-val="{{ false }}">
+                  <div style="display: flex; align-items: center; gap: var(--space-4); padding: var(--space-4); border: 1px solid var(--line); border-radius: var(--radius-md);">
+                    <span style="width: 64px; height: 64px; flex: none; border-radius: var(--radius-sm); background: var(--surface-recessed); color: var(--ink-faint); display: flex; align-items: center; justify-content: center;"><x-import component-from-global-scope="DesignSystem_b66810.Icon" name="{{ e.cardIcon }}" size="{{ 28 }}" hint-size="28px,28px"></x-import></span>
+                    <span style="display: flex; flex-direction: column; gap: 2px; min-width: 0;">
+                      <span class="body" style="font-weight: 600;">{{ e.cardTitle }}</span>
+                      <span class="body-s" style="color: var(--ink-muted);">{{ e.cardMeta }}</span>
+                    </span>
+                  </div>
+                </sc-if>
+                <sc-if value="{{ e.hasList }}" hint-placeholder-val="{{ false }}">
+                  <ul style="margin: 0; padding: 0 0 0 var(--space-5); display: flex; flex-direction: column; gap: var(--space-1);">
+                    <sc-for list="{{ e.list }}" as="li" hint-placeholder-count="2"><li class="body">{{ li }}</li></sc-for>
+                  </ul>
+                </sc-if>
+                <sc-if value="{{ e.hasCta }}" hint-placeholder-val="{{ true }}">
+                  <span style="align-self: flex-start; display: inline-flex; align-items: center; min-height: 48px; padding: 0 var(--space-6); border-radius: var(--radius-full); background: var(--lad); color: var(--on-lad); font: 600 var(--text-m)/1 var(--font-text); white-space: nowrap;">{{ e.cta }}</span>
+                </sc-if>
+                <p class="body-s" style="margin: 0; color: var(--ink-muted); text-wrap: pretty;">{{ e.note }}</p>
+              </div>
+              <div style="display: flex; flex-direction: column; gap: var(--space-2); padding: var(--space-6) var(--space-8); background: var(--surface-recessed);">
+                <span class="caption" style="color: var(--ink-muted); text-wrap: pretty;">ЯМузыкант не просит данные карты и не присылает ссылки на оплату. Если сомневаетесь — откройте ladmir.ru вручную.</span>
+                <span class="caption" style="color: var(--ink-muted);">{{ e.why }} · <a href="#">Настроить уведомления</a></span>
+              </div>
+            </article>
+          </div>
+        </section>
+
+        <section aria-label="Другие каналы" style="display: flex; flex-direction: column; gap: var(--space-5);">
+          <div style="display: flex; flex-direction: column; gap: var(--space-2);">
+            <h2 class="label" style="margin: 0; font-weight: 600; color: var(--ink-muted);">Push</h2>
+            <div style="display: grid; grid-template-columns: 40px minmax(0, 1fr); gap: var(--space-3); padding: var(--space-4); border-radius: var(--radius-lg); background: var(--surface-raised); border: 1px solid var(--line); box-shadow: var(--shadow-2);">
+              <span aria-hidden="true" style="width: 40px; height: 40px; border-radius: var(--radius-md); background: var(--lad); color: var(--on-lad); display: flex; align-items: center; justify-content: center; font: 700 14px/1 var(--font-display);">Л</span>
+              <span style="display: flex; flex-direction: column; gap: 2px; min-width: 0;">
+                <span class="body-s" style="font-weight: 600;">{{ e.pushTitle }}</span>
+                <span class="body-s" style="color: var(--ink-muted); text-wrap: pretty;">{{ e.pushText }}</span>
+              </span>
+            </div>
+          </div>
+          <div style="display: flex; flex-direction: column; gap: var(--space-2);">
+            <h2 class="label" style="margin: 0; font-weight: 600; color: var(--ink-muted);">СМС</h2>
+            <p class="body-s" style="margin: 0; padding: var(--space-3) var(--space-4); border-radius: var(--radius-md) var(--radius-md) var(--radius-md) var(--radius-xs); background: var(--surface-raised); border: 1px solid var(--line); font-variant-numeric: tabular-nums;">{{ e.sms }}</p>
+            <span class="caption" style="color: var(--ink-muted);">{{ e.smsNote }}</span>
+          </div>
+        </section>
+      </div>
+    </div>
+  </main>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script>
+const T = [
+  { id: 'code', icon: 'user', label: 'Код входа', who: 'Всем',
+    subject: 'Код для входа: 4821', pre: 'Никому не сообщайте этот код.', title: 'Код для входа на ЯМузыкант', body: 'Введите этот код на странице входа. Он действует 10 минут.', code: '4821',
+    note: 'Если вы не входили — просто проигнорируйте письмо. Сотрудники ЯМузыканта никогда не спрашивают код.', why: 'Письмо о входе в аккаунт',
+    pushTitle: 'Код для входа: 4821', pushText: 'Никому не сообщайте. Действует 10 минут.', sms: 'ЯМузыкант: код 4821. Никому не сообщайте.', smsNote: 'Только СМС — без ссылок.' },
+  { id: 'pub', icon: 'circle-check', label: 'Объявление опубликовано', who: 'Продавцу',
+    subject: 'Объявление опубликовано', pre: 'Fender American Vintage ’57 Stratocaster уже на Барахолке.', title: 'Объявление опубликовано', body: 'Покупатели уже видят его в каталоге и на Барахолке. Вопросы будут приходить в сообщения на ЯМузыканте.',
+    card: ['guitar', 'Fender American Vintage ’57 Stratocaster', '184 500 ₽ · Москва'], cta: 'Открыть объявление',
+    note: 'Чтобы продать быстрее, поднимите объявление в поиске — это можно сделать в кабинете за баллы.', why: 'Письмо о ваших объявлениях',
+    pushTitle: 'Объявление опубликовано', pushText: 'Fender American Vintage ’57 Stratocaster — на Барахолке.', sms: '—', smsNote: 'По этому событию СМС не отправляем.' },
+  { id: 'ret', icon: 'circle-alert', label: 'Вернули на доработку', who: 'Продавцу',
+    subject: 'Объявление нужно поправить', pre: 'Не хватает фото серийного номера.', title: 'Объявление нужно поправить', body: 'Модератор вернул объявление — исправьте и отправьте снова. Обычно проверка повторно занимает до часа.',
+    card: ['piano', 'Roland Juno-106, 1984', '189 000 ₽ · Санкт-Петербург'], list: ['Добавьте фото серийного номера', 'Уберите контакты из описания — общение только в чате'], cta: 'Исправить объявление',
+    note: 'Объявление сохранено как черновик, ничего не потеряется.', why: 'Письмо о ваших объявлениях',
+    pushTitle: 'Объявление нужно поправить', pushText: 'Roland Juno-106: добавьте фото серийного номера.', sms: '—', smsNote: 'По этому событию СМС не отправляем.' },
+  { id: 'msg', icon: 'message-circle', label: 'Новое сообщение', who: 'Покупателю и продавцу',
+    subject: 'Андрей К. ответил вам', pre: 'Здравствуйте. Шлифовали в «Лад и строй», чек есть…', title: 'Андрей К. ответил вам', body: '«Здравствуйте. Шлифовали в «Лад и строй», чек есть. Звукосниматели родные. Можно посмотреть у Таганской…»',
+    card: ['guitar', 'Fender American Vintage ’57 Stratocaster', '184 500 ₽'], cta: 'Ответить в чате',
+    note: 'Отвечайте только в чате ЯМузыканта — так переписку можно будет показать поддержке.', why: 'Письмо о новых сообщениях · не чаще раза в час',
+    pushTitle: 'Андрей К.', pushText: 'Здравствуйте. Шлифовали в «Лад и строй», чек есть…', sms: '—', smsNote: 'По этому событию СМС не отправляем.' },
+  { id: 'offer', icon: 'handshake', label: 'Цена согласована', who: 'Покупателю и продавцу',
+    subject: 'Цена согласована: 178 000 ₽', pre: 'Договоритесь о встрече или доставке в чате.', title: 'Цена согласована', body: 'Продавец принял 178 000 ₽ за Fender American Vintage ’57 Stratocaster. Договоритесь о встрече или доставке в чате.',
+    card: ['guitar', 'Fender American Vintage ’57 Stratocaster', 'В объявлении 184 500 ₽'], cta: 'Открыть чат',
+    note: 'Платите только после осмотра инструмента. Можно заказать проверку у мастера — от 1 500 ₽.', why: 'Письмо о ваших сделках',
+    pushTitle: 'Цена согласована: 178 000 ₽', pushText: 'Fender American Vintage ’57 Stratocaster. Договоритесь о встрече в чате.', sms: '—', smsNote: 'По этому событию СМС не отправляем.' },
+  { id: 'master', icon: 'wrench', label: 'Мастер подтвердил запись', who: 'Клиенту мастера',
+    subject: 'Запись подтверждена: пн, 13 окт', pre: 'Алексей Воронцов ждёт вас в 14:00.', title: 'Запись подтверждена', body: 'Алексей Воронцов ждёт вас в понедельник, 13 октября, в 14:00. Оплата мастеру после работы.',
+    card: ['wrench', 'Настройка · Fender Stratocaster', 'Москва, ул. Бауманская, 11, стр. 2'], list: ['Возьмите кейс или чехол', 'Если планы изменились — напишите мастеру в чат'], cta: 'Открыть чат с мастером',
+    note: 'Напомним за день до визита.', why: 'Письмо о записи к мастеру',
+    pushTitle: 'Запись подтверждена', pushText: 'Пн, 13 окт, 14:00 · Алексей Воронцов.', sms: 'ЯМузыкант: запись к мастеру пн 13.10 в 14:00, ул. Бауманская, 11.', smsNote: 'СМС — только напоминание за день.' }
+];
+class Component extends DCLogic {
+  state = { id: 'code' };
+  renderVals() {
+    const t = T.find(x => x.id === this.state.id);
+    return {
+      list: T.map(x => {
+        const on = x.id === t.id;
+        return { icon: x.icon, label: x.label, who: x.who, current: on ? 'page' : undefined, pick: () => this.setState({ id: x.id }),
+          style: 'display: flex; align-items: flex-start; gap: var(--space-3); width: 100%; min-height: 56px; padding: var(--space-3); border: 0; border-radius: var(--radius-sm); background: ' + (on ? 'var(--surface-recessed)' : 'transparent') + '; color: ' + (on ? 'var(--ink)' : 'var(--ink-muted)') + '; font: ' + (on ? '600' : '500') + ' var(--text-m)/22px var(--font-text); cursor: pointer; text-align: left;' };
+      }),
+      e: {
+        ...t, hasCode: !!t.code, hasCard: !!t.card, hasList: !!t.list, list: t.list || [], hasCta: !!t.cta, cta: t.cta || '',
+        cardIcon: t.card ? t.card[0] : 'guitar', cardTitle: t.card ? t.card[1] : '', cardMeta: t.card ? t.card[2] : ''
+      }
+    };
+  }
+}
+</script>
+</body>
+</html>

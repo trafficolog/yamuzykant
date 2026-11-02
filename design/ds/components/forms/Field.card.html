@@ -1,0 +1,17 @@
+<!-- @dsCard group="Формы" viewport="900x300" name="Field" -->
+<!DOCTYPE html><html lang="ru"><head><meta charset="utf-8"><meta name="color-scheme" content="only light"><link rel="stylesheet" href="../../styles.css">
+<script src="https://unpkg.com/react@18.3.1/umd/react.development.js" integrity="sha384-hD6/rw4ppMLGNu3tX5cjIb+uRZ7UkRJ6BPkLpg4hAu/6onKUg4lLsHAs9EBPT82L" crossorigin="anonymous"></script>
+<script src="https://unpkg.com/react-dom@18.3.1/umd/react-dom.development.js" integrity="sha384-u6aeetuaXnQ38mYT8rp6sbXaQe3NL9t+IBXmnYxwkUI2Hw4bsp2Wvmx4yRQF1uAm" crossorigin="anonymous"></script>
+<script src="../../_ds_bundle.js"></script>
+<style>html,body{background:var(--surface)}body{padding:8px 16px}.c-h{font:600 12px/16px var(--font-text);color:var(--ink-faint);margin:16px 16px 0;text-transform:none}</style></head><body class="ym-root" data-theme="light"><div id="r5"></div>
+<script>
+var L = window.DesignSystem_b66810, h = React.createElement; L.icons = Object.keys(L.ICONS);
+function mount(id, f) { var el = document.getElementById(id); try { ReactDOM.createRoot(el).render(f()); } catch (e) { el.textContent = 'Ошибка примера: ' + e.message; } }
+mount('r5', function () { return h('div',{className:'ym-cols',style:{gridTemplateColumns:'repeat(auto-fill,minmax(min(100%,240px),1fr))'}},
+ h(L.Field,{id:'f1',label:'Цена',suffix:'₽',defaultValue:'184 500',hint:'Ля440: 168 000 – 196 000 ₽'}),
+ h(L.Field,{id:'f2',label:'Серийный номер',placeholder:'V091187',hint:'Сверим с паспортом инструмента',demo:'focus'}),
+ h(L.Field,{id:'f3',label:'Серийный номер',defaultValue:'V091187',loading:true,hint:'Ищем в паспортах…'}),
+ h(L.Field,{id:'f4',label:'Серийный номер',defaultValue:'V091187',success:true,hint:'Паспорт найден: Fender, 2009'}),
+ h(L.Field,{id:'f5',label:'Минимальная цена для «По рукам!»',suffix:'₽',defaultValue:'120 000',error:'Ниже диапазона Ля440 больше чем на 25%'}),
+ h(L.Field,{id:'f6',label:'Город',defaultValue:'Москва',disabled:true,hint:'Город берётся из профиля'})); });
+</script></body></html>

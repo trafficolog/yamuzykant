@@ -1,0 +1,190 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+  <link rel="stylesheet" href="_ds/design-system-b66810d8-d429-49ea-bb35-5b22a7aa4f3a/tokens/webfonts.css">
+  <link rel="stylesheet" href="_ds/design-system-b66810d8-d429-49ea-bb35-5b22a7aa4f3a/tokens/tokens.css">
+  <link rel="stylesheet" href="_ds/design-system-b66810d8-d429-49ea-bb35-5b22a7aa4f3a/tokens/page.css">
+  <link rel="stylesheet" href="_ds/design-system-b66810d8-d429-49ea-bb35-5b22a7aa4f3a/tokens/components.css">
+  <link rel="stylesheet" href="_ds/design-system-b66810d8-d429-49ea-bb35-5b22a7aa4f3a/tokens/forms.css">
+  <link rel="stylesheet" href="ym-compat.css">
+  <script src="_ds/design-system-b66810d8-d429-49ea-bb35-5b22a7aa4f3a/_ds_bundle.js"></script>
+  <script src="plain-language.js"></script>
+  <style>
+    /* Hallmark · page: staff console overview (role-based) · theme: ЯМузыкант DS tokens · pre-emit critique: P4 H4 E4 S4 R4 V4 */
+    html, body { margin: 0; background: var(--surface); color: var(--ink); overflow-x: clip; }
+    a { color: var(--lad); text-decoration: none; }
+    a:not([class*="lm-"]):hover { color: var(--lad-strong); text-decoration: underline; }
+  </style>
+</helmet>
+<div class="lm-root" data-screen-label="Админ — Обзор" style="min-height: 100vh; background: var(--surface); font-family: var(--font-text);">
+  <dc-import name="Админ - Шапка" role="{{ role }}" hint-size="100%,64px"></dc-import>
+
+  <div style="display: grid; grid-template-columns: minmax(200px, 280px) minmax(0, 1fr); min-height: calc(100vh - 65px);">
+    <dc-import name="Админ - Меню" active="overview" role="{{ role }}" hint-size="100%,100%"></dc-import>
+
+    <main style="display: flex; flex-direction: column; gap: var(--space-8); padding: var(--space-6) var(--space-8) var(--space-12); min-width: 0;">
+      <div style="display: flex; align-items: flex-end; justify-content: space-between; gap: var(--space-4); flex-wrap: wrap;">
+        <div style="display: flex; flex-direction: column; gap: var(--space-1);">
+          <h1 class="h1 lm-title" style="margin: 0;">Обзор</h1>
+          <span class="body-s" style="color: var(--ink-muted);">Четверг, 9 октября · данные обновляются каждую минуту</span>
+        </div>
+        <span class="caption" style="color: var(--ink-muted);">Все цифры — примеры, уточнить</span>
+      </div>
+
+      <section aria-labelledby="q-h" style="display: flex; flex-direction: column; gap: var(--space-4);">
+        <h2 id="q-h" class="h3" style="margin: 0;">Очереди</h2>
+        <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: var(--space-4);">
+          <sc-for list="{{ queues }}" as="q" hint-placeholder-count="4">
+            <a href="{{ q.href }}" class="lm-adm-q" style="display: flex; flex-direction: column; gap: var(--space-3); padding: var(--space-5); border: 1px solid var(--line); border-radius: var(--radius-lg); background: var(--surface-raised); color: var(--ink); text-decoration: none;" style-hover="border-color: var(--lad);">
+              <span style="display: flex; align-items: center; justify-content: space-between; gap: var(--space-2);">
+                <span class="body-s" style="display: flex; align-items: center; gap: var(--space-2); color: var(--ink-muted);"><x-import component-from-global-scope="DesignSystem_b66810.Icon" name="{{ q.icon }}" size="{{ 18 }}" hint-size="18px,18px"></x-import>{{ q.label }}</span>
+                <sc-if value="{{ q.hasLate }}" hint-placeholder-val="{{ false }}">
+                  <x-import component-from-global-scope="DesignSystem_b66810.Badge" tone="danger" hint-size="100px,24px">{{ q.late }}</x-import>
+                </sc-if>
+              </span>
+              <span style="font: 600 var(--text-3xl)/1 var(--font-mono); font-variant-numeric: tabular-nums;">{{ q.n }}</span>
+              <span style="display: flex; flex-direction: column; gap: var(--space-1);">
+                <span aria-hidden="true" style="display: block; height: 6px; border-radius: var(--radius-full); background: var(--surface-recessed); overflow: hidden;"><span style="{{ q.bar }}"></span></span>
+                <span class="caption" style="color: var(--ink-muted);">{{ q.sla }}</span>
+              </span>
+            </a>
+          </sc-for>
+        </div>
+      </section>
+
+      <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 420px), 1fr)); gap: var(--space-8); align-items: start;">
+        <section aria-labelledby="u-h" style="display: flex; flex-direction: column; gap: var(--space-4);">
+          <h2 id="u-h" class="h3" style="margin: 0;">Срочно</h2>
+          <div role="list" style="display: flex; flex-direction: column; border-top: 1px solid var(--line);">
+            <sc-for list="{{ urgent }}" as="u" hint-placeholder-count="4">
+              <a role="listitem" href="{{ u.href }}" class="lm-adm-u" style="display: grid; grid-template-columns: 24px minmax(0, 1fr) auto; gap: var(--space-3); align-items: start; padding: var(--space-4) var(--space-2); border-bottom: 1px solid var(--line); color: var(--ink); text-decoration: none;" style-hover="background: var(--surface-recessed);">
+                <span style="{{ u.iconStyle }}"><x-import component-from-global-scope="DesignSystem_b66810.Icon" name="{{ u.icon }}" size="{{ 20 }}" hint-size="20px,20px"></x-import></span>
+                <span style="display: flex; flex-direction: column; gap: 2px; min-width: 0;">
+                  <span class="body" style="font-weight: 500;">{{ u.title }}</span>
+                  <span class="body-s" style="color: var(--ink-muted); text-wrap: pretty;">{{ u.text }}</span>
+                </span>
+                <span class="caption" style="color: var(--ink-muted); white-space: nowrap;">{{ u.when }}</span>
+              </a>
+            </sc-for>
+          </div>
+        </section>
+
+        <section aria-labelledby="m-h" style="display: flex; flex-direction: column; gap: var(--space-4);">
+          <h2 id="m-h" class="h3" style="margin: 0;">Сегодня</h2>
+          <div style="display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: var(--space-3);">
+            <sc-for list="{{ metrics }}" as="m" hint-placeholder-count="4">
+              <div style="display: flex; flex-direction: column; gap: var(--space-1); padding: var(--space-4) var(--space-5); border-radius: var(--radius-md); background: var(--surface-recessed);">
+                <span class="body-s" style="color: var(--ink-muted);">{{ m.label }}</span>
+                <span class="mono-l" style="font-variant-numeric: tabular-nums; white-space: nowrap;">{{ m.value }}</span>
+                <span class="caption" style="color: var(--ink-muted);">{{ m.note }}</span>
+              </div>
+            </sc-for>
+          </div>
+        </section>
+      </div>
+
+      <sc-if value="{{ showLog }}" hint-placeholder-val="{{ true }}">
+        <section aria-labelledby="l-h" style="display: flex; flex-direction: column; gap: var(--space-4);">
+          <div style="display: flex; align-items: baseline; justify-content: space-between; gap: var(--space-4);">
+            <h2 id="l-h" class="h3" style="margin: 0;">Действия сотрудников</h2>
+            <a href="#" class="body-s" style="min-height: 44px; display: flex; align-items: center;">Весь журнал</a>
+          </div>
+          <div role="table" aria-label="Журнал" style="display: flex; flex-direction: column; border-top: 1px solid var(--line);">
+            <sc-for list="{{ log }}" as="l" hint-placeholder-count="5">
+              <div role="row" style="display: grid; grid-template-columns: 64px minmax(140px, 200px) minmax(0, 1fr); gap: var(--space-4); align-items: center; min-height: 48px; border-bottom: 1px solid var(--line);">
+                <span role="cell" class="body-s" style="font-family: var(--font-mono); color: var(--ink-muted);">{{ l.t }}</span>
+                <span role="cell" class="body-s" style="font-weight: 500; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">{{ l.who }}</span>
+                <span role="cell" class="body-s" style="text-wrap: pretty;">{{ l.what }}</span>
+              </div>
+            </sc-for>
+          </div>
+        </section>
+      </sc-if>
+    </main>
+  </div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props="{&quot;role&quot;:{&quot;editor&quot;:&quot;enum&quot;,&quot;options&quot;:[&quot;admin&quot;,&quot;moderator&quot;,&quot;support&quot;,&quot;partners&quot;],&quot;default&quot;:&quot;admin&quot;,&quot;tsType&quot;:&quot;'admin' | 'moderator' | 'support' | 'partners'&quot;}}">
+const ROLES = {
+  admin: { name: 'Ольга Т.', ini: 'ОТ', role: 'Администратор', note: 'Администратор видит все разделы и журнал действий.' },
+  moderator: { name: 'Марина К.', ini: 'МК', role: 'Модератор', note: 'Модератор видит объявления, жалобы на них и справочники.' },
+  support: { name: 'Игорь П.', ini: 'ИП', role: 'Поддержка', note: 'Поддержка видит обращения, жалобы и карточки пользователей.' },
+  partners: { name: 'Денис Р.', ini: 'ДР', role: 'Менеджер по партнёрам', note: 'Менеджер видит компании, мастеров, тарифы и витрину.' }
+};
+const NAV = [
+  ['overview', 'layout-grid', 'Обзор', null, ['admin', 'moderator', 'support', 'partners'], '#'],
+  ['mod', 'badge-check', 'Модерация', 4, ['admin', 'moderator'], 'Десктоп - Модерация.dc.html'],
+  ['reports', 'triangle-alert', 'Жалобы и обращения', 19, ['admin', 'moderator', 'support'], 'Админ - Обращения.dc.html'],
+  ['users', 'user', 'Пользователи', null, ['admin', 'support', 'partners'], '#'],
+  ['verify', 'store', 'Проверка партнёров', 5, ['admin', 'partners'], '#'],
+  ['money', 'star', 'Тарифы и баллы', null, ['admin', 'partners'], '#'],
+  ['dict', 'sliders-horizontal', 'Справочники', null, ['admin', 'moderator'], '#'],
+  ['shop', 'boxes', 'Витрина и рассылки', null, ['admin', 'partners'], '#'],
+  ['staff', 'shield-check', 'Сотрудники и права', null, ['admin'], '#'],
+  ['log', 'history', 'Журнал действий', null, ['admin'], '#']
+];
+const QUEUES = [
+  ['mod', 'badge-check', 'Модерация', 4, 0, 'старейшее ждёт 2 ч · норма до 1 ч', 70, 'Десктоп - Модерация.dc.html'],
+  ['reports', 'triangle-alert', 'Жалобы', 7, 2, 'норма — ответ за 24 ч', 45, '#'],
+  ['support', 'message-circle', 'Обращения', 12, 0, 'среднее время ответа 38 мин', 30, '#'],
+  ['companies', 'store', 'Проверка компаний', 3, 1, 'норма — 2 рабочих дня', 80, '#'],
+  ['masters', 'wrench', 'Проверка мастеров', 2, 0, 'норма — 2 рабочих дня', 20, '#']
+];
+const QROLE = { mod: ['admin', 'moderator'], reports: ['admin', 'moderator', 'support'], support: ['admin', 'support'], companies: ['admin', 'partners'], masters: ['admin', 'partners'] };
+const URGENT = [
+  ['reports', 'circle-alert', 'danger', 'Жалоба: предоплата по ссылке', 'Gibson Les Paul Standard 2019 · 2 жалобы за сутки, фото найдены на другом сайте', '12 мин'],
+  ['mod', 'triangle-alert', 'warning', 'Цена на 40 % ниже рынка', 'Fender American Vintage ’57 Stratocaster · контакт вне ЯМузыканта в описании', '25 мин'],
+  ['companies', 'store', 'warning', 'ООО «Звук и дерево» — просрочена проверка', 'Документы загружены 7 окт, тариф «Бизнес» оплачен', '2 дня'],
+  ['support', 'message-circle', 'neutral', 'Не пришёл код входа', 'Пользователь +7 9•• •••-••-41 · третья попытка', '40 мин'],
+  ['masters', 'wrench', 'neutral', 'Новая анкета мастера', 'Мастерская «Тёплый ламп» · усилители · Екатеринбург', '3 ч']
+];
+const METRICS = {
+  admin: [['Новых объявлений', '214', 'опубликовано 188'], ['Отклонено', '9', 'из них мошенничество — 3'], ['Новых пользователей', '326', 'компаний — 4'], ['Списано баллов', '41 300', 'продвижение объявлений']],
+  moderator: [['Проверено вами', '37', 'среднее 1 мин 40 с'], ['Возвращено', '6', 'чаще всего — нет серийного номера'], ['Отклонено', '2', 'мошенничество'], ['Ждут в очереди', '4', 'старейшее 2 ч']],
+  support: [['Закрыто обращений', '28', 'вами — 11'], ['Среднее время ответа', '38 мин', 'норма — до 1 ч'], ['Жалоб принято', '7', '2 просрочены'], ['Оценка поддержки', '4,7', 'по 19 ответам']],
+  partners: [['Новых компаний', '4', '3 ждут проверки'], ['Подключено тарифов', '6', '«Бизнес» — 4'], ['Новых мастеров', '2', 'анкеты на проверке'], ['Продлений в октябре', '31', 'из 35 к продлению']]
+};
+const LOG = [
+  ['14:12', 'Марина К. · модератор', 'Отклонила ОБ-26-18187 и отправила продавца на проверку'],
+  ['14:05', 'Игорь П. · поддержка', 'Закрыл обращение № 4119 «Не пришёл код входа»'],
+  ['13:58', 'Денис Р. · партнёры', 'Подтвердил компанию ООО «Гитарный угол», тариф «Бизнес»'],
+  ['13:41', 'Марина К. · модератор', 'Вернула ОБ-26-18176 на доработку: нет фото серийного номера'],
+  ['13:20', 'Ольга Т. · администратор', 'Выдала права «Поддержка» сотруднику Анна С.']
+];
+class Component extends DCLogic {
+  renderVals() {
+    const role = ROLES[this.props.role] ? this.props.role : 'admin';
+    const R = ROLES[role];
+    const tones = { danger: 'var(--danger)', warning: 'var(--warning)', neutral: 'var(--ink-muted)' };
+    return {
+      me: R, rightsNote: R.note, role,
+      nav: NAV.filter(n => n[4].includes(role)).map(([id, icon, label, count, , href]) => {
+        const on = id === 'overview';
+        return { icon, label, href, count: String(count || ''), hasCount: !!count, current: on ? 'page' : undefined,
+          style: 'display: flex; align-items: center; gap: var(--space-3); min-height: 44px; padding: 0 var(--space-3); border-radius: var(--radius-sm); background: ' + (on ? 'var(--surface-recessed)' : 'transparent') + '; color: ' + (on ? 'var(--ink)' : 'var(--ink-muted)') + '; font: ' + (on ? '600' : '500') + ' var(--text-s)/22px var(--font-text); text-decoration: none;',
+          countStyle: 'min-width: 24px; padding: 2px 6px; box-sizing: border-box; border-radius: var(--radius-full); background: var(--lad); color: var(--on-lad); text-align: center; font-weight: 600; font-variant-numeric: tabular-nums;' };
+      }),
+      queues: QUEUES.filter(q => QROLE[q[0]].includes(role)).map(([id, icon, label, n, late, sla, pct, href]) => ({
+        icon, label, n: String(n), href, sla, hasLate: late > 0, late: 'просрочено ' + late,
+        bar: 'display: block; height: 100%; width: ' + pct + '%; border-radius: var(--radius-full); background: ' + (pct >= 70 ? 'var(--warning)' : 'var(--lad)') + ';'
+      })),
+      urgent: URGENT.filter(u => QROLE[u[0]].includes(role)).map(([q, icon, tone, title, text, when]) => ({
+        icon, title, text, when, href: q === 'mod' ? 'Десктоп - Модерация.dc.html' : (q === 'reports' || q === 'support') ? 'Админ - Обращения.dc.html' : '#',
+        iconStyle: 'display: flex; padding-top: 2px; color: ' + tones[tone] + ';'
+      })),
+      metrics: METRICS[role].map(([label, value, note]) => ({ label, value, note })),
+      showLog: role === 'admin',
+      log: LOG.map(([t, who, what]) => ({ t, who, what }))
+    };
+  }
+}
+</script>
+</body>
+</html>

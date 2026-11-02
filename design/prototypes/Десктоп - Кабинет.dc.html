@@ -1,0 +1,651 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+  <link rel="stylesheet" href="_ds/design-system-b66810d8-d429-49ea-bb35-5b22a7aa4f3a/tokens/webfonts.css">
+  <link rel="stylesheet" href="_ds/design-system-b66810d8-d429-49ea-bb35-5b22a7aa4f3a/tokens/tokens.css">
+  <link rel="stylesheet" href="_ds/design-system-b66810d8-d429-49ea-bb35-5b22a7aa4f3a/tokens/page.css">
+  <link rel="stylesheet" href="_ds/design-system-b66810d8-d429-49ea-bb35-5b22a7aa4f3a/tokens/components.css">
+  <link rel="stylesheet" href="_ds/design-system-b66810d8-d429-49ea-bb35-5b22a7aa4f3a/tokens/forms.css">
+  <link rel="stylesheet" href="ym-compat.css">
+  <script src="_ds/design-system-b66810d8-d429-49ea-bb35-5b22a7aa4f3a/_ds_bundle.js"></script>
+  <script src="plain-language.js"></script>
+  <style>
+    /* Hallmark · page: account hub (roles) · theme: ЯМузыкант DS tokens · pre-emit critique: P4 H4 E4 S4 R4 V4 */
+    html, body { margin: 0; background: var(--surface); color: var(--ink); overflow-x: clip; }
+    a { color: var(--lad); text-decoration: none; }
+    a:not([class*="lm-"]):hover { color: var(--lad-strong); text-decoration: underline; }
+  </style>
+</helmet>
+<div class="lm-root" data-screen-label="Десктоп — Кабинет" style="min-height: 100vh; background: var(--surface); font-family: var(--font-text);">
+  <dc-import name="Шапка" active="none" messages="{{ 3 }}" hint-size="100%,117px"></dc-import>
+
+  <div style="background: var(--surface-raised); border-bottom: 1px solid var(--line);">
+    <div style="max-width: var(--content-max); margin: 0 auto; padding: var(--space-6) var(--space-10) 0; box-sizing: border-box; display: flex; flex-direction: column; gap: var(--space-4);">
+      <div style="display: flex; align-items: flex-end; justify-content: space-between; gap: var(--space-4); flex-wrap: wrap;">
+        <div style="display: flex; flex-direction: column; gap: var(--space-3);">
+          <h1 class="h2 lm-title" style="margin: 0;">Кабинет</h1>
+          <div style="display: flex; flex-wrap: wrap; gap: var(--space-2);">
+            <x-import component-from-global-scope="DesignSystem_b66810.Badge" tone="nickel" icon="user" hint-size="120px,24px">{{ legalLabel }}</x-import>
+            <sc-for list="{{ roleBadges }}" as="b" hint-placeholder-count="3">
+              <x-import component-from-global-scope="DesignSystem_b66810.Badge" tone="{{ b.tone }}" icon="{{ b.icon }}" hint-size="110px,24px">{{ b.label }}</x-import>
+            </sc-for>
+          </div>
+        </div>
+        <div style="display: flex; align-items: center; gap: var(--space-3); flex-wrap: wrap;">
+          <sc-if value="{{ isLegal }}" hint-placeholder-val="{{ true }}">
+            <button type="button" onClick="{{ goTariff }}" aria-label="{{ usageText }}" style="display: flex; flex-direction: column; gap: var(--space-1); min-width: 200px; min-height: 48px; padding: var(--space-2) var(--space-4); border: 1px solid var(--line); border-radius: var(--radius-md); background: var(--surface); cursor: pointer; font: inherit; text-align: left; box-sizing: border-box;" style-hover="border-color: var(--line-control);">
+              <span class="caption" style="color: var(--ink-muted); white-space: nowrap;">Тариф «{{ planName }}» · {{ usageText }}</span>
+              <span style="display: block; height: 6px; border-radius: var(--radius-full); background: var(--surface-recessed); overflow: hidden;"><span style="{{ usageBar }}"></span></span>
+            </button>
+          </sc-if>
+          <button type="button" onClick="{{ goWallet }}" style="display: flex; align-items: center; gap: var(--space-2); min-height: 48px; padding: 0 var(--space-4); border: 1px solid var(--line); border-radius: var(--radius-full); background: var(--surface); color: var(--ink); cursor: pointer; font: inherit; white-space: nowrap;" style-hover="border-color: var(--line-control);">
+            <span style="display: flex; color: var(--brass-text);"><x-import component-from-global-scope="DesignSystem_b66810.Icon" name="star" size="{{ 20 }}" hint-size="20px,20px"></x-import></span>
+            <span style="font: 600 var(--text-m)/22px var(--font-mono);">{{ balanceText }}</span>
+          </button>
+        </div>
+      </div>
+      <nav aria-label="Разделы кабинета" style="display: flex; gap: var(--space-6); overflow-x: auto; scrollbar-width: none; margin-bottom: -1px;">
+        <sc-for list="{{ spaces }}" as="s" hint-placeholder-count="6">
+          <a href="{{ s.href }}" onClick="{{ s.go }}" aria-current="{{ s.current }}" style="{{ s.style }}">
+            <x-import component-from-global-scope="DesignSystem_b66810.Icon" name="{{ s.icon }}" size="{{ 16 }}" hint-size="16px,16px"></x-import>{{ s.label }}
+            <sc-if value="{{ s.count }}" hint-placeholder-val="{{ false }}">
+              <span style="min-width: 20px; height: 20px; padding: 0 6px; box-sizing: border-box; border-radius: var(--radius-full); background: var(--lad); color: var(--on-lad); font: 600 var(--text-xs)/20px var(--font-text); text-align: center;">{{ s.count }}</span>
+            </sc-if>
+          </a>
+        </sc-for>
+      </nav>
+    </div>
+  </div>
+
+  <main style="max-width: var(--content-max); margin: 0 auto; padding: var(--space-8) var(--space-10) 0; box-sizing: border-box; display: flex; flex-direction: column; gap: var(--space-6);">
+
+    <sc-if value="{{ is.overview }}" hint-placeholder-val="{{ true }}">
+      <h2 class="h1 lm-title" style="margin: 0;">Добрый день, Владимир</h2>
+      <div style="display: flex; flex-direction: column; gap: var(--space-3); max-width: 880px;">
+        <sc-for list="{{ todo }}" as="t" hint-placeholder-count="2">
+          <x-import component-from-global-scope="DesignSystem_b66810.Alert" tone="{{ t.tone }}" icon="{{ t.icon }}" title="{{ t.title }}" hint-size="100%,72px">{{ t.text }}</x-import>
+        </sc-for>
+      </div>
+      <sc-for list="{{ overview }}" as="g" hint-placeholder-count="3">
+        <section style="display: flex; flex-direction: column; gap: var(--space-4); margin-top: var(--space-4);">
+          <div style="display: flex; align-items: baseline; justify-content: space-between; gap: var(--space-4);">
+            <h3 class="h3" style="margin: 0; display: flex; align-items: center; gap: var(--space-2);"><span style="{{ g.iconStyle }}"><x-import component-from-global-scope="DesignSystem_b66810.Icon" name="{{ g.icon }}" size="{{ 20 }}" hint-size="20px,20px"></x-import></span>{{ g.title }}</h3>
+            <a href="#" onClick="{{ g.go }}" class="label" style="color: var(--lad); white-space: nowrap;">Открыть</a>
+          </div>
+          <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(min(100%, 220px), 1fr)); gap: var(--space-4);">
+            <sc-for list="{{ g.stats }}" as="st" hint-placeholder-count="4">
+              <div style="display: flex; flex-direction: column; gap: var(--space-1); padding: var(--space-4) var(--space-5); border-radius: var(--radius-md); background: var(--surface-recessed);">
+                <span class="body-s" style="color: var(--ink-muted);">{{ st.label }}</span>
+                <span class="mono-l" style="font-variant-numeric: tabular-nums;">{{ st.value }}</span>
+                <span class="caption" style="color: var(--ink-muted);">{{ st.note }}</span>
+              </div>
+            </sc-for>
+          </div>
+        </section>
+      </sc-for>
+    </sc-if>
+
+    <sc-if value="{{ hasSub }}" hint-placeholder-val="{{ false }}">
+      <div style="display: flex; align-items: center; justify-content: space-between; gap: var(--space-4); flex-wrap: wrap;">
+        <div role="radiogroup" aria-label="Подраздел" style="display: flex; flex-wrap: wrap; gap: var(--space-2);">
+          <sc-for list="{{ subs }}" as="c" hint-placeholder-count="4">
+            <x-import component-from-global-scope="DesignSystem_b66810.FilterChip" radio="{{ true }}" selected="{{ c.on }}" count="{{ c.count }}" onChange="{{ c.pick }}" hint-size="130px,40px">{{ c.label }}</x-import>
+          </sc-for>
+        </div>
+        <sc-if value="{{ spaceAction }}" hint-placeholder-val="{{ false }}">
+          <x-import component-from-global-scope="DesignSystem_b66810.Button" variant="outline" size="s" icon="plus" hint-size="200px,40px">{{ spaceAction }}</x-import>
+        </sc-if>
+      </div>
+    </sc-if>
+
+    <sc-if value="{{ is.cards }}" hint-placeholder-val="{{ false }}">
+      <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(var(--card-min), 1fr)); gap: var(--space-6);">
+        <sc-for list="{{ cards }}" as="lot" hint-placeholder-count="5">
+          <x-import component-from-global-scope="DesignSystem_b66810.ListingCard" dc-props="{{ lot }}" hint-size="100%,380px"></x-import>
+        </sc-for>
+      </div>
+    </sc-if>
+
+    <sc-if value="{{ is.rows }}" hint-placeholder-val="{{ false }}">
+      <div role="list" style="display: flex; flex-direction: column; border-top: 1px solid var(--line);">
+        <sc-for list="{{ rows }}" as="r" hint-placeholder-count="4">
+          <div role="listitem" style="display: grid; grid-template-columns: 64px minmax(0, 1fr) minmax(140px, auto) auto; gap: var(--space-4); align-items: center; padding: var(--space-4) 0; border-bottom: 1px solid var(--line);">
+            <span style="width: 64px; height: 64px; border-radius: var(--radius-md); background: var(--surface-recessed); color: var(--ink-faint); display: flex; align-items: center; justify-content: center;">
+              <x-import component-from-global-scope="DesignSystem_b66810.Icon" name="{{ r.icon }}" size="{{ 28 }}" hint-size="28px,28px"></x-import>
+            </span>
+            <div style="display: flex; flex-direction: column; gap: 2px; min-width: 0;">
+              <span class="body" style="font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">{{ r.title }}</span>
+              <span class="body-s" style="color: var(--ink-muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">{{ r.sub }}</span>
+            </div>
+            <div style="display: flex; flex-direction: column; align-items: flex-start; gap: var(--space-1);">
+              <x-import component-from-global-scope="DesignSystem_b66810.Badge" tone="{{ r.tone }}" hint-size="100px,24px">{{ r.status }}</x-import>
+              <span class="caption" style="color: var(--ink-muted); white-space: nowrap; font-variant-numeric: tabular-nums;">{{ r.meta }}</span>
+            </div>
+            <div style="display: flex; gap: var(--space-2); justify-content: flex-end;">
+              <sc-for list="{{ r.actions }}" as="a" hint-placeholder-count="2">
+                <x-import component-from-global-scope="DesignSystem_b66810.Button" variant="{{ a.variant }}" size="s" href="{{ a.href }}" onClick="{{ a.onClick }}" hint-size="120px,40px">{{ a.label }}</x-import>
+              </sc-for>
+            </div>
+          </div>
+        </sc-for>
+      </div>
+      <sc-if value="{{ rowsEmpty }}" hint-placeholder-val="{{ false }}">
+        <div style="display: flex; flex-direction: column; align-items: center; gap: var(--space-4); padding: var(--space-12) var(--space-6); text-align: center;">
+          <span style="width: 80px; height: 80px; border-radius: var(--radius-full); background: var(--surface-recessed); color: var(--ink-muted); display: flex; align-items: center; justify-content: center;"><x-import component-from-global-scope="DesignSystem_b66810.Icon" name="boxes" size="{{ 40 }}" hint-size="40px,40px"></x-import></span>
+          <p class="body" style="margin: 0;">Здесь пока пусто.</p>
+        </div>
+      </sc-if>
+    </sc-if>
+
+    <sc-if value="{{ is.repair }}" hint-placeholder-val="{{ false }}">
+      <div style="max-width: 760px;">
+        <x-import component-from-global-scope="DesignSystem_b66810.RepairOrderCard" number="ЗАКАЗ ЛМ-26-00317" instrument="Gibson Les Paul Studio 2014" work="Перешлифовка ладов и настройка" status="Ремонт" amount="{{ 7800 }}" master="А. Воронцов" action="Написать мастеру" steps="{{ repairSteps }}" hint-size="100%,260px"></x-import>
+      </div>
+    </sc-if>
+
+    <sc-if value="{{ is.reviews }}" hint-placeholder-val="{{ false }}">
+      <div style="display: flex; flex-direction: column; align-items: center; gap: var(--space-4); padding: var(--space-12) var(--space-6); text-align: center;">
+        <span style="width: 80px; height: 80px; border-radius: var(--radius-full); background: var(--surface-recessed); color: var(--ink-muted); display: flex; align-items: center; justify-content: center;"><x-import component-from-global-scope="DesignSystem_b66810.Icon" name="star" size="{{ 40 }}" hint-size="40px,40px"></x-import></span>
+        <p class="body" style="margin: 0; max-width: 380px; text-wrap: pretty;">{{ reviewsText }}</p>
+      </div>
+    </sc-if>
+
+    <sc-if value="{{ is.settings }}" hint-placeholder-val="{{ false }}">
+      <div style="display: flex; flex-direction: column; border-top: 1px solid var(--line);">
+        <sc-for list="{{ settings }}" as="row" hint-placeholder-count="3">
+          <section style="display: grid; grid-template-columns: minmax(220px, 1fr) minmax(0, 2fr); gap: var(--space-8); padding: var(--space-8) 0; border-bottom: 1px solid var(--line);">
+            <div style="display: flex; flex-direction: column; gap: var(--space-2);">
+              <h3 class="h3" style="margin: 0;">{{ row.title }}</h3>
+              <p class="body-s" style="margin: 0; color: var(--ink-muted); text-wrap: pretty;">{{ row.why }}</p>
+            </div>
+            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 240px), 1fr)); gap: var(--space-4); align-content: start;">
+              <sc-for list="{{ row.fields }}" as="f" hint-placeholder-count="2">
+                <x-import component-from-global-scope="DesignSystem_b66810.Field" id="{{ f.id }}" label="{{ f.label }}" defaultValue="{{ f.value }}" hint="{{ f.hint }}" disabled="{{ f.disabled }}" hint-size="100%,96px"></x-import>
+              </sc-for>
+            </div>
+          </section>
+        </sc-for>
+      </div>
+      <div><x-import component-from-global-scope="DesignSystem_b66810.Button" variant="inverse" hint-size="140px,48px">Сохранить</x-import></div>
+    </sc-if>
+
+    <sc-if value="{{ is.profile }}" hint-placeholder-val="{{ false }}">
+      <section style="display: grid; grid-template-columns: minmax(220px, 1fr) minmax(0, 2fr); gap: var(--space-8); padding-bottom: var(--space-8); border-bottom: 1px solid var(--line);">
+        <div style="display: flex; flex-direction: column; gap: var(--space-2);">
+          <h2 class="h3" style="margin: 0;">Правовой статус</h2>
+          <p class="body-s" style="margin: 0; color: var(--ink-muted); text-wrap: pretty;">От статуса зависит, какие роли можно подключить и какие документы понадобятся.</p>
+        </div>
+        <div role="radiogroup" aria-label="Правовой статус" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 200px), 1fr)); gap: var(--space-3);">
+          <sc-for list="{{ legals }}" as="l" hint-placeholder-count="4">
+            <button type="button" role="radio" aria-checked="{{ l.checked }}" onClick="{{ l.pick }}" style="{{ l.style }}" style-hover="border-color: var(--lad);">
+              <span class="body" style="font-weight: 600; color: var(--ink);">{{ l.label }}</span>
+              <span class="body-s" style="color: var(--ink-muted); text-align: left;">{{ l.note }}</span>
+            </button>
+          </sc-for>
+        </div>
+      </section>
+
+      <section style="display: grid; grid-template-columns: minmax(220px, 1fr) minmax(0, 2fr); gap: var(--space-8); padding-bottom: var(--space-8); border-bottom: 1px solid var(--line);">
+        <div style="display: flex; flex-direction: column; gap: var(--space-2);">
+          <h2 class="h3" style="margin: 0;">Роли</h2>
+          <p class="body-s" style="margin: 0; color: var(--ink-muted); text-wrap: pretty;">Один аккаунт — несколько ролей. Каждая подключённая роль получает свой раздел в кабинете.</p>
+        </div>
+        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 260px), 1fr)); gap: var(--space-4);">
+          <sc-for list="{{ roleCards }}" as="rc" hint-placeholder-count="4">
+            <div style="{{ rc.style }}">
+              <div style="display: flex; align-items: flex-start; gap: var(--space-3);">
+                <span style="{{ rc.iconStyle }}"><x-import component-from-global-scope="DesignSystem_b66810.Icon" name="{{ rc.icon }}" size="{{ 24 }}" hint-size="24px,24px"></x-import></span>
+                <div style="flex: 1; display: flex; flex-direction: column; gap: 2px; min-width: 0;">
+                  <span class="body" style="font-weight: 600;">{{ rc.label }}</span>
+                  <span class="body-s" style="color: var(--ink-muted); text-wrap: pretty;">{{ rc.text }}</span>
+                </div>
+              </div>
+              <sc-if value="{{ rc.locked }}" hint-placeholder-val="{{ false }}">
+                <p class="caption" style="margin: 0; color: var(--warning); display: flex; align-items: center; gap: var(--space-1);"><x-import component-from-global-scope="DesignSystem_b66810.Icon" name="info" size="{{ 14 }}" hint-size="14px,14px"></x-import>{{ rc.lockText }}</p>
+              </sc-if>
+              <div style="margin-top: auto; display: flex;">
+                <sc-if value="{{ rc.always }}" hint-placeholder-val="{{ false }}">
+                  <span class="body-s" style="color: var(--ink-muted);">Подключена всегда</span>
+                </sc-if>
+                <sc-if value="{{ rc.toggleable }}" hint-placeholder-val="{{ true }}">
+                  <x-import component-from-global-scope="DesignSystem_b66810.Button" variant="{{ rc.btnVariant }}" size="s" disabled="{{ rc.locked }}" onClick="{{ rc.toggle }}" hint-size="140px,40px">{{ rc.btnLabel }}</x-import>
+                </sc-if>
+              </div>
+            </div>
+          </sc-for>
+        </div>
+      </section>
+
+      <section style="display: grid; grid-template-columns: minmax(220px, 1fr) minmax(0, 2fr); gap: var(--space-8);">
+        <div style="display: flex; flex-direction: column; gap: var(--space-2);">
+          <h2 class="h3" style="margin: 0;">Личные данные</h2>
+          <p class="body-s" style="margin: 0; color: var(--ink-muted); text-wrap: pretty;">Имя видно в сообщениях и отзывах. Вместо фото — инициалы.</p>
+        </div>
+        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 240px), 1fr)); gap: var(--space-4); align-content: start;">
+          <x-import component-from-global-scope="DesignSystem_b66810.Field" id="p-name" label="Имя" defaultValue="Владимир" hint-size="100%,96px"></x-import>
+          <x-import component-from-global-scope="DesignSystem_b66810.Field" id="p-last" label="Фамилия" defaultValue="Ёлкин" hint="Другие видят только первую букву" hint-size="100%,96px"></x-import>
+          <x-import component-from-global-scope="DesignSystem_b66810.Field" id="p-phone" label="Телефон" defaultValue="+7 900 000-00-00" hint="Не показываем — для входа и уведомлений" hint-size="100%,96px"></x-import>
+          <x-import component-from-global-scope="DesignSystem_b66810.Field" id="p-city" label="Город" defaultValue="Москва" hint-size="100%,96px"></x-import>
+        </div>
+      </section>
+      <div><x-import component-from-global-scope="DesignSystem_b66810.Button" variant="inverse" hint-size="140px,48px">Сохранить</x-import></div>
+    </sc-if>
+
+    <sc-if value="{{ is.wallet }}" hint-placeholder-val="{{ false }}">
+      <div style="display: grid; grid-template-columns: minmax(300px, 1fr) minmax(0, 1.6fr); gap: var(--space-8); align-items: start;">
+        <section aria-label="Баланс" style="display: flex; flex-direction: column; gap: var(--space-4); padding: var(--space-6); border-radius: var(--radius-lg); border: 1px solid var(--line); background: var(--surface-raised);">
+          <span class="body-s" style="color: var(--ink-muted);">Баланс</span>
+          <span style="font: 600 48px/1 var(--font-mono); letter-spacing: -0.02em; font-variant-numeric: tabular-nums;">{{ balanceText }}</span>
+          <span class="caption" style="color: var(--ink-muted);">1 балл = 1 ₽. Баллы тратятся только на продвижение объявлений и не выводятся.</span>
+          <sc-if value="{{ isLegal }}" hint-placeholder-val="{{ false }}">
+            <p class="body-s" style="margin: 0; padding: var(--space-3) var(--space-4); border-radius: var(--radius-md); background: var(--surface-recessed);">В тариф «{{ planName }}» входит {{ planPoints }} в месяц — начисляем 1-го числа.</p>
+          </sc-if>
+          <div style="display: flex; flex-direction: column; gap: var(--space-3); padding-top: var(--space-4); border-top: 1px solid var(--line);">
+            <span class="label" style="font-weight: 600;">Пополнить</span>
+            <div role="radiogroup" aria-label="Сумма пополнения" style="display: flex; flex-wrap: wrap; gap: var(--space-2);">
+              <sc-for list="{{ topups }}" as="t" hint-placeholder-count="4">
+                <x-import component-from-global-scope="DesignSystem_b66810.FilterChip" radio="{{ true }}" selected="{{ t.on }}" onChange="{{ t.pick }}" hint-size="96px,40px">{{ t.label }}</x-import>
+              </sc-for>
+            </div>
+            <x-import component-from-global-scope="DesignSystem_b66810.Button" variant="primary" block="{{ true }}" onClick="{{ doTopup }}" hint-size="100%,48px">{{ topupLabel }}</x-import>
+            <span class="caption" style="color: var(--ink-muted);">Картой или через СБП. Чек придёт на почту.</span>
+          </div>
+        </section>
+
+        <div style="display: flex; flex-direction: column; gap: var(--space-3); min-width: 0;">
+          <sc-if value="{{ walletServices }}" hint-placeholder-val="{{ true }}">
+            <p class="body-s" style="margin: 0; color: var(--ink-muted);">Продвигаемые объявления помечаются «Реклама» с номером ERID.</p>
+            <div role="list" style="display: flex; flex-direction: column; border-top: 1px solid var(--line);">
+              <sc-for list="{{ promoList }}" as="p" hint-placeholder-count="6">
+                <div role="listitem" style="display: grid; grid-template-columns: minmax(0, 1fr) auto auto; gap: var(--space-4); align-items: center; padding: var(--space-4) 0; border-bottom: 1px solid var(--line);">
+                  <div style="display: flex; flex-direction: column; gap: 2px; min-width: 0;">
+                    <span class="body" style="font-weight: 600;">{{ p.name }}</span>
+                    <span class="body-s" style="color: var(--ink-muted);">{{ p.desc }}</span>
+                  </div>
+                  <span style="font: 600 var(--text-m)/22px var(--font-mono); white-space: nowrap;">{{ p.price }}</span>
+                  <x-import component-from-global-scope="DesignSystem_b66810.Button" variant="outline" size="s" onClick="{{ p.use }}" hint-size="120px,40px">Применить</x-import>
+                </div>
+              </sc-for>
+            </div>
+          </sc-if>
+          <sc-if value="{{ walletHistory }}" hint-placeholder-val="{{ false }}">
+            <div role="list" style="display: flex; flex-direction: column; border-top: 1px solid var(--line);">
+              <sc-for list="{{ historyRows }}" as="h" hint-placeholder-count="4">
+                <div role="listitem" style="display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: var(--space-4); align-items: center; padding: var(--space-4) 0; border-bottom: 1px solid var(--line);">
+                  <div style="display: flex; flex-direction: column; gap: 2px; min-width: 0;">
+                    <span class="body" style="font-weight: 500; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">{{ h.title }}</span>
+                    <span class="caption" style="color: var(--ink-muted);">{{ h.date }}</span>
+                  </div>
+                  <span style="{{ h.style }}">{{ h.amount }}</span>
+                </div>
+              </sc-for>
+            </div>
+          </sc-if>
+        </div>
+      </div>
+    </sc-if>
+
+    <sc-if value="{{ is.tariff }}" hint-placeholder-val="{{ false }}">
+      <section style="display: flex; flex-direction: column; gap: var(--space-3); max-width: 720px;">
+        <h2 class="h3" style="margin: 0;">Тариф «{{ planName }}»</h2>
+        <p class="body-s" style="margin: 0; color: var(--ink-muted); text-wrap: pretty;">Для ИП и ООО объявления размещаются по тарифу. В лимит входят все активные объявления аккаунта — лоты на Барахолке и товары магазина. Черновики и проданные не считаются.</p>
+        <div style="display: flex; align-items: center; gap: var(--space-3);">
+          <span style="flex: 1; display: block; height: 8px; border-radius: var(--radius-full); background: var(--surface-recessed); overflow: hidden;"><span style="{{ usageBar }}"></span></span>
+          <span class="body-s" style="white-space: nowrap; font-variant-numeric: tabular-nums;">{{ usageText }}</span>
+        </div>
+      </section>
+      <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 280px), 1fr)); gap: var(--space-6);">
+        <sc-for list="{{ plans }}" as="pl" hint-placeholder-count="3">
+          <article style="{{ pl.style }}">
+            <div style="display: flex; align-items: baseline; justify-content: space-between; gap: var(--space-3);">
+              <h3 class="h3" style="margin: 0;">{{ pl.name }}</h3>
+              <sc-if value="{{ pl.current }}" hint-placeholder-val="{{ false }}">
+                <x-import component-from-global-scope="DesignSystem_b66810.Badge" tone="lad" hint-size="80px,24px">Ваш тариф</x-import>
+              </sc-if>
+            </div>
+            <span style="font: 600 var(--text-xl, 24px)/1.2 var(--font-text); font-variant-numeric: tabular-nums;">{{ pl.price }}</span>
+            <ul style="margin: 0; padding: 0; list-style: none; display: flex; flex-direction: column; gap: var(--space-2);">
+              <sc-for list="{{ pl.features }}" as="f" hint-placeholder-count="3">
+                <li class="body-s" style="display: flex; gap: var(--space-2); align-items: flex-start;"><span style="display: flex; color: var(--lad); flex: none; margin-top: 2px;"><x-import component-from-global-scope="DesignSystem_b66810.Icon" name="check" size="{{ 16 }}" hint-size="16px,16px"></x-import></span>{{ f }}</li>
+              </sc-for>
+            </ul>
+            <div style="margin-top: auto;">
+              <x-import component-from-global-scope="DesignSystem_b66810.Button" variant="{{ pl.btnVariant }}" block="{{ true }}" disabled="{{ pl.disabled }}" onClick="{{ pl.pick }}" hint-size="100%,48px">{{ pl.btnLabel }}</x-import>
+            </div>
+          </article>
+        </sc-for>
+      </div>
+      <p class="caption" style="margin: 0; color: var(--ink-muted);">Цены и лимиты тарифов — примеры, уточнить.</p>
+    </sc-if>
+  </main>
+
+  <sc-if value="{{ promoOpen }}" hint-placeholder-val="{{ false }}">
+    <div aria-hidden="true" onClick="{{ closePromo }}" style="position: fixed; inset: 0; z-index: 40; background: color-mix(in srgb, var(--ink) 40%, transparent);"></div>
+    <div role="dialog" aria-modal="true" aria-labelledby="promo-h" style="position: fixed; z-index: 41; top: 50%; left: 50%; transform: translate(-50%, -50%); width: min(600px, calc(100vw - 32px)); max-height: calc(100vh - 48px); overflow-y: auto; box-sizing: border-box; padding: var(--space-6); border-radius: var(--radius-xl); background: var(--surface-raised); box-shadow: var(--shadow-3); display: flex; flex-direction: column; gap: var(--space-5);">
+      <div style="display: flex; align-items: center; justify-content: space-between; gap: var(--space-3);">
+        <h2 id="promo-h" class="h3" style="margin: 0;">Продвижение объявления</h2>
+        <x-import component-from-global-scope="DesignSystem_b66810.IconButton" icon="x" label="Закрыть" show-label="{{ false }}" onClick="{{ closePromo }}" hint-size="44px,44px"></x-import>
+      </div>
+      <div style="display: flex; flex-direction: column; gap: var(--space-2);">
+        <span class="label" style="font-weight: 600;">Объявление</span>
+        <div role="radiogroup" aria-label="Объявление" style="display: flex; flex-wrap: wrap; gap: var(--space-2);">
+          <sc-for list="{{ promoLots }}" as="l" hint-placeholder-count="3">
+            <x-import component-from-global-scope="DesignSystem_b66810.FilterChip" radio="{{ true }}" selected="{{ l.on }}" onChange="{{ l.pick }}" hint-size="160px,40px">{{ l.label }}</x-import>
+          </sc-for>
+        </div>
+      </div>
+      <div role="group" aria-label="Услуги" style="display: flex; flex-direction: column; gap: var(--space-2);">
+        <sc-for list="{{ promoSvc }}" as="p" hint-placeholder-count="6">
+          <button type="button" role="checkbox" aria-checked="{{ p.checked }}" onClick="{{ p.toggle }}" style="{{ p.style }}">
+            <span style="{{ p.boxStyle }}"><x-import component-from-global-scope="DesignSystem_b66810.Icon" name="check" size="{{ 14 }}" hint-size="14px,14px"></x-import></span>
+            <span style="display: flex; flex-direction: column; gap: 2px; min-width: 0;">
+              <span class="body" style="font-weight: 600; color: var(--ink);">{{ p.name }}</span>
+              <span class="body-s" style="color: var(--ink-muted);">{{ p.desc }}</span>
+            </span>
+            <span style="font: 600 var(--text-s)/20px var(--font-mono); white-space: nowrap; color: var(--ink);">{{ p.price }}</span>
+          </button>
+        </sc-for>
+      </div>
+      <sc-if value="{{ promoLack }}" hint-placeholder-val="{{ false }}">
+        <x-import component-from-global-scope="DesignSystem_b66810.Alert" tone="warning" title="{{ promoLackText }}" hint-size="100%,56px"></x-import>
+      </sc-if>
+      <div style="display: flex; align-items: center; justify-content: space-between; gap: var(--space-4); flex-wrap: wrap; padding-top: var(--space-4); border-top: 1px solid var(--line);">
+        <div style="display: flex; flex-direction: column; gap: 2px;">
+          <span style="font: 600 var(--text-l)/24px var(--font-mono);">Итого {{ promoTotal }}</span>
+          <span class="caption" style="color: var(--ink-muted);">{{ promoBalance }}</span>
+        </div>
+        <div style="display: flex; gap: var(--space-2); flex-wrap: wrap;">
+          <sc-if value="{{ promoLack }}" hint-placeholder-val="{{ false }}">
+            <x-import component-from-global-scope="DesignSystem_b66810.Button" variant="outline" onClick="{{ promoToTopup }}" hint-size="140px,48px">Пополнить</x-import>
+          </sc-if>
+          <x-import component-from-global-scope="DesignSystem_b66810.Button" variant="primary" disabled="{{ cantPay }}" onClick="{{ pay }}" hint-size="200px,48px">{{ promoPayLabel }}</x-import>
+        </div>
+      </div>
+      <p class="caption" style="margin: 0; color: var(--ink-muted);">Объявление будет помечено «Реклама» с номером ERID.</p>
+    </div>
+  </sc-if>
+
+  <div style="margin-top: var(--space-16);">
+    <dc-import name="Подвал" hint-size="100%,420px"></dc-import>
+  </div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props="{&quot;legalStatus&quot;:{&quot;editor&quot;:&quot;enum&quot;,&quot;options&quot;:[&quot;person&quot;,&quot;self&quot;,&quot;ip&quot;,&quot;ooo&quot;],&quot;default&quot;:&quot;ip&quot;,&quot;tsType&quot;:&quot;string&quot;,&quot;section&quot;:&quot;Аккаунт&quot;},&quot;seller&quot;:{&quot;editor&quot;:&quot;boolean&quot;,&quot;default&quot;:true,&quot;tsType&quot;:&quot;boolean&quot;,&quot;section&quot;:&quot;Аккаунт&quot;},&quot;shop&quot;:{&quot;editor&quot;:&quot;boolean&quot;,&quot;default&quot;:true,&quot;tsType&quot;:&quot;boolean&quot;,&quot;section&quot;:&quot;Аккаунт&quot;},&quot;master&quot;:{&quot;editor&quot;:&quot;boolean&quot;,&quot;default&quot;:true,&quot;tsType&quot;:&quot;boolean&quot;,&quot;section&quot;:&quot;Аккаунт&quot;}}">
+const LOT = 'Десктоп - Лот.dc.html', MSG = 'Десктоп - Сообщения.dc.html';
+const LEGAL = {
+  person: ['Физлицо', 'Продажа своих инструментов на Барахолке'],
+  self: ['Самозанятый', 'Можно работать мастером, чеки формируем сами'],
+  ip: ['ИП', 'Доступны все роли, включая магазин'],
+  ooo: ['ООО', 'Доступны все роли, документы на организацию']
+};
+const B = (label, variant, href) => ({ label, variant: variant || 'ghost', href: href || '#' });
+const SELL = {
+  active: [
+    { icon: 'guitar', title: 'Fender American Vintage ’57 Stratocaster 2009', sub: '184 500 ₽ · Б/у · Отличное', status: 'Опубликован', tone: 'lad', meta: '1 310 просмотров · 3 чата', actions: [B('Сообщения', 'outline', MSG + '?chat=lot'), B('Изменить')] },
+    { icon: 'cable', title: 'Boss DS-1 Distortion, 1986', sub: '14 500 ₽ · Б/у · Хорошее', status: 'Опубликован', tone: 'lad', meta: '420 просмотров · 1 чат', actions: [B('Сообщения', 'outline', MSG), B('Изменить')] },
+    { icon: 'piano', title: 'Roland Juno-106, 1984', sub: '189 000 ₽ · Б/у · Удовлетворительное', status: 'Опубликован', tone: 'lad', meta: '870 просмотров · 0 чатов', actions: [B('Снизить цену', 'outline'), B('Изменить')] }
+  ],
+  review: [{ icon: 'mic', title: 'Shure SM7B', sub: '31 500 ₽ · Б/у · Отличное', status: 'На проверке', tone: 'warning', meta: 'отправлен 40 мин назад', actions: [B('Изменить')] }],
+  drafts: [{ icon: 'headphones', title: 'Без названия', sub: 'Нет фото серийного номера', status: 'Черновик', tone: 'neutral', meta: 'изменён вчера', actions: [B('Продолжить', 'outline', 'Десктоп - Продать.dc.html')] }],
+  sold: [
+    { icon: 'guitar', title: 'Fender Player Stratocaster 2019', sub: '64 500 ₽', status: 'Снято', tone: 'neutral', meta: 'снято 13 авг', actions: [B('Опубликовать снова', 'outline')] },
+    { icon: 'speaker', title: 'Vox AC15C1', sub: '52 000 ₽', status: 'Снято', tone: 'neutral', meta: 'снято 2 июл', actions: [B('Опубликовать снова', 'outline')] }
+  ]
+};
+const SHOP = [
+  { icon: 'guitar', title: 'Fender Player Telecaster, Butterscotch', sub: '87 990 ₽ · артикул FPT-BTB', status: 'В наличии · 4', tone: 'lad', meta: '2 140 просмотров · 6 чатов', actions: [B('Сообщения', 'outline', MSG), B('Изменить')] },
+  { icon: 'guitar', title: 'Squier Classic Vibe ’60s Stratocaster', sub: '54 990 ₽ · артикул SCV-60', status: 'В наличии · 2', tone: 'lad', meta: '1 020 просмотров · 2 чата', actions: [B('Сообщения', 'outline', MSG), B('Изменить')] },
+  { icon: 'cable', title: "D'Addario EXL110, 3 комплекта", sub: '2 190 ₽ · артикул EXL110-3', status: 'Мало · 1', tone: 'warning', meta: '640 просмотров · 1 чат', actions: [B('Пополнить', 'outline'), B('Изменить')] },
+  { icon: 'piano', title: 'Korg Minilogue XD', sub: '79 990 ₽ · артикул MLXD', status: 'Нет в наличии', tone: 'neutral', meta: 'скрыт из поиска', actions: [B('Пополнить', 'outline'), B('Изменить')] }
+];
+const MASTER = {
+  new: [
+    { icon: 'guitar', title: 'Ibanez RG550 · настройка и замена струн', sub: 'Мария С. · хочет принести 10 окт', status: 'Новая', tone: 'copper', meta: 'пришла 15 мин назад', actions: [B('Ответить', 'outline', MSG), B('Отклонить')] },
+    { icon: 'badge-check', title: 'Проверка перед покупкой · Gibson SG 2015', sub: 'Игорь Л. · встреча с продавцом 9 окт', status: 'Новая', tone: 'copper', meta: 'пришла 2 ч назад', actions: [B('Ответить', 'outline', MSG), B('Отклонить')] }
+  ],
+  work: [{ icon: 'guitar', title: 'Gibson Les Paul Studio 2014 · перешлифовка ладов', sub: 'Владимир Ё. · смета 7 800 ₽ согласована', status: 'В работе', tone: 'info', meta: 'срок до 8 окт', actions: [B('Написать', 'outline', MSG + '?chat=master'), B('Готово')] }],
+  done: [{ icon: 'speaker', title: 'Marshall JCM800 · замена ламп', sub: 'Олег Р. · 6 400 ₽', status: 'Выдан', tone: 'neutral', meta: '28 сент', actions: [B('Написать', 'ghost', MSG)] }]
+};
+const SERVICES = [
+  { icon: 'wrench', title: 'Настройка гитары', sub: 'от 2 500 ₽ · 1–2 дня', status: 'Показывается', tone: 'lad', meta: '38 заказов за год', actions: [B('Изменить')] },
+  { icon: 'wrench', title: 'Перешлифовка ладов', sub: 'от 6 000 ₽ · 3–5 дней', status: 'Показывается', tone: 'lad', meta: '21 заказ за год', actions: [B('Изменить')] },
+  { icon: 'badge-check', title: 'Проверка перед покупкой', sub: '1 900 ₽ · выезд на встречу', status: 'Показывается', tone: 'lad', meta: '14 заказов за год', actions: [B('Изменить')] },
+  { icon: 'hammer', title: 'Ремонт трещин', sub: 'по смете', status: 'Скрыта', tone: 'neutral', meta: '—', actions: [B('Показать', 'outline')] }
+];
+const FAV = [
+  { id: 'f1', title: 'Gibson Les Paul Studio 2014, Wine Red', price: 149000, oldPrice: 162000, condition: 'very-good', city: 'Санкт-Петербург', shipping: 1200, favorite: true },
+  { id: 'f2', title: 'Ibanez RG550 Genesis, Road Flare Red', price: 96000, condition: 'excellent', city: 'Москва', distance: '6,5 км', inspected: true, favorite: true },
+  { id: 'f3', title: 'Korg MS-20 mini', price: 46000, condition: 'excellent', city: 'Екатеринбург', icon: 'piano', favorite: true },
+  { id: 'f4', title: 'Strymon BigSky', price: 42000, condition: 'excellent', city: 'Краснодар', shipping: 500, icon: 'cable', favorite: true },
+  { id: 'f5', title: 'Fender Hot Rod Deluxe IV', price: 68000, condition: 'very-good', city: 'Москва', shipping: 0, icon: 'speaker', favorite: true }
+].map(l => ({ ...l, href: LOT }));
+const SEARCHES = [
+  { icon: 'search', title: 'Fender Stratocaster до 120 000 ₽', sub: 'Барахолка · Москва · состояние от «Хорошее»', status: '3 новых', tone: 'lad', meta: 'уведомления включены', actions: [B('Показать', 'outline', 'Десктоп - Каталог.dc.html?view=flea'), B('Изменить')] },
+  { icon: 'search', title: 'Ламповые комбо до 80 000 ₽', sub: 'Каталог и Барахолка · вся Россия', status: '2 новых', tone: 'lad', meta: 'уведомления включены', actions: [B('Показать', 'outline', 'Десктоп - Каталог.dc.html'), B('Изменить')] }
+];
+const GEAR = [
+  { icon: 'guitar', title: 'Fender American Vintage ’57 Stratocaster', sub: 'S/N V091187 · 2009', status: 'Выставлен', tone: 'lad', meta: 'цена продаж 168–196 тыс. ₽', actions: [B('Детали', 'outline', 'Десктоп - Аксессуары.dc.html'), B('История')] },
+  { icon: 'cable', title: 'Boss DS-1 Distortion', sub: 'S/N 6M2341 · 1986', status: 'Выставлен', tone: 'lad', meta: 'цена продаж 4,5–7,5 тыс. ₽', actions: [B('Детали', 'outline', 'Десктоп - Аксессуары.dc.html'), B('История')] },
+  { icon: 'guitar', title: 'Gibson Les Paul Studio 2014', sub: 'S/N 140023456', status: 'В ремонте', tone: 'copper', meta: 'у мастера до 8 окт', actions: [B('Детали', 'outline', 'Десктоп - Аксессуары.dc.html'), B('История')] }
+];
+
+const LOTS = ['Fender American Vintage ’57 Stratocaster 2009', 'Boss DS-1 Distortion, 1986', 'Roland Juno-106, 1984', 'Fender Player Telecaster, Butterscotch', 'Squier Classic Vibe ’60s Stratocaster'];
+const PROMO = [
+  { id: 'up', name: 'Поднять в поиске', desc: 'Объявление один раз вернётся наверх выдачи', price: 49, tag: 'поднят сегодня' },
+  { id: 'color', name: 'Выделить цветом', desc: 'Рамка и фон карточки в выдаче на 7 дней', price: 99, tag: 'выделен на 7 дней' },
+  { id: 'urgent', name: 'Пометка «Срочно»', desc: 'Метка на карточке на 7 дней', price: 69, tag: '«Срочно» на 7 дней' },
+  { id: 'top', name: 'Закрепить в топе на 3 дня', desc: 'Первые места в категории и вашем городе', price: 199, tag: 'в топе 3 дня' },
+  { id: 'auto', name: 'Автоподнятие на 7 дней', desc: 'Поднимаем каждый день в 10:00', price: 249, tag: 'автоподнятие 7 дней' },
+  { id: 'home', name: 'Показ на главной', desc: 'Подборка на главной странице на 3 дня', price: 299, tag: 'на главной 3 дня' }
+];
+const PLANS = [
+  { id: 'start', name: 'Старт', price: 990, limit: 10, points: 300, extra: ['Страница магазина'] },
+  { id: 'biz', name: 'Бизнес', price: 2990, limit: 50, points: 1000, extra: ['Страница магазина', 'Статистика просмотров и чатов'] },
+  { id: 'pro', name: 'Про', price: 7990, limit: 200, points: 4000, extra: ['Страница магазина с обложкой', 'Статистика и выгрузка', 'Несколько сотрудников в чатах'] }
+];
+const HISTORY = [
+  { title: 'Начисление по тарифу «Бизнес»', amount: 1000, date: '1 окт', tariff: true },
+  { title: 'Закрепить в топе · Fender Player Telecaster', amount: -199, date: '30 сент' },
+  { title: 'Пополнение картой', amount: 500, date: '28 сент' },
+  { title: 'Поднять в поиске · Boss DS-1 Distortion', amount: -49, date: '25 сент' }
+];
+const pts = n => n.toLocaleString('ru-RU') + ' ' + ((m, h) => m === 1 && h !== 11 ? 'балл' : m >= 2 && m <= 4 && (h < 10 || h >= 20) ? 'балла' : 'баллов')(n % 10, n % 100);
+const rub = n => n.toLocaleString('ru-RU') + ' ₽';
+class Component extends DCLogic {
+  state = { space: 'overview', sub: {}, legal: null, roles: null, plan: 'biz', balance: 1250, history: HISTORY, promoted: {}, promo: null, picked: {}, topup: 1000 };
+  onKey = e => { if (e.key === 'Escape' && this.state.promo) this.setState({ promo: null }); };
+  componentWillUnmount() { document.removeEventListener('keydown', this.onKey); }
+  openPromote(lot) { this.setState({ promo: { lot: lot || LOTS[0] }, picked: { up: true } }); }
+  get legal() { return this.state.legal ?? this.props.legalStatus ?? 'ip'; }
+  get roles() { return this.state.roles ?? { seller: this.props.seller ?? true, shop: this.props.shop ?? true, master: this.props.master ?? true }; }
+  componentDidMount() {
+    const s = new URLSearchParams(location.search).get('tab');
+    if (s) this.setState({ space: s });
+    document.addEventListener('keydown', this.onKey);
+  }
+  baseVals() {
+    const legal = this.legal, roles = this.roles;
+    const canShop = legal === 'ip' || legal === 'ooo', canMaster = legal !== 'person';
+    const R = { seller: roles.seller, shop: roles.shop && canShop, master: roles.master && canMaster };
+    const SP = [
+      ['overview', 'layout-grid', 'Обзор', true],
+      ['fav', 'heart', 'Избранное', true],
+      ['gear', 'guitar', 'Мои инструменты', true],
+      ['selling', 'tag', 'Объявления', R.seller, 0],
+      ['shop', 'store', 'Магазин', R.shop],
+      ['master', 'wrench', 'Мастерская', R.master, MASTER.new.length],
+      ['wallet', 'star', canShop ? 'Кошелёк и тариф' : 'Кошелёк', true],
+      ['messages', 'message-circle', 'Сообщения', true, 3],
+      ['profile', 'user', 'Профиль и роли', true]
+    ].filter(x => x[3]);
+    let space = SP.some(x => x[0] === this.state.space) ? this.state.space : 'overview';
+    const tab = 'display: inline-flex; align-items: center; gap: var(--space-2); min-height: 48px; white-space: nowrap; text-decoration: none; box-sizing: border-box; font: 500 var(--text-m)/22px var(--font-text); border-bottom: 2px solid ';
+    const spaces = SP.map(([k, icon, label, , count]) => ({
+      icon, label, count: count || 0, current: k === space ? 'page' : undefined,
+      href: k === 'messages' ? MSG : '#',
+      style: tab + (k === space ? 'var(--lad); color: var(--ink); font-weight: 600;' : 'transparent; color: var(--ink-muted);'),
+      go: e => { if (k === 'messages') return; e.preventDefault(); this.setState({ space: k }); }
+    }));
+    const SUBS = {
+      fav: [['lots', 'Объявления', FAV.length], ['searches', 'Сохранённые поиски', SEARCHES.length]],
+      gear: [['list', 'Инструменты', GEAR.length], ['repair', 'Ремонт', 1]],
+      selling: [['active', 'Опубликованы', SELL.active.length], ['review', 'На проверке', SELL.review.length], ['drafts', 'Черновики', SELL.drafts.length], ['sold', 'Архив', SELL.sold.length], ['reviews', 'Отзывы', 0]],
+      shop: [['goods', 'Товары', SHOP.length], ['settings', 'Магазин и реквизиты'], ['reviews', 'Отзывы', 0]],
+      wallet: [['services', 'Продвижение'], ['history', 'История']].concat(canShop ? [['tariff', 'Тариф']] : []),
+      master: [['new', 'Новые заявки', MASTER.new.length], ['work', 'В работе', MASTER.work.length], ['done', 'Выданы', MASTER.done.length], ['services', 'Услуги и цены', SERVICES.length], ['settings', 'Мастерская'], ['reviews', 'Отзывы', 0]]
+    };
+    const subs = SUBS[space] || [];
+    const sub = this.state.sub[space] || (subs[0] && subs[0][0]);
+    let view = space === 'overview' ? 'overview' : space === 'profile' ? 'profile' : 'rows';
+    let rows = [], cards = [], settings = [];
+    if (space === 'wallet') view = sub === 'tariff' ? 'tariff' : 'wallet';
+    if (space === 'fav') { if (sub === 'lots') { view = 'cards'; cards = FAV; } else rows = SEARCHES; }
+    if (space === 'gear') { if (sub === 'repair') view = 'repair'; else rows = GEAR; }
+    if (space === 'selling') { if (sub === 'reviews') view = 'reviews'; else rows = SELL[sub]; }
+    if (space === 'shop') {
+      if (sub === 'goods') rows = SHOP; else if (sub === 'reviews') view = 'reviews';
+      else { view = 'settings'; settings = [
+        { title: 'Витрина', why: 'Название и адрес видят покупатели в карточках товаров.', fields: [{ id: 's-n', label: 'Название магазина', value: 'Гитарный угол' }, { id: 's-a', label: 'Адрес самовывоза', value: 'Москва, уточнить' }, { id: 's-h', label: 'Часы работы', value: 'Ежедневно 11:00–21:00' }] },
+        { title: 'Реквизиты', why: 'Нужны для статуса магазина-партнёра. Покупатели их не видят.', fields: [{ id: 's-inn', label: 'ИНН', value: '', hint: 'уточнить' }, { id: 's-ogrn', label: legal === 'ooo' ? 'ОГРН' : 'ОГРНИП', value: '', hint: 'уточнить' }] }
+      ]; }
+    }
+    if (space === 'master') {
+      if (sub === 'services') rows = SERVICES; else if (sub === 'reviews') view = 'reviews';
+      else if (sub === 'settings') { view = 'settings'; settings = [
+        { title: 'Мастерская', why: 'Карточка мастера в разделе «Мастера» и в выдаче «рядом с вами».', fields: [{ id: 'm-n', label: 'Название', value: 'Мастерская «Лад и строй»' }, { id: 'm-a', label: 'Адрес приёма', value: 'Москва, уточнить' }, { id: 'm-k', label: 'Инструменты', value: 'Гитары, усилители' }] },
+        { title: 'Приём заявок', why: 'Сколько заявок берёте и как быстро отвечаете — видно клиентам.', fields: [{ id: 'm-r', label: 'Отвечаю в течение', value: '1 часа' }, { id: 'm-q', label: 'Очередь', value: 'до 5 инструментов' }] }
+      ]; }
+      else rows = MASTER[sub];
+    }
+    const L = LEGAL[legal];
+    const roleBadges = [
+      R.seller && { label: 'Продавец', tone: 'nickel', icon: 'tag' },
+      R.shop && { label: 'Магазин', tone: 'lad', icon: 'store' },
+      R.master && { label: 'Мастер', tone: 'copper', icon: 'wrench' }
+    ].filter(Boolean);
+    const todo = [
+      R.master && { tone: 'copper', icon: 'wrench', title: 'Две новые заявки в мастерскую', text: 'Ответьте в течение часа — так клиенты видят, что вы на связи.' },
+      R.shop && { tone: 'warning', icon: 'triangle-alert', title: 'Заканчивается товар', text: "D'Addario EXL110 — остался 1 комплект. Korg Minilogue XD скрыт из поиска." },
+      R.seller && { tone: 'info', icon: 'message-circle', title: '3 непрочитанных сообщения', text: 'Покупатель спрашивает про Fender American Vintage ’57.' }
+    ].filter(Boolean);
+    const og = (k, title, icon, bg, fg, stats) => ({ title, icon, stats, iconStyle: 'width: 32px; height: 32px; border-radius: var(--radius-sm); display: inline-flex; align-items: center; justify-content: center; background: ' + bg + '; color: ' + fg + ';', go: e => { e.preventDefault(); this.setState({ space: k }); } });
+    const overview = [
+      og('fav', 'Избранное', 'heart', 'var(--surface-recessed)', 'var(--ink-muted)', [{ label: 'Объявления', value: FAV.length, note: '2 подешевели' }, { label: 'Сохранённые поиски', value: SEARCHES.length, note: '5 новых лотов' }]),
+      og('gear', 'Мои инструменты', 'guitar', 'var(--surface-recessed)', 'var(--ink-muted)', [{ label: 'Инструменты', value: GEAR.length, note: '1 в ремонте' }, { label: 'Ремонт', value: 1, note: 'готов до 8 окт' }]),
+      R.seller && og('selling', 'Объявления', 'tag', 'var(--nickel-soft)', 'var(--nickel)', [{ label: 'Опубликовано', value: SELL.active.length, note: '1 на проверке' }, { label: 'Просмотры', value: '2 600', note: 'за 7 дней' }, { label: 'Чаты', value: 4, note: 'по вашим лотам' }, { label: 'В архиве', value: SELL.sold.length, note: 'сняты с публикации' }]),
+      R.shop && og('shop', 'Магазин', 'store', 'var(--lad-soft)', 'var(--lad-strong)', [{ label: 'Товаров', value: SHOP.length, note: '1 нет в наличии' }, { label: 'Просмотры', value: '3 800', note: 'за 7 дней' }, { label: 'Чаты', value: 9, note: 'за 7 дней' }]),
+      R.master && og('master', 'Мастерская', 'wrench', 'var(--copper-soft)', 'var(--copper-strong)', [{ label: 'Новые заявки', value: MASTER.new.length, note: 'ждут ответа' }, { label: 'В работе', value: MASTER.work.length, note: 'ближайший срок 8 окт' }, { label: 'Выдано', value: 18, note: 'за месяц' }])
+    ].filter(Boolean);
+    const card = 'display: flex; flex-direction: column; gap: var(--space-1); padding: var(--space-4); border-radius: var(--radius-md); cursor: pointer; font: inherit; text-align: left; box-sizing: border-box; background: var(--surface-raised); border: 2px solid ';
+    const legals = Object.entries(LEGAL).map(([k, [label, note]]) => ({ label, note, checked: k === legal ? 'true' : 'false', style: card + (k === legal ? 'var(--lad);' : 'var(--line);'), pick: () => this.setState({ legal: k }) }));
+    const setRole = (k, v) => this.setState({ roles: { ...roles, [k]: v } });
+    const rc = (k, label, text, icon, bg, fg, on, locked, lockText) => ({
+      label, text, icon, locked: !!locked, lockText: lockText || '', always: k === 'buyer', toggleable: k !== 'buyer',
+      btnLabel: on ? 'Отключить' : 'Подключить', btnVariant: on ? 'ghost' : 'outline',
+      toggle: () => setRole(k, !on),
+      style: 'display: flex; flex-direction: column; gap: var(--space-3); padding: var(--space-5); border-radius: var(--radius-lg); border: 1px solid ' + (on ? 'var(--line-control)' : 'var(--line)') + '; background: ' + (on ? 'var(--surface-raised)' : 'var(--surface)') + ';',
+      iconStyle: 'width: 44px; height: 44px; flex: none; border-radius: var(--radius-md); display: flex; align-items: center; justify-content: center; background: ' + bg + '; color: ' + fg + ';'
+    });
+    const roleCards = [
+      rc('buyer', 'Покупатель', 'Избранное, сохранённые поиски, мои инструменты, ремонт, переписка с продавцами.', 'heart', 'var(--surface-recessed)', 'var(--ink-muted)', true),
+      rc('seller', 'Продавец лотов', 'Продажа своих б/у инструментов на Барахолке.', 'tag', 'var(--nickel-soft)', 'var(--nickel)', R.seller),
+      rc('shop', 'Магазин нового', 'Витрина и товары с остатками. Работает по тарифу с лимитом объявлений.', 'store', 'var(--lad-soft)', 'var(--lad-strong)', R.shop, !canShop, 'Нужен статус ИП или ООО'),
+      rc('master', 'Мастер', 'Заявки на ремонт и проверку, услуги и цены, карточка мастерской.', 'wrench', 'var(--copper-soft)', 'var(--copper-strong)', R.master, !canMaster, 'Нужен статус самозанятого, ИП или ООО')
+    ];
+    const reviewsText = { buying: 'Отзывов пока нет. После встречи с продавцом или ремонта у мастера можно оставить отзыв.', selling: 'Отзывов о вас как о продавце пока нет.', shop: 'Отзывов о магазине пока нет.', master: 'Отзывов о мастерской пока нет.' }[space] || '';
+    return {
+      legalLabel: L[0], roleBadges, spaces, todo, overview,
+      is: { overview: view === 'overview', rows: view === 'rows', cards: view === 'cards', repair: view === 'repair', reviews: view === 'reviews', settings: view === 'settings', profile: view === 'profile', wallet: view === 'wallet', tariff: view === 'tariff' },
+      space, sub, legal, R, canShop,
+      hasSub: subs.length > 0,
+      subs: subs.map(([k, label, count]) => ({ label, count, on: k === sub, pick: () => this.setState(s => ({ sub: { ...s.sub, [space]: k } })) })),
+      spaceAction: { selling: 'Продать инструмент', shop: 'Добавить товар', master: sub === 'services' ? 'Добавить услугу' : '' , gear: sub === 'list' ? 'Добавить инструмент' : '' }[space] || '',
+      rows: rows || [], rowsEmpty: view === 'rows' && (!rows || rows.length === 0), cards, settings, reviewsText,
+      legals, roleCards,
+      repairSteps: [{ label: 'Принят', meta: '2 окт', state: 'done' }, { label: 'Диагностика', meta: '3 окт', state: 'done' }, { label: 'Смета', meta: '7 800 ₽', state: 'done' }, { label: 'Ремонт', meta: 'до 8 окт', state: 'current' }, { label: 'Выдача' }]
+    };
+  }
+  renderVals() {
+    const b = this.baseVals(), s = this.state;
+    const isLegal = b.canShop;
+    const plan = PLANS.find(p => p.id === s.plan);
+    const used = SELL.active.length + SELL.review.length + (b.R.shop ? SHOP.length : 0);
+    const usedPct = Math.min(100, Math.round(used / plan.limit * 100));
+    const canPromote = (b.space === 'selling' && b.sub === 'active') || (b.space === 'shop' && b.sub === 'goods');
+    const rows = canPromote ? b.rows.map(r => {
+      const on = s.promoted[r.title];
+      return { ...r, meta: on ? on + ' · Реклама' : r.meta, actions: [{ label: on ? 'Ещё продвижение' : 'Продвинуть', variant: 'outline', href: '#', onClick: e => { e.preventDefault(); this.openPromote(r.title); } }, ...r.actions.map(a => ({ ...a, variant: 'ghost' }))] };
+    }) : b.rows;
+    const history = s.history.filter(h => isLegal || !h.tariff);
+    const total = PROMO.filter(p => s.picked[p.id]).reduce((n, p) => n + p.price, 0);
+    const lack = Math.max(0, total - s.balance);
+    const myLots = LOTS.filter((_, i) => i < 3 || b.R.shop);
+    const promoLot = s.promo ? s.promo.lot : '';
+    const ov = b.overview.concat([{
+      title: isLegal ? 'Кошелёк и тариф' : 'Кошелёк', icon: 'star',
+      iconStyle: 'width: 32px; height: 32px; border-radius: var(--radius-sm); display: inline-flex; align-items: center; justify-content: center; background: var(--brass-soft); color: var(--brass-text);',
+      go: e => { e.preventDefault(); this.setState({ space: 'wallet' }); },
+      stats: [{ label: 'Баланс', value: s.balance.toLocaleString('ru-RU'), note: 'баллов' }, { label: 'Продвигается', value: Object.keys(s.promoted).length, note: 'объявлений сейчас' }]
+        .concat(isLegal ? [{ label: 'Лимит объявлений', value: used + ' из ' + plan.limit, note: 'тариф «' + plan.name + '»' }] : [])
+    }]);
+    const planCard = 'display: flex; flex-direction: column; gap: var(--space-4); padding: var(--space-6); border-radius: var(--radius-lg); background: var(--surface-raised); border: 2px solid ';
+    const svc = 'display: grid; grid-template-columns: 24px minmax(0, 1fr) auto; gap: var(--space-3); align-items: center; padding: var(--space-3) var(--space-4); border-radius: var(--radius-md); cursor: pointer; font: inherit; text-align: left; box-sizing: border-box; width: 100%; border: 1px solid ';
+    return {
+      ...b, rows, overview: ov, isLegal,
+      balanceText: pts(s.balance),
+      planName: plan.name, planPoints: pts(plan.points),
+      usageText: used + ' из ' + plan.limit + ' объявлений',
+      usageBar: 'display: block; height: 100%; border-radius: var(--radius-full); width: ' + usedPct + '%; background: ' + (usedPct >= 90 ? 'var(--warning)' : 'var(--lad)') + ';',
+      goWallet: () => this.setState({ space: 'wallet' }),
+      goTariff: () => this.setState(st => ({ space: 'wallet', sub: { ...st.sub, wallet: 'tariff' } })),
+      walletServices: b.sub === 'services', walletHistory: b.sub === 'history',
+      topups: [500, 1000, 3000, 5000].map(v => ({ label: rub(v), on: s.topup === v, pick: () => this.setState({ topup: v }) })),
+      topupLabel: 'Пополнить на ' + rub(s.topup),
+      doTopup: () => this.setState(st => ({ balance: st.balance + st.topup, history: [{ title: 'Пополнение картой', amount: st.topup, date: 'сегодня' }, ...st.history] })),
+      promoList: PROMO.map(p => ({ name: p.name, desc: p.desc, price: pts(p.price), use: () => this.setState({ promo: { lot: myLots[0] }, picked: { [p.id]: true } }) })),
+      historyRows: history.map(h => ({ title: h.title, date: h.date, amount: (h.amount > 0 ? '+' : '−') + pts(Math.abs(h.amount)), style: 'font: 600 var(--text-m)/22px var(--font-mono); white-space: nowrap; color: ' + (h.amount > 0 ? 'var(--lad-strong)' : 'var(--ink)') + ';' })),
+      plans: PLANS.map(p => ({
+        name: p.name, price: rub(p.price) + ' в месяц', current: p.id === s.plan,
+        features: ['До ' + p.limit + ' активных объявлений', pts(p.points) + ' на продвижение каждый месяц', ...p.extra],
+        style: planCard + (p.id === s.plan ? 'var(--lad);' : 'var(--line);'),
+        btnLabel: p.id === s.plan ? 'Текущий тариф' : (p.limit > plan.limit ? 'Перейти' : 'Перейти на ' + p.name),
+        btnVariant: p.id === s.plan ? 'ghost' : 'outline', disabled: p.id === s.plan,
+        pick: () => this.setState({ plan: p.id })
+      })),
+      promoOpen: !!s.promo,
+      promoLots: myLots.map(l => ({ label: l.length > 34 ? l.slice(0, 32) + '…' : l, on: l === promoLot, pick: () => this.setState(st => ({ promo: { ...st.promo, lot: l } })) })),
+      promoSvc: PROMO.map(p => ({
+        name: p.name, desc: p.desc, price: pts(p.price), checked: s.picked[p.id] ? 'true' : 'false', on: !!s.picked[p.id],
+        style: svc + (s.picked[p.id] ? 'var(--lad); background: var(--lad-soft);' : 'var(--line); background: var(--surface-raised);'),
+        boxStyle: 'width: 20px; height: 20px; border-radius: var(--radius-xs); display: flex; align-items: center; justify-content: center; box-sizing: border-box; ' + (s.picked[p.id] ? 'background: var(--lad); color: var(--on-lad);' : 'border: 2px solid var(--line-control); color: transparent;'),
+        toggle: () => this.setState(st => ({ picked: { ...st.picked, [p.id]: !st.picked[p.id] } }))
+      })),
+      promoTotal: pts(total), promoBalance: 'На балансе ' + pts(s.balance),
+      promoLack: lack > 0, promoLackText: 'Не хватает ' + pts(lack) + '. Пополните кошелёк — баллы зачислятся сразу.',
+      promoPayLabel: total ? 'Оплатить ' + pts(total) : 'Выберите услугу',
+      cantPay: !total || lack > 0,
+      closePromo: () => this.setState({ promo: null }),
+      promoToTopup: () => this.setState({ promo: null, space: 'wallet', sub: { ...s.sub, wallet: 'services' }, topup: Math.max(500, Math.ceil(lack / 500) * 500) }),
+      pay: () => {
+        const chosen = PROMO.filter(p => s.picked[p.id]);
+        if (!chosen.length || lack > 0) return;
+        this.setState(st => ({
+          balance: st.balance - total,
+          history: [{ title: chosen.map(p => p.name).join(', ') + ' · ' + promoLot, amount: -total, date: 'сегодня' }, ...st.history],
+          promoted: { ...st.promoted, [promoLot]: chosen.map(p => p.tag).join(', ') },
+          promo: null
+        }));
+      }
+    };
+  }
+}
+</script>
+</body>
+</html>

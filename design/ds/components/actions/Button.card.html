@@ -1,0 +1,15 @@
+<!-- @dsCard group="Действия" viewport="900x390" name="Button" -->
+<!DOCTYPE html><html lang="ru"><head><meta charset="utf-8"><meta name="color-scheme" content="only light"><link rel="stylesheet" href="../../styles.css">
+<script src="https://unpkg.com/react@18.3.1/umd/react.development.js" integrity="sha384-hD6/rw4ppMLGNu3tX5cjIb+uRZ7UkRJ6BPkLpg4hAu/6onKUg4lLsHAs9EBPT82L" crossorigin="anonymous"></script>
+<script src="https://unpkg.com/react-dom@18.3.1/umd/react-dom.development.js" integrity="sha384-u6aeetuaXnQ38mYT8rp6sbXaQe3NL9t+IBXmnYxwkUI2Hw4bsp2Wvmx4yRQF1uAm" crossorigin="anonymous"></script>
+<script src="../../_ds_bundle.js"></script>
+<style>html,body{background:var(--surface)}body{padding:8px 16px}.c-h{font:600 12px/16px var(--font-text);color:var(--ink-faint);margin:16px 16px 0;text-transform:none}</style></head><body class="ym-root" data-theme="light"><div id="r0"></div>
+<script>
+var L = window.DesignSystem_b66810, h = React.createElement; L.icons = Object.keys(L.ICONS);
+function mount(id, f) { var el = document.getElementById(id); try { ReactDOM.createRoot(el).render(f()); } catch (e) { el.textContent = 'Ошибка примера: ' + e.message; } }
+mount('r0', function () { return h('div', {className:'ym-stack'},
+ h('div',{className:'ym-row',style:{padding:0}}, h(L.Button,{variant:'primary',size:'l',icon:'message-circle'},'Написать продавцу'), h(L.Button,{variant:'outline',icon:'handshake'},'Предложить цену')),
+ h('div',{className:'ym-row',style:{padding:0}}, h('span',{className:'c-h',style:{margin:0}},'Позже, для новых товаров:'), h(L.Button,{variant:'primary',size:'l'},'Купить'), h(L.Button,{variant:'inverse'},'В корзину')),
+ h('div',{className:'ym-row',style:{padding:0}}, h(L.Button,{variant:'service',size:'s',icon:'wrench'},'Записаться к мастеру'), h(L.Button,{variant:'muted',size:'s'},'Сохранить черновик'), h(L.Button,{variant:'ghost',size:'s',iconRight:'chevron-right'},'Все лоты'), h(L.Button,{variant:'danger',size:'s'},'Снять с продажи'), h(L.Button,{variant:'primary',size:'xs',icon:'plus'},'Добавить фото')),
+ h('div',{className:'demo-states'}, [['по умолчанию',{}],['наведение',{demo:'hover'}],['фокус',{className:'is-focus'}],['нажатие',{demo:'active'}],['неактивна',{disabled:true}],['загрузка',{loading:true}]].map(function(r){return h('div',{key:r[0],className:'demo-state'}, h('span',{className:'demo-label'},r[0]), h(L.Button,Object.assign({variant:'primary',icon:'shield-check'},r[1]),'Оплатить'))}))); });
+</script></body></html>

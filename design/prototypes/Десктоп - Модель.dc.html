@@ -1,0 +1,129 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+  <link rel="stylesheet" href="_ds/design-system-b66810d8-d429-49ea-bb35-5b22a7aa4f3a/tokens/webfonts.css">
+  <link rel="stylesheet" href="_ds/design-system-b66810d8-d429-49ea-bb35-5b22a7aa4f3a/tokens/tokens.css">
+  <link rel="stylesheet" href="_ds/design-system-b66810d8-d429-49ea-bb35-5b22a7aa4f3a/tokens/page.css">
+  <link rel="stylesheet" href="_ds/design-system-b66810d8-d429-49ea-bb35-5b22a7aa4f3a/tokens/components.css">
+  <link rel="stylesheet" href="_ds/design-system-b66810d8-d429-49ea-bb35-5b22a7aa4f3a/tokens/forms.css">
+  <link rel="stylesheet" href="ym-compat.css">
+  <script src="_ds/design-system-b66810d8-d429-49ea-bb35-5b22a7aa4f3a/_ds_bundle.js"></script>
+  <script src="plain-language.js"></script>
+  <style>
+    /* Hallmark · page: model · theme: ЯМузыкант DS tokens · pre-emit critique: P4 H4 E4 S4 R4 V4 */
+    html, body { margin: 0; background: var(--surface); color: var(--ink); overflow-x: clip; }
+    a { color: var(--lad); text-decoration: none; }
+    a:not([class*="lm-"]):hover { color: var(--lad-strong); text-decoration: underline; }
+    [data-model-head] .ym-model { padding: 0; }
+    #offers .ym-offers { padding: 0; }
+    main .ym-rail { padding: 0; }
+    [data-model-head] .ym-model > .ym-card__meta:empty { display: none; }
+  </style>
+</helmet>
+<div class="lm-root" data-screen-label="Десктоп — Модель" style="min-height: 100vh; background: var(--surface); font-family: var(--font-text);">
+  <dc-import name="Шапка" active="catalog" cart="{{ 1 }}" messages="{{ 3 }}" hint-size="100%,117px"></dc-import>
+
+  <main style="max-width: var(--content-max); margin: 0 auto; padding: var(--space-6) var(--space-10) 0; box-sizing: border-box;">
+    <nav aria-label="Хлебные крошки" style="display: flex; align-items: center; gap: var(--space-2); flex-wrap: wrap; margin-bottom: var(--space-4);">
+      <a href="Десктоп - Главная.dc.html" class="body-s" style="color: var(--ink-muted); min-height: 32px; display: flex; align-items: center; white-space: nowrap;">Главная</a>
+      <span aria-hidden="true" style="color: var(--ink-faint); display: flex;"><x-import component-from-global-scope="DesignSystem_b66810.Icon" name="chevron-right" size="{{ 14 }}" hint-size="14px,14px"></x-import></span>
+      <a href="Десктоп - Каталог.dc.html" class="body-s" style="color: var(--ink-muted); min-height: 32px; display: flex; align-items: center; white-space: nowrap;">Электрогитары</a>
+      <span aria-hidden="true" style="color: var(--ink-faint); display: flex;"><x-import component-from-global-scope="DesignSystem_b66810.Icon" name="chevron-right" size="{{ 14 }}" hint-size="14px,14px"></x-import></span>
+      <span class="body-s" aria-current="page" style="color: var(--ink); white-space: nowrap;">Fender Player Stratocaster</span>
+    </nav>
+
+    <div style="display: grid; grid-template-columns: minmax(0, 1fr) minmax(360px, 440px); gap: var(--space-10); align-items: start;">
+      <div style="display: flex; flex-direction: column; gap: var(--space-12); min-width: 0;">
+        <div data-model-head="">
+          <x-import component-from-global-scope="DesignSystem_b66810.ModelSummary" name="Fender Player Stratocaster" specs="{{ specsShort }}" newFrom="{{ 89990 }}" newCount="{{ 3 }}" usedFrom="{{ 62000 }}" usedCount="{{ 4 }}" newHref="#offers" usedHref="#offers" hint-size="100%,280px"></x-import>
+        </div>
+
+        <section id="offers" style="display: flex; flex-direction: column; gap: var(--space-4); scroll-margin-top: var(--space-6);">
+          <h2 class="h3 lm-title" style="margin: 0;">Предложения</h2>
+          <x-import component-from-global-scope="DesignSystem_b66810.OfferList" id="model-offers" offers="{{ offers }}" hint-size="100%,420px"></x-import>
+        </section>
+
+        <section style="display: flex; flex-direction: column; gap: var(--space-4);">
+          <h2 class="h3 lm-title" style="margin: 0;">Характеристики</h2>
+          <dl style="margin: 0; display: grid; grid-template-columns: minmax(160px, 240px) minmax(0, 1fr); max-width: 720px; border-top: 1px solid var(--line);">
+            <sc-for list="{{ specs }}" as="s" hint-placeholder-count="9">
+              <dt class="body" style="margin: 0; padding: var(--space-3) var(--space-4) var(--space-3) 0; border-bottom: 1px solid var(--line); color: var(--ink-muted);">{{ s.k }}</dt>
+              <dd class="body" style="margin: 0; padding: var(--space-3) 0; border-bottom: 1px solid var(--line); color: var(--ink);">{{ s.v }}</dd>
+            </sc-for>
+          </dl>
+        </section>
+      </div>
+
+      <aside style="display: flex; flex-direction: column; gap: var(--space-4); position: sticky; top: var(--space-4);">
+        <x-import component-from-global-scope="DesignSystem_b66810.PriceGuide" low="{{ 68000 }}" high="{{ 84000 }}" basis="по 126 продажам б/у за 12 месяцев" hint-size="100%,150px"></x-import>
+        <x-import component-from-global-scope="DesignSystem_b66810.Alert" tone="info" icon="bell" title="Сообщим о новом предложении" action="Подписаться" hint-size="100%,120px">Пришлём уведомление, когда в Москве появится новый лот этой модели.</x-import>
+        <x-import component-from-global-scope="DesignSystem_b66810.Alert" tone="copper" icon="wrench" title="Проверка перед покупкой — 1 900 ₽" action="Найти мастера" hint-size="100%,120px">Мастер осмотрит любой лот этой модели до отправки и пришлёт отчёт.</x-import>
+      </aside>
+    </div>
+
+    <section style="margin-top: var(--space-16);">
+      <x-import component-from-global-scope="DesignSystem_b66810.AccessoryRail" title="Аксессуары к Fender Stratocaster" groups="{{ accessories }}" hint-size="100%,340px"></x-import>
+    </section>
+
+    <section style="margin-top: var(--space-16);">
+      <div style="display: flex; align-items: baseline; justify-content: space-between; gap: var(--space-4); margin-bottom: var(--space-6);">
+        <h2 class="h2 lm-title" style="margin: 0;">Похожие предложения</h2>
+        <a href="Десктоп - Каталог.dc.html" class="label" style="color: var(--lad); white-space: nowrap;">Все электрогитары</a>
+      </div>
+      <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(var(--card-min), 1fr)); gap: var(--space-6);">
+        <sc-for list="{{ similar }}" as="lot" hint-placeholder-count="5">
+          <x-import component-from-global-scope="DesignSystem_b66810.ListingCard" dc-props="{{ lot }}" hint-size="100%,380px"></x-import>
+        </sc-for>
+      </div>
+    </section>
+  </main>
+
+  <div style="margin-top: var(--space-16);">
+    <dc-import name="Подвал" hint-size="100%,260px"></dc-import>
+  </div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props="{}">
+const LOT = 'Десктоп - Лот.dc.html';
+const OFFERS = [
+  { id: 'o1', kind: 'new', seller: 'Музторг', partner: true, condition: 'new', price: 89990, shipping: 0, city: 'Москва', eta: '1–2 дня' },
+  { id: 'o2', kind: 'new', seller: 'Pop-Music', partner: true, condition: 'new', price: 91500, shipping: 0, city: 'Санкт-Петербург', eta: '2–4 дня' },
+  { id: 'o3', kind: 'new', seller: 'Гитарный угол', partner: true, condition: 'new', price: 92990, shipping: 900, city: 'Москва', eta: '1 день' },
+  { id: 'o4', kind: 'used', seller: 'Андрей К.', condition: 'excellent', price: 76000, shipping: 0, city: 'Москва', distance: '4,2 км', inspected: true },
+  { id: 'o5', kind: 'used', seller: 'Мастерская «Лад и строй»', condition: 'very-good', price: 71000, shipping: 0, city: 'Москва', distance: '2,4 км', inspected: true },
+  { id: 'o6', kind: 'used', seller: 'Ирина С.', condition: 'good', price: 64500, shipping: 1200, city: 'Тверь' },
+  { id: 'o7', kind: 'used', seller: 'Олег Р.', condition: 'fair', price: 62000, shipping: 800, city: 'Казань' }
+];
+class Component extends DCLogic {
+  renderVals() {
+    const offers = OFFERS.map(({ kind, distance, ...o }) => ({ ...o, href: LOT }));
+    return {
+      offers,
+      specsShort: ['Ольха', 'Кленовый гриф', '3 × сингл', '22 лада'],
+      specs: [['Бренд', 'Fender'], ['Серия', 'Player'], ['Годы выпуска', '2018 – наст. время'], ['Страна производства', 'Мексика'], ['Корпус', 'Ольха'], ['Гриф и накладка', 'Клён, накладка клён или пао ферро'], ['Мензура', '648 мм (25,5″)'], ['Лады', '22, medium jumbo'], ['Звукосниматели', '3 × сингл Player Series Alnico V']].map(([k, v]) => ({ k, v })),
+      accessories: [
+        { name: 'Струны', items: [{ title: 'Ernie Ball Regular Slinky 10–46', price: 790, fit: 'fits', icon: 'cable' }, { title: "D'Addario EXL110, 3 комплекта", price: 2190, fit: 'fits', icon: 'cable' }, { title: 'Fender 250R 10–46', price: 690, fit: 'fits', icon: 'cable' }] },
+        { name: 'Чехлы и кейсы', items: [{ title: 'Чехол Fender Performance', price: 8990, fit: 'fits', icon: 'package' }, { title: 'Кейс SKB для Strat/Tele', price: 21500, fit: 'fits', icon: 'package' }] },
+        { name: 'Звукосниматели', items: [{ title: 'Fender Vintage Noiseless, комплект', price: 24900, fit: 'fits', icon: 'cable' }, { title: 'Seymour Duncan SSL-1, комплект', price: 16900, fit: 'check', icon: 'cable' }] },
+        { name: 'Ремни', items: [{ title: 'Ремень Levy’s кожаный 2,5″', price: 3400, icon: 'package' }] }
+      ],
+      similar: [
+        { id: 'm1', title: 'Fender Player Telecaster', price: 87990, condition: 'new', city: 'Москва', shipping: 0, partner: true },
+        { id: 'm2', title: 'Squier Classic Vibe ’60s Stratocaster', price: 54990, condition: 'new', city: 'Москва', shipping: 0, partner: true },
+        { id: 'm3', title: 'Fender Vintera ’50s Stratocaster', price: 104000, condition: 'excellent', city: 'Москва', distance: '5,5 км', posted: '3 дня назад' },
+        { id: 'm4', title: 'Fender American Performer Stratocaster', price: 139000, condition: 'very-good', city: 'Санкт-Петербург', shipping: 1500, inspected: true },
+        { id: 'm5', title: 'Yamaha Pacifica 612VIIX', price: 64990, condition: 'new', city: 'Казань', shipping: 0, partner: true }
+      ].map(l => ({ ...l, href: LOT }))
+    };
+  }
+}
+</script>
+</body>
+</html>

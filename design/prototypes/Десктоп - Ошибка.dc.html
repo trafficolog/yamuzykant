@@ -1,0 +1,91 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+  <link rel="stylesheet" href="_ds/design-system-b66810d8-d429-49ea-bb35-5b22a7aa4f3a/tokens/webfonts.css">
+  <link rel="stylesheet" href="_ds/design-system-b66810d8-d429-49ea-bb35-5b22a7aa4f3a/tokens/tokens.css">
+  <link rel="stylesheet" href="_ds/design-system-b66810d8-d429-49ea-bb35-5b22a7aa4f3a/tokens/page.css">
+  <link rel="stylesheet" href="_ds/design-system-b66810d8-d429-49ea-bb35-5b22a7aa4f3a/tokens/components.css">
+  <link rel="stylesheet" href="_ds/design-system-b66810d8-d429-49ea-bb35-5b22a7aa4f3a/tokens/forms.css">
+  <link rel="stylesheet" href="ym-compat.css">
+  <script src="_ds/design-system-b66810d8-d429-49ea-bb35-5b22a7aa4f3a/_ds_bundle.js"></script>
+  <script src="plain-language.js"></script>
+  <style>
+    /* Hallmark · page: error states (404 / 500 / maintenance) · theme: ЯМузыкант DS tokens · pre-emit critique: P4 H4 E4 S4 R5 V4 */
+    html, body { margin: 0; background: var(--surface); color: var(--ink); overflow-x: clip; }
+    a { color: var(--lad); text-decoration: none; }
+    a:not([class*="lm-"]):hover { color: var(--lad-strong); text-decoration: underline; }
+  </style>
+</helmet>
+<div class="lm-root" data-screen-label="Десктоп — Ошибка" style="min-height: 100vh; display: flex; flex-direction: column; background: var(--surface); font-family: var(--font-text);">
+  <dc-import name="Шапка" active="none" messages="{{ 3 }}" hint-size="100%,117px"></dc-import>
+
+  <main style="flex: 1; width: 100%; max-width: var(--content-max); margin: 0 auto; padding: var(--space-16) var(--space-10); box-sizing: border-box; display: grid; grid-template-columns: minmax(0, 1fr) minmax(280px, 420px); gap: var(--space-12); align-items: center;">
+    <section aria-labelledby="err-h" style="display: flex; flex-direction: column; align-items: flex-start; gap: var(--space-5); min-width: 0;">
+      <span style="font: 600 var(--text-l)/1 var(--font-mono); color: var(--ink-muted); letter-spacing: 0.02em;">{{ v.code }}</span>
+      <h1 id="err-h" class="h1 lm-title" style="margin: 0; max-width: 16ch; text-wrap: balance;">{{ v.title }}</h1>
+      <p class="body-l" style="margin: 0; max-width: 52ch; color: var(--ink-muted); text-wrap: pretty;">{{ v.text }}</p>
+      <sc-if value="{{ v.hasEta }}" hint-placeholder-val="{{ false }}">
+        <div style="display: flex; align-items: center; gap: var(--space-3); padding: var(--space-3) var(--space-4); border-radius: var(--radius-md); background: var(--surface-recessed);">
+          <x-import component-from-global-scope="DesignSystem_b66810.Icon" name="clock" size="{{ 20 }}" hint-size="20px,20px"></x-import>
+          <span class="body">{{ v.eta }}</span>
+        </div>
+      </sc-if>
+      <div style="display: flex; flex-wrap: wrap; gap: var(--space-3); padding-top: var(--space-2);">
+        <x-import component-from-global-scope="DesignSystem_b66810.Button" variant="primary" href="{{ v.primaryHref }}" onClick="{{ v.primaryClick }}" hint-size="200px,48px">{{ v.primary }}</x-import>
+        <x-import component-from-global-scope="DesignSystem_b66810.Button" variant="outline" href="{{ v.secondaryHref }}" hint-size="200px,48px">{{ v.secondary }}</x-import>
+      </div>
+    </section>
+
+    <aside style="display: flex; flex-direction: column; gap: var(--space-4); padding: var(--space-6); border: 1px solid var(--line); border-radius: var(--radius-lg); background: var(--surface-raised);">
+      <h2 class="h3" style="margin: 0;">{{ v.asideTitle }}</h2>
+      <nav aria-label="{{ v.asideTitle }}" style="display: flex; flex-direction: column; border-top: 1px solid var(--line);">
+        <sc-for list="{{ v.links }}" as="l" hint-placeholder-count="5">
+          <a href="{{ l.href }}" class="lm-errlink" style="display: flex; align-items: center; gap: var(--space-3); min-height: 48px; border-bottom: 1px solid var(--line); color: var(--ink); text-decoration: none;" style-hover="color: var(--lad-strong);">
+            <span style="display: flex; color: var(--ink-muted);"><x-import component-from-global-scope="DesignSystem_b66810.Icon" name="{{ l.icon }}" size="{{ 20 }}" hint-size="20px,20px"></x-import></span>
+            <span class="body" style="flex: 1; white-space: nowrap;">{{ l.label }}</span>
+            <span style="display: flex; color: var(--ink-faint);"><x-import component-from-global-scope="DesignSystem_b66810.Icon" name="chevron-right" size="{{ 16 }}" hint-size="16px,16px"></x-import></span>
+          </a>
+        </sc-for>
+      </nav>
+    </aside>
+  </main>
+
+  <dc-import name="Подвал" hint-size="100%,420px"></dc-import>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props="{&quot;kind&quot;:{&quot;editor&quot;:&quot;enum&quot;,&quot;options&quot;:[&quot;404&quot;,&quot;500&quot;,&quot;maintenance&quot;],&quot;default&quot;:&quot;404&quot;,&quot;tsType&quot;:&quot;'404' | '500' | 'maintenance'&quot;}}">
+const CATS = [
+  { icon: 'guitar', label: 'Гитары', href: 'Десктоп - Каталог.dc.html' },
+  { icon: 'cable', label: 'Педали и усилители', href: 'Десктоп - Каталог.dc.html' },
+  { icon: 'piano', label: 'Клавишные', href: 'Десктоп - Каталог.dc.html' },
+  { icon: 'boxes', label: 'Барахолка — свежие объявления', href: 'Десктоп - Каталог.dc.html?view=flea' },
+  { icon: 'wrench', label: 'Мастера', href: 'Десктоп - Мастера.dc.html' }
+];
+const HELP = [
+  { icon: 'message-circle', label: 'Сообщения — сохранятся', href: 'Десктоп - Сообщения.dc.html' },
+  { icon: 'shield-check', label: 'Правила безопасной сделки', href: 'Десктоп - Помощь.dc.html' },
+  { icon: 'info', label: 'Помощь', href: 'Десктоп - Помощь.dc.html' }
+];
+const V = {
+  '404': { code: 'Ошибка 404', title: 'Такой страницы нет', text: 'Возможно, объявление сняли с продажи или в ссылке опечатка. Посмотрите похожие инструменты в каталоге.', primary: 'В каталог', primaryHref: 'Десктоп - Каталог.dc.html', secondary: 'На главную', secondaryHref: 'Десктоп - Главная.dc.html', asideTitle: 'Популярные разделы', links: CATS },
+  '500': { code: 'Ошибка 500', title: 'Что-то сломалось у нас', text: 'Страница не загрузилась по нашей вине. Обновите её через минуту — если не поможет, напишите в поддержку.', primary: 'Обновить страницу', primaryHref: undefined, reload: true, secondary: 'Написать в поддержку', secondaryHref: 'Десктоп - Сообщения.dc.html?chat=support', asideTitle: 'Пока можно', links: HELP },
+  'maintenance': { code: 'Технические работы', title: 'ЯМузыкант обновляется', text: 'Объявления, сообщения и заявки мастерам сохранятся. Ничего делать не нужно — просто вернитесь чуть позже.', eta: 'Закончим к 06:00 по Москве', primary: 'Обновить страницу', reload: true, secondary: 'Помощь', secondaryHref: 'Десктоп - Помощь.dc.html', asideTitle: 'Что работает', links: HELP }
+};
+class Component extends DCLogic {
+  renderVals() {
+    const v = V[this.props.kind] || V['404'];
+    return {
+      v: { ...v, hasEta: !!v.eta, eta: v.eta || '', primaryHref: v.primaryHref, primaryClick: v.reload ? () => location.reload() : undefined }
+    };
+  }
+}
+</script>
+</body>
+</html>

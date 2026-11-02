@@ -1,0 +1,157 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+  <link rel="stylesheet" href="_ds/design-system-b66810d8-d429-49ea-bb35-5b22a7aa4f3a/tokens/webfonts.css">
+  <link rel="stylesheet" href="_ds/design-system-b66810d8-d429-49ea-bb35-5b22a7aa4f3a/tokens/tokens.css">
+  <link rel="stylesheet" href="_ds/design-system-b66810d8-d429-49ea-bb35-5b22a7aa4f3a/tokens/page.css">
+  <link rel="stylesheet" href="_ds/design-system-b66810d8-d429-49ea-bb35-5b22a7aa4f3a/tokens/components.css">
+  <link rel="stylesheet" href="_ds/design-system-b66810d8-d429-49ea-bb35-5b22a7aa4f3a/tokens/forms.css">
+  <link rel="stylesheet" href="ym-compat.css">
+  <link rel="stylesheet" href="_ds/design-system-b66810d8-d429-49ea-bb35-5b22a7aa4f3a/styles.css">
+  <script src="_ds/design-system-b66810d8-d429-49ea-bb35-5b22a7aa4f3a/_ds_bundle.js"></script>
+  <style>
+    html, body { margin: 0; background: var(--surface); color: var(--ink); overflow-x: clip; }
+    a { color: var(--lad); text-decoration: none; }
+    a:hover { color: var(--lad-strong); text-decoration: underline; }
+  </style>
+</helmet>
+<div data-screen-label="Разводящая" style="min-height: 100vh; background: var(--surface); font-family: var(--font-text);">
+  <header style="border-bottom: 1px solid var(--line); background: var(--surface-raised);">
+    <div style="max-width: 1440px; margin: 0 auto; padding: 16px clamp(16px, 4vw, 40px); box-sizing: border-box; display: flex; align-items: center; gap: 16px;">
+      <div style="display: flex; align-items: center; gap: 8px;" role="img" aria-label="ЯМузыкант">
+        <span aria-hidden="true" class="ym-wordmark" style="font-size: 24px;"><b>Я</b>Музыкант<i></i></span>
+      </div>
+    </div>
+  </header>
+
+  <main style="max-width: 1440px; margin: 0 auto; padding: 48px clamp(16px, 4vw, 40px) 64px; display: flex; flex-direction: column; gap: 32px; box-sizing: border-box;">
+    <div style="display: flex; flex-direction: column; gap: 8px; max-width: 640px;">
+      <h1 class="h1" style="margin: 0; text-wrap: balance; overflow-wrap: anywhere;">Макеты страниц</h1>
+      <p class="body-l" style="margin: 0; color: var(--ink-muted); text-wrap: pretty;">Выберите платформу. Внутри — структура экранов и их статус.</p>
+    </div>
+
+    <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(min(100%, 340px), 1fr)); gap: 24px; align-items: start;">
+
+      <section data-screen-label="Десктоп" style="display: flex; flex-direction: column; gap: 24px; padding: 24px; background: var(--surface-raised); border: 1px solid var(--line); border-radius: 16px; min-width: 0;">
+        <div style="display: flex; flex-direction: column; gap: 8px;">
+          <div style="display: flex; align-items: baseline; justify-content: space-between; gap: 12px;">
+            <h2 class="h2" style="margin: 0;">Десктоп</h2>
+            <span class="mono" style="color: var(--ink-muted); white-space: nowrap;">1440 px</span>
+          </div>
+          <p class="body-s" style="margin: 0; color: var(--ink-muted); text-wrap: pretty;">Шапка в две строки: поиск, «Продать инструмент», пять разделов и виды инструментов.</p>
+        </div>
+        <ol style="margin: 0; padding: 0; list-style: none; display: flex; flex-direction: column; border-top: 1px solid var(--line);">
+          <li class="body" style="display: flex; align-items: center; min-height: 44px; border-bottom: 1px solid var(--line);"><a href="Десктоп - Главная.dc.html" style="flex: 1; display: flex; align-items: center; justify-content: space-between; gap: 12px; min-height: 44px; color: var(--lad);">Главная<span class="body-s" style="color: var(--ink-muted);">Собран</span></a></li>
+          <li class="body" style="display: flex; align-items: center; min-height: 44px; border-bottom: 1px solid var(--line);"><a href="Десктоп - Каталог.dc.html" style="flex: 1; display: flex; align-items: center; justify-content: space-between; gap: 12px; min-height: 44px; color: var(--lad);">Каталог и Барахолка<span class="body-s" style="color: var(--ink-muted);">Собран</span></a></li>
+          <li class="body" style="display: flex; align-items: center; min-height: 44px; border-bottom: 1px solid var(--line);"><a href="Десктоп - Лот.dc.html" style="flex: 1; display: flex; align-items: center; justify-content: space-between; gap: 12px; min-height: 44px; color: var(--lad);">Лот<span class="body-s" style="color: var(--ink-muted);">Собран</span></a></li>
+          <li class="body" style="display: flex; align-items: center; min-height: 44px; border-bottom: 1px solid var(--line);"><a href="Десктоп - Модель.dc.html" style="flex: 1; display: flex; align-items: center; justify-content: space-between; gap: 12px; min-height: 44px; color: var(--lad);">Модель<span class="body-s" style="color: var(--ink-muted);">Собран</span></a></li>
+          <li class="body" style="display: flex; align-items: center; min-height: 44px; border-bottom: 1px solid var(--line);"><a href="Десктоп - Мастера.dc.html" style="flex: 1; display: flex; align-items: center; justify-content: space-between; gap: 12px; min-height: 44px; color: var(--lad);">Мастера<span class="body-s" style="color: var(--ink-muted);">Собран</span></a></li>
+          <li class="body" style="display: flex; align-items: center; min-height: 44px; border-bottom: 1px solid var(--line);"><a href="Десктоп - Аксессуары.dc.html" style="flex: 1; display: flex; align-items: center; justify-content: space-between; gap: 12px; min-height: 44px; color: var(--lad);">Аксессуары под ваш инструмент<span class="body-s" style="color: var(--ink-muted);">Собран</span></a></li>
+          <li class="body" style="display: flex; align-items: center; min-height: 44px; border-bottom: 1px solid var(--line);"><a href="Десктоп - Сообщения.dc.html" style="flex: 1; display: flex; align-items: center; justify-content: space-between; gap: 12px; min-height: 44px; color: var(--lad);">Сообщения<span class="body-s" style="color: var(--ink-muted);">Собран</span></a></li>
+          <li class="body" style="display: flex; align-items: center; min-height: 44px; border-bottom: 1px solid var(--line);"><a href="Десктоп - Продать.dc.html" style="flex: 1; display: flex; align-items: center; justify-content: space-between; gap: 12px; min-height: 44px; color: var(--lad);">Продать инструмент<span class="body-s" style="color: var(--ink-muted);">Собран</span></a></li>
+          <li class="body" style="display: flex; align-items: center; min-height: 44px; border-bottom: 1px solid var(--line);"><a href="Десктоп - Кабинет.dc.html" style="flex: 1; display: flex; align-items: center; justify-content: space-between; gap: 12px; min-height: 44px; color: var(--lad);">Кабинет<span class="body-s" style="color: var(--ink-muted);">Собран</span></a></li>
+        </ol>
+        <div style="display: flex; align-items: center; justify-content: space-between; gap: 12px;">
+          <span class="body-s" style="color: var(--ink-muted);">Готово 9 из 9</span>
+          <x-import component-from-global-scope="DesignSystem_b66810.Badge" tone="lad" hint-size="80px,24px">В работе</x-import>
+        </div>
+      </section>
+
+      <section data-screen-label="Мобильная" style="display: flex; flex-direction: column; gap: 24px; padding: 24px; background: var(--surface-raised); border: 1px solid var(--line); border-radius: 16px; min-width: 0;">
+        <div style="display: flex; flex-direction: column; gap: 8px;">
+          <div style="display: flex; align-items: baseline; justify-content: space-between; gap: 12px;">
+            <h2 class="h2" style="margin: 0;">Мобильная</h2>
+            <span class="mono" style="color: var(--ink-muted); white-space: nowrap;">390 px</span>
+          </div>
+          <p class="body-s" style="margin: 0; color: var(--ink-muted); text-wrap: pretty;">Те же экраны, что на десктопе. Поиск во второй строке шапки, лоты в две колонки, нижняя панель: Главная, Поиск, Продать, Сообщения, Кабинет.</p>
+        </div>
+        <ol style="margin: 0; padding: 0; list-style: none; display: flex; flex-direction: column; border-top: 1px solid var(--line);">
+          <li class="body" style="display: flex; align-items: center; min-height: 44px; border-bottom: 1px solid var(--line);">Главная</li>
+          <li class="body" style="display: flex; align-items: center; min-height: 44px; border-bottom: 1px solid var(--line);">Меню категорий</li>
+          <li class="body" style="display: flex; align-items: center; min-height: 44px; border-bottom: 1px solid var(--line);">Каталог и Барахолка, фильтры в шторке</li>
+          <li class="body" style="display: flex; align-items: center; min-height: 44px; border-bottom: 1px solid var(--line);">Лот</li>
+          <li class="body" style="display: flex; align-items: center; min-height: 44px; border-bottom: 1px solid var(--line);">Модель</li>
+          <li class="body" style="display: flex; align-items: center; min-height: 44px; border-bottom: 1px solid var(--line);">Мастера</li>
+          <li class="body" style="display: flex; align-items: center; min-height: 44px; border-bottom: 1px solid var(--line);">Аксессуары под ваш инструмент</li>
+          <li class="body" style="display: flex; align-items: center; min-height: 44px; border-bottom: 1px solid var(--line);">Сообщения: список чатов и чат</li>
+          <li class="body" style="display: flex; align-items: center; min-height: 44px; border-bottom: 1px solid var(--line);">Продать инструмент</li>
+          <li class="body" style="display: flex; align-items: center; min-height: 44px; border-bottom: 1px solid var(--line);">Кабинет</li>
+        </ol>
+        <div style="display: flex; align-items: center; justify-content: space-between; gap: 12px;">
+          <span class="body-s" style="color: var(--ink-muted);">Готово 0 из 10</span>
+          <x-import component-from-global-scope="DesignSystem_b66810.Badge" hint-size="80px,24px">Не начат</x-import>
+        </div>
+      </section>
+
+      <section data-screen-label="Другие виды" style="display: flex; flex-direction: column; gap: 24px; padding: 24px; background: var(--surface-raised); border: 1px solid var(--line); border-radius: 16px; min-width: 0;">
+        <div style="display: flex; flex-direction: column; gap: 8px;">
+          <div style="display: flex; align-items: baseline; justify-content: space-between; gap: 12px;">
+            <h2 class="h2" style="margin: 0;">Другие виды</h2>
+            <span class="mono" style="color: var(--ink-muted); white-space: nowrap;">по месту</span>
+          </div>
+          <p class="body-s" style="margin: 0; color: var(--ink-muted); text-wrap: pretty;">Страницы, на которые уже ведут ссылки, окна поверх экранов и служебные экраны.</p>
+        </div>
+        <div style="display: flex; flex-direction: column; gap: 16px;">
+          <div style="display: flex; flex-direction: column; gap: 4px;">
+            <h3 class="label" style="margin: 0; font-weight: 600; color: var(--ink-muted);">Страницы</h3>
+            <ol style="margin: 0; padding: 0; list-style: none; display: flex; flex-direction: column; border-top: 1px solid var(--line);">
+              <li class="body" style="display: flex; align-items: center; min-height: 44px; border-bottom: 1px solid var(--line);"><a href="Десктоп - Цены продаж.dc.html" style="flex: 1; display: flex; align-items: center; justify-content: space-between; gap: 12px; min-height: 44px; color: var(--lad);">Цены продаж<span class="body-s" style="color: var(--ink-muted);">Собран</span></a></li>
+              <li class="body" style="display: flex; align-items: center; min-height: 44px; border-bottom: 1px solid var(--line);"><a href="Десктоп - Продавец.dc.html" style="flex: 1; display: flex; align-items: center; justify-content: space-between; gap: 12px; min-height: 44px; color: var(--lad);">Страница продавца и магазина<span class="body-s" style="color: var(--ink-muted);">Собран</span></a></li>
+              <li class="body" style="display: flex; align-items: center; min-height: 44px; border-bottom: 1px solid var(--line);"><a href="Десктоп - Мастер.dc.html" style="flex: 1; display: flex; align-items: center; justify-content: space-between; gap: 12px; min-height: 44px; color: var(--lad);">Страница мастера<span class="body-s" style="color: var(--ink-muted);">Собран</span></a></li>
+              <li class="body" style="display: flex; align-items: center; min-height: 44px; border-bottom: 1px solid var(--line);"><a href="Десктоп - Тарифы.dc.html" style="flex: 1; display: flex; align-items: center; justify-content: space-between; gap: 12px; min-height: 44px; color: var(--lad);">Тарифы для бизнеса<span class="body-s" style="color: var(--ink-muted);">Собран</span></a></li>
+              <li class="body" style="display: flex; align-items: center; min-height: 44px; border-bottom: 1px solid var(--line);"><a href="Десктоп - Помощь.dc.html" style="flex: 1; display: flex; align-items: center; justify-content: space-between; gap: 12px; min-height: 44px; color: var(--lad);">Помощь и безопасность<span class="body-s" style="color: var(--ink-muted);">Собран</span></a></li>
+            </ol>
+          </div>
+          <div style="display: flex; flex-direction: column; gap: 4px;">
+            <h3 class="label" style="margin: 0; font-weight: 600; color: var(--ink-muted);">Окна</h3>
+            <ol style="margin: 0; padding: 0; list-style: none; display: flex; flex-direction: column; border-top: 1px solid var(--line);">
+              <li class="body" style="display: flex; align-items: center; justify-content: space-between; gap: 12px; min-height: 44px; border-bottom: 1px solid var(--line);">Вход и регистрация<span class="body-s" style="color: var(--ink-muted);">в шапке</span></li>
+              <li class="body" style="display: flex; align-items: center; justify-content: space-between; gap: 12px; min-height: 44px; border-bottom: 1px solid var(--line);"><a href="Десктоп - Кабинет.dc.html?tab=wallet" style="flex: 1; display: flex; align-items: center; justify-content: space-between; gap: 12px; min-height: 44px; color: var(--lad);">Продвижение объявления<span class="body-s" style="color: var(--ink-muted);">в кабинете</span></a></li>
+              <li class="body" style="display: flex; align-items: center; min-height: 44px; border-bottom: 1px solid var(--line);"><a href="Десктоп - Сообщения.dc.html?chat=lot" style="flex: 1; display: flex; align-items: center; justify-content: space-between; gap: 12px; min-height: 44px; color: var(--lad);">Предложить цену в чате<span class="body-s" style="color: var(--ink-muted);">в сообщениях</span></a></li>
+              <li class="body" style="display: flex; align-items: center; min-height: 44px; border-bottom: 1px solid var(--line);"><a href="Десктоп - Лот.dc.html" style="flex: 1; display: flex; align-items: center; justify-content: space-between; gap: 12px; min-height: 44px; color: var(--lad);">Заявка мастеру<span class="body-s" style="color: var(--ink-muted);">на лоте и у мастера</span></a></li>
+              <li class="body" style="display: flex; align-items: center; min-height: 44px; border-bottom: 1px solid var(--line);"><a href="Десктоп - Продавец.dc.html" style="flex: 1; display: flex; align-items: center; justify-content: space-between; gap: 12px; min-height: 44px; color: var(--lad);">Жалоба на объявление или пользователя<span class="body-s" style="color: var(--ink-muted);">на странице продавца</span></a></li>
+            </ol>
+          </div>
+          <div style="display: flex; flex-direction: column; gap: 4px;">
+            <h3 class="label" style="margin: 0; font-weight: 600; color: var(--ink-muted);">Служебное</h3>
+            <ol style="margin: 0; padding: 0; list-style: none; display: flex; flex-direction: column; border-top: 1px solid var(--line);">
+              <li class="body" style="display: flex; align-items: center; min-height: 44px; border-bottom: 1px solid var(--line);"><a href="Письма и уведомления.dc.html" style="flex: 1; display: flex; align-items: center; justify-content: space-between; gap: 12px; min-height: 44px; color: var(--lad);">Письма и уведомления<span class="body-s" style="color: var(--ink-muted);">Собран</span></a></li>
+              <li class="body" style="display: flex; align-items: center; min-height: 44px; border-bottom: 1px solid var(--line);"><a href="Десктоп - Ошибка.dc.html" style="flex: 1; display: flex; align-items: center; justify-content: space-between; gap: 12px; min-height: 44px; color: var(--lad);">Ошибки: 404, 500, техработы<span class="body-s" style="color: var(--ink-muted);">Собран</span></a></li>
+            </ol>
+          </div>
+          <div style="display: flex; flex-direction: column; gap: 4px;">
+            <h3 class="label" style="margin: 0; font-weight: 600; color: var(--ink-muted);">Администрирование площадки</h3>
+            <p class="caption" style="margin: 0 0 4px; color: var(--ink-muted); text-wrap: pretty;">Общий интерфейс для сотрудников: что видит каждый, зависит от прав — модератор, поддержка, менеджер по партнёрам, администратор.</p>
+            <ol style="margin: 0; padding: 0; list-style: none; display: flex; flex-direction: column; border-top: 1px solid var(--line);">
+              <li class="body" style="display: flex; align-items: center; min-height: 44px; border-bottom: 1px solid var(--line);"><a href="Админ - Обзор.dc.html" style="flex: 1; display: flex; align-items: center; justify-content: space-between; gap: 12px; min-height: 44px; color: var(--lad);">Обзор: очереди, обращения, ключевые показатели<span class="body-s" style="color: var(--ink-muted);">Собран</span></a></li>
+              <li class="body" style="display: flex; align-items: center; min-height: 44px; border-bottom: 1px solid var(--line);"><a href="Десктоп - Модерация.dc.html" style="flex: 1; display: flex; align-items: center; justify-content: space-between; gap: 12px; min-height: 44px; color: var(--lad);">Модерация объявлений<span class="body-s" style="color: var(--ink-muted);">Собран</span></a></li>
+              <li class="body" style="display: flex; align-items: center; min-height: 44px; border-bottom: 1px solid var(--line);"><a href="Админ - Обращения.dc.html" style="flex: 1; display: flex; align-items: center; justify-content: space-between; gap: 12px; min-height: 44px; color: var(--lad);">Жалобы и обращения в поддержку<span class="body-s" style="color: var(--ink-muted);">Собран</span></a></li>
+              <li class="body" style="display: flex; align-items: center; min-height: 44px; border-bottom: 1px solid var(--line);"><a href="Админ - Пользователи.dc.html" style="flex: 1; display: flex; align-items: center; justify-content: space-between; gap: 12px; min-height: 44px; color: var(--lad);">Пользователи: карточка, блокировки, история<span class="body-s" style="color: var(--ink-muted);">Собран</span></a></li>
+              <li class="body" style="display: flex; align-items: center; min-height: 44px; border-bottom: 1px solid var(--line);"><a href="Админ - Проверка.dc.html" style="flex: 1; display: flex; align-items: center; justify-content: space-between; gap: 12px; min-height: 44px; color: var(--lad);">Проверка компаний и мастеров<span class="body-s" style="color: var(--ink-muted);">Собран</span></a></li>
+              <li class="body" style="display: flex; align-items: center; min-height: 44px; border-bottom: 1px solid var(--line);"><a href="Админ - Деньги.dc.html" style="flex: 1; display: flex; align-items: center; justify-content: space-between; gap: 12px; min-height: 44px; color: var(--lad);">Тарифы, баллы и платежи<span class="body-s" style="color: var(--ink-muted);">Собран</span></a></li>
+              <li class="body" style="display: flex; align-items: center; min-height: 44px; border-bottom: 1px solid var(--line);"><a href="Админ - Справочники.dc.html" style="flex: 1; display: flex; align-items: center; justify-content: space-between; gap: 12px; min-height: 44px; color: var(--lad);">Справочники: категории, модели, цены продаж<span class="body-s" style="color: var(--ink-muted);">Собран</span></a></li>
+              <li class="body" style="display: flex; align-items: center; min-height: 44px; border-bottom: 1px solid var(--line);"><a href="Админ - Витрина.dc.html" style="flex: 1; display: flex; align-items: center; justify-content: space-between; gap: 12px; min-height: 44px; color: var(--lad);">Витрина: главная, подборки, рассылки<span class="body-s" style="color: var(--ink-muted);">Собран</span></a></li>
+              <li class="body" style="display: flex; align-items: center; min-height: 44px; border-bottom: 1px solid var(--line);"><a href="Админ - Сотрудники.dc.html" style="flex: 1; display: flex; align-items: center; justify-content: space-between; gap: 12px; min-height: 44px; color: var(--lad);">Сотрудники и права доступа<span class="body-s" style="color: var(--ink-muted);">Собран</span></a></li>
+              <li class="body" style="display: flex; align-items: center; min-height: 44px; border-bottom: 1px solid var(--line);"><a href="Админ - Журнал.dc.html" style="flex: 1; display: flex; align-items: center; justify-content: space-between; gap: 12px; min-height: 44px; color: var(--lad);">Журнал действий сотрудников<span class="body-s" style="color: var(--ink-muted);">Собран</span></a></li>
+            </ol>
+          </div>
+        </div>
+        <div style="display: flex; align-items: center; justify-content: space-between; gap: 12px;">
+          <span class="body-s" style="color: var(--ink-muted);">Готово 22 из 22</span>
+          <x-import component-from-global-scope="DesignSystem_b66810.Badge" hint-size="80px,24px">Не начат</x-import>
+        </div>
+      </section>
+
+    </div>
+  </main>
+</div>
+</x-dc>
+</body>
+</html>

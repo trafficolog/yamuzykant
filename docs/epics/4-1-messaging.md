@@ -1,0 +1,22 @@
+---
+id: "4.1"
+phase: "4"
+title: "Сообщения"
+status: todo
+gate: G2
+---
+
+# Эпик 4.1. Сообщения
+
+**Use cases:** UC-D1 · **Макеты:** Десктоп - Сообщения.dc.html
+**Зависит от эпиков:** 2.1, 0.1
+
+## Задачи
+
+<!-- docs:ops:begin tasks -->
+| Задача | Статус | Риск | Исполнитель → Ревьюер |
+|---|---|---|---|
+| [4.1.1 Сообщения: домен и realtime](../tasks/4-1-1-messaging-domain.md) | todo | high | opus → opus |
+| [4.1.2 Сообщения: список и чат](../tasks/4-1-2-messages-ui.md) | todo | medium | sonnet → sonnet |
+| [4.1.3 Антиспам в сообщениях](../tasks/4-1-3-antispam.md) | todo | medium | sonnet → sonnet |
+<!-- docs:ops:end -->

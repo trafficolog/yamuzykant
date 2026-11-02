@@ -1,0 +1,234 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+  <link rel="stylesheet" href="_ds/design-system-b66810d8-d429-49ea-bb35-5b22a7aa4f3a/tokens/webfonts.css">
+  <link rel="stylesheet" href="_ds/design-system-b66810d8-d429-49ea-bb35-5b22a7aa4f3a/tokens/tokens.css">
+  <link rel="stylesheet" href="_ds/design-system-b66810d8-d429-49ea-bb35-5b22a7aa4f3a/tokens/page.css">
+  <link rel="stylesheet" href="_ds/design-system-b66810d8-d429-49ea-bb35-5b22a7aa4f3a/tokens/components.css">
+  <link rel="stylesheet" href="_ds/design-system-b66810d8-d429-49ea-bb35-5b22a7aa4f3a/tokens/forms.css">
+  <link rel="stylesheet" href="ym-compat.css">
+  <script src="_ds/design-system-b66810d8-d429-49ea-bb35-5b22a7aa4f3a/_ds_bundle.js"></script>
+  <script src="plain-language.js"></script>
+  <style>
+    /* Hallmark · page: staff console — partner verification · theme: ЯМузыкант DS tokens · pre-emit critique: P4 H4 E4 S4 R4 V4 */
+    html, body { margin: 0; background: var(--surface); color: var(--ink); overflow-x: clip; }
+    a { color: var(--lad); text-decoration: none; }
+    a:not([class*="lm-"]):hover { color: var(--lad-strong); text-decoration: underline; }
+  </style>
+</helmet>
+<div class="lm-root" data-screen-label="Админ — Проверка партнёров" style="min-height: 100vh; background: var(--surface); font-family: var(--font-text);">
+  <dc-import name="Админ - Шапка" role="{{ role }}" hint-size="100%,64px"></dc-import>
+  <div style="display: grid; grid-template-columns: minmax(200px, 240px) minmax(0, 1fr); min-height: calc(100vh - 65px);">
+    <dc-import name="Админ - Меню" active="verify" role="{{ role }}" hint-size="100%,100%"></dc-import>
+
+    <div style="display: flex; flex-wrap: wrap; align-items: stretch; min-width: 0;">
+      <section aria-labelledby="q-h" style="flex: 0 1 260px; min-width: 240px; max-width: 100%; display: flex; flex-direction: column; border-right: 1px solid var(--line); background: var(--surface-raised); min-width: 0; box-sizing: border-box;">
+        <div style="display: flex; flex-direction: column; gap: var(--space-3); padding: var(--space-5);">
+          <div style="display: flex; flex-direction: column; gap: 2px;">
+            <h1 id="q-h" class="h3" style="margin: 0;">Проверка партнёров</h1>
+            <span class="caption" style="color: var(--ink-muted);">Норма — 2 рабочих дня</span>
+          </div>
+          <div role="radiogroup" aria-label="Фильтр" style="display: flex; flex-wrap: wrap; gap: var(--space-2);">
+            <sc-for list="{{ filters }}" as="f" hint-placeholder-count="4">
+              <x-import component-from-global-scope="DesignSystem_b66810.FilterChip" radio="{{ true }}" selected="{{ f.on }}" count="{{ f.count }}" onChange="{{ f.pick }}" hint-size="100px,40px">{{ f.label }}</x-import>
+            </sc-for>
+          </div>
+        </div>
+        <div role="list" style="display: flex; flex-direction: column; border-top: 1px solid var(--line);">
+          <sc-for list="{{ queue }}" as="q" hint-placeholder-count="5">
+            <button type="button" role="listitem" aria-current="{{ q.current }}" onClick="{{ q.pick }}" style="{{ q.style }}" style-hover="background: var(--surface-recessed);">
+              <span style="display: flex; align-items: center; justify-content: space-between; gap: var(--space-2);">
+                <span class="caption" style="display: flex; align-items: center; gap: var(--space-1); color: var(--ink-muted);"><x-import component-from-global-scope="DesignSystem_b66810.Icon" name="{{ q.icon }}" size="{{ 14 }}" hint-size="14px,14px"></x-import>{{ q.kindLabel }}</span>
+                <span class="caption" style="{{ q.waitStyle }}">{{ q.wait }}</span>
+              </span>
+              <span class="body" style="font-weight: 600; text-align: left;">{{ q.name }}</span>
+              <span class="body-s" style="color: var(--ink-muted); text-align: left;">{{ q.sub }}</span>
+              <span style="display: flex; gap: var(--space-1); flex-wrap: wrap;">
+                <x-import component-from-global-scope="DesignSystem_b66810.Badge" tone="{{ q.tone }}" hint-size="100px,24px">{{ q.status }}</x-import>
+              </span>
+            </button>
+          </sc-for>
+          <sc-if value="{{ queueEmpty }}" hint-placeholder-val="{{ false }}">
+            <p class="body-s" style="margin: 0; padding: var(--space-6) var(--space-5); color: var(--ink-muted);">Заявок нет.</p>
+          </sc-if>
+        </div>
+      </section>
+
+      <section aria-labelledby="a-h" style="flex: 1 1 360px; max-width: 100%; display: flex; flex-direction: column; gap: var(--space-6); padding: var(--space-6); min-width: 0; box-sizing: border-box;">
+        <sc-if value="{{ hasUndo }}" hint-placeholder-val="{{ false }}">
+          <div role="status" style="display: flex; align-items: center; justify-content: space-between; gap: var(--space-3); padding: var(--space-3) var(--space-4); border-radius: var(--radius-md); background: var(--inverse); color: var(--on-inverse);">
+            <span class="body-s">{{ undoText }}</span>
+            <button type="button" onClick="{{ undo }}" class="label" style="min-height: 36px; padding: 0 var(--space-3); border: 0; background: none; color: inherit; font-weight: 600; text-decoration: underline; cursor: pointer;">Отменить</button>
+          </div>
+        </sc-if>
+
+        <sc-if value="{{ hasCur }}" hint-placeholder-val="{{ true }}">
+          <div style="display: flex; flex-direction: column; gap: var(--space-6);">
+            <div style="display: flex; flex-direction: column; gap: var(--space-1);">
+              <span class="caption" style="font-family: var(--font-mono); color: var(--ink-muted);">Заявка {{ cur.id }} · {{ cur.kindLabel }} · подана {{ cur.sent }}</span>
+              <h2 id="a-h" class="h2" style="margin: 0; overflow-wrap: anywhere;">{{ cur.name }}</h2>
+              <span class="body-s" style="color: var(--ink-muted);">{{ cur.sub }}</span>
+            </div>
+
+            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 260px), 1fr)); gap: var(--space-6); align-items: start;">
+              <div style="display: flex; flex-direction: column; gap: var(--space-2);">
+                <h3 class="label" style="margin: 0; font-weight: 600; color: var(--ink-muted);">{{ cur.dataTitle }}</h3>
+                <div style="display: flex; flex-direction: column; border-top: 1px solid var(--line);">
+                  <sc-for list="{{ cur.data }}" as="d" hint-placeholder-count="5">
+                    <div style="display: grid; grid-template-columns: minmax(110px, 140px) minmax(0, 1fr); gap: var(--space-3); padding: var(--space-2) 0; border-bottom: 1px solid var(--line);">
+                      <span class="body-s" style="color: var(--ink-muted);">{{ d.k }}</span>
+                      <span class="body-s" style="{{ d.style }}">{{ d.v }}</span>
+                    </div>
+                  </sc-for>
+                </div>
+              </div>
+              <div style="display: flex; flex-direction: column; gap: var(--space-2);">
+                <h3 class="label" style="margin: 0; font-weight: 600; color: var(--ink-muted);">Автоматические проверки</h3>
+                <sc-for list="{{ cur.checks }}" as="c" hint-placeholder-count="3">
+                  <div style="display: grid; grid-template-columns: 20px minmax(0, 1fr); gap: var(--space-2); align-items: start; padding: var(--space-2) var(--space-3); border-radius: var(--radius-md); background: var(--surface-recessed);">
+                    <span style="{{ c.iconStyle }}"><x-import component-from-global-scope="DesignSystem_b66810.Icon" name="{{ c.icon }}" size="{{ 18 }}" hint-size="18px,18px"></x-import></span>
+                    <span style="display: flex; flex-direction: column; gap: 2px;">
+                      <span class="body-s" style="font-weight: 500;">{{ c.title }}</span>
+                      <span class="caption" style="color: var(--ink-muted); text-wrap: pretty;">{{ c.text }}</span>
+                    </span>
+                  </div>
+                </sc-for>
+              </div>
+            </div>
+
+            <div style="display: flex; flex-direction: column; gap: var(--space-2);">
+              <h3 class="label" style="margin: 0; font-weight: 600; color: var(--ink-muted);">{{ cur.docsTitle }}</h3>
+              <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: var(--space-3);">
+                <sc-for list="{{ cur.docs }}" as="doc" hint-placeholder-count="4">
+                  <button type="button" onClick="{{ doc.toggle }}" aria-pressed="{{ doc.flagged }}" style="{{ doc.style }}" style-hover="border-color: var(--lad);">
+                    <span style="{{ doc.thumb }}"><x-import component-from-global-scope="DesignSystem_b66810.Icon" name="{{ doc.icon }}" size="{{ 28 }}" hint-size="28px,28px"></x-import></span>
+                    <span class="body-s" style="font-weight: 500; text-align: left;">{{ doc.label }}</span>
+                    <span class="caption" style="{{ doc.stateStyle }}">{{ doc.state }}</span>
+                  </button>
+                </sc-for>
+              </div>
+              <span class="caption" style="color: var(--ink-muted);">Нажмите на документ, чтобы отметить «нужна замена».</span>
+            </div>
+
+            <div style="display: flex; flex-direction: column; gap: var(--space-3); padding: var(--space-5); border: 1px solid var(--line); border-radius: var(--radius-lg); background: var(--surface-raised);">
+              <h3 class="h3" style="margin: 0;">Решение</h3>
+              <label for="v-note" class="lm-sr">Комментарий</label>
+              <textarea id="v-note" rows="2" value="{{ note }}" onInput="{{ onNote }}" onChange="{{ onNote }}" placeholder="{{ notePh }}" style="width: 100%; box-sizing: border-box; padding: var(--space-3) var(--space-4); border: 1px solid var(--line-control); border-radius: var(--radius-sm); background: var(--surface-raised); color: var(--ink); font: 400 var(--text-s)/22px var(--font-text); resize: vertical;"></textarea>
+              <div style="display: flex; flex-wrap: wrap; gap: var(--space-3);">
+                <x-import component-from-global-scope="DesignSystem_b66810.Button" variant="primary" icon="check" disabled="{{ cantApprove }}" onClick="{{ approve }}" hint-size="180px,48px">{{ approveLabel }}</x-import>
+                <x-import component-from-global-scope="DesignSystem_b66810.Button" variant="outline" disabled="{{ cantRequest }}" onClick="{{ request }}" hint-size="220px,48px">{{ requestLabel }}</x-import>
+                <x-import component-from-global-scope="DesignSystem_b66810.Button" variant="ghost" disabled="{{ cantReject }}" onClick="{{ reject }}" hint-size="120px,48px">Отказать</x-import>
+              </div>
+              <span class="caption" style="color: var(--ink-muted); text-wrap: pretty;">{{ decisionHint }}</span>
+            </div>
+          </div>
+        </sc-if>
+        <sc-if value="{{ noCur }}" hint-placeholder-val="{{ false }}">
+          <div style="display: flex; flex-direction: column; align-items: flex-start; gap: var(--space-3); padding: var(--space-12) 0;">
+            <span style="width: 64px; height: 64px; border-radius: var(--radius-full); background: var(--surface-recessed); color: var(--ink-muted); display: flex; align-items: center; justify-content: center;"><x-import component-from-global-scope="DesignSystem_b66810.Icon" name="circle-check" size="{{ 40 }}" hint-size="40px,40px"></x-import></span>
+            <p class="body" style="margin: 0;">Все заявки разобраны.</p>
+          </div>
+        </sc-if>
+      </section>
+    </div>
+  </div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props="{&quot;role&quot;:{&quot;editor&quot;:&quot;enum&quot;,&quot;options&quot;:[&quot;admin&quot;,&quot;partners&quot;],&quot;default&quot;:&quot;admin&quot;,&quot;tsType&quot;:&quot;'admin' | 'partners'&quot;}}">
+const A = [
+  { id: 'ПР-0412', kind: 'company', name: 'ООО «Звук и дерево»', sub: 'Магазин · Санкт-Петербург · тариф «Бизнес» оплачен', sent: '7 окт', wait: '2 дня', late: true, status: 'Ждёт проверки',
+    data: [['ИНН', '7801234567', 'mono'], ['ОГРН', '1157847123456', 'mono'], ['Директор', 'Карпов Илья Сергеевич', ''], ['Юр. адрес', 'Санкт-Петербург, ул. Рубинштейна, 12', ''], ['Пункт выдачи', 'тот же адрес', ''], ['Банк', 'р/с •••• 4410, Т-Банк', 'mono']],
+    checks: [['ok', 'Компания действует', 'Найдена в реестре юрлиц, статус «действующая».'], ['ok', 'Директор совпадает', 'ФИО совпадает с паспортом заявителя.'], ['warn', 'Адрес массовой регистрации', 'По адресу зарегистрировано 14 компаний — уточните пункт выдачи.']],
+    docs: [['badge-check', 'Выписка из реестра', 'принят'], ['user', 'Паспорт директора', 'принят'], ['store', 'Фото витрины', 'загружено'], ['badge-check', 'Договор оферты', 'подписан']] },
+  { id: 'ПР-0415', kind: 'master', name: 'Тёплый ламп · Никита Ж.', sub: 'Мастер · усилители · Екатеринбург', sent: '9 окт', wait: '3 ч', late: false, status: 'Ждёт проверки',
+    data: [['Специализация', 'Ламповые усилители, педали', ''], ['Опыт', '9 лет', ''], ['Мастерская', 'Екатеринбург, ул. Малышева, 51', ''], ['Форма', 'Самозанятый · ИНН 667012345678', 'mono'], ['Цены', 'диагностика от 1 000 ₽', '']],
+    checks: [['ok', 'Статус самозанятого', 'Подтверждён в налоговой.'], ['ok', 'Отзывы с других площадок', '38 отзывов, средняя 4,8 — по ссылкам заявителя.'], ['warn', 'Мало фото работ', 'Загружено 3 из 6 рекомендуемых.']],
+    docs: [['camera', 'Работа: Fender Twin', 'загружено'], ['camera', 'Работа: Marshall JCM800', 'загружено'], ['camera', 'Мастерская', 'загружено'], ['user', 'Паспорт', 'принят']] },
+  { id: 'ПР-0409', kind: 'company', name: 'ИП Белов А. В.', sub: 'Магазин · Новосибирск · тариф «Старт»', sent: '6 окт', wait: '3 дня', late: true, status: 'Ждёт документы',
+    data: [['ИНН', '540123456789', 'mono'], ['ОГРНИП', '318547600012345', 'mono'], ['Адрес', 'Новосибирск, Красный пр., 86', ''], ['Банк', 'р/с •••• 9021, Сбербанк', 'mono']],
+    checks: [['ok', 'ИП действует', 'Найден в реестре.'], ['bad', 'Паспорт нечитаемый', 'Запрошена замена 7 окт — ответа нет.']],
+    docs: [['badge-check', 'Выписка из реестра', 'принят'], ['user', 'Паспорт', 'нужна замена'], ['store', 'Фото витрины', 'загружено']] },
+  { id: 'ПР-0414', kind: 'master', name: 'Ирина Белова', sub: 'Мастер · ламповые усилители · Москва', sent: '8 окт', wait: '1 д', late: false, status: 'Ждёт проверки',
+    data: [['Специализация', 'Ламповые усилители, комбо', ''], ['Опыт', '12 лет', ''], ['Мастерская', '«Ламповый сервис», Москва, ул. Расковой, 14', ''], ['Форма', 'ИП · ИНН 771234567890', 'mono']],
+    checks: [['ok', 'ИП действует', 'Найден в реестре.'], ['ok', 'Фото работ', '6 из 6 рекомендуемых.']],
+    docs: [['camera', 'Работа: Vox AC30', 'загружено'], ['camera', 'Работа: Fender Deluxe', 'загружено'], ['user', 'Паспорт', 'принят']] }
+];
+const FILTERS = [['all', 'Все'], ['company', 'Компании'], ['master', 'Мастера'], ['docs', 'Ждут документы']];
+class Component extends DCLogic {
+  state = { items: A, sel: 'ПР-0412', filter: 'all', note: '', flagged: {}, done: 0, last: null };
+  decide(label) {
+    const s = this.state;
+    const idx = s.items.findIndex(x => x.id === s.sel);
+    const item = s.items[idx];
+    const items = s.items.filter(x => x.id !== s.sel);
+    const next = items[Math.min(idx, items.length - 1)];
+    this.setState({ items, sel: next ? next.id : null, note: '', flagged: {}, done: s.done + 1, last: { item, idx, label } });
+  }
+  renderVals() {
+    const s = this.state;
+    const role = this.props.role === 'partners' ? 'partners' : 'admin';
+    const pass = (x, k) => k === 'all' || (k === 'docs' ? x.status === 'Ждёт документы' : x.kind === k);
+    const vis = s.items.filter(x => pass(x, s.filter));
+    const c = s.items.find(x => x.id === s.sel);
+    const ic = { ok: ['circle-check', 'var(--lad)'], warn: ['triangle-alert', 'var(--warning)'], bad: ['circle-alert', 'var(--danger)'] };
+    const nFlag = c ? c.docs.filter((d, i) => s.flagged[i] || d[2] === 'нужна замена').length : 0;
+    const hasBad = c ? c.checks.some(x => x[0] === 'bad') : false;
+    const isCompany = c && c.kind === 'company';
+    return {
+      role,
+      filters: FILTERS.map(([k, label]) => ({ label, on: s.filter === k, count: s.items.filter(x => pass(x, k)).length, pick: () => this.setState({ filter: k }) })),
+      queue: vis.map(x => ({
+        name: x.name, sub: x.sub, wait: x.wait, status: x.status, tone: x.status === 'Ждёт документы' ? 'nickel' : 'warning',
+        icon: x.kind === 'company' ? 'store' : 'wrench', kindLabel: x.kind === 'company' ? 'Компания' : 'Мастер',
+        waitStyle: 'white-space: nowrap; ' + (x.late ? 'color: var(--danger); font-weight: 600;' : 'color: var(--ink-muted);'),
+        current: c && x.id === c.id ? 'true' : undefined,
+        pick: () => this.setState({ sel: x.id, note: '', flagged: {} }),
+        style: 'display: flex; flex-direction: column; gap: var(--space-1); width: 100%; padding: var(--space-4) var(--space-5); border: 0; border-bottom: 1px solid var(--line); border-left: 3px solid ' + (c && x.id === c.id ? 'var(--lad)' : 'transparent') + '; background: ' + (c && x.id === c.id ? 'var(--surface-recessed)' : 'transparent') + '; color: var(--ink); font: inherit; cursor: pointer; box-sizing: border-box; text-align: left;'
+      })),
+      queueEmpty: vis.length === 0,
+      hasCur: !!c, noCur: !c,
+      cur: c ? {
+        id: c.id, name: c.name, sub: c.sub, sent: c.sent, kindLabel: isCompany ? 'компания' : 'мастер',
+        dataTitle: isCompany ? 'Данные компании' : 'Анкета мастера',
+        docsTitle: isCompany ? 'Документы' : 'Документы и фото работ',
+        data: c.data.map(([k, v, t]) => ({ k, v, style: t === 'mono' ? 'font-family: var(--font-mono); font-variant-numeric: tabular-nums;' : '' })),
+        checks: c.checks.map(([t, title, text]) => ({ icon: ic[t][0], title, text, iconStyle: 'display: flex; padding-top: 1px; color: ' + ic[t][1] + ';' })),
+        docs: c.docs.map(([icon, label, state], i) => {
+          const fl = !!s.flagged[i] || state === 'нужна замена';
+          return { icon, label, state: fl ? 'нужна замена' : state, flagged: fl ? 'true' : 'false',
+            toggle: () => { if (state !== 'нужна замена') this.setState(st => ({ flagged: { ...st.flagged, [i]: !st.flagged[i] } })); },
+            style: 'display: flex; flex-direction: column; gap: var(--space-2); padding: var(--space-3); border-radius: var(--radius-md); border: 1px solid ' + (fl ? 'var(--danger)' : 'var(--line)') + '; background: var(--surface-raised); color: var(--ink); font: inherit; cursor: pointer; text-align: left;',
+            thumb: 'aspect-ratio: 4 / 3; border-radius: var(--radius-sm); background: var(--surface-recessed); color: var(--ink-faint); display: flex; align-items: center; justify-content: center;',
+            stateStyle: fl ? 'color: var(--danger); font-weight: 600;' : (state === 'принят' || state === 'подписан') ? 'color: var(--lad-strong);' : 'color: var(--ink-muted);' };
+        })
+      } : { data: [], checks: [], docs: [] },
+      note: s.note, onNote: e => this.setState({ note: e.target.value }),
+      notePh: 'Комментарий заявителю — придёт в чат поддержки',
+      cantApprove: nFlag > 0 || hasBad,
+      approveLabel: isCompany ? 'Подтвердить компанию' : 'Подтвердить мастера',
+      cantRequest: nFlag === 0,
+      requestLabel: nFlag ? 'Запросить замену · ' + nFlag : 'Запросить документы',
+      cantReject: s.note.trim().length < 5,
+      decisionHint: hasBad || nFlag ? 'Подтвердить можно, когда все документы приняты и нет красных проверок.' : isCompany ? 'После подтверждения у компании появится пометка «Компания проверена» и откроется публикация по тарифу.' : 'После подтверждения карточка мастера появится в разделе «Мастера».',
+      approve: () => this.decide('подтверждено'),
+      request: () => {
+        if (!nFlag) return;
+        this.setState(st => ({ items: st.items.map(x => x.id === st.sel ? { ...x, status: 'Ждёт документы', docs: x.docs.map((d, i) => st.flagged[i] ? [d[0], d[1], 'нужна замена'] : d) } : x), flagged: {}, note: '', last: { label: 'запрошена замена документов', item: null } }));
+      },
+      reject: () => { if (s.note.trim().length >= 5) this.decide('отказано'); },
+      hasUndo: !!s.last,
+      undoText: s.last ? (s.last.item ? s.last.item.name + ' — ' : '') + s.last.label : '',
+      undo: () => { const l = s.last; if (!l) return; if (!l.item) { this.setState({ last: null }); return; } const it = s.items.slice(); it.splice(l.idx, 0, l.item); this.setState({ items: it, sel: l.item.id, last: null, done: s.done - 1 }); }
+    };
+  }
+}
+</script>
+</body>
+</html>

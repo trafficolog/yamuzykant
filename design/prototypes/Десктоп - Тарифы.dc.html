@@ -1,0 +1,222 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+  <link rel="stylesheet" href="_ds/design-system-b66810d8-d429-49ea-bb35-5b22a7aa4f3a/tokens/webfonts.css">
+  <link rel="stylesheet" href="_ds/design-system-b66810d8-d429-49ea-bb35-5b22a7aa4f3a/tokens/tokens.css">
+  <link rel="stylesheet" href="_ds/design-system-b66810d8-d429-49ea-bb35-5b22a7aa4f3a/tokens/page.css">
+  <link rel="stylesheet" href="_ds/design-system-b66810d8-d429-49ea-bb35-5b22a7aa4f3a/tokens/components.css">
+  <link rel="stylesheet" href="_ds/design-system-b66810d8-d429-49ea-bb35-5b22a7aa4f3a/tokens/forms.css">
+  <link rel="stylesheet" href="ym-compat.css">
+  <script src="_ds/design-system-b66810d8-d429-49ea-bb35-5b22a7aa4f3a/_ds_bundle.js"></script>
+  <script src="plain-language.js"></script>
+  <style>
+    /* Hallmark · page: business plans · theme: ЯМузыкант DS tokens (lad) · pre-emit critique: P4 H4 E4 S4 R4 V4 */
+    html, body { margin: 0; background: var(--surface); color: var(--ink); overflow-x: clip; }
+    a { color: var(--lad); text-decoration: none; }
+    a:not([class*="lm-"]):hover { color: var(--lad-strong); text-decoration: underline; }
+    details > summary { list-style: none; }
+    details > summary::-webkit-details-marker { display: none; }
+    details[open] > summary .lm-chev { transform: rotate(180deg); }
+  </style>
+</helmet>
+<div class="lm-root" data-screen-label="Десктоп — Тарифы для бизнеса" style="min-height: 100vh; background: var(--surface); font-family: var(--font-text);">
+  <dc-import name="Шапка" active="none" messages="{{ 3 }}" hint-size="100%,117px"></dc-import>
+
+  <main style="max-width: var(--content-max); margin: 0 auto; padding: var(--space-6) var(--space-10) 0; box-sizing: border-box; display: flex; flex-direction: column; gap: var(--space-12);">
+    <div style="display: flex; flex-direction: column; gap: var(--space-4);">
+      <nav aria-label="Хлебные крошки" style="display: flex; align-items: center; gap: var(--space-2); flex-wrap: wrap;">
+        <a href="Десктоп - Главная.dc.html" class="body-s" style="color: var(--ink-muted); min-height: 32px; display: flex; align-items: center; white-space: nowrap;">Главная</a>
+        <span aria-hidden="true" style="color: var(--ink-faint); display: flex;"><x-import component-from-global-scope="DesignSystem_b66810.Icon" name="chevron-right" size="{{ 14 }}" hint-size="14px,14px"></x-import></span>
+        <span class="body-s" aria-current="page" style="color: var(--ink); white-space: nowrap;">Тарифы для бизнеса</span>
+      </nav>
+      <div style="display: grid; grid-template-columns: minmax(0, 1fr) minmax(320px, 440px); gap: var(--space-10); align-items: end;">
+        <div style="display: flex; flex-direction: column; gap: var(--space-3); min-width: 0;">
+          <h1 class="h1 lm-title" style="margin: 0;">Тарифы для магазинов и мастерских</h1>
+          <p class="body" style="margin: 0; color: var(--ink-muted); max-width: 600px; text-wrap: pretty;">Для ИП и компаний объявления размещаются по тарифу. Частные продавцы продают свои инструменты без тарифа.</p>
+        </div>
+        <div style="display: flex; flex-direction: column; gap: var(--space-2);">
+          <span class="label" style="font-weight: 600;">Сколько объявлений у вас одновременно?</span>
+          <div role="radiogroup" aria-label="Количество объявлений" style="display: flex; flex-wrap: wrap; gap: var(--space-2);">
+            <sc-for list="{{ sizes }}" as="z" hint-placeholder-count="4">
+              <x-import component-from-global-scope="DesignSystem_b66810.FilterChip" radio="{{ true }}" selected="{{ z.on }}" onChange="{{ z.pick }}" hint-size="100px,40px">{{ z.label }}</x-import>
+            </sc-for>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <section aria-label="Тарифы" style="display: flex; flex-direction: column; gap: var(--space-4);">
+      <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 300px), 1fr)); gap: var(--space-6); align-items: stretch;">
+        <sc-for list="{{ plans }}" as="pl" hint-placeholder-count="3">
+          <article style="{{ pl.style }}">
+            <div style="display: flex; align-items: center; justify-content: space-between; gap: var(--space-3); min-height: 24px;">
+              <h2 class="h3" style="margin: 0;">{{ pl.name }}</h2>
+              <sc-if value="{{ pl.fit }}" hint-placeholder-val="{{ false }}">
+                <x-import component-from-global-scope="DesignSystem_b66810.Badge" tone="lad" icon="check" hint-size="120px,24px">Вам подойдёт</x-import>
+              </sc-if>
+            </div>
+            <div style="display: flex; flex-direction: column; gap: var(--space-1);">
+              <span style="display: flex; align-items: baseline; gap: var(--space-2);">
+                <span style="font: 600 var(--text-3xl)/1 var(--font-text); font-variant-numeric: tabular-nums; white-space: nowrap;">{{ pl.price }}</span>
+                <span class="body-s" style="color: var(--ink-muted);">в месяц</span>
+              </span>
+              <span class="body-s" style="color: var(--ink-muted);">{{ pl.who }}</span>
+            </div>
+            <div style="display: flex; flex-direction: column; gap: var(--space-3); padding: var(--space-4) 0; border-top: 1px solid var(--line); border-bottom: 1px solid var(--line);">
+              <span style="display: flex; align-items: baseline; justify-content: space-between; gap: var(--space-3);"><span class="body-s" style="color: var(--ink-muted);">Активных объявлений</span><span class="body" style="font-weight: 600; font-variant-numeric: tabular-nums;">{{ pl.limit }}</span></span>
+              <span style="display: flex; align-items: baseline; justify-content: space-between; gap: var(--space-3);"><span class="body-s" style="color: var(--ink-muted);">Баллов на продвижение</span><span class="body" style="font-weight: 600; font-variant-numeric: tabular-nums;">{{ pl.points }}</span></span>
+            </div>
+            <ul style="margin: 0; padding: 0; list-style: none; display: flex; flex-direction: column; gap: var(--space-2); flex: 1;">
+              <sc-for list="{{ pl.extra }}" as="x" hint-placeholder-count="3">
+                <li class="body-s" style="display: flex; gap: var(--space-2); align-items: flex-start;"><span style="flex: none; color: var(--lad); display: flex; padding-top: 2px;"><x-import component-from-global-scope="DesignSystem_b66810.Icon" name="check" size="{{ 16 }}" hint-size="16px,16px"></x-import></span>{{ x }}</li>
+              </sc-for>
+            </ul>
+            <x-import component-from-global-scope="DesignSystem_b66810.Button" variant="{{ pl.btn }}" block="{{ true }}" href="Десктоп - Кабинет.dc.html" hint-size="100%,48px">{{ pl.cta }}</x-import>
+          </article>
+        </sc-for>
+      </div>
+      <p class="caption" style="margin: 0; color: var(--ink-muted);">Цены, лимиты и баллы — примеры, уточнить. Цены указаны с НДС.</p>
+    </section>
+
+    <section aria-labelledby="cmp-h" style="display: flex; flex-direction: column; gap: var(--space-4);">
+      <h2 id="cmp-h" class="h3" style="margin: 0;">Сравнение</h2>
+      <div role="table" aria-label="Сравнение тарифов" style="display: flex; flex-direction: column; border-top: 1px solid var(--line);">
+        <div role="row" style="display: grid; grid-template-columns: minmax(200px, 2fr) repeat(3, minmax(90px, 1fr)); gap: var(--space-4); align-items: center; min-height: 48px; border-bottom: 1px solid var(--line);">
+          <span role="columnheader" class="body-s" style="color: var(--ink-muted);">Что входит</span>
+          <sc-for list="{{ heads }}" as="h" hint-placeholder-count="3">
+            <span role="columnheader" class="body" style="{{ h.style }}">{{ h.name }}</span>
+          </sc-for>
+        </div>
+        <sc-for list="{{ rows }}" as="r" hint-placeholder-count="8">
+          <div role="row" style="display: grid; grid-template-columns: minmax(200px, 2fr) repeat(3, minmax(90px, 1fr)); gap: var(--space-4); align-items: center; min-height: 52px; border-bottom: 1px solid var(--line);">
+            <span role="rowheader" class="body-s">{{ r.label }}</span>
+            <sc-for list="{{ r.cells }}" as="c" hint-placeholder-count="3">
+              <span role="cell" style="{{ c.style }}">
+                <sc-if value="{{ c.yes }}" hint-placeholder-val="{{ false }}"><x-import component-from-global-scope="DesignSystem_b66810.Icon" name="check" size="{{ 18 }}" hint-size="18px,18px"></x-import></sc-if>
+                <span class="body-s" style="font-variant-numeric: tabular-nums;">{{ c.text }}</span>
+              </span>
+            </sc-for>
+          </div>
+        </sc-for>
+      </div>
+    </section>
+
+    <section aria-labelledby="pts-h" style="display: grid; grid-template-columns: minmax(240px, 1fr) minmax(0, 2fr); gap: var(--space-10); align-items: start;">
+      <div style="display: flex; flex-direction: column; gap: var(--space-3);">
+        <span style="width: 40px; height: 40px; border-radius: var(--radius-md); background: var(--brass-soft); color: var(--brass-text); display: flex; align-items: center; justify-content: center;"><x-import component-from-global-scope="DesignSystem_b66810.Icon" name="star" size="{{ 20 }}" hint-size="20px,20px"></x-import></span>
+        <h2 id="pts-h" class="h3" style="margin: 0;">На что тратить баллы</h2>
+        <p class="body-s" style="margin: 0; color: var(--ink-muted); text-wrap: pretty;">Баллы по тарифу начисляются 1-го числа и сгорают в конце месяца. Докупленные картой не сгорают. 1 балл = 1 ₽.</p>
+      </div>
+      <div style="display: flex; flex-direction: column; border-top: 1px solid var(--line);">
+        <sc-for list="{{ promo }}" as="p" hint-placeholder-count="6">
+          <div style="display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: var(--space-4); align-items: center; min-height: 56px; padding: var(--space-2) 0; border-bottom: 1px solid var(--line);">
+            <span style="display: flex; flex-direction: column; gap: 2px; min-width: 0;">
+              <span class="body" style="font-weight: 500;">{{ p.name }}</span>
+              <span class="body-s" style="color: var(--ink-muted);">{{ p.desc }}</span>
+            </span>
+            <span class="body" style="font-weight: 600; white-space: nowrap; font-variant-numeric: tabular-nums;">{{ p.price }}</span>
+          </div>
+        </sc-for>
+        <span class="caption" style="padding-top: var(--space-3); color: var(--ink-muted);">Продвинутые объявления помечены «Реклама» по закону о рекламе.</span>
+      </div>
+    </section>
+
+    <section aria-labelledby="faq-h" style="display: grid; grid-template-columns: minmax(240px, 1fr) minmax(0, 2fr); gap: var(--space-10); align-items: start;">
+      <h2 id="faq-h" class="h3" style="margin: 0;">Частые вопросы</h2>
+      <div style="display: flex; flex-direction: column; border-top: 1px solid var(--line);">
+        <sc-for list="{{ faq }}" as="q" hint-placeholder-count="5">
+          <details style="border-bottom: 1px solid var(--line);">
+            <summary style="display: flex; align-items: center; justify-content: space-between; gap: var(--space-4); min-height: 56px; cursor: pointer;" style-hover="color: var(--lad-strong);">
+              <span class="body" style="font-weight: 500;">{{ q.q }}</span>
+              <span class="lm-chev" aria-hidden="true" style="flex: none; display: flex; color: var(--ink-muted); transition: transform 220ms var(--lm-ease-out);"><x-import component-from-global-scope="DesignSystem_b66810.Icon" name="chevron-down" size="{{ 20 }}" hint-size="20px,20px"></x-import></span>
+            </summary>
+            <p class="body-s" style="margin: 0; padding: 0 0 var(--space-4); max-width: 68ch; color: var(--ink-muted); text-wrap: pretty;">{{ q.a }}</p>
+          </details>
+        </sc-for>
+      </div>
+    </section>
+
+    <section aria-label="Связаться" style="display: flex; align-items: center; justify-content: space-between; gap: var(--space-6); flex-wrap: wrap; padding: var(--space-8); border-radius: var(--radius-lg); background: var(--surface-recessed);">
+      <div style="display: flex; flex-direction: column; gap: var(--space-1);">
+        <h2 class="h3" style="margin: 0;">Больше 200 объявлений или выгрузка из учётной системы?</h2>
+        <span class="body-s" style="color: var(--ink-muted);">Подберём условия и поможем с загрузкой товаров.</span>
+      </div>
+      <x-import component-from-global-scope="DesignSystem_b66810.Button" variant="outline" icon="message-circle" href="Десктоп - Сообщения.dc.html" hint-size="220px,48px">Написать нам</x-import>
+    </section>
+  </main>
+
+  <div style="margin-top: var(--space-16);">
+    <dc-import name="Подвал" hint-size="100%,420px"></dc-import>
+  </div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script>
+const PLANS = [
+  { id: 'start', name: 'Старт', price: 990, limit: 10, points: 300, who: 'Мастерская или небольшой магазин', extra: ['Страница магазина с реквизитами', 'Пометка «Компания проверена»', 'Оплата по счёту, закрывающие документы'] },
+  { id: 'biz', name: 'Бизнес', price: 2990, limit: 50, points: 1000, who: 'Магазин с постоянным ассортиментом', extra: ['Всё из «Старта»', 'Статистика просмотров и чатов', 'Шаблоны ответов в чатах'] },
+  { id: 'pro', name: 'Про', price: 7990, limit: 200, points: 4000, who: 'Сеть или крупный магазин', extra: ['Всё из «Бизнеса»', 'Обложка на странице магазина', 'Выгрузка статистики', 'Несколько сотрудников в кабинете'] }
+];
+const SIZES = [['10', 'до 10', 'start'], ['50', 'до 50', 'biz'], ['200', 'до 200', 'pro'], ['more', 'больше 200', null]];
+const ROWS = [
+  ['Активных объявлений', p => ({ text: String(p.limit) })],
+  ['Баллов на продвижение в месяц', p => ({ text: p.points.toLocaleString('ru-RU') })],
+  ['Страница магазина с реквизитами', () => ({ yes: true })],
+  ['Пометка «Компания проверена»', () => ({ yes: true })],
+  ['Оплата по счёту и закрывающие документы', () => ({ yes: true })],
+  ['Статистика просмотров и чатов', p => p.id === 'start' ? { text: '—' } : { yes: true }],
+  ['Шаблоны ответов в чатах', p => p.id === 'start' ? { text: '—' } : { yes: true }],
+  ['Обложка на странице магазина', p => p.id === 'pro' ? { yes: true } : { text: '—' }],
+  ['Сотрудники в кабинете', p => ({ text: p.id === 'pro' ? 'до 5' : '1' })]
+];
+const PROMO = [
+  ['Поднять в поиске', 'Объявление один раз вернётся наверх выдачи', 49],
+  ['Пометка «Срочно»', 'Метка на карточке на 7 дней', 69],
+  ['Выделить цветом', 'Рамка и фон карточки в выдаче на 7 дней', 99],
+  ['Закрепить в топе на 3 дня', 'Первые места в категории и вашем городе', 199],
+  ['Показ на главной', 'Подборка на главной странице на 3 дня', 299]
+];
+const FAQ = [
+  ['Что будет, если объявлений больше лимита?', 'Новые объявления сохранятся как черновики. Опубликуйте их, когда снимете старые или перейдёте на тариф больше.'],
+  ['Можно сменить тариф в середине месяца?', 'Да. При переходе на тариф больше доплачиваете разницу за оставшиеся дни, баллы начисляются сразу. Переход на тариф меньше — со следующего месяца.'],
+  ['Что считается активным объявлением?', 'Опубликованное и на проверке. Черновики и снятые с продажи в лимит не входят.'],
+  ['Как оплатить по счёту?', 'В кабинете укажите реквизиты — счёт придёт на почту. Акт и счёт-фактура формируются каждый месяц.'],
+  ['Мастерам нужен тариф?', 'Для карточки мастера и приёма заявок — нет. Тариф нужен, только если мастерская продаёт товары или инструменты.']
+];
+const rub = n => n.toLocaleString('ru-RU') + ' ₽';
+const pts = n => n.toLocaleString('ru-RU') + ' ' + ((m, h) => m === 1 && h !== 11 ? 'балл' : m >= 2 && m <= 4 && (h < 10 || h >= 20) ? 'балла' : 'баллов')(n % 10, n % 100);
+
+class Component extends DCLogic {
+  state = { size: '50' };
+  renderVals() {
+    const fitId = (SIZES.find(z => z[0] === this.state.size) || [])[2];
+    const colStyle = fit => 'display: flex; align-items: center; gap: var(--space-1); color: ' + (fit ? 'var(--lad)' : 'var(--ink)') + ';' + (fit ? ' font-weight: 600;' : '');
+    return {
+      sizes: SIZES.map(([k, label]) => ({ label, on: this.state.size === k, pick: () => this.setState({ size: k }) })),
+      plans: PLANS.map(p => {
+        const fit = p.id === fitId;
+        return {
+          name: p.name, price: rub(p.price), who: p.who, limit: 'до ' + p.limit, points: pts(p.points), extra: p.extra, fit,
+          btn: fit ? 'primary' : 'outline', cta: 'Подключить «' + p.name + '»',
+          style: 'display: flex; flex-direction: column; gap: var(--space-5); padding: var(--space-6); border-radius: var(--radius-lg); background: var(--surface-raised); border: ' + (fit ? '2px solid var(--lad)' : '1px solid var(--line)') + '; margin: ' + (fit ? '0' : '1px') + ';'
+        };
+      }),
+      heads: PLANS.map(p => ({ name: p.name, style: 'font-weight: 600; color: ' + (p.id === fitId ? 'var(--lad)' : 'var(--ink)') + ';' })),
+      rows: ROWS.map(([label, f]) => ({
+        label,
+        cells: PLANS.map(p => { const v = f(p); return { yes: !!v.yes, text: v.text || '', style: colStyle(p.id === fitId) + (v.text === '—' ? ' color: var(--ink-faint);' : '') }; })
+      })),
+      promo: PROMO.map(([name, desc, price]) => ({ name, desc, price: pts(price) })),
+      faq: FAQ.map(([q, a]) => ({ q, a }))
+    };
+  }
+}
+</script>
+</body>
+</html>

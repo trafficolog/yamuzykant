@@ -1,0 +1,11 @@
+name: Задача
+description: Новая задача — сначала карточка docs/tasks/*.md по шаблону, затем issue через tools/gh-sync.mjs
+labels: [task]
+body:
+  - type: input
+    id: card
+    attributes: { label: Карточка, placeholder: docs/tasks/N-M-K-slug.md }
+    validations: { required: true }
+  - type: textarea
+    id: why
+    attributes: { label: Зачем }

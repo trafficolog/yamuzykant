@@ -1,0 +1,2 @@
+html { background: var(--surface); color-scheme: only light; }
+[data-theme="dark"] { color-scheme: dark; }

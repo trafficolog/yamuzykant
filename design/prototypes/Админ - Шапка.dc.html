@@ -1,0 +1,51 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+  <link rel="stylesheet" href="_ds/design-system-b66810d8-d429-49ea-bb35-5b22a7aa4f3a/tokens/webfonts.css">
+  <link rel="stylesheet" href="_ds/design-system-b66810d8-d429-49ea-bb35-5b22a7aa4f3a/tokens/tokens.css">
+  <link rel="stylesheet" href="_ds/design-system-b66810d8-d429-49ea-bb35-5b22a7aa4f3a/tokens/page.css">
+  <link rel="stylesheet" href="_ds/design-system-b66810d8-d429-49ea-bb35-5b22a7aa4f3a/tokens/components.css">
+  <link rel="stylesheet" href="_ds/design-system-b66810d8-d429-49ea-bb35-5b22a7aa4f3a/tokens/forms.css">
+  <link rel="stylesheet" href="ym-compat.css">
+  <script src="_ds/design-system-b66810d8-d429-49ea-bb35-5b22a7aa4f3a/_ds_bundle.js"></script>
+  <script src="plain-language.js"></script>
+</helmet>
+<header style="display: flex; align-items: center; gap: var(--space-6); padding: 0 var(--space-8); min-height: 64px; box-sizing: border-box; border-bottom: 1px solid var(--line); background: var(--surface-raised); font-family: var(--font-text);">
+  <a href="Админ - Обзор.dc.html" class="lm-adm-logo" style="flex: none; display: flex; align-items: baseline; gap: var(--space-3); color: var(--ink); text-decoration: none;">
+    <span class="ym-wordmark" style="font-size: 20px;"><b>Я</b>Музыкант<i></i></span>
+    <span class="body" style="color: var(--ink-muted); white-space: nowrap;">Администрирование</span>
+  </a>
+  <label style="flex: 1; max-width: 560px; display: flex; align-items: center; gap: var(--space-2); min-height: 40px; padding: 0 var(--space-4); border: 1px solid var(--line-control); border-radius: var(--radius-full); background: var(--surface);">
+    <span style="display: flex; color: var(--ink-muted);"><x-import component-from-global-scope="DesignSystem_b66810.Icon" name="search" size="{{ 18 }}" hint-size="18px,18px"></x-import></span>
+    <span class="lm-sr">Поиск</span>
+    <input type="search" placeholder="Пользователь, телефон, номер объявления или обращения" style="flex: 1; min-width: 0; border: 0; background: none; color: var(--ink); font: 400 var(--text-s)/22px var(--font-text); outline: none;"></input>
+  </label>
+  <span style="margin-left: auto; flex: none; display: flex; align-items: center; gap: var(--space-3);">
+    <span aria-hidden="true" style="width: 32px; height: 32px; border-radius: var(--radius-full); background: var(--nickel-soft); color: var(--nickel); display: flex; align-items: center; justify-content: center; font: 600 var(--text-xs)/1 var(--font-text);">{{ me.ini }}</span>
+    <span style="display: flex; flex-direction: column;">
+      <span class="body-s" style="font-weight: 600; white-space: nowrap;">{{ me.name }}</span>
+      <span class="caption" style="color: var(--ink-muted); white-space: nowrap;">{{ me.role }}</span>
+    </span>
+  </span>
+</header>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props="{&quot;$preview&quot;:{&quot;width&quot;:1280,&quot;height&quot;:64},&quot;role&quot;:{&quot;editor&quot;:&quot;enum&quot;,&quot;options&quot;:[&quot;admin&quot;,&quot;moderator&quot;,&quot;support&quot;,&quot;partners&quot;],&quot;default&quot;:&quot;admin&quot;,&quot;tsType&quot;:&quot;'admin' | 'moderator' | 'support' | 'partners'&quot;}}">
+const ROLES = {
+  admin: { name: 'Ольга Т.', ini: 'ОТ', role: 'Администратор' },
+  moderator: { name: 'Марина К.', ini: 'МК', role: 'Модератор' },
+  support: { name: 'Игорь П.', ini: 'ИП', role: 'Поддержка' },
+  partners: { name: 'Денис Р.', ini: 'ДР', role: 'Менеджер по партнёрам' }
+};
+class Component extends DCLogic {
+  renderVals() { return { me: ROLES[this.props.role] || ROLES.admin }; }
+}
+</script>
+</body>
+</html>

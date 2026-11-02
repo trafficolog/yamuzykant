@@ -1,0 +1,460 @@
+{
+  "version": 1,
+  "viewports": [
+    {
+      "name": "1440",
+      "width": 1440,
+      "height": 900
+    },
+    {
+      "name": "390",
+      "width": 390,
+      "height": 844
+    }
+  ],
+  "prototypesDir": "design/prototypes",
+  "outDir": "design/screens",
+  "threshold": {
+    "default": 0.02,
+    "data": 0.05
+  },
+  "screens": [
+    {
+      "id": "header",
+      "file": "Шапка.dc.html",
+      "query": "",
+      "gate": "G0",
+      "mvp": true,
+      "compare": "visual",
+      "threshold": "default",
+      "mask": [],
+      "states": [
+        "default",
+        "categories-open",
+        "search-focus",
+        "logged-in"
+      ],
+      "viewports": [
+        "1440",
+        "390"
+      ]
+    },
+    {
+      "id": "footer",
+      "file": "Подвал.dc.html",
+      "query": "",
+      "gate": "G0",
+      "mvp": true,
+      "compare": "visual",
+      "threshold": "default",
+      "mask": [],
+      "states": [
+        "default"
+      ],
+      "viewports": [
+        "1440",
+        "390"
+      ]
+    },
+    {
+      "id": "home",
+      "file": "Десктоп - Главная.dc.html",
+      "query": "",
+      "gate": "G1",
+      "mvp": true,
+      "compare": "visual",
+      "threshold": "data",
+      "mask": [
+        "[data-dynamic]"
+      ],
+      "states": [
+        "default",
+        "loading",
+        "empty-city"
+      ],
+      "viewports": [
+        "1440",
+        "390"
+      ]
+    },
+    {
+      "id": "flea",
+      "file": "Десктоп - Каталог.dc.html",
+      "query": "?view=flea",
+      "gate": "G1",
+      "mvp": true,
+      "compare": "visual",
+      "threshold": "data",
+      "mask": [
+        "[data-dynamic]"
+      ],
+      "states": [
+        "default",
+        "filters-applied",
+        "loading"
+      ],
+      "viewports": [
+        "1440",
+        "390"
+      ]
+    },
+    {
+      "id": "flea-empty",
+      "file": "Десктоп - Каталог.dc.html",
+      "query": "?view=flea&empty=1",
+      "gate": "G1",
+      "mvp": true,
+      "compare": "visual",
+      "threshold": "default",
+      "mask": [],
+      "states": [
+        "empty"
+      ],
+      "viewports": [
+        "1440",
+        "390"
+      ]
+    },
+    {
+      "id": "lot",
+      "file": "Десктоп - Лот.dc.html",
+      "query": "",
+      "gate": "G1",
+      "mvp": true,
+      "compare": "visual",
+      "threshold": "data",
+      "mask": [
+        "[data-dynamic]"
+      ],
+      "states": [
+        "default",
+        "own-listing",
+        "withdrawn",
+        "favorite-on"
+      ],
+      "viewports": [
+        "1440",
+        "390"
+      ]
+    },
+    {
+      "id": "seller",
+      "file": "Десктоп - Продавец.dc.html",
+      "query": "",
+      "gate": "G1",
+      "mvp": true,
+      "compare": "visual",
+      "threshold": "data",
+      "mask": [
+        "[data-dynamic]"
+      ],
+      "states": [
+        "default",
+        "no-listings"
+      ],
+      "viewports": [
+        "1440",
+        "390"
+      ]
+    },
+    {
+      "id": "sell",
+      "file": "Десктоп - Продать.dc.html",
+      "query": "",
+      "gate": "G1",
+      "mvp": true,
+      "compare": "visual",
+      "threshold": "default",
+      "mask": [],
+      "states": [
+        "empty",
+        "partially-filled",
+        "ready",
+        "sent",
+        "limit-reached"
+      ],
+      "viewports": [
+        "1440",
+        "390"
+      ]
+    },
+    {
+      "id": "messages",
+      "file": "Десктоп - Сообщения.dc.html",
+      "query": "",
+      "gate": "G1",
+      "mvp": true,
+      "compare": "visual",
+      "threshold": "data",
+      "mask": [
+        "[data-dynamic]"
+      ],
+      "states": [
+        "list",
+        "thread",
+        "offer-waiting",
+        "offer-accepted",
+        "empty"
+      ],
+      "viewports": [
+        "1440",
+        "390"
+      ]
+    },
+    {
+      "id": "account",
+      "file": "Десктоп - Кабинет.dc.html",
+      "query": "",
+      "gate": "G1",
+      "mvp": true,
+      "compare": "visual",
+      "threshold": "data",
+      "mask": [
+        "[data-dynamic]"
+      ],
+      "states": [
+        "overview",
+        "listings",
+        "favorites",
+        "searches",
+        "profile",
+        "needs-changes"
+      ],
+      "viewports": [
+        "1440",
+        "390"
+      ]
+    },
+    {
+      "id": "help",
+      "file": "Десктоп - Помощь.dc.html",
+      "query": "",
+      "gate": "G2",
+      "mvp": true,
+      "compare": "visual",
+      "threshold": "default",
+      "mask": [],
+      "states": [
+        "default",
+        "article",
+        "contact-form"
+      ],
+      "viewports": [
+        "1440",
+        "390"
+      ]
+    },
+    {
+      "id": "error",
+      "file": "Десктоп - Ошибка.dc.html",
+      "query": "",
+      "gate": "G2",
+      "mvp": true,
+      "compare": "visual",
+      "threshold": "default",
+      "mask": [],
+      "states": [
+        "404",
+        "500",
+        "503"
+      ],
+      "viewports": [
+        "1440",
+        "390"
+      ]
+    },
+    {
+      "id": "emails",
+      "file": "Письма и уведомления.dc.html",
+      "query": "",
+      "gate": "G1",
+      "mvp": true,
+      "compare": "visual",
+      "threshold": "default",
+      "mask": [],
+      "states": [
+        "login-code",
+        "moderation-approved",
+        "moderation-returned",
+        "new-message",
+        "offer",
+        "saved-search"
+      ],
+      "viewports": [
+        "1440"
+      ]
+    },
+    {
+      "id": "console-moderation",
+      "file": "Десктоп - Модерация.dc.html",
+      "query": "",
+      "gate": "G2",
+      "mvp": true,
+      "compare": "checklist",
+      "threshold": "default",
+      "mask": [],
+      "states": [
+        "queue",
+        "decision"
+      ],
+      "viewports": [
+        "1440"
+      ]
+    },
+    {
+      "id": "console-overview",
+      "file": "Админ - Обзор.dc.html",
+      "query": "",
+      "gate": "G2",
+      "mvp": true,
+      "compare": "checklist",
+      "threshold": "default",
+      "mask": [],
+      "states": [
+        "default"
+      ],
+      "viewports": [
+        "1440"
+      ]
+    },
+    {
+      "id": "console-tickets",
+      "file": "Админ - Обращения.dc.html",
+      "query": "",
+      "gate": "G2",
+      "mvp": true,
+      "compare": "checklist",
+      "threshold": "default",
+      "mask": [],
+      "states": [
+        "list",
+        "detail"
+      ],
+      "viewports": [
+        "1440"
+      ]
+    },
+    {
+      "id": "console-users",
+      "file": "Админ - Пользователи.dc.html",
+      "query": "",
+      "gate": "G2",
+      "mvp": true,
+      "compare": "checklist",
+      "threshold": "default",
+      "mask": [],
+      "states": [
+        "list",
+        "detail",
+        "restrict"
+      ],
+      "viewports": [
+        "1440"
+      ]
+    },
+    {
+      "id": "console-dictionaries",
+      "file": "Админ - Справочники.dc.html",
+      "query": "",
+      "gate": "G2",
+      "mvp": true,
+      "compare": "checklist",
+      "threshold": "default",
+      "mask": [],
+      "states": [
+        "categories",
+        "models",
+        "suggested"
+      ],
+      "viewports": [
+        "1440"
+      ]
+    },
+    {
+      "id": "console-staff",
+      "file": "Админ - Сотрудники.dc.html",
+      "query": "",
+      "gate": "G2",
+      "mvp": true,
+      "compare": "checklist",
+      "threshold": "default",
+      "mask": [],
+      "states": [
+        "list",
+        "roles"
+      ],
+      "viewports": [
+        "1440"
+      ]
+    },
+    {
+      "id": "console-log",
+      "file": "Админ - Журнал.dc.html",
+      "query": "",
+      "gate": "G2",
+      "mvp": true,
+      "compare": "checklist",
+      "threshold": "default",
+      "mask": [],
+      "states": [
+        "default",
+        "filtered"
+      ],
+      "viewports": [
+        "1440"
+      ]
+    }
+  ],
+  "postMvp": [
+    {
+      "id": "catalog-new",
+      "file": "Десктоп - Каталог.dc.html",
+      "mvp": false
+    },
+    {
+      "id": "model",
+      "file": "Десктоп - Модель.dc.html",
+      "mvp": false
+    },
+    {
+      "id": "sale-prices",
+      "file": "Десктоп - Цены продаж.dc.html",
+      "mvp": false
+    },
+    {
+      "id": "masters",
+      "file": "Десктоп - Мастера.dc.html",
+      "mvp": false
+    },
+    {
+      "id": "master",
+      "file": "Десктоп - Мастер.dc.html",
+      "mvp": false
+    },
+    {
+      "id": "accessories",
+      "file": "Десктоп - Аксессуары.dc.html",
+      "mvp": false
+    },
+    {
+      "id": "plans",
+      "file": "Десктоп - Тарифы.dc.html",
+      "mvp": false
+    },
+    {
+      "id": "console-partners",
+      "file": "Админ - Проверка.dc.html",
+      "mvp": false
+    },
+    {
+      "id": "console-money",
+      "file": "Админ - Деньги.dc.html",
+      "mvp": false
+    },
+    {
+      "id": "console-showcase",
+      "file": "Админ - Витрина.dc.html",
+      "mvp": false
+    }
+  ]
+}

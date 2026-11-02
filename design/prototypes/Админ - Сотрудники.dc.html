@@ -1,0 +1,151 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+  <link rel="stylesheet" href="_ds/design-system-b66810d8-d429-49ea-bb35-5b22a7aa4f3a/tokens/webfonts.css">
+  <link rel="stylesheet" href="_ds/design-system-b66810d8-d429-49ea-bb35-5b22a7aa4f3a/tokens/tokens.css">
+  <link rel="stylesheet" href="_ds/design-system-b66810d8-d429-49ea-bb35-5b22a7aa4f3a/tokens/page.css">
+  <link rel="stylesheet" href="_ds/design-system-b66810d8-d429-49ea-bb35-5b22a7aa4f3a/tokens/components.css">
+  <link rel="stylesheet" href="_ds/design-system-b66810d8-d429-49ea-bb35-5b22a7aa4f3a/tokens/forms.css">
+  <link rel="stylesheet" href="ym-compat.css">
+  <script src="_ds/design-system-b66810d8-d429-49ea-bb35-5b22a7aa4f3a/_ds_bundle.js"></script>
+  <script src="plain-language.js"></script>
+  <style>
+    /* Hallmark · page: staff console — staff & access · theme: ЯМузыкант DS tokens · pre-emit critique: P4 H4 E4 S4 R4 V4 */
+    html, body { margin: 0; background: var(--surface); color: var(--ink); overflow-x: clip; }
+    a { color: var(--lad); text-decoration: none; }
+    a:not([class*="lm-"]):hover { color: var(--lad-strong); text-decoration: underline; }
+  </style>
+</helmet>
+<div class="lm-root" data-screen-label="Админ — Сотрудники и права" style="min-height: 100vh; background: var(--surface); font-family: var(--font-text);">
+  <dc-import name="Админ - Шапка" role="admin" hint-size="100%,64px"></dc-import>
+  <div style="display: grid; grid-template-columns: minmax(200px, 240px) minmax(0, 1fr); min-height: calc(100vh - 65px);">
+    <dc-import name="Админ - Меню" active="staff" role="admin" hint-size="100%,100%"></dc-import>
+
+    <main style="display: flex; flex-direction: column; gap: var(--space-8); padding: var(--space-6) var(--space-8) var(--space-12); min-width: 0;">
+      <div style="display: flex; flex-direction: column; gap: var(--space-1);">
+        <h1 class="h1 lm-title" style="margin: 0;">Сотрудники и права</h1>
+        <span class="body-s" style="color: var(--ink-muted);">Раздел видит только администратор</span>
+      </div>
+
+      <section aria-labelledby="s-h" style="display: flex; flex-direction: column; gap: var(--space-3);">
+        <h2 id="s-h" class="h3" style="margin: 0;">Сотрудники</h2>
+        <div role="table" aria-label="Сотрудники" style="display: flex; flex-direction: column; border-top: 1px solid var(--line);">
+          <sc-for list="{{ staff }}" as="p" hint-placeholder-count="5">
+            <div role="row" style="{{ p.row }}">
+              <span role="cell" style="display: flex; align-items: center; gap: var(--space-3); min-width: 0;">
+                <span aria-hidden="true" style="flex: none; width: 36px; height: 36px; border-radius: var(--radius-full); background: var(--nickel-soft); color: var(--nickel); display: flex; align-items: center; justify-content: center; font: 600 var(--text-xs)/1 var(--font-text);">{{ p.ini }}</span>
+                <span style="display: flex; flex-direction: column; min-width: 0;">
+                  <span class="body-s" style="font-weight: 600;">{{ p.name }}</span>
+                  <span class="caption" style="color: var(--ink-muted); overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">{{ p.mail }}</span>
+                  <span class="caption" style="color: var(--ink-muted);">{{ p.seen }}</span>
+                </span>
+              </span>
+              <label role="cell" style="display: flex; min-width: 0;"><span class="lm-sr">Роль: {{ p.name }}</span>
+                <select value="{{ p.role }}" onChange="{{ p.onRole }}" disabled="{{ p.self }}" style="width: 100%; min-height: 40px; padding: 0 var(--space-3); border: 1px solid var(--line-control); border-radius: var(--radius-sm); background: var(--surface-raised); color: var(--ink); font: 400 var(--text-s)/1 var(--font-text);">
+                  <sc-for list="{{ roleOpts }}" as="o" hint-placeholder-count="4"><option value="{{ o.v }}">{{ o.label }}</option></sc-for>
+                </select>
+              </label>
+              <span role="cell" style="display: flex; flex-direction: column; align-items: flex-end; gap: var(--space-1);">
+                <span style="flex: none; display: flex;"><x-import component-from-global-scope="DesignSystem_b66810.Badge" tone="{{ p.mfaTone }}" hint-size="110px,24px">{{ p.mfa }}</x-import></span>
+                <sc-if value="{{ p.canOff }}" hint-placeholder-val="{{ false }}">
+                  <x-import component-from-global-scope="DesignSystem_b66810.Button" variant="ghost" size="s" onClick="{{ p.toggle }}" hint-size="110px,32px">{{ p.offLabel }}</x-import>
+                </sc-if>
+              </span>
+            </div>
+          </sc-for>
+        </div>
+        <div style="display: flex; gap: var(--space-3); align-items: flex-end; flex-wrap: wrap; padding-top: var(--space-2);">
+          <div style="flex: 1 1 260px;"><x-import component-from-global-scope="DesignSystem_b66810.Field" id="inv" label="Пригласить по почте" placeholder="name@ladmir.ru" value="{{ inv }}" onChange="{{ onInv }}" hint-size="100%,72px"></x-import></div>
+          <label style="display: flex; flex-direction: column; gap: var(--space-2); flex: 0 1 200px;"><span class="label" style="font-weight: 600;">Роль</span>
+            <select value="{{ invRole }}" onChange="{{ onInvRole }}" style="min-height: 48px; padding: 0 var(--space-3); border: 1px solid var(--line-control); border-radius: var(--radius-sm); background: var(--surface-raised); color: var(--ink); font: 400 var(--text-m)/1 var(--font-text);">
+              <sc-for list="{{ roleOpts }}" as="o" hint-placeholder-count="4"><option value="{{ o.v }}">{{ o.label }}</option></sc-for>
+            </select>
+          </label>
+          <x-import component-from-global-scope="DesignSystem_b66810.Button" variant="primary" disabled="{{ cantInv }}" onClick="{{ invite }}" hint-size="160px,48px">Пригласить</x-import>
+        </div>
+        <span class="caption" style="color: var(--ink-muted);">Вход в администрирование — только с двухфакторной защитой.</span>
+      </section>
+
+      <section aria-labelledby="r-h" style="display: flex; flex-direction: column; gap: var(--space-3);">
+        <h2 id="r-h" class="h3" style="margin: 0;">Что может каждая роль</h2>
+        <div role="table" aria-label="Права ролей" style="display: flex; flex-direction: column; border-top: 1px solid var(--line);">
+          <div role="row" class="caption" style="display: grid; grid-template-columns: minmax(140px, 1.6fr) repeat(4, minmax(64px, 1fr)); gap: var(--space-3); align-items: center; min-height: 40px; border-bottom: 1px solid var(--line); color: var(--ink-muted);">
+            <span role="columnheader">Раздел</span>
+            <sc-for list="{{ roleHeads }}" as="h" hint-placeholder-count="4"><span role="columnheader" style="text-align: center;">{{ h }}</span></sc-for>
+          </div>
+          <sc-for list="{{ matrix }}" as="m" hint-placeholder-count="10">
+            <div role="row" style="display: grid; grid-template-columns: minmax(140px, 1.6fr) repeat(4, minmax(64px, 1fr)); gap: var(--space-3); align-items: center; min-height: 44px; border-bottom: 1px solid var(--line);">
+              <span role="rowheader" class="body-s">{{ m.label }}</span>
+              <sc-for list="{{ m.cells }}" as="c" hint-placeholder-count="4">
+                <span role="cell" style="{{ c.style }}" aria-label="{{ c.aria }}">
+                  <sc-if value="{{ c.yes }}" hint-placeholder-val="{{ false }}"><x-import component-from-global-scope="DesignSystem_b66810.Icon" name="check" size="{{ 18 }}" hint-size="18px,18px"></x-import></sc-if>
+                  <sc-if value="{{ c.view }}" hint-placeholder-val="{{ false }}"><span class="caption">просмотр</span></sc-if>
+                  <sc-if value="{{ c.no }}" hint-placeholder-val="{{ false }}"><span class="caption">—</span></sc-if>
+                </span>
+              </sc-for>
+            </div>
+          </sc-for>
+        </div>
+        <span class="caption" style="color: var(--ink-muted);">Права совпадают с меню: сотрудник видит только отмеченные разделы.</span>
+      </section>
+    </main>
+  </div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script>
+const ROLES = [['admin', 'Администратор'], ['moderator', 'Модератор'], ['support', 'Поддержка'], ['partners', 'Партнёры']];
+const STAFF = [
+  ['ot', 'Ольга Т.', 'ОТ', 'olga.t@ladmir.ru', 'admin', 'сейчас в сети', true, true, true],
+  ['mk', 'Марина К.', 'МК', 'marina.k@ladmir.ru', 'moderator', '14:12', true, true, false],
+  ['ip', 'Игорь П.', 'ИП', 'igor.p@ladmir.ru', 'support', '14:05', true, true, false],
+  ['dr', 'Денис Р.', 'ДР', 'denis.r@ladmir.ru', 'partners', '13:58', true, true, false],
+  ['as', 'Анна С.', 'АС', 'anna.s@ladmir.ru', 'support', 'приглашена сегодня', false, true, false]
+];
+const MATRIX = [
+  ['Обзор', 'y', 'y', 'y', 'y'], ['Модерация объявлений', 'y', 'y', 'n', 'n'], ['Жалобы и обращения', 'y', 'y', 'y', 'n'],
+  ['Пользователи и блокировки', 'y', 'v', 'y', 'v'], ['Проверка партнёров', 'y', 'n', 'n', 'y'], ['Тарифы и баллы', 'y', 'n', 'n', 'y'],
+  ['Ручное начисление баллов', 'y', 'n', 'n', 'n'], ['Справочники', 'y', 'y', 'n', 'n'], ['Витрина и рассылки', 'y', 'n', 'n', 'y'],
+  ['Сотрудники и права', 'y', 'n', 'n', 'n'], ['Журнал действий', 'y', 'n', 'n', 'n']
+];
+class Component extends DCLogic {
+  state = { staff: STAFF, inv: '', invRole: 'support' };
+  renderVals() {
+    const s = this.state;
+    const ok = /.+@.+\..+/.test(s.inv);
+    return {
+      roleOpts: ROLES.map(([v, label]) => ({ v, label })),
+      roleHeads: ROLES.map(r => r[1]),
+      staff: s.staff.map(([id, name, ini, mail, role, seen, mfa, active, self], i) => ({
+        name, ini, mail, role, seen: active ? 'Был: ' + seen : 'Доступ отключён', self,
+        mfa: mfa ? 'Защита включена' : 'Нет защиты', mfaTone: mfa ? 'lad' : 'warning',
+        canOff: !self, offLabel: active ? 'Отключить' : 'Включить',
+        row: 'display: grid; grid-template-columns: minmax(150px, 1.6fr) minmax(120px, 1fr) minmax(0, auto); gap: var(--space-3); align-items: center; min-height: 60px; border-bottom: 1px solid var(--line);' + (active ? '' : ' opacity: 0.55;'),
+        onRole: e => { const v = e.target.value; this.setState(st => ({ staff: st.staff.map((x, j) => j === i ? [x[0], x[1], x[2], x[3], v, ...x.slice(5)] : x) })); },
+        toggle: () => this.setState(st => ({ staff: st.staff.map((x, j) => j === i ? [...x.slice(0, 7), !x[7], x[8]] : x) }))
+      })),
+      inv: s.inv, onInv: e => this.setState({ inv: e.target.value }),
+      invRole: s.invRole, onInvRole: e => this.setState({ invRole: e.target.value }),
+      cantInv: !ok,
+      invite: () => {
+        if (!ok) return;
+        const nm = s.inv.split('@')[0];
+        this.setState(st => ({ staff: st.staff.concat([['n' + Date.now(), nm, nm.slice(0, 2).toUpperCase(), st.inv, st.invRole, 'приглашён сейчас', false, true, false]]), inv: '' }));
+      },
+      matrix: MATRIX.map(([label, ...v]) => ({
+        label,
+        cells: v.map((x, i) => ({ yes: x === 'y', view: x === 'v', no: x === 'n', aria: ROLES[i][1] + ': ' + (x === 'y' ? 'полный доступ' : x === 'v' ? 'только просмотр' : 'нет доступа'),
+          style: 'display: flex; justify-content: center; color: ' + (x === 'y' ? 'var(--lad)' : 'var(--ink-faint)') + ';' }))
+      }))
+    };
+  }
+}
+</script>
+</body>
+</html>

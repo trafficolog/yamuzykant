@@ -1,0 +1,231 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+  <link rel="stylesheet" href="_ds/design-system-b66810d8-d429-49ea-bb35-5b22a7aa4f3a/tokens/webfonts.css">
+  <link rel="stylesheet" href="_ds/design-system-b66810d8-d429-49ea-bb35-5b22a7aa4f3a/tokens/tokens.css">
+  <link rel="stylesheet" href="_ds/design-system-b66810d8-d429-49ea-bb35-5b22a7aa4f3a/tokens/page.css">
+  <link rel="stylesheet" href="_ds/design-system-b66810d8-d429-49ea-bb35-5b22a7aa4f3a/tokens/components.css">
+  <link rel="stylesheet" href="_ds/design-system-b66810d8-d429-49ea-bb35-5b22a7aa4f3a/tokens/forms.css">
+  <link rel="stylesheet" href="ym-compat.css">
+  <script src="_ds/design-system-b66810d8-d429-49ea-bb35-5b22a7aa4f3a/_ds_bundle.js"></script>
+  <script src="plain-language.js"></script>
+  <style>
+    /* Hallmark · page: marketplace home · theme: ЯМузыкант DS tokens · pre-emit critique: P4 H4 E4 S4 R4 V4 */
+    [data-eq-card] > * { flex: 1; display: flex; flex-direction: column; }
+    [data-eq-card] .ym-panel { flex: 1; display: flex; flex-direction: column; }
+    [data-eq-card] .ym-panel > .ym-actions { margin-top: auto; }
+    [data-eq-card] .ym-guide { flex: 1; }
+    [data-eq-card] .ym-guide__head { flex-wrap: nowrap; }
+    [data-eq-card] .ym-guide__verdict { margin-top: auto; }
+    html, body { margin: 0; background: var(--surface); color: var(--ink); overflow-x: clip; }
+    a { color: var(--lad); text-decoration: none; }
+    a:not([class*="lm-"]):hover { color: var(--lad-strong); text-decoration: underline; }
+  </style>
+</helmet>
+<div class="lm-root" data-screen-label="Десктоп — Главная" style="min-height: 100vh; background: var(--surface); font-family: var(--font-text);">
+  <dc-import name="Шапка" active="catalog" cart="{{ 1 }}" messages="{{ 3 }}" hint-size="100%,117px"></dc-import>
+
+  <main style="max-width: var(--content-max); margin: 0 auto; padding: var(--space-6) var(--space-10) 0; box-sizing: border-box;">
+    <h1 class="lm-sr">ЯМузыкант — новые и б/у музыкальные инструменты, мастера и ремонт</h1>
+
+    <div style="display: grid; grid-template-columns: minmax(0, 1fr) minmax(280px, 320px); gap: var(--space-6); align-items: stretch;">
+        <section aria-label="Категории" style="position: relative; min-width: 0; display: flex; flex-direction: column; justify-content: center;">
+          <div ref="{{ catRef }}" style="overflow-x: auto; scrollbar-width: none; scroll-behavior: smooth;">
+            <div style="display: grid; grid-auto-flow: column; grid-template-rows: repeat(2, auto); grid-auto-columns: 196px; gap: var(--space-3) var(--space-4); padding-right: var(--space-12);">
+              <sc-for list="{{ cats }}" as="c" hint-placeholder-count="16">
+                <a href="#" style="display: flex; align-items: center; gap: var(--space-3); min-height: 64px; color: var(--ink); text-decoration: none;">
+                  <span style="width: 64px; height: 64px; flex: none; border-radius: var(--radius-sm); background: var(--surface-recessed); color: var(--ink-faint); display: flex; align-items: center; justify-content: center;">
+                    <x-import component-from-global-scope="DesignSystem_b66810.Icon" name="{{ c.icon }}" size="{{ 28 }}" hint-size="28px,28px"></x-import>
+                  </span>
+                  <span class="body-s" style="color: var(--ink); text-wrap: balance;">{{ c.name }}</span>
+                </a>
+              </sc-for>
+            </div>
+          </div>
+          <button type="button" aria-label="Ещё категории" onClick="{{ scrollCats }}" style="position: absolute; right: 0; top: 50%; transform: translateY(-50%); width: 44px; height: 44px; border-radius: var(--radius-full); border: 1px solid var(--line); background: var(--surface-raised); box-shadow: var(--shadow-1); color: var(--ink); display: flex; align-items: center; justify-content: center; cursor: pointer; padding: 0;" style-hover="background: var(--surface-recessed);">
+            <x-import component-from-global-scope="DesignSystem_b66810.Icon" name="chevron-right" size="{{ 20 }}" hint-size="20px,20px"></x-import>
+          </button>
+        </section>
+
+        <section style="display: flex; flex-direction: column; gap: var(--space-4); padding: var(--space-6); border-radius: var(--radius-lg); background: var(--copper-soft); box-sizing: border-box;">
+          <div style="display: flex; align-items: flex-start; justify-content: space-between; gap: var(--space-3);">
+            <div style="display: flex; flex-direction: column; gap: var(--space-1);">
+              <h2 style="margin: 0; font: 600 var(--text-l)/24px var(--font-text); color: var(--copper-strong);">Проверка мастером</h2>
+              <p class="body-s" style="margin: 0; color: var(--ink); text-wrap: pretty;">Мастер осмотрит инструмент до покупки и напишет отчёт.</p>
+            </div>
+            <span style="color: var(--copper); flex: none;"><x-import component-from-global-scope="DesignSystem_b66810.Icon" name="wrench" size="{{ 40 }}" hint-size="40px,40px"></x-import></span>
+          </div>
+          <div style="margin-top: auto;"><x-import component-from-global-scope="DesignSystem_b66810.Button" variant="copper" size="s" hint-size="140px,40px">Найти мастера</x-import></div>
+        </section>
+
+        <section aria-label="Подборки" style="position: relative; min-width: 0; display: flex; flex-direction: column; justify-content: center;">
+          <div ref="{{ selRef }}" style="overflow-x: auto; scrollbar-width: none; scroll-behavior: smooth;">
+            <div style="display: flex; gap: var(--space-3); padding-right: var(--space-12);">
+              <sc-for list="{{ picks }}" as="p" hint-placeholder-count="8">
+                <a href="#" style="{{ p.style }}">
+                  <span style="font: 600 var(--text-m)/22px var(--font-text); color: var(--ink); text-wrap: balance;">{{ p.title }}</span>
+                  <span style="margin-top: auto; height: 76px; border-radius: var(--radius-md); background: var(--surface-raised); color: var(--ink-faint); display: flex; align-items: center; justify-content: center;">
+                    <x-import component-from-global-scope="DesignSystem_b66810.Icon" name="{{ p.icon }}" size="{{ 40 }}" hint-size="40px,40px"></x-import>
+                  </span>
+                </a>
+              </sc-for>
+            </div>
+          </div>
+          <button type="button" aria-label="Ещё подборки" onClick="{{ scrollPicks }}" style="position: absolute; right: 0; top: 50%; transform: translateY(-50%); width: 44px; height: 44px; border-radius: var(--radius-full); border: 1px solid var(--line); background: var(--surface-raised); box-shadow: var(--shadow-1); color: var(--ink); display: flex; align-items: center; justify-content: center; cursor: pointer; padding: 0;" style-hover="background: var(--surface-recessed);">
+            <x-import component-from-global-scope="DesignSystem_b66810.Icon" name="chevron-right" size="{{ 20 }}" hint-size="20px,20px"></x-import>
+          </button>
+        </section>
+
+        <section style="display: flex; flex-direction: column; gap: var(--space-4); padding: var(--space-6); border-radius: var(--radius-lg); background: var(--lad-soft); box-sizing: border-box;">
+          <div style="display: flex; align-items: flex-start; justify-content: space-between; gap: var(--space-3);">
+            <div style="display: flex; flex-direction: column; gap: var(--space-1);">
+              <h2 style="margin: 0; font: 600 var(--text-l)/24px var(--font-text); color: var(--lad-strong);">Безопасная сделка</h2>
+              <p class="body-s" style="margin: 0; color: var(--ink); text-wrap: pretty;">Продавец получит деньги, только когда вы проверите инструмент.</p>
+            </div>
+            <span style="color: var(--lad); flex: none;"><x-import component-from-global-scope="DesignSystem_b66810.Icon" name="shield-check" size="{{ 40 }}" hint-size="40px,40px"></x-import></span>
+          </div>
+          <div style="margin-top: auto;"><x-import component-from-global-scope="DesignSystem_b66810.Button" variant="outline" size="s" hint-size="160px,40px">Как это работает</x-import></div>
+        </section>
+    </div>
+
+    <section style="margin-top: var(--space-16);">
+      <div style="display: flex; align-items: baseline; justify-content: space-between; gap: var(--space-4); margin-bottom: var(--space-6);">
+        <h2 class="h2 lm-title" style="margin: 0;">Чаще всего сохраняют</h2>
+        <a href="#" class="label" style="color: var(--lad); white-space: nowrap;">Все лоты</a>
+      </div>
+      <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(var(--card-min), 1fr)); gap: var(--space-6);">
+        <sc-for list="{{ saved }}" as="lot" hint-placeholder-count="10">
+          <x-import component-from-global-scope="DesignSystem_b66810.ListingCard" dc-props="{{ lot }}" hint-size="100%,380px"></x-import>
+        </sc-for>
+      </div>
+    </section>
+
+    <section style="margin-top: var(--space-16);">
+      <div style="display: flex; align-items: baseline; justify-content: space-between; gap: var(--space-4); margin-bottom: var(--space-6);">
+        <h2 class="h2 lm-title" style="margin: 0;">Проверено мастером</h2>
+        <a href="#" class="label" style="color: var(--lad); white-space: nowrap;">Все проверенные</a>
+      </div>
+      <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(var(--card-min), 1fr)); gap: var(--space-6);">
+        <sc-for list="{{ inspected }}" as="lot" hint-placeholder-count="10">
+          <x-import component-from-global-scope="DesignSystem_b66810.ListingCard" dc-props="{{ lot }}" hint-size="100%,380px"></x-import>
+        </sc-for>
+      </div>
+    </section>
+
+    <section style="margin-top: var(--space-16);">
+      <div style="display: flex; align-items: baseline; justify-content: space-between; gap: var(--space-4); margin-bottom: var(--space-6);">
+        <h2 class="h2 lm-title" style="margin: 0;">Мастера рядом</h2>
+        <a href="Десктоп - Мастера.dc.html" class="label" style="color: var(--lad); white-space: nowrap;">Все мастера</a>
+      </div>
+      <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(min(100%, 320px), 1fr)); gap: var(--space-6);">
+        <sc-for list="{{ masters }}" as="m" hint-placeholder-count="3">
+          <div data-eq-card="" style="display: flex; flex-direction: column; min-width: 0;">
+            <x-import component-from-global-scope="DesignSystem_b66810.MasterCard" dc-props="{{ m }}" hint-size="100%,260px"></x-import>
+          </div>
+        </sc-for>
+      </div>
+    </section>
+
+    <section style="margin-top: var(--space-16);">
+      <div style="display: flex; align-items: baseline; justify-content: space-between; gap: var(--space-4); margin-bottom: var(--space-6);">
+        <h2 class="h2 lm-title" style="margin: 0;">Недавно продано: за сколько ушли инструменты</h2>
+        <a href="#" class="label" style="color: var(--lad); white-space: nowrap;">Все цены продаж</a>
+      </div>
+      <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(min(100%, 320px), 1fr)); gap: var(--space-6);">
+        <sc-for list="{{ sold }}" as="s" hint-placeholder-count="3">
+          <article style="display: grid; grid-row: span 2; grid-template-rows: subgrid; row-gap: var(--space-3); min-width: 0;">
+            <div style="display: flex; flex-direction: column; gap: var(--space-1); min-width: 0;">
+              <h3 class="h4" style="margin: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">{{ s.title }}</h3>
+              <span class="body-s" style="color: var(--ink-muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">{{ s.meta }}</span>
+            </div>
+            <div data-eq-card="" style="display: flex; flex-direction: column; min-width: 0;">
+              <x-import component-from-global-scope="DesignSystem_b66810.PriceGuide" low="{{ s.low }}" high="{{ s.high }}" price="{{ s.price }}" basis="{{ s.basis }}" hint-size="100%,150px"></x-import>
+            </div>
+          </article>
+        </sc-for>
+      </div>
+    </section>
+  </main>
+
+  <div style="margin-top: var(--space-16);">
+    <dc-import name="Подвал" hint-size="100%,260px"></dc-import>
+  </div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script>
+class Component extends DCLogic {
+  catRef = React.createRef();
+  selRef = React.createRef();
+  scrollBy(ref) { const el = ref.current; if (!el) return; const end = el.scrollLeft + el.clientWidth >= el.scrollWidth - 4; el.scrollTo({ left: end ? 0 : el.scrollLeft + el.clientWidth * 0.8 }); }
+  renderVals() {
+    const cats = [
+      ['Электрогитары', 'guitar'], ['Акустические гитары', 'guitar'], ['Бас-гитары', 'guitar'], ['Педали эффектов', 'cable'],
+      ['Гитарные усилители', 'speaker'], ['Синтезаторы', 'piano'], ['Цифровые пианино', 'piano'], ['Ударные', 'drum'],
+      ['Микрофоны', 'mic'], ['Наушники и мониторы', 'headphones'], ['Звуковые карты и пульты', 'sliders-horizontal'], ['DJ-оборудование', 'headphones'],
+      ['Духовые', 'mic'], ['Смычковые', 'guitar'], ['Струны и аксессуары', 'cable'], ['Запчасти', 'hammer']
+    ].map(([name, icon]) => ({ name, icon }));
+    const tile = 'display: flex; flex-direction: column; gap: var(--space-3); width: 152px; min-height: 176px; flex: none; box-sizing: border-box; padding: var(--space-3); border-radius: var(--radius-lg); text-decoration: none; background: ';
+    const picks = [
+      ['Редкие находки', 'star', 'var(--copper-soft)'],
+      ['Винтаж до 1990 года', 'history', 'var(--surface-recessed)'],
+      ['Педали до 10 000 ₽', 'cable', 'var(--brass-soft)'],
+      ['Новое у партнёров', 'store', 'var(--lad-soft)'],
+      ['Рядом с вами', 'map-pin', 'var(--nickel-soft)'],
+      ['Первая гитара до 30 000 ₽', 'guitar', 'var(--lad-soft)'],
+      ['Домашняя студия', 'mic', 'var(--nickel-soft)'],
+      ['Синтезаторы 80-х', 'piano', 'var(--surface-recessed)']
+    ].map(([title, icon, bg]) => ({ title, icon, style: tile + bg + ';' }));
+    const saved = [
+      { id: '1', title: 'Fender American Vintage ’57 Stratocaster 2009, Sunburst', price: 184500, condition: 'excellent', city: 'Москва', shipping: 0, inspected: true },
+      { id: '2', title: 'Gibson Les Paul Studio 2014, Wine Red', price: 149000, oldPrice: 162000, condition: 'very-good', city: 'Санкт-Петербург', shipping: 1200, favorite: true },
+      { id: '3', title: 'Boss DS-1 Distortion, Made in Japan 1986', price: 14500, condition: 'good', city: 'Екатеринбург', rare: true, icon: 'cable' },
+      { id: '4', title: 'Roland Juno-106, 1984', price: 189000, condition: 'fair', city: 'Новосибирск', inspected: true, icon: 'piano' },
+      { id: '5', title: 'Yamaha Pacifica 112V, новая', price: 32990, condition: 'new', city: 'Казань', shipping: 0, partner: true },
+      { id: '6', title: 'Boss RC-30 Loop Station', price: 12000, condition: 'very-good', city: 'Москва', distance: '1,8 км', posted: '2 ч назад', icon: 'cable' },
+      { id: '20', title: 'Fender Hot Rod Deluxe IV', price: 68000, condition: 'very-good', city: 'Москва', shipping: 0, icon: 'speaker' },
+      { id: '21', title: 'Nord Stage 3 88', price: 289000, condition: 'excellent', city: 'Санкт-Петербург', shipping: 0, icon: 'piano' },
+      { id: '22', title: 'Strymon BigSky', price: 42000, condition: 'excellent', city: 'Краснодар', shipping: 500, icon: 'cable' },
+      { id: '23', title: 'Taylor 214ce, Natural', price: 98000, condition: 'very-good', city: 'Екатеринбург', shipping: 0, inspected: true }
+    ];
+    const inspected = [
+      { id: '8', title: 'Ibanez RG550 Genesis, Road Flare Red', price: 96000, condition: 'excellent', city: 'Москва', shipping: 0, inspected: true },
+      { id: '13', title: 'Gibson SG Standard 2015, Heritage Cherry', price: 118000, oldPrice: 126000, condition: 'good', city: 'Санкт-Петербург', shipping: 1500, inspected: true },
+      { id: '14', title: 'Marshall JCM800 2203, 1983', price: 165000, condition: 'very-good', city: 'Москва', inspected: true, icon: 'speaker' },
+      { id: '15', title: 'Fender Precision Bass 1978, Natural', price: 212000, condition: 'good', city: 'Казань', shipping: 0, inspected: true },
+      { id: '16', title: 'Korg MS-20 mini', price: 46000, condition: 'excellent', city: 'Екатеринбург', inspected: true, icon: 'piano' },
+      { id: '17', title: 'Fulltone OCD v2', price: 13500, condition: 'very-good', city: 'Москва', shipping: 400, inspected: true, icon: 'cable' },
+      { id: '18', title: 'Yamaha DX7, 1983', price: 74000, condition: 'good', city: 'Нижний Новгород', shipping: 0, inspected: true, icon: 'piano' },
+      { id: '19', title: 'Shure SM7B', price: 31500, condition: 'excellent', city: 'Самара', shipping: 600, inspected: true, icon: 'mic' },
+      { id: '24', title: 'Gretsch G5420T Electromatic, Orange', price: 89000, condition: 'excellent', city: 'Москва', shipping: 0, inspected: true },
+      { id: '25', title: 'Vox AC30C2', price: 84000, condition: 'good', city: 'Тула', shipping: 1500, inspected: true, icon: 'speaker' }
+    ];
+    const masters = [
+      { name: 'Алексей Воронцов', workshop: 'Мастерская «Лад и строй»', rating: 4.9, reviews: 212, specialties: ['Перешлифовка ладов', 'Настройка', 'Электрика'], priceFrom: 2500, eta: '3–5 дней', distance: '2,4 км', verified: true },
+      { name: 'Ирина Белова', workshop: 'Ламповый сервис', rating: 4.8, reviews: 97, specialties: ['Ламповые усилители', 'Педали'], priceFrom: 3000, eta: 'до 10 дней', city: 'Москва' },
+      { name: 'Дмитрий Соколов', workshop: 'Гитарная клиника', rating: 4.7, reviews: 64, specialties: ['Настройка', 'Ремонт трещин'], priceFrom: 2000, eta: '2–4 дня', distance: '5,8 км', verified: true }
+    ];
+    const sold = [
+      { title: 'Fender Player Stratocaster', meta: 'Б/у · Хорошее · Москва · продано 3 окт', low: 68000, high: 84000, price: 76000, basis: 'за 12 месяцев' },
+      { title: 'Boss DS-1 Distortion', meta: 'Б/у · Очень хорошее · Казань · продано 2 окт', low: 4500, high: 7500, price: 6200, basis: 'за 12 месяцев' },
+      { title: 'Korg Minilogue XD', meta: 'Б/у · Отличное · Москва · продано 1 окт', low: 52000, high: 64000, price: 58500, basis: 'за 12 месяцев' }
+    ];
+    return {
+      cats, picks, masters, sold,
+      saved: saved.map(l => ({ ...l, href: 'Десктоп - Лот.dc.html' })),
+      inspected: inspected.map(l => ({ ...l, href: 'Десктоп - Лот.dc.html' })),
+      catRef: this.catRef, selRef: this.selRef,
+      scrollCats: () => this.scrollBy(this.catRef),
+      scrollPicks: () => this.scrollBy(this.selRef)
+    };
+  }
+}
+</script>
+</body>
+</html>

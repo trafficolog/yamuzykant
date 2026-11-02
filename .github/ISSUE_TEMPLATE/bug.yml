@@ -1,0 +1,13 @@
+name: Дефект
+labels: [bug]
+body:
+  - type: input
+    id: uc
+    attributes: { label: Сценарий (UC) или экран }
+  - type: textarea
+    id: steps
+    attributes: { label: Шаги, ожидалось, получилось }
+    validations: { required: true }
+  - type: dropdown
+    id: risk
+    attributes: { label: Блокирует гейт?, options: [нет, да — данные, да — безопасность, да — сценарий UC] }

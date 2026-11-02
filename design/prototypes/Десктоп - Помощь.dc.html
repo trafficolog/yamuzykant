@@ -1,0 +1,195 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+  <link rel="stylesheet" href="_ds/design-system-b66810d8-d429-49ea-bb35-5b22a7aa4f3a/tokens/webfonts.css">
+  <link rel="stylesheet" href="_ds/design-system-b66810d8-d429-49ea-bb35-5b22a7aa4f3a/tokens/tokens.css">
+  <link rel="stylesheet" href="_ds/design-system-b66810d8-d429-49ea-bb35-5b22a7aa4f3a/tokens/page.css">
+  <link rel="stylesheet" href="_ds/design-system-b66810d8-d429-49ea-bb35-5b22a7aa4f3a/tokens/components.css">
+  <link rel="stylesheet" href="_ds/design-system-b66810d8-d429-49ea-bb35-5b22a7aa4f3a/tokens/forms.css">
+  <link rel="stylesheet" href="ym-compat.css">
+  <script src="_ds/design-system-b66810d8-d429-49ea-bb35-5b22a7aa4f3a/_ds_bundle.js"></script>
+  <script src="plain-language.js"></script>
+  <style>
+    /* Hallmark · page: help & safety · theme: ЯМузыкант DS tokens · pre-emit critique: P4 H4 E4 S4 R4 V4 */
+    html, body { margin: 0; background: var(--surface); color: var(--ink); overflow-x: clip; }
+    a { color: var(--lad); text-decoration: none; }
+    a:not([class*="lm-"]):hover { color: var(--lad-strong); text-decoration: underline; }
+    details > summary { list-style: none; }
+    details > summary::-webkit-details-marker { display: none; }
+    details[open] > summary .lm-chev { transform: rotate(180deg); }
+  </style>
+</helmet>
+<div class="lm-root" data-screen-label="Десктоп — Помощь и безопасность" style="min-height: 100vh; background: var(--surface); font-family: var(--font-text);">
+  <dc-import name="Шапка" active="none" messages="{{ 3 }}" hint-size="100%,117px"></dc-import>
+
+  <main style="max-width: var(--content-max); margin: 0 auto; padding: var(--space-6) var(--space-10) 0; box-sizing: border-box; display: flex; flex-direction: column; gap: var(--space-10);">
+    <div style="display: flex; flex-direction: column; gap: var(--space-4);">
+      <nav aria-label="Хлебные крошки" style="display: flex; align-items: center; gap: var(--space-2); flex-wrap: wrap;">
+        <a href="Десктоп - Главная.dc.html" class="body-s" style="color: var(--ink-muted); min-height: 32px; display: flex; align-items: center; white-space: nowrap;">Главная</a>
+        <span aria-hidden="true" style="color: var(--ink-faint); display: flex;"><x-import component-from-global-scope="DesignSystem_b66810.Icon" name="chevron-right" size="{{ 14 }}" hint-size="14px,14px"></x-import></span>
+        <span class="body-s" aria-current="page" style="color: var(--ink); white-space: nowrap;">Помощь</span>
+      </nav>
+      <div style="display: grid; grid-template-columns: minmax(0, 1fr) minmax(320px, 520px); gap: var(--space-10); align-items: end;">
+        <div style="display: flex; flex-direction: column; gap: var(--space-2); min-width: 0;">
+          <h1 class="h1 lm-title" style="margin: 0;">Помощь и безопасность</h1>
+          <p class="body" style="margin: 0; color: var(--ink-muted); max-width: 560px; text-wrap: pretty;">Как покупать, продавать и записываться к мастеру — и как не попасться мошенникам.</p>
+        </div>
+        <x-import component-from-global-scope="DesignSystem_b66810.Field" id="hq" label="Поиск по вопросам" placeholder="Например, как поднять объявление" value="{{ q }}" onChange="{{ onQ }}" hint-size="100%,72px"></x-import>
+      </div>
+    </div>
+
+    <section aria-labelledby="safe-h" style="display: grid; grid-template-columns: minmax(240px, 1fr) minmax(0, 2.2fr); gap: var(--space-10); padding: var(--space-8); border-radius: var(--radius-lg); background: var(--lad-soft);">
+      <div style="display: flex; flex-direction: column; gap: var(--space-3);">
+        <span style="width: 48px; height: 48px; border-radius: var(--radius-full); background: var(--surface-raised); color: var(--lad); display: flex; align-items: center; justify-content: center;"><x-import component-from-global-scope="DesignSystem_b66810.Icon" name="shield-check" size="{{ 24 }}" hint-size="24px,24px"></x-import></span>
+        <h2 id="safe-h" class="h2" style="margin: 0;">Пять правил безопасной сделки</h2>
+        <p class="body-s" style="margin: 0; text-wrap: pretty;">ЯМузыкант не участвует в оплате между покупателем и продавцом. Эти правила защищают вас сами.</p>
+      </div>
+      <ol style="margin: 0; padding: 0; list-style: none; display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 260px), 1fr)); gap: var(--space-5) var(--space-8);">
+        <sc-for list="{{ rules }}" as="r" hint-placeholder-count="5">
+          <li style="display: grid; grid-template-columns: 32px minmax(0, 1fr); gap: var(--space-3); align-items: start;">
+            <span class="body" style="width: 32px; height: 32px; border-radius: var(--radius-full); background: var(--surface-raised); color: var(--lad-strong); display: flex; align-items: center; justify-content: center; font-weight: 600; font-variant-numeric: tabular-nums;">{{ r.n }}</span>
+            <span style="display: flex; flex-direction: column; gap: 2px;">
+              <span class="body" style="font-weight: 600;">{{ r.title }}</span>
+              <span class="body-s" style="text-wrap: pretty;">{{ r.text }}</span>
+            </span>
+          </li>
+        </sc-for>
+      </ol>
+    </section>
+
+    <div style="display: grid; grid-template-columns: minmax(240px, 300px) minmax(0, 1fr); gap: var(--space-10); align-items: start;">
+      <div style="position: sticky; top: var(--space-4); display: flex; flex-direction: column; gap: var(--space-6);">
+      <nav aria-label="Темы" style="display: flex; flex-direction: column; gap: 2px;">
+        <sc-for list="{{ topics }}" as="t" hint-placeholder-count="6">
+          <button type="button" aria-current="{{ t.current }}" onClick="{{ t.pick }}" style="{{ t.style }}" style-hover="background: var(--surface-recessed); color: var(--ink);">
+            <x-import component-from-global-scope="DesignSystem_b66810.Icon" name="{{ t.icon }}" size="{{ 20 }}" hint-size="20px,20px"></x-import>
+            <span style="flex: 1; text-align: left;">{{ t.label }}</span>
+            <span class="caption" style="color: var(--ink-muted); font-variant-numeric: tabular-nums;">{{ t.count }}</span>
+          </button>
+        </sc-for>
+      </nav>
+      <aside style="display: flex; flex-direction: column; gap: var(--space-4);">
+        <div style="display: flex; flex-direction: column; gap: var(--space-3); padding: var(--space-5); border: 1px solid var(--line); border-radius: var(--radius-lg); background: var(--surface-raised);">
+          <h2 class="h3" style="margin: 0;">Не нашли ответ?</h2>
+          <p class="body-s" style="margin: 0; color: var(--ink-muted);">Поддержка отвечает в сообщениях, ежедневно с 9:00 до 21:00 по Москве.</p>
+          <x-import component-from-global-scope="DesignSystem_b66810.Button" variant="primary" icon="message-circle" block="{{ true }}" href="Десктоп - Сообщения.dc.html" hint-size="100%,48px">Написать в поддержку</x-import>
+        </div>
+        <div style="display: flex; flex-direction: column; gap: var(--space-3); padding: var(--space-5); border: 1px solid var(--line); border-radius: var(--radius-lg); background: var(--surface-raised);">
+          <h2 class="h3" style="margin: 0;">Столкнулись с мошенником?</h2>
+          <p class="body-s" style="margin: 0; color: var(--ink-muted); text-wrap: pretty;">Пожалуйтесь на объявление или пользователя — проверим в течение суток.</p>
+          <x-import component-from-global-scope="DesignSystem_b66810.Button" variant="outline" icon="triangle-alert" block="{{ true }}" hint-size="100%,48px">Сообщить о нарушении</x-import>
+        </div>
+      </aside>
+      </div>
+
+      <section aria-labelledby="q-h" style="display: flex; flex-direction: column; gap: var(--space-4); min-width: 0;">
+        <div style="display: flex; align-items: baseline; justify-content: space-between; gap: var(--space-4); flex-wrap: wrap;">
+          <h2 id="q-h" class="h3" style="margin: 0;">{{ listTitle }}</h2>
+          <span class="body-s" style="color: var(--ink-muted);">{{ listCount }}</span>
+        </div>
+        <sc-if value="{{ hasItems }}" hint-placeholder-val="{{ true }}">
+          <div style="display: flex; flex-direction: column; border-top: 1px solid var(--line);">
+            <sc-for list="{{ items }}" as="q" hint-placeholder-count="6">
+              <details style="border-bottom: 1px solid var(--line);">
+                <summary style="display: flex; align-items: center; justify-content: space-between; gap: var(--space-4); min-height: 56px; cursor: pointer;" style-hover="color: var(--lad-strong);">
+                  <span style="display: flex; flex-direction: column; gap: 2px;">
+                    <span class="body" style="font-weight: 500;">{{ q.q }}</span>
+                    <sc-if value="{{ q.showTopic }}" hint-placeholder-val="{{ false }}"><span class="caption" style="color: var(--ink-muted);">{{ q.topic }}</span></sc-if>
+                  </span>
+                  <span class="lm-chev" aria-hidden="true" style="flex: none; display: flex; color: var(--ink-muted); transition: transform 220ms var(--lm-ease-out);"><x-import component-from-global-scope="DesignSystem_b66810.Icon" name="chevron-down" size="{{ 20 }}" hint-size="20px,20px"></x-import></span>
+                </summary>
+                <p class="body-s" style="margin: 0; padding: 0 0 var(--space-4); max-width: 68ch; color: var(--ink-muted); text-wrap: pretty;">{{ q.a }}</p>
+              </details>
+            </sc-for>
+          </div>
+        </sc-if>
+        <sc-if value="{{ noItems }}" hint-placeholder-val="{{ false }}">
+          <div style="display: flex; flex-direction: column; align-items: flex-start; gap: var(--space-3); padding: var(--space-6) 0;">
+            <span style="width: 64px; height: 64px; border-radius: var(--radius-full); background: var(--surface-recessed); color: var(--ink-muted); display: flex; align-items: center; justify-content: center;"><x-import component-from-global-scope="DesignSystem_b66810.Icon" name="search" size="{{ 40 }}" hint-size="40px,40px"></x-import></span>
+            <p class="body" style="margin: 0;">Ничего не нашли. Напишите в поддержку — ответим.</p>
+          </div>
+        </sc-if>
+      </section>
+
+    </div>
+  </main>
+
+  <div style="margin-top: var(--space-16);">
+    <dc-import name="Подвал" hint-size="100%,420px"></dc-import>
+  </div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script>
+const RULES = [
+  ['Общайтесь только на ЯМузыканте', 'Переписка в чатах сохраняется — по ней поддержка разберёт спор.'],
+  ['Не платите по ссылкам из чата', 'ЯМузыкант не присылает ссылки на оплату и не просит данные карты.'],
+  ['Смотрите инструмент до оплаты', 'Встретьтесь лично или закажите проверку у мастера перед покупкой.'],
+  ['Сверяйте серийный номер', 'Он должен совпадать с фото в объявлении и на самом инструменте.'],
+  ['Не переводите предоплату незнакомым', 'Особенно если цена заметно ниже, чем в «Ценах продаж».']
+];
+const TOPICS = [
+  ['buy', 'shopping-bag', 'Покупка'],
+  ['sell', 'tag', 'Продажа'],
+  ['masters', 'wrench', 'Мастера и ремонт'],
+  ['biz', 'store', 'Тарифы и баллы'],
+  ['account', 'user', 'Аккаунт и вход'],
+  ['safety', 'shield-check', 'Безопасность']
+];
+const FAQ = [
+  ['buy', 'Как связаться с продавцом?', 'Нажмите «Написать» на странице объявления. Все договорённости о цене, встрече и доставке — в чате.'],
+  ['buy', 'Как предложить свою цену?', 'В чате с продавцом нажмите «Предложить цену». Продавец примет, отклонит или ответит своей ценой.'],
+  ['buy', 'Как устроена доставка в защитной упаковке?', 'Продавец упаковывает инструмент в жёсткий кейс или коробку с уплотнителем и отправляет транспортной компанией. Стоимость указана в объявлении.'],
+  ['buy', 'Что значит «Проверено мастером»?', 'Мастер осмотрел инструмент и составил отчёт с фото. Отчёт открывается на странице объявления.'],
+  ['sell', 'Как разместить объявление?', 'Нажмите «Продать инструмент» в шапке, заполните четыре шага и опубликуйте. Модератор проверит объявление.'],
+  ['sell', 'Почему объявление на проверке?', 'Модератор смотрит фото и описание. Если что-то не так, напишем, что исправить.'],
+  ['sell', 'Как отметить, что инструмент продан?', 'В кабинете нажмите «Снять с продажи» и укажите итоговую цену. Она анонимно попадёт в «Цены продаж».'],
+  ['masters', 'Как записаться к мастеру?', 'Выберите услугу и день на странице мастера и отправьте заявку. Мастер подтвердит время в сообщениях.'],
+  ['masters', 'Кому платить за ремонт?', 'Мастеру напрямую, после работы. ЯМузыкант не берёт комиссию за запись.'],
+  ['masters', 'Как стать мастером на ЯМузыканте?', 'В кабинете откройте «Профиль и роли» и включите роль «Мастер». После проверки карточка появится в разделе «Мастера».'],
+  ['biz', 'Кому нужен тариф?', 'ИП и компаниям, которые продают инструменты и товары. Частные продавцы размещают объявления без тарифа.'],
+  ['biz', 'Что такое баллы?', 'Внутренняя валюта для продвижения объявлений: поднять в поиске, выделить цветом, закрепить в топе. 1 балл = 1 ₽.'],
+  ['biz', 'Можно вернуть баллы деньгами?', 'Нет. Баллы тратятся только на продвижение объявлений.'],
+  ['account', 'Как войти?', 'По номеру телефона — пришлём код в СМС. Пароль не нужен.'],
+  ['account', 'Как удалить аккаунт?', 'В кабинете откройте «Профиль и роли» → «Удалить аккаунт». Объявления снимутся, переписка удалится через 30 дней.'],
+  ['safety', 'Продавец просит перейти в мессенджер. Что делать?', 'Не переходите. Это частая схема обмана. Пожалуйтесь на пользователя — мы проверим.'],
+  ['safety', 'Мне прислали ссылку на оплату. Это ЯМузыкант?', 'Нет. ЯМузыкант не присылает ссылок на оплату. Не открывайте её и сообщите о нарушении.'],
+  ['safety', 'Как понять, что объявление подозрительное?', 'Цена сильно ниже рынка, мало фото, нет фото серийного номера, продавец торопит с предоплатой.']
+];
+const plural = (n, a, b, c) => { const m = n % 10, h = n % 100; return m === 1 && h !== 11 ? a : m >= 2 && m <= 4 && (h < 10 || h >= 20) ? b : c; };
+
+class Component extends DCLogic {
+  state = { topic: 'buy', q: '' };
+  renderVals() {
+    const s = this.state;
+    const q = s.q.trim().toLowerCase();
+    const searching = q.length > 1;
+    const items = FAQ.filter(f => searching ? (f[1] + ' ' + f[2]).toLowerCase().includes(q) : f[0] === s.topic);
+    const tname = id => TOPICS.find(t => t[0] === id)[2];
+    return {
+      q: s.q, onQ: e => this.setState({ q: e.target.value }),
+      rules: RULES.map(([title, text], i) => ({ n: String(i + 1), title, text })),
+      topics: TOPICS.map(([id, icon, label]) => {
+        const on = !searching && s.topic === id;
+        return {
+          icon, label, count: String(FAQ.filter(f => f[0] === id).length), current: on ? 'page' : undefined,
+          pick: () => this.setState({ topic: id, q: '' }),
+          style: 'display: flex; align-items: center; gap: var(--space-3); width: 100%; min-height: 44px; padding: 0 var(--space-3); border: 0; border-radius: var(--radius-sm); background: ' + (on ? 'var(--surface-recessed)' : 'transparent') + '; color: ' + (on ? 'var(--ink)' : 'var(--ink-muted)') + '; font: ' + (on ? '600' : '500') + ' var(--text-m)/24px var(--font-text); cursor: pointer;'
+        };
+      }),
+      listTitle: searching ? 'Результаты поиска' : tname(s.topic),
+      listCount: items.length + ' ' + plural(items.length, 'вопрос', 'вопроса', 'вопросов'),
+      items: items.map(f => ({ q: f[1], a: f[2], topic: tname(f[0]), showTopic: searching })),
+      hasItems: items.length > 0, noItems: items.length === 0
+    };
+  }
+}
+</script>
+</body>
+</html>

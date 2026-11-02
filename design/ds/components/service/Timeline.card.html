@@ -1,0 +1,12 @@
+<!-- @dsCard group="Сервис" viewport="900x260" name="Timeline" -->
+<!DOCTYPE html><html lang="ru"><head><meta charset="utf-8"><meta name="color-scheme" content="only light"><link rel="stylesheet" href="../../styles.css">
+<script src="https://unpkg.com/react@18.3.1/umd/react.development.js" integrity="sha384-hD6/rw4ppMLGNu3tX5cjIb+uRZ7UkRJ6BPkLpg4hAu/6onKUg4lLsHAs9EBPT82L" crossorigin="anonymous"></script>
+<script src="https://unpkg.com/react-dom@18.3.1/umd/react-dom.development.js" integrity="sha384-u6aeetuaXnQ38mYT8rp6sbXaQe3NL9t+IBXmnYxwkUI2Hw4bsp2Wvmx4yRQF1uAm" crossorigin="anonymous"></script>
+<script src="../../_ds_bundle.js"></script>
+<style>html,body{background:var(--surface)}body{padding:8px 16px}.c-h{font:600 12px/16px var(--font-text);color:var(--ink-faint);margin:16px 16px 0;text-transform:none}</style></head><body class="ym-root" data-theme="light"><div id="r11"></div>
+<script>
+var L = window.DesignSystem_b66810, h = React.createElement; L.icons = Object.keys(L.ICONS);
+function mount(id, f) { var el = document.getElementById(id); try { ReactDOM.createRoot(el).render(f()); } catch (e) { el.textContent = 'Ошибка примера: ' + e.message; } }
+mount('r11', function () { return h('div',{className:'ym-stack'}, h(L.Timeline,{steps:[{label:'Оплачено',meta:'в Фермате · 3 окт',state:'done'},{label:'Отправлено',meta:'Кофр-доставка',state:'done'},{label:'Получено',meta:'ожидается 7 окт',state:'current'},{label:'Проверка',meta:'24 часа'},{label:'Деньги продавцу'}]}),
+ h(L.Timeline,{tone:'copper',steps:[{label:'Принят',state:'done'},{label:'Диагностика',state:'done'},{label:'Смета',state:'done'},{label:'Ремонт',meta:'до 8 окт',state:'current'},{label:'Выдача'}]})); });
+</script></body></html>

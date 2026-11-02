@@ -1,0 +1,144 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+  <link rel="stylesheet" href="_ds/design-system-b66810d8-d429-49ea-bb35-5b22a7aa4f3a/tokens/webfonts.css">
+  <link rel="stylesheet" href="_ds/design-system-b66810d8-d429-49ea-bb35-5b22a7aa4f3a/tokens/tokens.css">
+  <link rel="stylesheet" href="_ds/design-system-b66810d8-d429-49ea-bb35-5b22a7aa4f3a/tokens/page.css">
+  <link rel="stylesheet" href="_ds/design-system-b66810d8-d429-49ea-bb35-5b22a7aa4f3a/tokens/components.css">
+  <link rel="stylesheet" href="_ds/design-system-b66810d8-d429-49ea-bb35-5b22a7aa4f3a/tokens/forms.css">
+  <link rel="stylesheet" href="ym-compat.css">
+  <script src="_ds/design-system-b66810d8-d429-49ea-bb35-5b22a7aa4f3a/_ds_bundle.js"></script>
+  <script src="plain-language.js"></script>
+  <style>
+    /* Hallmark · page: masters · theme: ЯМузыкант DS tokens · pre-emit critique: P4 H4 E4 S4 R4 V4 */
+    html, body { margin: 0; background: var(--surface); color: var(--ink); overflow-x: clip; }
+    a { color: var(--lad); text-decoration: none; }
+    a:not([class*="lm-"]):hover { color: var(--lad-strong); text-decoration: underline; }
+    [data-eq-card] > * { flex: 1; display: flex; flex-direction: column; }
+    [data-eq-card] .ym-panel { flex: 1; display: flex; flex-direction: column; }
+    [data-eq-card] .ym-panel > .ym-actions { margin-top: auto; }
+  </style>
+</helmet>
+<div class="lm-root" data-screen-label="Десктоп — Мастера" style="min-height: 100vh; background: var(--surface); font-family: var(--font-text);">
+  <dc-import name="Шапка" active="masters" cart="{{ 1 }}" messages="{{ 3 }}" hint-size="100%,117px"></dc-import>
+
+  <main style="max-width: var(--content-max); margin: 0 auto; padding: var(--space-6) var(--space-10) 0; box-sizing: border-box;">
+    <nav aria-label="Хлебные крошки" style="display: flex; align-items: center; gap: var(--space-2); flex-wrap: wrap; margin-bottom: var(--space-4);">
+      <a href="Десктоп - Главная.dc.html" class="body-s" style="color: var(--ink-muted); min-height: 32px; display: flex; align-items: center; white-space: nowrap;">Главная</a>
+      <span aria-hidden="true" style="color: var(--ink-faint); display: flex;"><x-import component-from-global-scope="DesignSystem_b66810.Icon" name="chevron-right" size="{{ 14 }}" hint-size="14px,14px"></x-import></span>
+      <span class="body-s" aria-current="page" style="color: var(--ink); white-space: nowrap;">Мастера</span>
+    </nav>
+
+    <div style="display: flex; flex-direction: column; gap: var(--space-2); margin-bottom: var(--space-6);">
+      <h1 class="h1 lm-title" style="margin: 0;">Мастера и ремонт</h1>
+      <p class="body-s" style="margin: 0; color: var(--ink-muted);">Мастерские в Москве: ремонт, настройка и проверка инструмента перед покупкой.</p>
+    </div>
+
+    <div style="display: flex; flex-direction: column; gap: var(--space-4); max-width: 880px;">
+      <x-import component-from-global-scope="DesignSystem_b66810.SearchBar" id="masters-q" scope="Мастера" placeholder="Опишите, что случилось с инструментом" hint-size="100%,48px"></x-import>
+      <div style="display: grid; grid-template-columns: max-content minmax(0, 1fr); gap: var(--space-3) var(--space-4); align-items: start;">
+        <span id="lbl-kind" class="label" style="font-weight: 600; min-height: 40px; display: flex; align-items: center;">Инструмент</span>
+        <div role="radiogroup" aria-labelledby="lbl-kind" style="display: flex; flex-wrap: wrap; gap: var(--space-2); min-width: 0;">
+          <sc-for list="{{ kindChips }}" as="c" hint-placeholder-count="5">
+            <x-import component-from-global-scope="DesignSystem_b66810.FilterChip" radio="{{ true }}" selected="{{ c.on }}" onChange="{{ c.pick }}" hint-size="120px,40px">{{ c.label }}</x-import>
+          </sc-for>
+        </div>
+        <span id="lbl-work" class="label" style="font-weight: 600; min-height: 40px; display: flex; align-items: center;">Что сделать</span>
+        <div role="radiogroup" aria-labelledby="lbl-work" style="display: flex; flex-wrap: wrap; gap: var(--space-2); min-width: 0;">
+          <sc-for list="{{ workChips }}" as="c" hint-placeholder-count="5">
+            <x-import component-from-global-scope="DesignSystem_b66810.FilterChip" radio="{{ true }}" selected="{{ c.on }}" count="{{ c.count }}" onChange="{{ c.pick }}" hint-size="140px,40px">{{ c.label }}</x-import>
+          </sc-for>
+        </div>
+      </div>
+    </div>
+
+    <section style="margin-top: var(--space-10);">
+      <div style="display: flex; align-items: center; justify-content: space-between; gap: var(--space-4); flex-wrap: wrap; margin-bottom: var(--space-6);">
+        <h2 class="h2 lm-title" style="margin: 0;">{{ listTitle }}</h2>
+        <div style="display: flex; align-items: center; gap: var(--space-2); flex: none;">
+          <label for="msort" class="body-s" style="color: var(--ink-muted);">Сортировка</label>
+          <select id="msort" style="height: 40px; padding: 0 var(--space-8) 0 var(--space-3); border: 1px solid var(--line-control); border-radius: var(--radius-sm); background: var(--surface-raised); color: var(--ink); font: 500 var(--text-s)/20px var(--font-text); cursor: pointer;">
+            <option>Ближе ко мне</option>
+            <option>Выше рейтинг</option>
+            <option>Дешевле</option>
+            <option>Быстрее срок</option>
+          </select>
+        </div>
+      </div>
+      <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(min(100%, 320px), 1fr)); gap: var(--space-6);">
+        <sc-for list="{{ masters }}" as="m" hint-placeholder-count="6">
+          <div data-eq-card="" style="display: flex; flex-direction: column; min-width: 0;">
+            <x-import component-from-global-scope="DesignSystem_b66810.MasterCard" dc-props="{{ m }}" hint-size="100%,260px"></x-import>
+          </div>
+        </sc-for>
+      </div>
+      <sc-if value="{{ empty }}" hint-placeholder-val="{{ false }}">
+        <div style="display: flex; flex-direction: column; align-items: center; gap: var(--space-4); padding: var(--space-12) var(--space-6); text-align: center;">
+          <span style="width: 80px; height: 80px; border-radius: var(--radius-full); background: var(--surface-recessed); color: var(--ink-muted); display: flex; align-items: center; justify-content: center;">
+            <x-import component-from-global-scope="DesignSystem_b66810.Icon" name="wrench" size="{{ 40 }}" hint-size="40px,40px"></x-import>
+          </span>
+          <p class="body" style="margin: 0; max-width: 360px; text-wrap: pretty;">Рядом нет мастеров на эту работу. Выберите другую работу.</p>
+        </div>
+      </sc-if>
+    </section>
+
+    <section style="margin-top: var(--space-16); display: flex; flex-direction: column; gap: var(--space-6);">
+      <h2 class="h2 lm-title" style="margin: 0;">Ваш заказ ремонта</h2>
+      <div style="max-width: 760px;">
+        <x-import component-from-global-scope="DesignSystem_b66810.RepairOrderCard" number="ЗАКАЗ ЛМ-26-00317" instrument="Gibson Les Paul Studio 2014" work="Перешлифовка ладов и настройка" status="Ремонт" amount="{{ 7800 }}" master="А. Воронцов" action="Написать мастеру" steps="{{ steps }}" hint-size="100%,260px"></x-import>
+      </div>
+    </section>
+  </main>
+
+  <div style="margin-top: var(--space-16);">
+    <dc-import name="Подвал" hint-size="100%,260px"></dc-import>
+  </div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props="{}">
+const KINDS = ['Гитары', 'Усилители и педали', 'Клавишные', 'Ударные', 'Духовые'];
+const WORKS = {
+  'Гитары': ['Настройка', 'Перешлифовка ладов', 'Электрика', 'Ремонт трещин', 'Проверка перед покупкой'],
+  'Усилители и педали': ['Ламповые усилители', 'Транзисторные усилители', 'Педали эффектов', 'Проверка перед покупкой'],
+  'Клавишные': ['Ремонт клавиатуры', 'Ремонт синтезаторов', 'Проверка перед покупкой'],
+  'Ударные': ['Замена пластиков', 'Ремонт стоек и педалей'],
+  'Духовые': ['Регулировка клапанов', 'Чистка']
+};
+const MASTERS = [
+  { name: 'Алексей Воронцов', workshop: 'Мастерская «Лад и строй»', rating: 4.9, reviews: 212, kinds: ['Гитары'], specialties: ['Перешлифовка ладов', 'Настройка', 'Электрика', 'Проверка перед покупкой'], priceFrom: 2500, eta: '3–5 дней', distance: '2,4 км', verified: true },
+  { name: 'Дмитрий Соколов', workshop: 'Гитарная клиника', rating: 4.7, reviews: 64, kinds: ['Гитары'], specialties: ['Настройка', 'Ремонт трещин', 'Проверка перед покупкой'], priceFrom: 2000, eta: '2–4 дня', distance: '5,8 км', verified: true },
+  { name: 'Сергей Лаптев', workshop: 'Струна и гриф', rating: 4.8, reviews: 131, kinds: ['Гитары'], specialties: ['Настройка', 'Перешлифовка ладов'], priceFrom: 1800, eta: '1–2 дня', distance: '7,1 км' },
+  { name: 'Павел Гончаров', workshop: 'Гитарный сервис на Соколе', rating: 4.6, reviews: 48, kinds: ['Гитары'], specialties: ['Электрика', 'Настройка'], priceFrom: 1500, eta: 'в день обращения', distance: '9,3 км', verified: true },
+  { name: 'Ирина Белова', workshop: 'Ламповый сервис', rating: 4.8, reviews: 97, kinds: ['Усилители и педали'], specialties: ['Ламповые усилители', 'Педали эффектов', 'Проверка перед покупкой'], priceFrom: 3000, eta: 'до 10 дней', distance: '4,0 км' },
+  { name: 'Максим Орлов', workshop: 'Мастерская педалей', rating: 4.9, reviews: 76, kinds: ['Усилители и педали'], specialties: ['Педали эффектов', 'Транзисторные усилители'], priceFrom: 1200, eta: '2–3 дня', distance: '6,2 км', verified: true },
+  { name: 'Николай Ершов', workshop: 'Синт-сервис', rating: 4.7, reviews: 58, kinds: ['Клавишные'], specialties: ['Ремонт синтезаторов', 'Ремонт клавиатуры', 'Проверка перед покупкой'], priceFrom: 2500, eta: '5–7 дней', distance: '11 км' },
+  { name: 'Олег Зайцев', workshop: 'Барабанная мастерская', rating: 4.6, reviews: 33, kinds: ['Ударные'], specialties: ['Замена пластиков', 'Ремонт стоек и педалей'], priceFrom: 900, eta: '1–3 дня', distance: '8,4 км' },
+  { name: 'Анна Миронова', workshop: 'Духовой сервис', rating: 4.8, reviews: 41, kinds: ['Духовые'], specialties: ['Регулировка клапанов', 'Чистка'], priceFrom: 2000, eta: '3–5 дней', distance: '12 км', verified: true }
+];
+class Component extends DCLogic {
+  state = { kind: 'Гитары', work: 'Настройка' };
+  renderVals() {
+    const { kind, work } = this.state;
+    const works = WORKS[kind];
+    const inKind = MASTERS.filter(m => m.kinds.includes(kind));
+    const kindChips = KINDS.map(k => ({ label: k, on: k === kind, pick: () => this.setState({ kind: k, work: WORKS[k][0] }) }));
+    const workChips = works.map(w => ({ label: w, on: w === work, count: inKind.filter(m => m.specialties.includes(w)).length, pick: () => this.setState({ work: w }) }));
+    const masters = inKind.filter(m => m.specialties.includes(work)).map(({ kinds, ...m }) => m);
+    return {
+      kindChips, workChips, masters,
+      empty: masters.length === 0,
+      listTitle: work + ' — ' + masters.length + ' ' + (n => { const m = n % 10, h = n % 100; return m === 1 && h !== 11 ? 'мастер' : m >= 2 && m <= 4 && (h < 10 || h >= 20) ? 'мастера' : 'мастеров'; })(masters.length) + ' рядом',
+      steps: [{ label: 'Принят', meta: '2 окт', state: 'done' }, { label: 'Диагностика', meta: '3 окт', state: 'done' }, { label: 'Смета', meta: '7 800 ₽', state: 'done' }, { label: 'Ремонт', meta: 'до 8 окт', state: 'current' }, { label: 'Выдача' }]
+    };
+  }
+}
+</script>
+</body>
+</html>

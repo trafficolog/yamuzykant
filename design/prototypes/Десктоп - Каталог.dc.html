@@ -1,0 +1,229 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+  <link rel="stylesheet" href="_ds/design-system-b66810d8-d429-49ea-bb35-5b22a7aa4f3a/tokens/webfonts.css">
+  <link rel="stylesheet" href="_ds/design-system-b66810d8-d429-49ea-bb35-5b22a7aa4f3a/tokens/tokens.css">
+  <link rel="stylesheet" href="_ds/design-system-b66810d8-d429-49ea-bb35-5b22a7aa4f3a/tokens/page.css">
+  <link rel="stylesheet" href="_ds/design-system-b66810d8-d429-49ea-bb35-5b22a7aa4f3a/tokens/components.css">
+  <link rel="stylesheet" href="_ds/design-system-b66810d8-d429-49ea-bb35-5b22a7aa4f3a/tokens/forms.css">
+  <link rel="stylesheet" href="ym-compat.css">
+  <script src="_ds/design-system-b66810d8-d429-49ea-bb35-5b22a7aa4f3a/_ds_bundle.js"></script>
+  <script src="plain-language.js"></script>
+  <style>
+    /* Hallmark · page: catalog/flea · theme: ЯМузыкант DS tokens · pre-emit critique: P4 H4 E4 S4 R4 V4 */
+    aside[aria-label="Фильтры"] .lm-field__hint:empty { display: none; }
+    html, body { margin: 0; background: var(--surface); color: var(--ink); overflow-x: clip; }
+    a { color: var(--lad); text-decoration: none; }
+    a:not([class*="lm-"]):hover { color: var(--lad-strong); text-decoration: underline; }
+    .ym-switch__opt { transition: background-color var(--ym-dur-micro) var(--ym-ease-out), box-shadow var(--ym-dur-micro) var(--ym-ease-out); }
+    .ym-switch__opt:hover:not([aria-current="page"]) { background: var(--surface-raised); box-shadow: var(--shadow-1); text-decoration: none; }
+    .ym-switch__opt:hover:not([aria-current="page"]) .ym-icon { color: var(--ink); }
+  </style>
+</helmet>
+<div class="lm-root" data-screen-label="Десктоп — Каталог и Барахолка" style="min-height: 100vh; background: var(--surface); font-family: var(--font-text);">
+  <dc-import name="Шапка" active="{{ view }}" cart="{{ 1 }}" messages="{{ 3 }}" hint-size="100%,117px"></dc-import>
+
+  <main style="max-width: var(--content-max); margin: 0 auto; padding: var(--space-6) var(--space-10) 0; box-sizing: border-box;">
+    <nav aria-label="Хлебные крошки" style="display: flex; align-items: center; gap: var(--space-2); flex-wrap: wrap; margin-bottom: var(--space-4);">
+      <a href="Десктоп - Главная.dc.html" class="body-s" style="color: var(--ink-muted); min-height: 32px; display: flex; align-items: center; white-space: nowrap;">Главная</a>
+      <span aria-hidden="true" style="color: var(--ink-faint); display: flex;"><x-import component-from-global-scope="DesignSystem_b66810.Icon" name="chevron-right" size="{{ 14 }}" hint-size="14px,14px"></x-import></span>
+      <a href="#" class="body-s" style="color: var(--ink-muted); min-height: 32px; display: flex; align-items: center; white-space: nowrap;">Гитары</a>
+      <span aria-hidden="true" style="color: var(--ink-faint); display: flex;"><x-import component-from-global-scope="DesignSystem_b66810.Icon" name="chevron-right" size="{{ 14 }}" hint-size="14px,14px"></x-import></span>
+      <span class="body-s" aria-current="page" style="color: var(--ink);">Электрогитары</span>
+    </nav>
+
+    <div style="display: flex; align-items: flex-end; justify-content: space-between; gap: var(--space-6); flex-wrap: wrap; margin-bottom: var(--space-6);">
+      <div style="display: flex; flex-direction: column; gap: var(--space-2);">
+        <h1 class="h1 lm-title" style="margin: 0;">Электрогитары</h1>
+        <p class="body-s" style="margin: 0; color: var(--ink-muted);">{{ lead }}</p>
+      </div>
+      <x-import component-from-global-scope="DesignSystem_b66810.CatalogSwitch" value="{{ view }}" counts="{{ counts }}" onChange="{{ setView }}" hint-size="320px,48px"></x-import>
+    </div>
+
+    <div style="display: grid; grid-template-columns: 280px minmax(0, 1fr); gap: var(--space-8); align-items: start;">
+      <aside aria-label="Фильтры" style="display: flex; flex-direction: column; gap: var(--space-6); box-sizing: border-box; padding: var(--space-5); border-radius: var(--radius-lg); background: var(--surface-recessed);">
+        <div style="display: flex; align-items: center; justify-content: space-between; gap: var(--space-3); min-height: 44px;">
+          <h2 class="h3" style="margin: 0;">Фильтры</h2>
+          <sc-if value="{{ hasSel }}" hint-placeholder-val="{{ false }}">
+            <button type="button" onClick="{{ reset }}" class="label" style="border: 0; background: none; padding: 0 var(--space-2); margin-right: calc(-1 * var(--space-2)); min-height: 44px; color: var(--lad); cursor: pointer; white-space: nowrap;" style-hover="color: var(--lad-strong); text-decoration: underline;">Сбросить все</button>
+          </sc-if>
+        </div>
+
+        <sc-if value="{{ isFlea }}" hint-placeholder-val="{{ false }}">
+          <fieldset style="border: 0; margin: 0; padding: 0; display: flex; flex-direction: column; gap: var(--space-3);">
+            <legend class="label" style="padding: 0; margin-bottom: var(--space-3); font-weight: 600;">Состояние</legend>
+            <div style="display: flex; flex-wrap: wrap; gap: var(--space-2);">
+              <sc-for list="{{ condChips }}" as="c" hint-placeholder-count="5">
+                <x-import component-from-global-scope="DesignSystem_b66810.FilterChip" selected="{{ c.on }}" count="{{ c.count }}" onChange="{{ c.toggle }}" hint-size="120px,40px">{{ c.label }}</x-import>
+              </sc-for>
+            </div>
+          </fieldset>
+        </sc-if>
+
+        <fieldset style="border: 0; margin: 0; padding: 0; display: flex; flex-direction: column;">
+          <legend class="label" style="padding: 0; margin-bottom: var(--space-3); font-weight: 600;">Цена</legend>
+          <div style="display: grid; grid-template-columns: minmax(0, 1fr); gap: var(--space-3);">
+            <x-import component-from-global-scope="DesignSystem_b66810.Field" id="pmin" label="от" suffix="₽" placeholder="0" inputMode="numeric" hint-size="100%,72px"></x-import>
+            <x-import component-from-global-scope="DesignSystem_b66810.Field" id="pmax" label="до" suffix="₽" placeholder="любая" inputMode="numeric" hint-size="100%,72px"></x-import>
+          </div>
+        </fieldset>
+
+        <fieldset style="border: 0; margin: 0; padding: 0; display: flex; flex-direction: column;">
+          <legend class="label" style="padding: 0; margin-bottom: var(--space-3); font-weight: 600;">Бренд</legend>
+          <div style="display: flex; flex-wrap: wrap; gap: var(--space-2);">
+            <sc-for list="{{ brandChips }}" as="c" hint-placeholder-count="8">
+              <x-import component-from-global-scope="DesignSystem_b66810.FilterChip" selected="{{ c.on }}" count="{{ c.count }}" onChange="{{ c.toggle }}" hint-size="100px,40px">{{ c.label }}</x-import>
+            </sc-for>
+          </div>
+        </fieldset>
+
+        <fieldset style="border: 0; margin: 0; padding: 0; display: flex; flex-direction: column;">
+          <legend class="label" style="padding: 0; margin-bottom: var(--space-3); font-weight: 600;">Покупка и доставка</legend>
+          <div style="display: flex; flex-wrap: wrap; gap: var(--space-2);">
+            <sc-for list="{{ dealChips }}" as="c" hint-placeholder-count="4">
+              <x-import component-from-global-scope="DesignSystem_b66810.FilterChip" selected="{{ c.on }}" icon="{{ c.icon }}" onChange="{{ c.toggle }}" hint-size="160px,40px">{{ c.label }}</x-import>
+            </sc-for>
+          </div>
+        </fieldset>
+
+      </aside>
+
+      <div style="display: flex; flex-direction: column; gap: var(--space-6); min-width: 0;">
+        <div style="display: flex; align-items: center; justify-content: space-between; gap: var(--space-4); flex-wrap: wrap; min-height: 40px;">
+          <div style="display: flex; flex-wrap: wrap; gap: var(--space-2); min-width: 0;">
+            <sc-for list="{{ activeChips }}" as="c" hint-placeholder-count="0">
+              <x-import component-from-global-scope="DesignSystem_b66810.FilterChip" selected="{{ true }}" removable="{{ true }}" onChange="{{ c.toggle }}" hint-size="120px,40px">{{ c.label }}</x-import>
+            </sc-for>
+            <span class="body-s" style="color: var(--ink-muted); display: flex; align-items: center; min-height: 40px; white-space: nowrap; font-variant-numeric: tabular-nums;">{{ found }}</span>
+          </div>
+          <div style="display: flex; align-items: center; gap: var(--space-2); flex: none;">
+            <label for="sort" class="body-s" style="color: var(--ink-muted);">Сортировка</label>
+            <select id="sort" style="height: 40px; padding: 0 var(--space-8) 0 var(--space-3); border: 1px solid var(--line-control); border-radius: var(--radius-sm); background: var(--surface-raised); color: var(--ink); font: 500 var(--text-s)/20px var(--font-text); cursor: pointer;">
+              <option>{{ sortDefault }}</option>
+              <option>Сначала дешевле</option>
+              <option>Сначала дороже</option>
+              <option>Ближе ко мне</option>
+            </select>
+          </div>
+        </div>
+
+        <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(var(--card-min), 1fr)); gap: var(--space-6);">
+          <sc-for list="{{ lots }}" as="lot" hint-placeholder-count="12">
+            <x-import component-from-global-scope="DesignSystem_b66810.ListingCard" dc-props="{{ lot }}" hint-size="100%,380px"></x-import>
+          </sc-for>
+        </div>
+
+        <sc-if value="{{ empty }}" hint-placeholder-val="{{ false }}">
+          <div style="display: flex; flex-direction: column; align-items: center; gap: var(--space-4); padding: var(--space-12) var(--space-6); text-align: center;">
+            <span style="width: 80px; height: 80px; border-radius: var(--radius-full); background: var(--surface-recessed); color: var(--ink-muted); display: flex; align-items: center; justify-content: center;">
+              <x-import component-from-global-scope="DesignSystem_b66810.Icon" name="search" size="{{ 40 }}" hint-size="40px,40px"></x-import>
+            </span>
+            <p class="body" style="margin: 0; color: var(--ink); max-width: 360px; text-wrap: pretty;">По этим фильтрам лотов нет. Уберите часть фильтров.</p>
+            <x-import component-from-global-scope="DesignSystem_b66810.Button" variant="outline" size="s" onClick="{{ reset }}" hint-size="160px,40px">Сбросить фильтры</x-import>
+          </div>
+        </sc-if>
+
+        <sc-if value="{{ hasMore }}" hint-placeholder-val="{{ true }}">
+          <div style="display: flex; flex-direction: column; align-items: center; gap: var(--space-2); padding-top: var(--space-2);">
+            <x-import component-from-global-scope="DesignSystem_b66810.Button" variant="outline" hint-size="200px,48px">Показать ещё</x-import>
+            <span class="body-s" style="color: var(--ink-muted);">{{ shown }}</span>
+          </div>
+        </sc-if>
+      </div>
+    </div>
+  </main>
+
+  <div style="margin-top: var(--space-16);">
+    <dc-import name="Подвал" hint-size="100%,260px"></dc-import>
+  </div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props="{}">
+const NEW = [
+  ['Fender Player Stratocaster, Polar White', 89990, 'Fender'], ['Squier Classic Vibe ’60s Stratocaster', 54990, 'Squier'],
+  ['Ibanez RG421, Mahogany Oil', 42990, 'Ibanez'], ['Yamaha Pacifica 112V, Sonic Blue', 32990, 'Yamaha'],
+  ['Gibson Les Paul Standard ’50s, Heritage Cherry', 329000, 'Gibson'], ['Epiphone Les Paul Standard ’60s', 64990, 'Epiphone'],
+  ['PRS SE Custom 24, Charcoal Burst', 79990, 'PRS'], ['ESP LTD EC-256, Black', 49990, 'ESP'],
+  ['Fender Player Telecaster, Butterscotch', 87990, 'Fender'], ['Gretsch G2622 Streamliner', 49990, 'Gretsch'],
+  ['Jackson JS22 Dinky, Satin Black', 27990, 'Jackson'], ['Squier Affinity Telecaster', 29990, 'Squier']
+].map(([title, price, brand], i) => ({ id: 'n' + i, title, price, brand, condition: 'new', partner: true, city: ['Москва', 'Санкт-Петербург', 'Казань'][i % 3], shipping: i % 4 === 1 ? 900 : 0, fermata: true }));
+const USED = [
+  ['Fender American Vintage ’57 Stratocaster 2009', 184500, 'Fender', 'excellent', { inspected: true, distance: '4,2 км', posted: '2 ч назад' }],
+  ['Gibson Les Paul Studio 2014, Wine Red', 149000, 'Gibson', 'very-good', { oldPrice: 162000, city: 'Санкт-Петербург', shipping: 1200 }],
+  ['Ibanez RG550 Genesis, Road Flare Red', 96000, 'Ibanez', 'excellent', { inspected: true, distance: '6,5 км', posted: '1 ч назад' }],
+  ['Fender Japan Telecaster TL52, 1990', 72000, 'Fender', 'very-good', { rare: true, city: 'Екатеринбург', shipping: 800 }],
+  ['Gibson SG Standard 2015, Heritage Cherry', 118000, 'Gibson', 'good', { oldPrice: 126000, city: 'Санкт-Петербург', shipping: 1500, inspected: true }],
+  ['Squier Classic Vibe ’50s Stratocaster', 38000, 'Squier', 'excellent', { distance: '2,1 км', posted: 'вчера' }],
+  ['Epiphone Casino 2012, Natural', 52000, 'Epiphone', 'good', { city: 'Казань', shipping: 0 }],
+  ['PRS SE Custom 24, 2019', 58000, 'PRS', 'mint', { distance: '9,8 км', posted: '3 ч назад' }],
+  ['Jackson Soloist SL2 2018', 89000, 'Jackson', 'excellent', { city: 'Новосибирск', shipping: 1500, inspected: true }],
+  ['Ibanez RG370 1996', 34000, 'Ibanez', 'fair', { distance: '12 км', posted: '2 дня назад' }],
+  ['Gretsch G5420T Electromatic, Orange', 89000, 'Gretsch', 'excellent', { inspected: true, shipping: 0 }],
+  ['ESP LTD EC-1000 2016, Vintage Black', 74000, 'ESP', 'very-good', { city: 'Самара', shipping: 600 }]
+].map(([title, price, brand, condition, x], i) => ({ id: 'u' + i, title, price, brand, condition, city: 'Москва', fermata: i % 3 !== 2, ...x }));
+const COND = [['mint', 'Как новое'], ['excellent', 'Отличное'], ['very-good', 'Очень хорошее'], ['good', 'Хорошее'], ['fair', 'Удовлетворительное']];
+const BRANDS = ['Fender', 'Gibson', 'Ibanez', 'Squier', 'Epiphone', 'PRS', 'ESP', 'Jackson', 'Gretsch', 'Yamaha'];
+const DEALS = [['safe', 'Безопасная сделка', 'shield-check'], ['inspected', 'Проверено мастером', 'badge-check'], ['freeship', 'Бесплатная доставка', 'truck'], ['near', 'Рядом со мной', 'map-pin']];
+const fmt = n => n.toLocaleString('ru-RU');
+const plural = (n, a, b, c) => { const m = n % 10, h = n % 100; return m === 1 && h !== 11 ? a : m >= 2 && m <= 4 && (h < 10 || h >= 20) ? b : c; };
+
+class Component extends DCLogic {
+  state = { view: 'catalog', sel: [] };
+  componentDidMount() {
+    const v = new URLSearchParams(location.search).get('view');
+    if (v === 'flea') this.setState({ view: 'flea', sel: ['deal:safe'] });
+  }
+  setView = v => {
+    if (v === this.state.view) return;
+    const u = new URL(location.href);
+    if (v === 'flea') u.searchParams.set('view', 'flea'); else u.searchParams.delete('view');
+    history.replaceState(null, '', u);
+    this.setState({ view: v, sel: v === 'flea' ? ['deal:safe'] : [] });
+  };
+  toggle = key => this.setState(s => ({ sel: s.sel.includes(key) ? s.sel.filter(k => k !== key) : [...s.sel, key] }));
+  renderVals() {
+    const { view, sel } = this.state;
+    const isFlea = view === 'flea';
+    const base = isFlea ? USED : NEW;
+    const has = k => sel.includes(k);
+    const conds = sel.filter(k => k.startsWith('cond:')).map(k => k.slice(5));
+    const brands = sel.filter(k => k.startsWith('brand:')).map(k => k.slice(6));
+    const lots = base.filter(l =>
+      (!conds.length || conds.includes(l.condition)) &&
+      (!brands.length || brands.includes(l.brand)) &&
+      (!has('deal:safe') || l.fermata) &&
+      (!has('deal:inspected') || l.inspected) &&
+      (!has('deal:freeship') || l.shipping === 0) &&
+      (!has('deal:near') || !!l.distance)
+    ).map(({ brand, ...l }) => ({ ...l, href: 'Десктоп - Лот.dc.html' }));
+    const chip = (key, label, extra) => ({ key, label, on: has(key), toggle: () => this.toggle(key), ...extra });
+    const condChips = COND.map(([c, l]) => chip('cond:' + c, l, { count: USED.filter(x => x.condition === c).length }));
+    const brandChips = BRANDS.filter(b => base.some(l => l.brand === b)).map(b => chip('brand:' + b, b, { count: base.filter(l => l.brand === b).length }));
+    const dealChips = DEALS.filter(([k]) => isFlea || (k !== 'inspected' && k !== 'near')).map(([k, l, icon]) => chip('deal:' + k, l, { icon }));
+    const all = [...condChips, ...brandChips, ...dealChips];
+    const activeChips = sel.map(k => all.find(c => c.key === k)).filter(Boolean);
+    const total = isFlea ? 18760 : 3412;
+    return {
+      view, isFlea, lots, condChips, brandChips, dealChips, activeChips,
+      counts: { catalog: 3412, flea: 18760 },
+      setView: this.setView,
+      reset: () => this.setState({ sel: [] }),
+      hasSel: sel.length > 0, noSel: sel.length === 0,
+      empty: lots.length === 0, hasMore: sel.length === 0 && lots.length > 0,
+      lead: isFlea ? 'Б/у от частных продавцов и мастерских. Деньги продавец получит, когда вы проверите инструмент.' : 'Новые модели у магазинов-партнёров с гарантией и доставкой.',
+      found: (n => 'Найдено ' + fmt(n) + ' ' + plural(n, 'лот', 'лота', 'лотов'))(sel.length ? lots.length : total),
+      sortDefault: isFlea ? 'Сначала свежие' : 'Сначала популярные',
+      shown: 'Показано ' + lots.length + ' из ' + fmt(total)
+    };
+  }
+}
+</script>
+</body>
+</html>

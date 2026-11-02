@@ -1,0 +1,331 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+  <link rel="stylesheet" href="_ds/design-system-b66810d8-d429-49ea-bb35-5b22a7aa4f3a/tokens/webfonts.css">
+  <link rel="stylesheet" href="_ds/design-system-b66810d8-d429-49ea-bb35-5b22a7aa4f3a/tokens/tokens.css">
+  <link rel="stylesheet" href="_ds/design-system-b66810d8-d429-49ea-bb35-5b22a7aa4f3a/tokens/page.css">
+  <link rel="stylesheet" href="_ds/design-system-b66810d8-d429-49ea-bb35-5b22a7aa4f3a/tokens/components.css">
+  <link rel="stylesheet" href="_ds/design-system-b66810d8-d429-49ea-bb35-5b22a7aa4f3a/tokens/forms.css">
+  <link rel="stylesheet" href="ym-compat.css">
+  <script src="_ds/design-system-b66810d8-d429-49ea-bb35-5b22a7aa4f3a/_ds_bundle.js"></script>
+  <script src="plain-language.js"></script>
+  <style>
+    /* Hallmark · page: lot · theme: ЯМузыкант DS tokens · pre-emit critique: P4 H4 E4 S5 R4 V4 */
+    html, body { margin: 0; background: var(--surface); color: var(--ink); overflow-x: clip; }
+    a { color: var(--lad); text-decoration: none; }
+    a:not([class*="lm-"]):hover { color: var(--lad-strong); text-decoration: underline; }
+    main .ym-rail { padding: 0; }
+  </style>
+</helmet>
+<div class="lm-root" data-screen-label="Десктоп — Лот" style="min-height: 100vh; background: var(--surface); font-family: var(--font-text);">
+  <dc-import name="Шапка" active="flea" cart="{{ 1 }}" messages="{{ 3 }}" hint-size="100%,117px"></dc-import>
+
+  <main style="max-width: var(--content-max); margin: 0 auto; padding: var(--space-6) var(--space-10) 0; box-sizing: border-box;">
+    <nav aria-label="Хлебные крошки" style="display: flex; align-items: center; gap: var(--space-2); flex-wrap: wrap; margin-bottom: var(--space-4);">
+      <a href="Десктоп - Главная.dc.html" class="body-s" style="color: var(--ink-muted); min-height: 32px; display: flex; align-items: center; white-space: nowrap;">Главная</a>
+      <span aria-hidden="true" style="color: var(--ink-faint); display: flex;"><x-import component-from-global-scope="DesignSystem_b66810.Icon" name="chevron-right" size="{{ 14 }}" hint-size="14px,14px"></x-import></span>
+      <a href="Десктоп - Каталог.dc.html?view=flea" class="body-s" style="color: var(--ink-muted); min-height: 32px; display: flex; align-items: center; white-space: nowrap;">Электрогитары · Барахолка</a>
+      <span aria-hidden="true" style="color: var(--ink-faint); display: flex;"><x-import component-from-global-scope="DesignSystem_b66810.Icon" name="chevron-right" size="{{ 14 }}" hint-size="14px,14px"></x-import></span>
+      <span class="body-s" aria-current="page" style="color: var(--ink); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; min-width: 0;">Fender American Vintage ’57 Stratocaster</span>
+    </nav>
+
+    <div style="display: grid; grid-template-columns: minmax(0, 1fr) minmax(360px, 440px); gap: var(--space-10); align-items: start;">
+      <section aria-label="Фотографии" style="display: flex; flex-direction: column; gap: var(--space-3); min-width: 0;">
+        <div style="position: relative; aspect-ratio: 4 / 3; border-radius: var(--radius-lg); background: var(--surface-recessed); color: var(--ink-faint); display: flex; flex-direction: column; align-items: center; justify-content: center; gap: var(--space-3);">
+          <x-import component-from-global-scope="DesignSystem_b66810.Icon" name="{{ photo.icon }}" size="{{ 64 }}" hint-size="64px,64px"></x-import>
+          <span class="body-s" style="color: var(--ink-muted);">{{ photo.label }}</span>
+          <span class="body-s" style="position: absolute; left: var(--space-4); bottom: var(--space-4); padding: var(--space-1) var(--space-3); border-radius: var(--radius-full); background: var(--surface-raised); color: var(--ink); font-variant-numeric: tabular-nums;">{{ photoCount }}</span>
+        </div>
+        <div role="group" aria-label="Выбор фото" style="display: grid; grid-template-columns: repeat(6, minmax(0, 1fr)); gap: var(--space-3);">
+          <sc-for list="{{ thumbs }}" as="t" hint-placeholder-count="6">
+            <button type="button" aria-label="{{ t.label }}" aria-pressed="{{ t.pressed }}" onClick="{{ t.go }}" style="{{ t.style }}" style-hover="color: var(--ink-muted);">
+              <x-import component-from-global-scope="DesignSystem_b66810.Icon" name="{{ t.icon }}" size="{{ 24 }}" hint-size="24px,24px"></x-import>
+            </button>
+          </sc-for>
+        </div>
+      </section>
+
+      <section aria-label="Покупка" style="display: flex; flex-direction: column; gap: var(--space-5);">
+        <div style="display: flex; flex-direction: column; gap: var(--space-3);">
+          <h1 class="h2 lm-title" style="margin: 0; text-wrap: balance;">Fender American Vintage ’57 Stratocaster 2009, Sunburst</h1>
+          <div style="display: flex; flex-wrap: wrap; gap: var(--space-2);">
+            <x-import component-from-global-scope="DesignSystem_b66810.ConditionBadge" condition="excellent" hint-size="140px,24px"></x-import>
+            <x-import component-from-global-scope="DesignSystem_b66810.Badge" tone="copper" icon="badge-check" hint-size="170px,24px">Проверено мастером</x-import>
+          </div>
+        </div>
+
+        <x-import component-from-global-scope="DesignSystem_b66810.PriceTag" price="{{ 184500 }}" shipping="{{ 0 }}" size="pdp" hint-size="100%,56px"></x-import>
+
+        <x-import component-from-global-scope="DesignSystem_b66810.Button" variant="primary" size="l" block="{{ true }}" icon="message-circle" onClick="{{ write }}" hint-size="100%,56px">Написать продавцу</x-import>
+
+        <div style="display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: var(--space-2); align-items: center;">
+          <x-import component-from-global-scope="DesignSystem_b66810.Button" variant="outline" block="{{ true }}" icon="handshake" onClick="{{ write }}" hint-size="100%,48px">Предложить цену</x-import>
+          <x-import component-from-global-scope="DesignSystem_b66810.FavoriteButton" count="{{ 80 }}" hint-size="48px,48px"></x-import>
+        </div>
+
+        <ul aria-label="Доставка и получение" style="margin: 0; padding: var(--space-4) 0; list-style: none; display: flex; flex-direction: column; gap: var(--space-3); border-top: 1px solid var(--line); border-bottom: 1px solid var(--line);">
+          <li style="display: flex; gap: var(--space-3); align-items: flex-start;">
+            <span style="color: var(--lad); display: flex; flex: none;"><x-import component-from-global-scope="DesignSystem_b66810.Icon" name="truck" size="{{ 20 }}" hint-size="20px,20px"></x-import></span>
+            <span style="display: flex; flex-direction: column; gap: 2px;"><span class="body" style="font-weight: 500;">Доставка в защитной упаковке</span><span class="body-s" style="color: var(--ink-muted);">2–4 дня по России · срок уточнить</span></span>
+          </li>
+          <li style="display: flex; gap: var(--space-3); align-items: flex-start;">
+            <span style="color: var(--ink-muted); display: flex; flex: none;"><x-import component-from-global-scope="DesignSystem_b66810.Icon" name="map-pin" size="{{ 20 }}" hint-size="20px,20px"></x-import></span>
+            <span style="display: flex; flex-direction: column; gap: 2px;"><span class="body" style="font-weight: 500;">Встреча в Москве</span><span class="body-s" style="color: var(--ink-muted);">4,2 км от вас · место согласуете с продавцом</span></span>
+          </li>
+          <li style="display: flex; gap: var(--space-3); align-items: flex-start;">
+            <span style="color: var(--lad); display: flex; flex: none;"><x-import component-from-global-scope="DesignSystem_b66810.Icon" name="shield-check" size="{{ 20 }}" hint-size="20px,20px"></x-import></span>
+            <span style="display: flex; flex-direction: column; gap: 2px;"><span class="body" style="font-weight: 500;">Переписка остаётся на ЯМузыканте</span><span class="body-s" style="color: var(--ink-muted);">Если что-то пойдёт не так, поддержка увидит историю</span></span>
+          </li>
+        </ul>
+
+        <div class="body-s" style="display: flex; flex-wrap: wrap; gap: var(--space-1) var(--space-4); color: var(--ink-muted); font-variant-numeric: tabular-nums;">
+          <span>Выставлен 3 дня назад</span>
+          <span>Просмотров 1 310</span>
+          <span>Предложений цены 2</span>
+        </div>
+        <a href="Десктоп - Модель.dc.html" class="label" style="color: var(--lad); align-self: flex-start; min-height: 32px; display: flex; align-items: center; gap: var(--space-1); white-space: nowrap;">Все предложения этой модели — 14<x-import component-from-global-scope="DesignSystem_b66810.Icon" name="chevron-right" size="{{ 16 }}" hint-size="16px,16px"></x-import></a>
+      </section>
+    </div>
+
+    <div style="display: grid; grid-template-columns: minmax(0, 1fr) minmax(360px, 440px); gap: var(--space-10); align-items: start; margin-top: var(--space-12);">
+      <div style="display: flex; flex-direction: column; gap: var(--space-12); min-width: 0;">
+        <section style="display: flex; flex-direction: column; gap: var(--space-4);">
+          <h2 class="h3 lm-title" style="margin: 0;">Описание</h2>
+          <p class="body-l" style="margin: 0; max-width: 720px; text-wrap: pretty;">Гриф шлифовали один раз, лады в отличном состоянии. Оригинальные звукосниматели, родной твидовый кейс. Отправлю доставкой в защитной упаковке или встречусь в Москве.</p>
+        </section>
+
+        <section style="display: flex; flex-direction: column; gap: var(--space-4);">
+          <h2 class="h3 lm-title" style="margin: 0;">Характеристики</h2>
+          <dl style="margin: 0; display: grid; grid-template-columns: minmax(160px, 240px) minmax(0, 1fr); max-width: 720px; border-top: 1px solid var(--line);">
+            <sc-for list="{{ specs }}" as="s" hint-placeholder-count="8">
+              <dt class="body" style="margin: 0; padding: var(--space-3) var(--space-4) var(--space-3) 0; border-bottom: 1px solid var(--line); color: var(--ink-muted);">{{ s.k }}</dt>
+              <dd class="body" style="margin: 0; padding: var(--space-3) 0; border-bottom: 1px solid var(--line); color: var(--ink);">{{ s.v }}</dd>
+            </sc-for>
+          </dl>
+        </section>
+
+        <section style="display: flex; flex-direction: column; max-width: 720px;">
+          <x-import component-from-global-scope="DesignSystem_b66810.PassportCard" instrument="Fender American Vintage ’57 Stratocaster" serial="V091187" year="2009" owners="{{ 3 }}" verified="{{ true }}" events="{{ passport }}" hint-size="100%,420px"></x-import>
+        </section>
+      </div>
+
+      <aside style="display: flex; flex-direction: column; gap: var(--space-4); position: sticky; top: var(--space-4);">
+        <x-import component-from-global-scope="DesignSystem_b66810.PriceGuide" low="{{ 168000 }}" high="{{ 196000 }}" price="{{ 184500 }}" basis="по 41 продаже за 12 месяцев" hint-size="100%,150px"></x-import>
+        <x-import component-from-global-scope="DesignSystem_b66810.SellerCard" name="Гитарный угол" rating="{{ 4.9 }}" reviews="{{ 432 }}" city="Москва" since="2025" badges="{{ sellerBadges }}" hint-size="100%,220px"></x-import>
+        <div onClick="{{ alertClick }}">
+          <x-import component-from-global-scope="DesignSystem_b66810.Alert" tone="copper" icon="wrench" title="Проверка перед покупкой — от 1 900 ₽" action="Заказать проверку" hint-size="100%,120px">Мастер осмотрит инструмент до оплаты, сверит серийный номер и пришлёт отчёт с фото.</x-import>
+        </div>
+      </aside>
+    </div>
+
+    <section style="margin-top: var(--space-16);">
+      <x-import component-from-global-scope="DesignSystem_b66810.AccessoryRail" title="Аксессуары к Fender Stratocaster" groups="{{ accessories }}" hint-size="100%,340px"></x-import>
+    </section>
+
+    <section style="margin-top: var(--space-16);">
+      <div style="display: flex; align-items: baseline; justify-content: space-between; gap: var(--space-4); margin-bottom: var(--space-6);">
+        <h2 class="h2 lm-title" style="margin: 0;">Похожие лоты рядом</h2>
+        <a href="Десктоп - Каталог.dc.html?view=flea" class="label" style="color: var(--lad); white-space: nowrap;">Все в Барахолке</a>
+      </div>
+      <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(var(--card-min), 1fr)); gap: var(--space-6);">
+        <sc-for list="{{ similar }}" as="lot" hint-placeholder-count="5">
+          <x-import component-from-global-scope="DesignSystem_b66810.ListingCard" dc-props="{{ lot }}" hint-size="100%,380px"></x-import>
+        </sc-for>
+      </div>
+    </section>
+  </main>
+  <sc-if value="{{ insp.open }}" hint-placeholder-val="{{ false }}">
+    <div style="position: fixed; inset: 0; z-index: 100; display: flex; align-items: flex-start; justify-content: center; padding: var(--space-12) var(--space-4); box-sizing: border-box; overflow-y: auto;">
+      <div aria-hidden="true" onClick="{{ insp.close }}" style="position: fixed; inset: 0; background: color-mix(in srgb, var(--ink) 40%, transparent);"></div>
+      <div role="dialog" aria-modal="true" aria-labelledby="insp-h" style="position: relative; width: 100%; max-width: 560px; box-sizing: border-box; display: flex; flex-direction: column; gap: var(--space-5); padding: var(--space-6); background: var(--surface-raised); border-radius: var(--radius-xl); box-shadow: var(--shadow-3);">
+        <div style="display: flex; align-items: flex-start; justify-content: space-between; gap: var(--space-3);">
+          <div style="display: flex; flex-direction: column; gap: var(--space-1); min-width: 0;">
+            <h2 id="insp-h" class="h3" style="margin: 0;">{{ insp.title }}</h2>
+            <span class="body-s" style="color: var(--ink-muted);">Fender American Vintage ’57 Stratocaster · 184 500 ₽</span>
+          </div>
+          <div style="margin: calc(-1 * var(--space-2)) calc(-1 * var(--space-2)) 0 0;">
+            <x-import component-from-global-scope="DesignSystem_b66810.IconButton" icon="x" label="Закрыть" show-label="{{ false }}" onClick="{{ insp.close }}" hint-size="44px,44px"></x-import>
+          </div>
+        </div>
+
+        <sc-if value="{{ insp.sent }}" hint-placeholder-val="{{ false }}">
+          <div style="display: flex; flex-direction: column; gap: var(--space-4);">
+            <span style="width: 48px; height: 48px; border-radius: var(--radius-full); background: var(--copper-soft); color: var(--copper-strong); display: flex; align-items: center; justify-content: center;"><x-import component-from-global-scope="DesignSystem_b66810.Icon" name="circle-check" size="{{ 24 }}" hint-size="24px,24px"></x-import></span>
+            <p class="body" style="margin: 0; text-wrap: pretty;">{{ insp.sentText }}</p>
+            <p class="body-s" style="margin: 0; color: var(--ink-muted); text-wrap: pretty;">Мы сообщили продавцу о проверке. Отчёт с фото мастер пришлёт в чат.</p>
+            <div style="display: flex; flex-wrap: wrap; gap: var(--space-3);">
+              <x-import component-from-global-scope="DesignSystem_b66810.Button" variant="primary" icon="message-circle" href="Десктоп - Сообщения.dc.html?chat=master" hint-size="220px,48px">Открыть чат с мастером</x-import>
+              <x-import component-from-global-scope="DesignSystem_b66810.Button" variant="ghost" onClick="{{ insp.close }}" hint-size="120px,48px">Готово</x-import>
+            </div>
+          </div>
+        </sc-if>
+
+        <sc-if value="{{ insp.editing }}" hint-placeholder-val="{{ true }}">
+          <div style="display: flex; flex-direction: column; gap: var(--space-5);">
+            <ul style="margin: 0; padding: var(--space-4); list-style: none; display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: var(--space-2) var(--space-4); border-radius: var(--radius-md); background: var(--surface-recessed);">
+              <sc-for list="{{ insp.checks }}" as="c" hint-placeholder-count="4">
+                <li class="body-s" style="display: flex; gap: var(--space-2); align-items: flex-start;"><span style="flex: none; display: flex; color: var(--copper-strong); padding-top: 2px;"><x-import component-from-global-scope="DesignSystem_b66810.Icon" name="check" size="{{ 16 }}" hint-size="16px,16px"></x-import></span>{{ c }}</li>
+              </sc-for>
+            </ul>
+
+            <fieldset style="border: 0; margin: 0; padding: 0; display: flex; flex-direction: column; gap: var(--space-2);">
+              <legend class="label" style="padding: 0; margin-bottom: var(--space-2); font-weight: 600;">Мастер рядом с продавцом</legend>
+              <div role="radiogroup" aria-label="Мастер" style="display: flex; flex-direction: column; gap: var(--space-2);">
+                <sc-for list="{{ insp.masters }}" as="m" hint-placeholder-count="3">
+                  <button type="button" role="radio" aria-checked="{{ m.on }}" onClick="{{ m.pick }}" style="{{ m.style }}" style-hover="border-color: var(--copper);">
+                    <span aria-hidden="true" style="{{ m.dot }}"></span>
+                    <span aria-hidden="true" style="flex: none; width: 40px; height: 40px; border-radius: var(--radius-full); background: var(--copper-soft); color: var(--copper-strong); display: flex; align-items: center; justify-content: center; font: 600 var(--text-s)/1 var(--font-text);">{{ m.ini }}</span>
+                    <span style="flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 2px; text-align: left;">
+                      <span class="body" style="font-weight: 600;">{{ m.name }}</span>
+                      <span class="body-s" style="color: var(--ink-muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">{{ m.meta }}</span>
+                    </span>
+                    <span style="display: flex; flex-direction: column; align-items: flex-end; gap: 2px;">
+                      <span class="body" style="font-weight: 600; white-space: nowrap; font-variant-numeric: tabular-nums;">{{ m.price }}</span>
+                      <span class="caption" style="color: var(--ink-muted); white-space: nowrap;">{{ m.slot }}</span>
+                    </span>
+                  </button>
+                </sc-for>
+              </div>
+            </fieldset>
+
+            <div style="display: flex; flex-direction: column; gap: var(--space-2);">
+              <span class="label" style="font-weight: 600;">Где посмотреть инструмент</span>
+              <div role="radiogroup" aria-label="Место" style="display: flex; flex-wrap: wrap; gap: var(--space-2);">
+                <sc-for list="{{ insp.places }}" as="p" hint-placeholder-count="2">
+                  <x-import component-from-global-scope="DesignSystem_b66810.FilterChip" radio="{{ true }}" selected="{{ p.on }}" icon="{{ p.icon }}" onChange="{{ p.pick }}" hint-size="200px,40px">{{ p.label }}</x-import>
+                </sc-for>
+              </div>
+            </div>
+
+            <div style="display: flex; flex-direction: column; gap: var(--space-2);">
+              <span class="label" style="font-weight: 600;">Когда</span>
+              <div role="radiogroup" aria-label="День" style="display: flex; flex-wrap: wrap; gap: var(--space-2);">
+                <sc-for list="{{ insp.days }}" as="d" hint-placeholder-count="5">
+                  <x-import component-from-global-scope="DesignSystem_b66810.FilterChip" radio="{{ true }}" selected="{{ d.on }}" onChange="{{ d.pick }}" hint-size="110px,40px">{{ d.label }}</x-import>
+                </sc-for>
+              </div>
+            </div>
+
+            <div style="display: flex; flex-direction: column; gap: var(--space-2);">
+              <label for="insp-note" class="label" style="font-weight: 600;">Что проверить особенно <span style="color: var(--ink-muted); font-weight: 400;">— необязательно</span></label>
+              <textarea id="insp-note" rows="2" value="{{ insp.note }}" onInput="{{ insp.onNote }}" onChange="{{ insp.onNote }}" placeholder="Например, родные ли звукосниматели" style="width: 100%; box-sizing: border-box; padding: var(--space-3) var(--space-4); border: 1px solid var(--line-control); border-radius: var(--radius-sm); background: var(--surface-raised); color: var(--ink); font: 400 var(--text-m)/24px var(--font-text); resize: vertical;"></textarea>
+            </div>
+
+            <div style="display: flex; align-items: center; justify-content: space-between; gap: var(--space-4); padding-top: var(--space-4); border-top: 1px solid var(--line);">
+              <span style="display: flex; flex-direction: column; gap: 2px;">
+                <span class="body-s" style="color: var(--ink-muted);">Оплата мастеру после осмотра</span>
+                <span class="h3" style="font-variant-numeric: tabular-nums; white-space: nowrap;">{{ insp.total }}</span>
+              </span>
+              <x-import component-from-global-scope="DesignSystem_b66810.Button" variant="primary" disabled="{{ insp.cant }}" onClick="{{ insp.send }}" hint-size="200px,48px">Отправить заявку</x-import>
+            </div>
+            <sc-if value="{{ insp.cant }}" hint-placeholder-val="{{ true }}">
+              <span class="caption" style="color: var(--ink-muted); margin-top: calc(-1 * var(--space-3));">Выберите день.</span>
+            </sc-if>
+          </div>
+        </sc-if>
+      </div>
+    </div>
+  </sc-if>
+
+  <div style="margin-top: var(--space-16);">
+    <dc-import name="Подвал" hint-size="100%,260px"></dc-import>
+  </div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props="{}">
+const PHOTOS = [
+  ['guitar', 'Общий вид'], ['guitar', 'Корпус крупно'], ['scan-barcode', 'Серийный номер'],
+  ['camera', 'Гриф и лады'], ['camera', 'Звукосниматели'], ['package', 'Кейс']
+];
+const LOT = 'Десктоп - Лот.dc.html';
+const IM = [
+  ['АВ', 'Алексей Воронцов', '«Лад и строй» · 4,9 · 2,4 км от продавца', 1900, 'ближайшее — пн'],
+  ['СЛ', 'Сергей Лаптев', '«Струна и гриф» · 4,8 · 3,1 км', 1700, 'ближайшее — вт'],
+  ['ДС', 'Дмитрий Соколов', '«Гитарная клиника» · 4,7 · 4,6 км', 1500, 'ближайшее — ср']
+];
+const IDAYS = ['Пн, 13 окт', 'Вт, 14 окт', 'Ср, 15 окт', 'Чт, 16 окт', 'Пт, 17 окт'];
+class Component extends DCLogic {
+  state = { ph: 0, bought: false, iOpen: false, im: 0, iplace: 'shop', iday: null, inote: '', isent: false };
+  onEsc = e => { if (e.key === 'Escape' && this.state.iOpen) this.setState({ iOpen: false }); };
+  componentDidMount() { document.addEventListener('keydown', this.onEsc); }
+  componentWillUnmount() { document.removeEventListener('keydown', this.onEsc); }
+  inspVals() {
+    const s = this.state;
+    const rub = n => n.toLocaleString('ru-RU') + ' ₽';
+    const m = IM[s.im];
+    const total = m[3] + (s.iplace === 'meet' ? 500 : 0);
+    return {
+      open: s.iOpen, sent: s.isent, editing: !s.isent,
+      title: s.isent ? 'Заявка отправлена' : 'Проверка перед покупкой',
+      close: () => this.setState({ iOpen: false }),
+      checks: ['Серийный номер и документы', 'Гриф, лады и прогиб', 'Электрика и звукосниматели', 'Звук через усилитель'],
+      masters: IM.map((x, i) => {
+        const on = i === s.im;
+        return {
+          ini: x[0], name: x[1], meta: x[2], price: rub(x[3]), slot: x[4], on,
+          pick: () => this.setState({ im: i }),
+          style: 'display: flex; align-items: center; gap: var(--space-3); width: 100%; padding: var(--space-3) var(--space-4); border-radius: var(--radius-md); border: ' + (on ? '2px solid var(--copper)' : '1px solid var(--line)') + '; margin: ' + (on ? '0' : '1px') + '; background: ' + (on ? 'var(--copper-soft)' : 'var(--surface-raised)') + '; color: var(--ink); font: inherit; cursor: pointer; box-sizing: border-box;',
+          dot: 'flex: none; width: 20px; height: 20px; border-radius: var(--radius-full); box-sizing: border-box; border: ' + (on ? '6px solid var(--copper)' : '2px solid var(--line-control)') + '; background: var(--surface-raised);'
+        };
+      }),
+      places: [
+        { label: 'В мастерской', icon: 'wrench', on: s.iplace === 'shop', pick: () => this.setState({ iplace: 'shop' }) },
+        { label: 'Выезд на встречу · +500 ₽', icon: 'map-pin', on: s.iplace === 'meet', pick: () => this.setState({ iplace: 'meet' }) }
+      ],
+      days: IDAYS.map(d => ({ label: d, on: s.iday === d, pick: () => this.setState({ iday: d }) })),
+      note: s.inote, onNote: e => this.setState({ inote: e.target.value }),
+      total: rub(total), cant: !s.iday,
+      send: () => { if (s.iday) this.setState({ isent: true }); },
+      sentText: m[1] + ' посмотрит инструмент ' + (s.iday || '').toLowerCase() + (s.iplace === 'meet' ? ' на встрече с продавцом' : ' в мастерской') + '. Время мастер подтвердит в сообщениях. Стоимость — ' + rub(total) + '.'
+    };
+  }
+  renderVals() {
+    const { ph, bought } = this.state;
+    const tb = 'aspect-ratio: 1 / 1; min-height: 44px; border-radius: var(--radius-md); background: var(--surface-recessed); color: var(--ink-faint); display: flex; align-items: center; justify-content: center; cursor: pointer; padding: 0; box-sizing: border-box; border: 2px solid ';
+    const thumbs = PHOTOS.map(([icon, label], i) => ({
+      icon, label: 'Фото ' + (i + 1) + ': ' + label,
+      pressed: i === ph ? 'true' : 'false',
+      style: tb + (i === ph ? 'var(--lad);' : 'transparent;'),
+      go: () => this.setState({ ph: i })
+    }));
+    return {
+      insp: this.inspVals(),
+      alertClick: e => { if (e.target.closest && e.target.closest('button')) this.setState({ iOpen: true, isent: false, iday: null, inote: '' }); },
+      thumbs,
+      photo: { icon: PHOTOS[ph][0], label: PHOTOS[ph][1] },
+      photoCount: (ph + 1) + ' / ' + PHOTOS.length,
+      write: () => { location.href = 'Десктоп - Сообщения.dc.html?chat=lot'; },
+      specs: [['Бренд', 'Fender'], ['Модель', 'American Vintage ’57 Stratocaster'], ['Год', '2009'], ['Страна производства', 'США'], ['Корпус', 'Ольха'], ['Гриф и накладка', 'Клён, профиль V'], ['Звукосниматели', '3 × сингл, оригинальные'], ['Лады', '21, vintage'], ['Комплект', 'Твидовый кейс, ремень, документы']].map(([k, v]) => ({ k, v })),
+      passport: [
+        { date: '14.09.2026', kind: 'inspection', text: 'Проверка перед покупкой: отчёт из 14 пунктов, без замечаний', by: 'А. Воронцов · «Лад и строй»' },
+        { date: '02.03.2023', kind: 'sale', text: 'Продажа на ЯМузыканте с безопасной сделкой', by: 'Москва → Тверь' },
+        { date: '11.06.2018', kind: 'repair', text: 'Перешлифовка ладов, замена порожка (кость)', by: 'Мастерская, чек приложен' },
+        { date: '20.11.2009', kind: 'setup', text: 'Первая продажа, заводская настройка', by: 'Официальный дилер' }
+      ],
+      sellerBadges: [{ label: 'Быстро отправляет', tone: 'lad', icon: 'truck' }, { label: 'Магазин', tone: 'nickel' }],
+      accessories: [
+        { name: 'Струны', items: [{ title: 'Ernie Ball Regular Slinky 10–46', price: 790, fit: 'fits', icon: 'cable' }, { title: "D'Addario EXL110, 3 комплекта", price: 2190, fit: 'fits', icon: 'cable' }, { title: 'Elixir Nanoweb 10–46', price: 1890, fit: 'fits', icon: 'cable' }] },
+        { name: 'Чехлы и кейсы', items: [{ title: 'Чехол Fender Performance', price: 8990, fit: 'fits', icon: 'package' }, { title: 'Кейс SKB для Strat/Tele', price: 21500, fit: 'fits', icon: 'package' }] },
+        { name: 'Звукосниматели', items: [{ title: 'Seymour Duncan SSL-1, комплект', price: 16900, fit: 'check', icon: 'cable' }] },
+        { name: 'Ремни', items: [{ title: 'Ремень Levy’s кожаный 2,5″', price: 3400, icon: 'package' }] }
+      ],
+      similar: [
+        { id: 's1', title: 'Fender Player Stratocaster 2019, Polar White', price: 78000, condition: 'good', city: 'Москва', distance: '3,2 км', posted: '40 мин назад' },
+        { id: 's2', title: 'Fender American Standard Stratocaster 2012', price: 132000, condition: 'very-good', city: 'Москва', distance: '7,4 км', posted: 'вчера', inspected: true },
+        { id: 's3', title: 'Squier Classic Vibe ’50s Stratocaster', price: 38000, condition: 'excellent', city: 'Москва', distance: '2,1 км', posted: 'вчера' },
+        { id: 's4', title: 'Fender Japan ST62, 1994', price: 98000, condition: 'very-good', city: 'Химки', distance: '18 км', posted: '2 дня назад', rare: true },
+        { id: 's5', title: 'Fender Vintera ’50s Stratocaster', price: 104000, condition: 'excellent', city: 'Москва', distance: '5,5 км', posted: '3 дня назад' }
+      ].map(l => ({ ...l, href: LOT }))
+    };
+  }
+}
+</script>
+</body>
+</html>

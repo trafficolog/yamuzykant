@@ -1,0 +1,6 @@
+# Заменить @OWNER на логин владельца на этапе 0
+*                         @OWNER
+/docs/02-process/         @OWNER
+/.github/                 @OWNER
+/design/                  @OWNER
+/resources/js/ds/         @OWNER

@@ -1,0 +1,17 @@
+<!-- @dsCard group="Формы" viewport="900x420" name="Radio" -->
+<!DOCTYPE html><html lang="ru"><head><meta charset="utf-8"><meta name="color-scheme" content="only light"><link rel="stylesheet" href="../../styles.css">
+<script src="https://unpkg.com/react@18.3.1/umd/react.development.js" integrity="sha384-hD6/rw4ppMLGNu3tX5cjIb+uRZ7UkRJ6BPkLpg4hAu/6onKUg4lLsHAs9EBPT82L" crossorigin="anonymous"></script>
+<script src="https://unpkg.com/react-dom@18.3.1/umd/react-dom.development.js" integrity="sha384-u6aeetuaXnQ38mYT8rp6sbXaQe3NL9t+IBXmnYxwkUI2Hw4bsp2Wvmx4yRQF1uAm" crossorigin="anonymous"></script>
+<script src="../../_ds_bundle.js"></script>
+<style>html,body{background:var(--surface)}body{margin:0;padding:16px 20px}.g{display:grid;grid-template-columns:repeat(auto-fill,minmax(min(100%,260px),1fr));gap:4px 24px}.s{display:grid;gap:2px}.k{font:500 11px/14px var(--font-mono);color:var(--ink-faint)}</style></head><body class="ym-root" data-theme="light"><div id="r"></div>
+<script>
+var L = window.DesignSystem_b66810, h = React.createElement;
+function S(k, el) { return h('div', { className: 's', key: k }, h('span', { className: 'k' }, k), el); }
+ReactDOM.createRoot(document.getElementById('r')).render(h('div', { className: 'g' },
+S('столбцом, с подсказками', h(L.Radio,{name:'r1',label:'Доставка',defaultValue:'courier',options:[{value:'courier',label:'Курьер',hint:'Завтра, бесплатно'},{value:'pickup',label:'Пункт выдачи',hint:'600 м от вас'},{value:'pack',label:'Доставка с упаковкой',hint:'Для инструментов, со страховкой'}]})),
+S('наведение / фокус', h('div',null,h(L.Radio,{name:'r2',label:'Продавец',options:['Частное лицо','Магазин'],demo:'hover',inline:true}),h(L.Radio,{name:'r3',options:['Частное лицо','Магазин'],demo:'focus',inline:true}))),
+S('в строку, выбран', h(L.Radio,{name:'r4',label:'Оплата',inline:true,defaultValue:'СБП',options:['СБП','Картой онлайн']})),
+S('вариант неактивен', h(L.Radio,{name:'r5',label:'Получение',defaultValue:'Самовывоз',options:['Самовывоз',{value:'meet',label:'Встреча в метро',disabled:true}]})),
+S('группа неактивна', h(L.Radio,{name:'r6',label:'Состояние',disabled:true,defaultValue:'Отличное',options:['Отличное','Хорошее']})),
+S('ошибка', h(L.Radio,{name:'r7',label:'Тип объявления',error:'Выберите тип объявления',options:['Продаю','Ищу']}))));
+</script></body></html>
