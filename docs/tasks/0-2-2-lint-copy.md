@@ -26,7 +26,7 @@ escalations: []
 ## Что сделать
 - Довести `tools/lint-copy.mjs`: словарь из AGENTS.md §5, режим `--styles` (hex/rgb в Pages, Components, Layouts)
 - Подключить в job `docs` и в `npm run lint:copy`
-- Playwright `copy.spec.ts`: обход всех публичных маршрутов, проверка `document.body.innerText`
+- Playwright `copy.spec.ts`: обход всех публичных маршрутов, проверка `document.body.innerText`; внутренняя витрина `/_ds` исключена — на ней отрисованы компоненты ДС с текстами по умолчанию (например, `Header` с запрещённой подписью), которые в продукте не используются (ARCHITECTURE §4)
 
 ## Критерии приёмки
 - [ ] Слово «сетап» в .tsx, .php, lang/*.php роняет CI с файлом и строкой

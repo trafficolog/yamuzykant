@@ -113,4 +113,4 @@ flowchart LR
 
 ## 9. Переменные окружения
 
-`APP_*`, `DB_*`, `REDIS_*`, `SCOUT_DRIVER=meilisearch`, `MEILISEARCH_HOST`, `MEILISEARCH_KEY`, `REVERB_APP_ID`, `REVERB_APP_KEY`, `REVERB_APP_SECRET`, `AWS_*` (S3-совместимое), `MAIL_*`, `YANDEX_CLIENT_ID`, `YANDEX_CLIENT_SECRET`, `YANDEX_REDIRECT_URI`, `SENTRY_LARAVEL_DSN`, `VITE_SENTRY_DSN`. Каждая новая переменная добавляется сюда и в `.env.example` в том же PR.
+`APP_*`, `DB_*`, `REDIS_*`, `SCOUT_DRIVER=meilisearch`, `MEILISEARCH_HOST`, `MEILISEARCH_KEY`, `REVERB_APP_ID`, `REVERB_APP_KEY`, `REVERB_APP_SECRET`, `AWS_*` (S3-совместимое), `MAIL_*`, `YANDEX_CLIENT_ID`, `YANDEX_CLIENT_SECRET`, `YANDEX_REDIRECT_URI`, `SENTRY_LARAVEL_DSN`, `VITE_SENTRY_DSN`, `DS_SHOWCASE` (витрина `/_ds`: по умолчанию включена только в local и stage, в production закрыта всегда; в CI e2e — `true`). Каждая новая переменная добавляется сюда и в `.env.example` в том же PR.

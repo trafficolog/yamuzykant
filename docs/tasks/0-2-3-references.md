@@ -29,6 +29,8 @@ escalations: []
 - Проверить глазами каждый снимок: экран отрисован полностью, нет пустых областей и ошибок загрузки
 - `tests/e2e/visual/_helpers.ts`: сравнение страницы реализации с эталоном по manifest (порог, маски)
 - Тест-заготовки `visual/{id}.spec.ts` со `test.fixme` для экранов следующих гейтов
+- Эталон витрины `/_ds` на 1440 (перенесён из 0.2.1): снять с реализации в Linux-контейнере Playwright той же версии, что в CI, снять `test.skip` в `tests/e2e/visual/ds.visual.spec.ts`; эталон принимает OWNER на G0
+- Все эталоны — `-linux.png` (CI на Linux); Windows/macOS-снимки в git не попадают
 
 ## Критерии приёмки
 - [ ] В `design/screens` есть PNG для каждого `screens[].viewports` из manifest
