@@ -15,7 +15,8 @@ permissions:
 env:
   PHP_VERSION: '8.3'
   PHP_EXTENSIONS: pdo_pgsql, pdo_sqlite, redis, intl, gd
-  NODE_VERSION: '20'
+  # Node 22 LTS: jsdom 30 и undici из lock-файла требуют Node ≥ 22.22 (на Node 20 Vitest падает).
+  NODE_VERSION: '22'
 
 # Имена jobs docs, php, js, e2e — обязательные проверки main (CI-CD.md §4, ORCHESTRATOR §0 п.4).
 # Внутри job проверки идут шагами с `if: !cancelled() && steps.install.outcome == 'success'`:
