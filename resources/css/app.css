@@ -1,1 +1,6 @@
-/* Токены дизайн-системы подключаются в задаче 0.2.1 (порядок — DESIGN-SYSTEM.md §2). */
+/* Токены и стили дизайн-системы — строго в этом порядке (docs/03-design/DESIGN-SYSTEM.md §2). */
+@import '../js/ds/tokens/webfonts.css';
+@import '../js/ds/tokens/tokens.css';
+@import '../js/ds/tokens/page.css';
+@import '../js/ds/tokens/components.css';
+@import '../js/ds/tokens/forms.css';

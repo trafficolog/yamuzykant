@@ -40,6 +40,19 @@ export default tseslint.config(
             'react-hooks/exhaustive-deps': 'warn',
             '@typescript-eslint/no-explicit-any': 'error',
             'react/prop-types': 'off',
+            // Дизайн-система подключается только через `@ds`; resources/js/ds — генерируемая копия.
+            'no-restricted-imports': [
+                'error',
+                {
+                    patterns: [
+                        {
+                            group: ['@ds/*', '@/ds', '@/ds/*', '**/ds/**'],
+                            message:
+                                'Импортируйте компоненты ДС только из «@ds»; resources/js/ds — копия, которую обновляет npm run ds:sync.',
+                        },
+                    ],
+                },
+            ],
         },
     },
     {
