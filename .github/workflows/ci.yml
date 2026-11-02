@@ -29,7 +29,9 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
-        with: { node-version: ${{ env.NODE_VERSION }} }
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+      - run: node --test .github/scripts/coverage-gate.test.mjs
       - run: node tools/docs-ops.mjs check
       - run: node tools/lint-copy.mjs --styles
       - name: Запрет правок копии ДС вне ds-sync
@@ -71,9 +73,14 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - uses: shivammathur/setup-php@v2
-        with: { php-version: ${{ env.PHP_VERSION }}, extensions: pdo_pgsql, redis, intl, gd, imagick, coverage: pcov }
+        with:
+          php-version: ${{ env.PHP_VERSION }}
+          extensions: pdo_pgsql, redis, intl, gd, imagick
+          coverage: pcov
       - uses: actions/cache@v4
-        with: { path: vendor, key: composer-${{ hashFiles('composer.lock') }} }
+        with:
+          path: vendor
+          key: composer-${{ hashFiles('composer.lock') }}
       - run: composer install --no-interaction --prefer-dist
       - run: cp .env.example .env && php artisan key:generate
       - run: vendor/bin/pint --test
@@ -88,7 +95,9 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
-        with: { node-version: ${{ env.NODE_VERSION }}, cache: npm }
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: npm
       - run: npm ci
       - run: npm run lint
       - run: npm run typecheck
@@ -129,14 +138,20 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - uses: shivammathur/setup-php@v2
-        with: { php-version: ${{ env.PHP_VERSION }}, extensions: pdo_pgsql, redis, intl, gd, imagick }
+        with:
+          php-version: ${{ env.PHP_VERSION }}
+          extensions: pdo_pgsql, redis, intl, gd, imagick
       - uses: actions/setup-node@v4
-        with: { node-version: ${{ env.NODE_VERSION }}, cache: npm }
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: npm
       - run: composer install --no-interaction --prefer-dist && npm ci
       - run: cp .env.example .env && php artisan key:generate && php artisan migrate --seed --force
       - run: npm run build && npm run build:ssr
       - uses: actions/cache@v4
-        with: { path: ~/.cache/ms-playwright, key: pw-${{ hashFiles('package-lock.json') }} }
+        with:
+          path: ~/.cache/ms-playwright
+          key: pw-${{ hashFiles('package-lock.json') }}
       - run: npx playwright install --with-deps chromium
       - name: Сервисы приложения
         run: |
@@ -146,7 +161,8 @@ jobs:
           php artisan queue:work > storage/logs/queue.log 2>&1 &
           npx wait-on http://127.0.0.1:8000/health
       - run: npx playwright test
-        env: { E2E_BASE_URL: http://127.0.0.1:8000 }
+        env:
+          E2E_BASE_URL: http://127.0.0.1:8000
       - if: always()
         uses: actions/upload-artifact@v4
         with:
