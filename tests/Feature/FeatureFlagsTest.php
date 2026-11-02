@@ -2,13 +2,10 @@
 
 declare(strict_types=1);
 
-use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Schema;
 use Inertia\Testing\AssertableInertia as Assert;
 use Laravel\Pennant\Feature;
-
-uses(RefreshDatabase::class);
 
 // Список из карточки 0.1.6 и SCREENS.md §2; `premoderation` — SPEC §6.1, ARCHITECTURE §7.
 dataset('feature_flags', [
