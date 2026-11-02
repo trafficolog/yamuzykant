@@ -3,7 +3,7 @@ id: "0.1.1"
 phase: "0"
 epic: "0.1"
 title: "Каркас Laravel + Inertia + React + SSR"
-status: ready
+status: done
 gate: G0
 risk: medium
 model_impl: sonnet
@@ -14,7 +14,7 @@ uc: []
 prototype: ""
 screens: []
 issue: 1
-sync_state: drifted
+sync_state: aligned
 escalations: []
 ---
 

@@ -17,3 +17,6 @@
 /.idea
 /.vscode
 npm-debug.log
+
+# Worktree-копии агентов Claude Code
+/.claude/worktrees/
