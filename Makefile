@@ -1,4 +1,7 @@
 .DEFAULT_GOAL := help
+.PHONY: help up down fresh test-docker e2e
+# Если key:generate упал, неполный .env не остаётся и не блокирует следующий запуск.
+.DELETE_ON_ERROR:
 
 help: ## Показать цели
 	@echo "make up     поднять сервисы compose (pgsql, redis, meilisearch, mailpit, minio) и дождаться healthy"
@@ -7,7 +10,12 @@ help: ## Показать цели
 	@echo "make test-docker  живые тесты сервисов (нужен make up)"
 	@echo "make e2e    собрать фронтенд и запустить Playwright"
 
-up: ## Поднять сервисы и дождаться healthy
+# Создаётся, только если .env ещё нет: копия .env.example и новый APP_KEY (нужен vendor/, то есть composer install).
+.env:
+	cp .env.example .env
+	php artisan key:generate --ansi
+
+up: .env ## Поднять сервисы и дождаться healthy
 	docker compose up -d --wait
 
 down: ## Остановить сервисы
