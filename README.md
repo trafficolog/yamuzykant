@@ -17,6 +17,26 @@
 
 Нужно заранее: аккаунт GitHub и `gh` CLI с авторизацией, PHP 8.3, Composer, Node 20+, Docker (для PostgreSQL, Redis, Meilisearch), Playwright-браузеры (`npx playwright install`).
 
+## Локальный запуск
+
+Нужны Docker с Compose v2, PHP 8.3+ с `pdo_pgsql`, Composer, Node 20+. Команды выполняются из корня репозитория.
+
+```bash
+docker compose up -d --wait      # pgsql 16, redis 7, meilisearch, mailpit, minio; ждёт healthy
+cp .env.example .env             # значения совпадают с compose.yaml, правки не нужны
+composer install
+php artisan key:generate
+php artisan migrate --seed
+npm install
+npm run dev                      # Vite; отдельно: php artisan serve
+```
+
+Адреса: Mailpit — http://127.0.0.1:8025 (письма), MinIO — http://127.0.0.1:9001 (консоль, логин и пароль из `AWS_*` в `.env`), Meilisearch — http://127.0.0.1:7700.
+
+Короткий вариант через Makefile (нужен `make`, на Windows например через Chocolatey или Scoop): `make up`, `make fresh` (`migrate:fresh --seed`), `make down`, `make e2e`. Список целей — `make help`.
+
+Тесты: `composer test` не требует Docker. Тесты живых сервисов (`composer test:docker`) нужен запущенный `docker compose`, или `make test-docker`.
+
 ## Что внутри
 
 ```
