@@ -2,7 +2,9 @@
 
 declare(strict_types=1);
 
+use App\Domain\Accounts\Mail\LoginCodeMail;
 use App\Domain\Accounts\Models\User;
+use Illuminate\Foundation\Http\Middleware\ValidateCsrfToken;
 use Illuminate\Support\Facades\Mail;
 
 beforeEach(function () {
@@ -11,7 +13,7 @@ beforeEach(function () {
 });
 
 it('верный код входит в существующий аккаунт и отмечает время входа', function () {
-    $this->freezeTime();
+    $this->freezeSecond();
     $user = User::factory()->create(['email' => 'anna@example.com', 'last_login_at' => null]);
     $code = requestLoginCode('Anna@Example.com');
     $sessionBefore = session()->getId();
@@ -75,7 +77,7 @@ it('без запрошенного кода → 422', function () {
 });
 
 it('истёкший код → 422', function () {
-    $this->freezeTime();
+    $this->freezeSecond();
     User::factory()->create(['email' => 'anna@example.com']);
     $code = requestLoginCode('anna@example.com');
 
@@ -98,7 +100,7 @@ it('проверяет формат запроса', function (array $payload, s
 ]);
 
 it('5 неверных кодов → блок 15 мин даже с верным кодом', function () {
-    $this->freezeTime();
+    $this->freezeSecond();
     User::factory()->create(['email' => 'anna@example.com']);
     $code = requestLoginCode('anna@example.com');
     $wrong = wrongLoginCode($code);
@@ -132,7 +134,7 @@ it('5 неверных кодов → блок 15 мин даже с верны�
 });
 
 it('после блокировки прежний код больше не действует', function () {
-    $this->freezeTime();
+    $this->freezeSecond();
     User::factory()->create(['email' => 'anna@example.com']);
     $code = requestLoginCode('anna@example.com');
 
@@ -179,11 +181,13 @@ it('LOGIN_CODE_FAKE не открывает вход при APP_ENV :dataset', f
     config(['login.code_fake' => '123456']);
     User::factory()->create(['email' => 'anna@example.com']);
     app()['env'] = $env;
+    // Вне testing Laravel включает проверку CSRF — здесь проверяется только код.
+    $this->withoutMiddleware(ValidateCsrfToken::class);
 
     $this->postJson('/auth/email/code', ['email' => 'anna@example.com'])->assertStatus(202);
 
-    /** @var App\Domain\Accounts\Mail\LoginCodeMail $mail */
-    $mail = Mail::queued(App\Domain\Accounts\Mail\LoginCodeMail::class)->last();
+    /** @var LoginCodeMail $mail */
+    $mail = Mail::queued(LoginCodeMail::class)->last();
     if ($mail->code === '123456') {
         $this->markTestSkipped('Случайный код совпал с LOGIN_CODE_FAKE');
     }

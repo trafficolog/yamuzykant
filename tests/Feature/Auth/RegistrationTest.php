@@ -20,7 +20,7 @@ function verifyNewEmail(string $email): void
 }
 
 it('первый вход создаёт пользователя с согласием и пишет версию документа', function () {
-    $this->freezeTime();
+    $this->freezeSecond();
     $city = City::factory()->create(['name' => 'Москва', 'region' => 'Москва']);
     verifyNewEmail('Boris@Example.com');
 

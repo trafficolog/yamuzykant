@@ -36,6 +36,7 @@ it('письмо в очереди зашифровано и рендеритс�
     $mail->assertSeeInHtml('048213');
     $mail->assertSeeInText('048213');
     $mail->assertSeeInText('10 мин');
+    $mail->assertDontSeeInText('All rights reserved');
 });
 
 it('ответ одинаковый для существующей и новой почты', function () {

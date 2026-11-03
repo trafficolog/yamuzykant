@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 use App\Domain\Accounts\Mail\LoginCodeMail;
 use App\Domain\Accounts\Models\User;
+use Illuminate\Mail\SendQueuedMailable;
 use Illuminate\Support\Facades\Exceptions;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Mail;
@@ -94,7 +95,7 @@ it('в задании очереди код зашифрован', function () {
 
     $this->postJson('/auth/email/code', ['email' => 'anna@example.com'])->assertStatus(202);
 
-    Queue::assertPushedOn('high', Illuminate\Mail\SendQueuedMailable::class, function ($job) {
+    Queue::assertPushedOn('high', SendQueuedMailable::class, function ($job) {
         return $job->shouldBeEncrypted === true;
     });
 });
