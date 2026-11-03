@@ -3,7 +3,7 @@ id: "6.1.1"
 phase: "6"
 epic: "6.1"
 title: "Мобильная шапка и нижняя панель"
-status: in_progress
+status: review
 gate: G1
 risk: medium
 model_impl: sonnet

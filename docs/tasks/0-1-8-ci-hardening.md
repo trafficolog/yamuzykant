@@ -3,7 +3,7 @@ id: "0.1.8"
 phase: "0"
 epic: "0.1"
 title: "CI и docs-ops: укрепление после ревью"
-status: todo
+status: in_progress
 gate: G1
 risk: medium
 model_impl: sonnet
