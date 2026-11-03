@@ -27,11 +27,14 @@ final class HandleInertiaRequests extends Middleware
         return [
             ...parent::share($request),
             // Флаги глобальные: scope null, а не текущий пользователь (for(null), а не default-scope).
-            'flags' => fn (): array => collect(FeatureFlag::cases())
-                ->mapWithKeys(fn (FeatureFlag $flag): array => [
-                    $flag->value => Feature::for(null)->active($flag->value),
-                ])
-                ->all(),
+            // Один запрос к таблице features на все флаги: values() загружает их пачкой.
+            'flags' => fn (): array => array_map(
+                fn (mixed $active): bool => (bool) $active,
+                Feature::for(null)->values(array_map(
+                    fn (FeatureFlag $flag): string => $flag->value,
+                    FeatureFlag::cases(),
+                )),
+            ),
             // Справочник категорий для меню шапки: только видимые, явный список полей (CategoryResource).
             'categories' => fn (): array => CategoryResource::collection((new CategoryTree)->public())
                 ->resolve($request),
