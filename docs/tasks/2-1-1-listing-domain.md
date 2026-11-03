@@ -3,7 +3,7 @@ id: "2.1.1"
 phase: "2"
 epic: "2.1"
 title: "Объявление: модель и жизненный цикл"
-status: in_progress
+status: review
 gate: G1
 risk: high
 model_impl: opus
