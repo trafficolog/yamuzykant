@@ -1,13 +1,14 @@
 import { test } from '@playwright/test';
 import { expectMatchesReference } from './_helpers';
+import { keepOnly } from './_isolate';
 
-// Заготовка визуального теста экрана «footer» (гейт G0). Экрана в реализации ещё нет:
-// когда он появится, укажите маршрут в page.goto, замените test.fixme на test и прогоните
-// npm run test:visual -- --grep footer. Эталон, маски и порог берутся из design/screens/manifest.json.
+// Экран «footer» (гейт G0): подвал PublicLayout на главной против design/screens/footer@{1440,390}.png.
+// Ссылки на разделы вне MVP скрыты флагами, MAX вместо YouTube — как в прототипе «Подвал».
 test.describe('@visual footer', () => {
     for (const viewport of ['1440', '390']) {
-        test.fixme(`footer@${viewport}`, async ({ page }) => {
-            await page.goto('/'); // TODO: маршрут экрана «footer»
+        test(`footer@${viewport}`, async ({ page }) => {
+            await page.goto('/');
+            await keepOnly(page, 'footer');
             await expectMatchesReference(page, 'footer', viewport);
         });
     }
