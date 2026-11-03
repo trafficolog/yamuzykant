@@ -115,6 +115,9 @@ jobs:
           SHA: ${{ needs.authorize.outputs.sha }}
           DEPLOY_HOST: ${{ secrets.DEPLOY_HOST }}
           DEPLOY_USER: ${{ secrets.DEPLOY_USER }}
+          # Ключ сервера — из секрета окружения (StrictHostKeyChecking yes, 0.1.4); остальные значения
+          # .env production задаёт задача 6.4.1, до неё deploy.sh отказывает с именами недостающих.
+          DEPLOY_KNOWN_HOSTS: ${{ secrets.DEPLOY_KNOWN_HOSTS }}
       - if: steps.has.outputs.ok == 'true'
         env:
           PRODUCTION_URL: ${{ vars.PRODUCTION_URL }}

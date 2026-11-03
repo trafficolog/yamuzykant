@@ -22,6 +22,8 @@ const OWNER = 'trafficolog';
 
 const load = (name) => parseYaml(readFileSync(join(WORKFLOWS, name), 'utf8'));
 const workflowFiles = readdirSync(WORKFLOWS).filter((f) => /\.ya?ml$/.test(f));
+// Workflows с доступом к секретам выкатки (stage и production).
+const DEPLOY_WORKFLOWS = ['deploy.yml', 'release.yml', 'provision.yml'];
 
 // Job запускается, если истинно его `if` с учётом результатов needs (как в GitHub):
 // need пропущен — 'skipped', need в failed — 'failure', иначе 'success'.
@@ -208,7 +210,7 @@ test('запись — только contents: write у job, создающего
 });
 
 test('jobs выкатки не получают прав на запись', () => {
-    for (const file of ['deploy.yml', 'release.yml']) {
+    for (const file of DEPLOY_WORKFLOWS) {
         const wf = load(file);
         for (const name of deployJobs(wf)) {
             assert.doesNotMatch(text(wf.jobs[name].permissions ?? {}), /write/, `${file}/${name}`);
@@ -249,7 +251,7 @@ test('проверка внедрения ловит format(), toJSON(), vars и
     assert.doesNotMatch('${{ runner.os }}', UNSAFE_IN_RUN);
 });
 
-for (const file of ['deploy.yml', 'release.yml']) {
+for (const file of DEPLOY_WORKFLOWS) {
     test(`${file}: нет триггеров pull_request, pull_request_target, workflow_call`, () => {
         const on = load(file).on;
         for (const trigger of ['pull_request', 'pull_request_target', 'workflow_call']) {
@@ -260,7 +262,7 @@ for (const file of ['deploy.yml', 'release.yml']) {
 
 // Статус-функция в if снимает неявный success(): job идёт и при отказе authorize.
 test('в if jobs выкатки и authorize нет статус-функций (always, cancelled, failure, success)', () => {
-    for (const file of ['deploy.yml', 'release.yml']) {
+    for (const file of DEPLOY_WORKFLOWS) {
         const wf = load(file);
         for (const name of new Set([...deployJobs(wf), ...gateJobs(wf)])) {
             assert.doesNotMatch(
@@ -273,7 +275,7 @@ test('в if jobs выкатки и authorize нет статус-функций 
 });
 
 test('у jobs выкатки, authorize и release и их шагов нет continue-on-error и своего shell', () => {
-    for (const file of ['deploy.yml', 'release.yml']) {
+    for (const file of DEPLOY_WORKFLOWS) {
         const wf = load(file);
         const names = new Set([...deployJobs(wf), ...gateJobs(wf), ...releaseJobs(wf)]);
         for (const name of names) {
@@ -580,4 +582,233 @@ test('authorize: комментарии и пустые строки списк�
     const r = authorize(who(OWNER, 'v1.0.0'), '# никого\n\n');
     assert.equal(r.status, 1, r.out);
     assert.match(r.out, /пуст/);
+});
+
+// ---------- выкатка stage по SSH (0.1.4) ----------
+
+// SHA для deploy.sh — только из проверенного источника, одинаковый в checkout и env.SHA,
+// в run — только "$SHA" (ревью PR #83, N9). Возвращает нарушения.
+export const shaViolations = (wf, source) => {
+    const expr = `\${{ ${source} }}`;
+    const out = [];
+    for (const name of deployJobs(wf)) {
+        const steps = wf.jobs[name].steps ?? [];
+        const deploys = steps.filter((s) =>
+            /deploy\/deploy\.sh (stage|production)\b/.test(String(s.run ?? '')),
+        );
+        if (deploys.length === 0) out.push(`${name}: нет шага deploy/deploy.sh <окружение>`);
+        const checkout = steps.find((s) => /^actions\/checkout@/.test(String(s.uses ?? '')));
+        if (String(checkout?.with?.ref ?? '').replace(/\s+/g, ' ') !== expr)
+            out.push(`${name}: checkout.ref = ${checkout?.with?.ref}, нужно ${expr}`);
+        for (const step of deploys) {
+            if (!/^\.\/deploy\/deploy\.sh (stage|production) "\$SHA"\n?$/.test(String(step.run)))
+                out.push(`${name}: run = ${step.run}, нужно ./deploy/deploy.sh <окружение> "$SHA"`);
+            if (String(step.env?.SHA ?? '').replace(/\s+/g, ' ') !== expr)
+                out.push(`${name}: env.SHA = ${step.env?.SHA}, нужно ${expr}`);
+        }
+    }
+    return out;
+};
+
+const SHA_SOURCES = {
+    'deploy.yml': 'github.event.workflow_run.head_sha',
+    'release.yml': 'needs.authorize.outputs.sha',
+};
+for (const [file, source] of Object.entries(SHA_SOURCES)) {
+    test(`${file}: deploy.sh получает SHA только из ${source} — и в checkout, и в env.SHA`, () => {
+        assert.deepEqual(shaViolations(load(file), source), []);
+    });
+}
+
+const clone = (v) => JSON.parse(JSON.stringify(v));
+const deployStep = (wf, job) =>
+    wf.jobs[job].steps.find((s) =>
+        /deploy\/deploy\.sh (stage|production)/.test(String(s.run ?? '')),
+    );
+const checkoutStep = (wf, job) =>
+    wf.jobs[job].steps.find((s) => /^actions\/checkout@/.test(String(s.uses ?? '')));
+
+test('проверка SHA ловит github.sha, расхождение checkout и SHA прямо в run', () => {
+    const base = load('release.yml');
+    const mutations = {
+        'env.SHA = github.sha': (wf) => (deployStep(wf, 'deploy').env.SHA = '${{ github.sha }}'),
+        'checkout по тегу': (wf) => (checkoutStep(wf, 'deploy').with.ref = '${{ inputs.tag }}'),
+        'SHA литералом в run': (wf) =>
+            (deployStep(wf, 'deploy').run = './deploy/deploy.sh production abc123'),
+        'GITHUB_SHA в run': (wf) =>
+            (deployStep(wf, 'deploy').run = './deploy/deploy.sh production "$GITHUB_SHA"'),
+        'нет env.SHA': (wf) => delete deployStep(wf, 'deploy').env.SHA,
+    };
+    for (const [label, mutate] of Object.entries(mutations)) {
+        const wf = clone(base);
+        mutate(wf);
+        assert.ok(shaViolations(wf, SHA_SOURCES['release.yml']).length > 0, label);
+    }
+});
+
+// Шаги authorize не выключаются и передают ровно проверенные значения (ревью PR #83, N8).
+const AUTHORIZE_RUN =
+    'node .github/scripts/workflow-guards.mjs authorize --actor "$ACTOR" --triggering-actor "$TRIGGERING_ACTOR" --tag "$TAG"';
+export const authorizeViolations = (wf) => {
+    const out = [];
+    const gates = gateJobs(wf);
+    if (gates.length === 0) out.push('нет job с workflow-guards.mjs authorize');
+    for (const name of gates) {
+        for (const step of wf.jobs[name].steps ?? []) {
+            if (Object.hasOwn(step, 'if'))
+                out.push(`${name}: у шага «${step.name ?? step.run ?? step.uses}» есть if`);
+        }
+        const step = wf.jobs[name].steps.find((s) => AUTHORIZE.test(String(s.run ?? '')));
+        if (String(step.run).trim() !== AUTHORIZE_RUN) out.push(`${name}: run = ${step.run}`);
+        const want = {
+            ACTOR: '${{ github.actor }}',
+            TRIGGERING_ACTOR: '${{ github.triggering_actor }}',
+            TAG: '${{ inputs.tag }}',
+        };
+        if (JSON.stringify(step.env ?? {}) !== JSON.stringify(want))
+            out.push(`${name}: env = ${JSON.stringify(step.env)}`);
+    }
+    return out;
+};
+
+test('release.yml: шаги authorize без if, actor, triggering_actor и tag — из события, без --allowlist', () => {
+    assert.deepEqual(authorizeViolations(load('release.yml')), []);
+});
+
+test('проверка authorize ловит if: false, литерал --tag, --allowlist /dev/stdin и подмену env', () => {
+    const base = load('release.yml');
+    const auth = (wf) => wf.jobs.authorize.steps.find((s) => AUTHORIZE.test(String(s.run ?? '')));
+    const mutations = {
+        'if: false у шага authorize': (wf) => (auth(wf).if = false),
+        'if у проверки тега': (wf) => (wf.jobs.authorize.steps.at(-1).if = "inputs.tag != ''"),
+        'литерал --tag': (wf) => (auth(wf).run = AUTHORIZE_RUN.replace('"$TAG"', 'v1.0.0')),
+        '--allowlist /dev/stdin': (wf) =>
+            (auth(wf).run = `${AUTHORIZE_RUN} --allowlist /dev/stdin`),
+        'ACTOR из ввода': (wf) => (auth(wf).env.ACTOR = '${{ inputs.tag }}'),
+        'лишняя переменная': (wf) => (auth(wf).env.EXTRA = 'x'),
+    };
+    for (const [label, mutate] of Object.entries(mutations)) {
+        const wf = clone(base);
+        mutate(wf);
+        assert.ok(authorizeViolations(wf).length > 0, label);
+    }
+});
+
+// Шаги, которые ходят на сервер по SSH: deploy.sh и provision.sh.
+const sshSteps = (wf) =>
+    Object.values(wf.jobs).flatMap((job) =>
+        (job.steps ?? []).filter((s) =>
+            /\.\/deploy\/(deploy|provision)\.sh /.test(String(s.run ?? '')),
+        ),
+    );
+
+for (const file of DEPLOY_WORKFLOWS) {
+    test(`${file}: SSH-шаги получают known_hosts из секрета DEPLOY_KNOWN_HOSTS`, () => {
+        const steps = sshSteps(load(file));
+        assert.ok(steps.length > 0, 'нет шагов deploy.sh / provision.sh');
+        for (const step of steps) {
+            assert.equal(
+                step.env?.DEPLOY_KNOWN_HOSTS,
+                '${{ secrets.DEPLOY_KNOWN_HOSTS }}',
+                step.run,
+            );
+        }
+    });
+}
+
+const KEY_CHECK = /case "\$KEY" in\s+"-----BEGIN OPENSSH PRIVATE KEY-----"\*\)/;
+for (const file of ['deploy.yml', 'provision.yml']) {
+    test(`${file}: перед ssh-agent проверяется формат ключа, значение не печатается`, () => {
+        const wf = load(file);
+        for (const name of deployJobs(wf)) {
+            const steps = wf.jobs[name].steps;
+            const agent = steps.findIndex((s) =>
+                /^webfactory\/ssh-agent@/.test(String(s.uses ?? '')),
+            );
+            const check = steps.findIndex((s) => KEY_CHECK.test(String(s.run ?? '')));
+            assert.ok(agent >= 0 && check >= 0 && check < agent, `${name}: проверка до ssh-agent`);
+            assert.equal(steps[check].env?.KEY, '${{ secrets.DEPLOY_SSH_KEY }}');
+            assert.equal(steps[check].if, steps[agent].if, 'проверка идёт вместе с ssh-agent');
+            const mentions = String(steps[check].run).match(/\$\{?KEY\b/g) ?? [];
+            assert.equal(mentions.length, 1, 'ключ используется только в case, не в echo');
+        }
+    });
+}
+
+test('deploy.yml: до STAGE_DEPLOY_LIVE=true — dry-run без SSH, после — выкатка и /health', () => {
+    const wf = load('deploy.yml');
+    const steps = wf.jobs.deploy.steps;
+    const deploy = deployStep(wf, 'deploy');
+    const agent = steps.find((s) => /^webfactory\/ssh-agent@/.test(String(s.uses ?? '')));
+    const health = steps.find((s) => /\/health/.test(String(s.run ?? '')));
+    assert.ok(!Object.hasOwn(deploy, 'if'), 'шаг deploy.sh идёт всегда (dry-run или выкатка)');
+    for (const [vars, live] of [
+        [{}, false],
+        [{ STAGE_DEPLOY_LIVE: 'false' }, false],
+        [{ STAGE_DEPLOY_LIVE: 'true' }, true],
+    ]) {
+        const ctx = { ...workflowRun(), vars, secrets: {} };
+        assert.equal(evaluate(deploy.env.DEPLOY_DRY_RUN, ctx), live ? '0' : '1', text(vars));
+        assert.equal(jobRuns(agent, ctx), live, 'ssh-agent');
+        assert.equal(jobRuns(health, ctx), live, 'проверка /health');
+    }
+});
+
+// ---------- provision.yml ----------
+
+test('provision.yml: только ручной запуск с выбором provision или rollback', () => {
+    const wf = load('provision.yml');
+    assert.deepEqual(Object.keys(wf.on), ['workflow_dispatch']);
+    const input = wf.on.workflow_dispatch.inputs.command;
+    assert.equal(input.type, 'choice');
+    assert.deepEqual(input.options, ['provision', 'rollback']);
+});
+
+// Ожидающий run в группе concurrency заменяется следующим: ручной откат не должен молча
+// отменяться очередным мержем (ревью PR #96, п. 8). Откат — своя группа без отмены, выкатка
+// и откат на сервере разводятся flock с ожиданием (deploy-scripts.test.mjs).
+test('provision.yml: rollback — своя группа concurrency без отмены, provision — общая с deploy.yml', () => {
+    const wf = load('provision.yml');
+    assert.ok(!Object.hasOwn(wf, 'concurrency'), 'concurrency — на уровне job');
+    const stage = load('deploy.yml').concurrency;
+    assert.equal(stage, 'deploy-stage');
+    for (const name of deployJobs(wf)) {
+        const c = wf.jobs[name].concurrency;
+        assert.equal(c?.['cancel-in-progress'], false, `${name}: cancel-in-progress: false`);
+        const group = (command) =>
+            evaluate(c.group, { ...dispatch('v1.0.0'), inputs: { command } });
+        assert.equal(group('provision'), stage, 'provision в очереди deploy-stage');
+        assert.equal(group('rollback'), 'stage-rollback', 'rollback в своей группе');
+    }
+});
+
+test('provision.yml: job идёт только из main, окружение stage', () => {
+    const wf = load('provision.yml');
+    const jobs = deployJobs(wf);
+    assert.ok(jobs.length > 0);
+    for (const name of jobs) {
+        assert.equal(wf.jobs[name].environment, 'stage', name);
+        assert.equal(runs(wf, name, dispatch('v1.0.0')), true, `${name}: из main`);
+        for (const ref of ['refs/heads/task/x', 'refs/tags/v1.0.0', 'refs/heads/main-x']) {
+            assert.equal(runs(wf, name, dispatch('v1.0.0', { ref })), false, `${name} от ${ref}`);
+        }
+        assert.equal(runs(wf, name, workflowRun()), false, `${name}: не от workflow_run`);
+    }
+});
+
+test('provision.yml: provision.sh remote и deploy.sh rollback stage — по выбору команды', () => {
+    const wf = load('provision.yml');
+    const steps = Object.values(wf.jobs).flatMap((j) => j.steps);
+    const byRun = (cmd) => steps.find((s) => String(s.run ?? '').trim() === cmd);
+    const provision = byRun('./deploy/provision.sh remote');
+    const rollback = byRun('./deploy/deploy.sh rollback stage');
+    assert.ok(provision && rollback, 'нет шагов provision.sh remote и deploy.sh rollback stage');
+    for (const [command, p, r] of [
+        ['provision', true, false],
+        ['rollback', false, true],
+    ]) {
+        const ctx = { ...dispatch('v1.0.0'), inputs: { command } };
+        assert.equal(jobRuns(provision, ctx), p, `provision при ${command}`);
+        assert.equal(jobRuns(rollback, ctx), r, `rollback при ${command}`);
+    }
 });

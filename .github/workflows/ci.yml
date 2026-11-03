@@ -33,7 +33,7 @@ jobs:
         with:
           node-version: ${{ env.NODE_VERSION }}
       - name: Тесты скриптов CI
-        run: node --test .github/scripts/coverage-gate.test.mjs .github/scripts/workflow-guards.test.mjs .github/scripts/workflow-pins.test.mjs
+        run: node --test .github/scripts/coverage-gate.test.mjs .github/scripts/workflow-guards.test.mjs .github/scripts/workflow-pins.test.mjs .github/scripts/deploy-scripts.test.mjs
       - name: Тесты lint-copy и словаря copy.spec
         run: node --test tools/lint-copy.test.mjs tools/copy-dictionary.test.mjs
       - name: Карточки, зависимости, гейты (docs-ops check)
