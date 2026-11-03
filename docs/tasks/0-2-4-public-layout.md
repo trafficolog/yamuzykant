@@ -3,7 +3,7 @@ id: "0.2.4"
 phase: "0"
 epic: "0.2"
 title: "PublicLayout: шапка и подвал"
-status: todo
+status: in_progress
 gate: G0
 risk: medium
 model_impl: sonnet
