@@ -3,7 +3,7 @@ id: "0.1.10"
 phase: "0"
 epic: "0.1"
 title: "Защита release.yml и deploy.yml без branch protection"
-status: review
+status: done
 gate: G1
 risk: high
 model_impl: opus
@@ -14,7 +14,7 @@ uc: []
 prototype: ""
 screens: []
 issue: 81
-sync_state: drifted
+sync_state: aligned
 escalations: []
 ---
 
