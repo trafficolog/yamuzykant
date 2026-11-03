@@ -3,7 +3,7 @@ id: "0.1.4"
 phase: "0"
 epic: "0.1"
 title: "Окружение stage и автодеплой"
-status: in_progress
+status: review
 gate: G1
 risk: high
 model_impl: opus
