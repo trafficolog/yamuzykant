@@ -1,7 +1,7 @@
 ---
 id: "2"
 title: "Объявления"
-status: todo
+status: in_progress
 gate: G1
 ---
 
