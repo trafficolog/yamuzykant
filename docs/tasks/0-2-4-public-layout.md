@@ -3,7 +3,7 @@ id: "0.2.4"
 phase: "0"
 epic: "0.2"
 title: "PublicLayout: шапка и подвал"
-status: in_progress
+status: done
 gate: G0
 risk: medium
 model_impl: sonnet
@@ -14,7 +14,7 @@ uc: ["S1"]
 prototype: "Шапка.dc.html, Подвал.dc.html"
 screens: ["header", "footer"]
 issue: 10
-sync_state: drifted
+sync_state: aligned
 escalations: []
 ---
 
