@@ -19,7 +19,7 @@ gate: G0
 | [0.1.1 Каркас Laravel + Inertia + React + SSR](../tasks/0-1-1-laravel-skeleton.md) | done | medium | sonnet → sonnet |
 | [0.1.2 Локальное окружение Docker Compose](../tasks/0-1-2-docker-local.md) | done | low | haiku → sonnet |
 | [0.1.3 CI на GitHub Actions](../tasks/0-1-3-ci.md) | done | high | opus → opus |
-| [0.1.4 Окружение stage и автодеплой](../tasks/0-1-4-stage-deploy.md) | in_progress | high | opus → opus |
+| [0.1.4 Окружение stage и автодеплой](../tasks/0-1-4-stage-deploy.md) | review | high | opus → opus |
 | [0.1.5 Логи, ошибки, health](../tasks/0-1-5-observability.md) | todo | medium | sonnet → sonnet |
 | [0.1.6 Фича-флаги Pennant](../tasks/0-1-6-feature-flags.md) | done | low | haiku → sonnet |
 | [0.1.7 Larastan для tests/ и config/](../tasks/0-1-7-larastan-tests.md) | done | low | haiku → sonnet |
