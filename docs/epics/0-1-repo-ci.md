@@ -25,4 +25,5 @@ gate: G0
 | [0.1.7 Larastan для tests/ и config/](../tasks/0-1-7-larastan-tests.md) | todo | low | haiku → sonnet |
 | [0.1.8 CI и docs-ops: укрепление после ревью](../tasks/0-1-8-ci-hardening.md) | todo | medium | sonnet → opus |
 | [0.1.9 Флаги и тестовый каркас: доработки после ревью](../tasks/0-1-9-flags-test-harness.md) | todo | low | haiku → sonnet |
+| [0.1.10 Защита release.yml и deploy.yml без branch protection](../tasks/0-1-10-workflow-guards.md) | todo | high | opus → opus |
 <!-- docs:ops:end -->

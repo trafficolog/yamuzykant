@@ -9,7 +9,7 @@ risk: high
 model_impl: opus
 model_review: opus
 roles: ["DEVOPS"]
-depends_on: ["0.1.3"]
+depends_on: ["0.1.3", "0.1.10"]
 uc: []
 prototype: ""
 screens: []
