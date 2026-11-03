@@ -13,4 +13,8 @@ describe('playwright.config: проект references', () => {
     it('retries: 0 — даже в CI', () => {
         expect(references?.retries).toBe(0);
     });
+
+    it('снимок в пути с {testName}: параллельные тесты одного эталона не делят файл', () => {
+        expect(references?.snapshotPathTemplate).toContain('{testName}');
+    });
 });
