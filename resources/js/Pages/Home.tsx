@@ -7,4 +7,4 @@ export default function Home() {
     return <h1>{ru.brand}</h1>;
 }
 
-Home.layout = (page: ReactNode) => <PublicLayout>{page}</PublicLayout>;
+Home.layout = (page: ReactNode) => <PublicLayout tab="home">{page}</PublicLayout>;

@@ -1,4 +1,4 @@
-import { Icon } from '@ds';
+import { Button, Icon } from '@ds';
 import { useState } from 'react';
 
 import type { FlagName } from '@/Hooks/useFlag';
@@ -19,14 +19,19 @@ export interface CategoryMenuProps {
     categories: readonly CategoryNode[];
     /** Включён ли флаг; элементы с выключенным флагом не рендерятся. */
     isEnabled: (flag: FlagName | undefined) => boolean;
+    /** Закрыть меню; кнопка есть только в шторке на экранах < 640 px. */
+    onClose: () => void;
 }
 
 /**
  * Меню категорий шапки: слева виды инструментов, справа группы выбранного вида и блок «Сервисы».
  * Открытием и закрытием (кнопка, Esc, клик вне) управляет SiteHeader.
+ * На экранах < 640 px меню — полноэкранная шторка: сначала список видов, по выбору вида — его группы
+ * с кнопкой «Все категории» для возврата (`data-view` переключает показ стилем).
  */
-export default function CategoryMenu({ categories, isEnabled }: CategoryMenuProps) {
+export default function CategoryMenu({ categories, isEnabled, onClose }: CategoryMenuProps) {
     const [current, setCurrent] = useState(0);
+    const [view, setView] = useState<'list' | 'panel'>('list');
     const visible = categories.filter((category) => isEnabled(category.flag));
     const selected = visible[current] ?? visible[0];
 
@@ -41,8 +46,18 @@ export default function CategoryMenu({ categories, isEnabled }: CategoryMenuProp
                 id={CATEGORY_MENU_ID}
                 role="dialog"
                 aria-label={ru.categoryMenu.label}
+                data-view={view}
                 className="ym-site-menu"
             >
+                <div className="ym-site-menu__bar">
+                    <span className="ym-site-menu__bar-title type-h3">{ru.categoryMenu.label}</span>
+                    <Button
+                        variant="ghost"
+                        icon="x"
+                        aria-label={ru.categoryMenu.close}
+                        onClick={onClose}
+                    />
+                </div>
                 <div className="ym-site-menu__in">
                     <nav aria-label={ru.categoryMenu.navLabel} className="ym-site-menu__list">
                         {visible.map((category, index) => (
@@ -53,7 +68,10 @@ export default function CategoryMenu({ categories, isEnabled }: CategoryMenuProp
                                 aria-current={category === selected ? 'true' : undefined}
                                 onMouseEnter={() => setCurrent(index)}
                                 onFocus={() => setCurrent(index)}
-                                onClick={() => setCurrent(index)}
+                                onClick={() => {
+                                    setCurrent(index);
+                                    setView('panel');
+                                }}
                             >
                                 <span className="ym-site-menu__ico">
                                     <Icon name={category.icon} size={18} />
@@ -67,6 +85,15 @@ export default function CategoryMenu({ categories, isEnabled }: CategoryMenuProp
                     </nav>
 
                     <div className="ym-site-menu__panel">
+                        {/* В ДС нет стрелки «влево»: chevron-right зеркалится стилем. */}
+                        <Button
+                            variant="ghost"
+                            icon="chevron-right"
+                            className="ym-site-menu__back"
+                            onClick={() => setView('list')}
+                        >
+                            {ru.categoryMenu.back}
+                        </Button>
                         <a href={FLEA_HREF} className="ym-site-menu__title type-h2">
                             {selected.name}
                             <Icon name="chevron-right" size={24} />

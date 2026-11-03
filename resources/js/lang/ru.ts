@@ -39,6 +39,8 @@ export const ru = {
         label: 'Все категории',
         navLabel: 'Категории',
         servicesLabel: 'Сервисы',
+        close: 'Закрыть меню',
+        back: 'Все категории',
         more: (count: number) => `Ещё ${count}`,
         services: {
             masterCheck: 'Проверка мастером перед покупкой',
@@ -47,6 +49,14 @@ export const ru = {
             delivery: 'Доставка в защитной упаковке',
             sell: (kind: string) => `Продать ${kind}`,
         },
+    },
+    tabBar: {
+        label: 'Нижнее меню',
+        home: 'Главная',
+        search: 'Поиск',
+        sell: 'Продать',
+        messages: 'Сообщения',
+        account: 'Кабинет',
     },
     footer: {
         services: {

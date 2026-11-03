@@ -140,20 +140,104 @@
     gap: var(--space-2);
 }
 
-/* Узкие экраны: строки переносятся, горизонтальной прокрутки нет (мобильная шапка — задача 6.1.1) */
+/*
+ * Мобильная шапка (< 640 px, задача 6.1.1), по мобильному UI-киту ДС: первая строка — Wordmark и город,
+ * вторая — «Категории» (иконка) и поиск. Строку разделов и иконки берёт на себя нижняя панель, «Продать»
+ * и «Кабинет» — её вкладки.
+ */
 @media (max-width: 639px) {
-    .ym-site-header__strip-in,
-    .ym-site-header__main-in {
-        padding-left: var(--space-4);
-        padding-right: var(--space-4);
+    .ym-site-header__strip {
+        display: none;
     }
-    .ym-site-header__strip-in {
-        gap: var(--space-3);
+    .ym-site-header__main-in {
+        padding: var(--space-1) var(--space-4) var(--space-3);
+        gap: var(--space-1) var(--space-2);
+    }
+    /* Перенос строки: пустой элемент на всю ширину между первой и второй строкой */
+    .ym-site-header__main-in::after {
+        content: '';
+        order: 2;
+        flex-basis: 100%;
+        height: 0;
+    }
+    .ym-site-header__main-in > .ym-wordmark,
+    .ym-site-header__actions {
+        order: 1;
     }
     .ym-site-header__actions {
-        flex: 1 1 100%;
-        flex-wrap: wrap;
+        flex: 1 1 0;
+        min-width: 0;
         margin-left: 0;
+        justify-content: flex-end;
+    }
+    .ym-site-header__actions > :not(:first-child) {
+        display: none;
+    }
+    .ym-site-header__actions > .ym-btn {
+        max-width: 100%;
+        overflow: hidden;
+    }
+    .ym-site-header__cats,
+    .ym-site-header__search {
+        order: 3;
+    }
+    .ym-site-header__search {
+        flex: 1 1 0;
+    }
+    /* «Категории» на телефоне — квадратная кнопка с иконкой; подпись остаётся в имени для чтения с экрана */
+    .ym-site-header__cats > .ym-btn {
+        width: var(--control-m);
+        padding: 0;
+    }
+    .ym-site-header__cats-label {
+        display: block;
+        position: absolute;
+        width: 1px;
+        height: 1px;
+        overflow: hidden;
+        clip-path: inset(50%);
+        white-space: nowrap;
+    }
+}
+
+/* Нижняя панель: только на < 640 px, прижата к низу окна и учитывает безопасную зону (вырез, жест «домой») */
+.ym-tabbar {
+    display: none;
+}
+@media (max-width: 639px) {
+    .ym-tabbar {
+        display: flex;
+        position: sticky;
+        bottom: 0;
+        z-index: 10;
+        padding: var(--space-1) var(--space-1) max(var(--space-1), env(safe-area-inset-bottom));
+        background: var(--surface-raised);
+        border-top: 1px solid var(--line);
+    }
+    .ym-tabbar__item {
+        flex: 1 1 0;
+        /* Подпись не обрезается: на 320 px «Сообщения» шире равной доли, остальные вкладки уступают */
+        min-width: min-content;
+        min-height: var(--hit-min);
+        padding-inline: 0;
+        color: var(--ink-muted);
+    }
+    .ym-tabbar__item[aria-current='page'] {
+        color: var(--accent-text);
+    }
+    .ym-tabbar__item:focus-visible {
+        outline: 2px solid var(--focus-ring);
+        outline-offset: -2px;
+    }
+    .ym-tabbar__label {
+        max-width: 100%;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+    }
+    .ym-tabbar__item .ym-iconbtn__count {
+        top: var(--space-1);
+        right: calc(50% - var(--space-6));
     }
 }
 
@@ -346,6 +430,71 @@
     }
     .ym-site-menu__services {
         flex-basis: 100%;
+    }
+}
+
+/*
+ * Меню категорий на < 640 px — полноэкранная шторка (задача 6.1.1): сверху панель с названием и «Закрыть меню»,
+ * ниже список видов; выбор вида открывает его группы с кнопкой «Все категории» для возврата.
+ * Показ списка и групп переключает атрибут data-view.
+ */
+.ym-site-menu__bar,
+.ym-site-menu__back {
+    display: none;
+}
+@media (max-width: 639px) {
+    .ym-site-menu {
+        position: fixed;
+        inset: 0;
+        z-index: 1;
+        max-height: none;
+        border-radius: 0;
+        box-shadow: none;
+        overscroll-behavior: contain;
+    }
+    .ym-site-menu__scrim {
+        display: none;
+    }
+    .ym-site-menu__bar {
+        position: sticky;
+        top: 0;
+        z-index: 1;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        padding: var(--space-2) var(--space-2) var(--space-2) var(--space-4);
+        background: var(--surface-raised);
+        border-bottom: 1px solid var(--line);
+    }
+    .ym-site-menu__bar .ym-btn {
+        width: var(--control-m);
+        padding: 0;
+    }
+    .ym-site-menu[data-view='list'] .ym-site-menu__panel,
+    .ym-site-menu[data-view='panel'] .ym-site-menu__list {
+        display: none;
+    }
+    .ym-site-menu__back {
+        display: inline-flex;
+        align-self: flex-start;
+        margin-left: calc(-1 * var(--space-3));
+    }
+    .ym-site-menu__back svg {
+        transform: scaleX(-1);
+    }
+    .ym-site-menu__title,
+    .ym-site-menu__group-title,
+    .ym-site-menu__item,
+    .ym-site-menu__service {
+        min-height: var(--hit-min);
+    }
+    .ym-site-menu__title,
+    .ym-site-menu__group-title {
+        align-items: center;
+    }
+    /* Пока шторка открыта, страница под ней не прокручивается */
+    body:has(.ym-site-menu) {
+        overflow: hidden;
     }
 }
 

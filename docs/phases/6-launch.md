@@ -13,7 +13,7 @@ gate: G3
 <!-- docs:ops:begin epics -->
 | Эпик | Задач | Готово |
 |---|---|---|
-| [6.1 Мобильная версия](../epics/6-1-mobile.md) | 2 | 0 |
+| [6.1 Мобильная версия](../epics/6-1-mobile.md) | 2 | 1 |
 | [6.2 Качество](../epics/6-2-quality.md) | 3 | 0 |
 | [6.3 Безопасность и ПДн](../epics/6-3-security.md) | 3 | 0 |
 | [6.4 Production и запуск](../epics/6-4-release.md) | 4 | 0 |

@@ -22,8 +22,8 @@ gate: G0
 | [0.1.4 Окружение stage и автодеплой](../tasks/0-1-4-stage-deploy.md) | todo | high | opus → opus |
 | [0.1.5 Логи, ошибки, health](../tasks/0-1-5-observability.md) | todo | medium | sonnet → sonnet |
 | [0.1.6 Фича-флаги Pennant](../tasks/0-1-6-feature-flags.md) | done | low | haiku → sonnet |
-| [0.1.7 Larastan для tests/ и config/](../tasks/0-1-7-larastan-tests.md) | in_progress | low | haiku → sonnet |
-| [0.1.8 CI и docs-ops: укрепление после ревью](../tasks/0-1-8-ci-hardening.md) | todo | medium | sonnet → opus |
+| [0.1.7 Larastan для tests/ и config/](../tasks/0-1-7-larastan-tests.md) | done | low | haiku → sonnet |
+| [0.1.8 CI и docs-ops: укрепление после ревью](../tasks/0-1-8-ci-hardening.md) | in_progress | medium | sonnet → opus |
 | [0.1.9 Флаги и тестовый каркас: доработки после ревью](../tasks/0-1-9-flags-test-harness.md) | todo | low | haiku → sonnet |
 | [0.1.10 Защита release.yml и deploy.yml без branch protection](../tasks/0-1-10-workflow-guards.md) | done | high | opus → opus |
 <!-- docs:ops:end -->

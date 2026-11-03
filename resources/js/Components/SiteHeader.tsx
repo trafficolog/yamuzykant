@@ -160,10 +160,16 @@ export default function SiteHeader({
                             aria-controls={CATEGORY_MENU_ID}
                             onClick={() => (open ? closeMenu(false) : setOpen(true))}
                         >
-                            {ru.header.categories}
+                            <span className="ym-site-header__cats-label">
+                                {ru.header.categories}
+                            </span>
                         </Button>
                         {open ? (
-                            <CategoryMenu categories={categories} isEnabled={isEnabled} />
+                            <CategoryMenu
+                                categories={categories}
+                                isEnabled={isEnabled}
+                                onClose={() => closeMenu(true)}
+                            />
                         ) : null}
                     </div>
 

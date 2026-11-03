@@ -16,7 +16,7 @@ gate: G1
 <!-- docs:ops:begin tasks -->
 | Задача | Статус | Риск | Исполнитель → Ревьюер |
 |---|---|---|---|
-| [1.1.1 Вход по коду на почту: бэкенд](../tasks/1-1-1-email-login.md) | in_progress | high | opus → opus |
+| [1.1.1 Вход по коду на почту: бэкенд](../tasks/1-1-1-email-login.md) | review | high | opus → opus |
 | [1.1.2 Окно входа](../tasks/1-1-2-login-dialog.md) | todo | medium | sonnet → sonnet |
 | [1.1.3 Профиль, город и уведомления](../tasks/1-1-3-profile.md) | todo | medium | sonnet → sonnet |
 | [1.1.4 Выбор города](../tasks/1-1-4-city-select.md) | todo | low | haiku → sonnet |
