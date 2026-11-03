@@ -23,3 +23,15 @@ test.describe('@visual header', () => {
         });
     }
 });
+
+// R1-вид (флаги выключены) — то, что видят пользователи: эталон состояния `header--r1@{vp}.png`,
+// снятый с реализации блоком и принятый OWNER на G1; порог из manifest, без подмены флагов.
+test.describe('@visual header R1', () => {
+    for (const viewport of ['1440']) {
+        test(`header@${viewport}, R1`, async ({ page }) => {
+            await page.goto('/');
+            await keepOnly(page, 'header');
+            await expectMatchesReference(page, 'header', viewport, { state: 'r1' });
+        });
+    }
+});

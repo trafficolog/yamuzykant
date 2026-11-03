@@ -22,3 +22,15 @@ test.describe('@visual footer', () => {
         });
     }
 });
+
+// R1-вид (флаги выключены) — то, что видят пользователи: эталон состояния `footer--r1@{vp}.png`,
+// снятый с реализации блоком и принятый OWNER на G1; порог из manifest, без подмены флагов.
+test.describe('@visual footer R1', () => {
+    for (const viewport of ['1440', '390']) {
+        test(`footer@${viewport}, R1`, async ({ page }) => {
+            await page.goto('/');
+            await keepOnly(page, 'footer');
+            await expectMatchesReference(page, 'footer', viewport, { state: 'r1' });
+        });
+    }
+});

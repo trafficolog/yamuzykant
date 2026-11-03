@@ -1,5 +1,5 @@
 // @vitest-environment node
-import { readFileSync } from 'node:fs';
+import { readdirSync, readFileSync } from 'node:fs';
 import { describe, expect, it } from 'vitest';
 
 // 0.2.6 (аудит G0, R5): эталоны header и footer — снимок блока (локатор `block` из manifest),
@@ -8,6 +8,7 @@ interface Screen {
     id: string;
     block?: string;
     viewports: string[];
+    stateReferences?: { state: string; viewports: string[] }[];
 }
 const manifest = JSON.parse(readFileSync('design/screens/manifest.json', 'utf8')) as {
     screens: Screen[];
@@ -41,4 +42,43 @@ describe('эталоны блоков header и footer', () => {
             expect(pngSize(`design/screens/${screen.id}@1440.png`).height).toBeLessThan(900);
         });
     }
+});
+
+// Ревью PR #99: R1-вид (флаги выключены) — то, что видят пользователи — сверяется с эталонами
+// состояния `{id}--{state}@{vp}.png`, снятыми с реализации блоком (принимает OWNER на G1).
+describe('эталоны состояния R1 (header, footer)', () => {
+    const expected: Record<string, string[]> = { header: ['1440'], footer: ['1440', '390'] };
+
+    for (const [id, viewports] of Object.entries(expected)) {
+        it(`${id}: manifest объявляет состояние r1 для ${viewports.join(', ')}`, () => {
+            const screen = manifest.screens.find((item) => item.id === id);
+            expect(screen?.stateReferences).toEqual([{ state: 'r1', viewports }]);
+        });
+
+        for (const viewport of viewports) {
+            it(`${id}--r1@${viewport}: файл есть, ширина равна ширине viewport`, () => {
+                const size = pngSize(`design/screens/${id}--r1@${viewport}.png`);
+                expect(size.width).toBe(Number(viewport));
+                expect(size.height).toBeGreaterThan(0);
+            });
+        }
+    }
+
+    it('каждое state: в visual-спеках объявлено в manifest', () => {
+        const declared = new Set(
+            manifest.screens.flatMap((screen) =>
+                (screen.stateReferences ?? []).map((item) => item.state),
+            ),
+        );
+        const dir = 'tests/e2e/visual';
+        const used = readdirSync(dir)
+            .filter((name) => name.endsWith('.spec.ts'))
+            .flatMap((name) =>
+                [...readFileSync(`${dir}/${name}`, 'utf8').matchAll(/state: '([^']+)'/g)].map(
+                    (match) => match[1],
+                ),
+            );
+        expect(used.length).toBeGreaterThan(0);
+        for (const state of used) expect(declared.has(state ?? ''), state).toBe(true);
+    });
 });

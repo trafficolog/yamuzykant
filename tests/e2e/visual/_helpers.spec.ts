@@ -97,6 +97,28 @@ test.describe('@visual хелпер сверки с эталоном', () => {
         expect(artifacts.some((name) => name.endsWith('-actual.png'))).toBe(true);
     });
 
+    test('состояние: эталон {id}--{state}@{vp}.png; необъявленное состояние — понятная ошибка', async ({
+        page,
+    }) => {
+        await expect(
+            expectMatchesReference(page, 'footer', '1440', { state: 'нет-такого' }),
+        ).rejects.toThrow(/footer--нет-такого@1440\.png/);
+    });
+
+    // Прототип с ошибкой консоли нельзя ни сверять, ни снимать (ревью PR #99).
+    test('прототип с ошибкой консоли: openPrototype падает', async ({ page }) => {
+        await page.route(/Подвал|%D0%9F%D0%BE%D0%B4%D0%B2%D0%B0%D0%BB/, async (route) => {
+            const response = await route.fetch();
+            const body = (await response.text()).replace(
+                '</body>',
+                '<script>console.error("boom")</script></body>',
+            );
+            await route.fulfill({ response, body });
+        });
+
+        await expect(openPrototype(page, 'footer', '1440')).rejects.toThrow(/ошибками.*boom/);
+    });
+
     test('неизвестный экран или viewport: понятная ошибка', async ({ page }) => {
         await expect(expectMatchesReference(page, 'нет-такого', '1440')).rejects.toThrow(
             /manifest/,

@@ -1,4 +1,5 @@
 import { execFileSync } from 'node:child_process';
+import { createServer } from 'node:http';
 import { mkdtempSync, readFileSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
@@ -10,7 +11,7 @@ import { MANIFEST, PROTOTYPES_BASE } from './_helpers';
 // Скрипт запускается на временном манифесте (REF_MANIFEST) и пишет во временную папку.
 const ROOT = join(import.meta.dirname, '../../..');
 
-function capture(mask: string[]): string {
+function capture(mask: string[], base = PROTOTYPES_BASE): string {
     const dir = mkdtempSync(join(tmpdir(), 'ym-capture-'));
     const footer = MANIFEST.screens.find((screen) => screen.id === 'footer');
     if (!footer) throw new Error('В manifest нет экрана footer');
@@ -23,7 +24,7 @@ function capture(mask: string[]): string {
     writeFileSync(file, JSON.stringify(manifest));
     execFileSync(process.execPath, ['tools/capture-reference.mjs'], {
         cwd: ROOT,
-        env: { ...process.env, REF_MANIFEST: file, REF_BASE: PROTOTYPES_BASE },
+        env: { ...process.env, REF_MANIFEST: file, REF_BASE: base },
         stdio: 'pipe',
     });
     return join(dir, 'footer@1440.png');
@@ -57,5 +58,42 @@ test.describe('@visual capture-reference: маски', () => {
     test('без маски эталон не закрашен', async ({ page }) => {
         const file = capture([]);
         expect(await pixelAt(page, file, 5, 5)).not.toEqual([255, 0, 255, 255]);
+    });
+});
+
+// Ревью PR #99: прототип с ошибкой консоли не снимается — скрипт завершается с кодом 1.
+test.describe('@visual capture-reference: ошибки прототипа', () => {
+    test('console.error в прототипе: код выхода 1 и причина в выводе', async () => {
+        const server = createServer((request, response) => {
+            void fetch(`${PROTOTYPES_BASE}${request.url}`).then(async (upstream) => {
+                const type = upstream.headers.get('content-type') ?? '';
+                let body: Buffer | string = Buffer.from(await upstream.arrayBuffer());
+                if (type.includes('text/html')) {
+                    body = body
+                        .toString('utf8')
+                        .replace('</body>', '<script>console.error("boom")</script></body>');
+                }
+                response.writeHead(upstream.status, { 'content-type': type });
+                response.end(body);
+            });
+        });
+        await new Promise<void>((resolve) => server.listen(0, '127.0.0.1', resolve));
+        const address = server.address();
+        const port = typeof address === 'object' && address ? address.port : 0;
+
+        let status = 0;
+        let output = '';
+        try {
+            capture([], `http://127.0.0.1:${port}`);
+        } catch (error) {
+            const failure = error as { status?: number; stdout?: Buffer };
+            status = failure.status ?? -1;
+            output = String(failure.stdout ?? '');
+        } finally {
+            server.close();
+        }
+
+        expect(status).toBe(1);
+        expect(output).toContain('boom');
     });
 });
