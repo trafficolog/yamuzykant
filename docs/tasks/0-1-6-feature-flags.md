@@ -3,7 +3,7 @@ id: "0.1.6"
 phase: "0"
 epic: "0.1"
 title: "Фича-флаги Pennant"
-status: in_progress
+status: done
 gate: G0
 risk: low
 model_impl: haiku
@@ -14,7 +14,7 @@ uc: []
 prototype: ""
 screens: []
 issue: 6
-sync_state: drifted
+sync_state: aligned
 escalations: []
 ---
 

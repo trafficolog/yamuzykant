@@ -21,7 +21,8 @@ gate: G0
 | [0.1.3 CI на GitHub Actions](../tasks/0-1-3-ci.md) | done | high | opus → opus |
 | [0.1.4 Окружение stage и автодеплой](../tasks/0-1-4-stage-deploy.md) | todo | high | opus → opus |
 | [0.1.5 Логи, ошибки, health](../tasks/0-1-5-observability.md) | todo | medium | sonnet → sonnet |
-| [0.1.6 Фича-флаги Pennant](../tasks/0-1-6-feature-flags.md) | in_progress | low | haiku → sonnet |
+| [0.1.6 Фича-флаги Pennant](../tasks/0-1-6-feature-flags.md) | done | low | haiku → sonnet |
 | [0.1.7 Larastan для tests/ и config/](../tasks/0-1-7-larastan-tests.md) | todo | low | haiku → sonnet |
 | [0.1.8 CI и docs-ops: укрепление после ревью](../tasks/0-1-8-ci-hardening.md) | todo | medium | sonnet → opus |
+| [0.1.9 Флаги и тестовый каркас: доработки после ревью](../tasks/0-1-9-flags-test-harness.md) | todo | low | haiku → sonnet |
 <!-- docs:ops:end -->

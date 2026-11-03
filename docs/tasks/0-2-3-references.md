@@ -3,7 +3,7 @@ id: "0.2.3"
 phase: "0"
 epic: "0.2"
 title: "Эталоны макетов и визуальные тесты"
-status: in_progress
+status: done
 gate: G0
 risk: medium
 model_impl: sonnet
@@ -14,7 +14,7 @@ uc: []
 prototype: "Все из manifest.json"
 screens: ["*"]
 issue: 9
-sync_state: drifted
+sync_state: aligned
 escalations: []
 ---
 
