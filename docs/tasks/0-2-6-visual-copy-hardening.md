@@ -3,7 +3,7 @@ id: "0.2.6"
 phase: "0"
 epic: "0.2"
 title: "Визуальные и текстовые проверки: укрепление после ревью"
-status: in_progress
+status: review
 gate: G1
 risk: low
 model_impl: sonnet
