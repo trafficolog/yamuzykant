@@ -9,11 +9,10 @@ const css = readFileSync(
 );
 
 describe('resources/css/app.css', () => {
-    it('подключает токены ДС в порядке DESIGN-SYSTEM.md §2', () => {
+    it('подключает токены ДС в порядке DESIGN-SYSTEM.md §2, без webfonts.css (Google Fonts, 0.2.8)', () => {
         const imports = [...css.matchAll(/@import\s+["']([^"']+)["']/g)].map((m) => m[1]);
 
         expect(imports).toEqual([
-            '../js/ds/tokens/webfonts.css',
             '../js/ds/tokens/tokens.css',
             '../js/ds/tokens/page.css',
             '../js/ds/tokens/components.css',
