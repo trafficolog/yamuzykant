@@ -29,10 +29,15 @@ escalations: []
 - Скрипт настройки sshd (часть provisioning из 0.1.4): `PasswordAuthentication no`, `PermitRootLogin no` (или `prohibit-password`), `KbdInteractiveAuthentication no`; перед применением — проверка, что вход по ключу работает (иначе не применять)
 - Workflow выкатки проверяет `known_hosts` (`StrictHostKeyChecking yes`), без `ssh-keyscan` на лету
 
+- Ручная проверка из PR #96 (0.1.4): протокол деплой → откат → повторный деплой с временем отката ≤ 1 мин; Nginx + PHP-FPM + basic-auth на сервере; certbot `--webroot`; `docker compose up --wait`; supervisor до первого релиза; `ufw --force enable` по живому SSH; память VPS на `npm ci && build:ssr`; `mc admin user add` из stdin
+- Согласовать `DEPLOY_LOCK_WAIT` (900 с) и сборку с `timeout-minutes` deploy.yml (ревью PR #96)
+- Порядок для OWNER: секреты → `provision.yml` (`provision`) → `STAGE_DEPLOY_LIVE=true` → мерж/перезапуск deploy.yml → `provision.yml` (`rollback`) → повторная выкатка
+
 ## Критерии приёмки
 - [ ] Выкатка на stage из `deploy.yml` проходит по ключу (run)
 - [ ] Вход на сервер по паролю отклоняется (`ssh -o PubkeyAuthentication=no` → Permission denied; вывод в PR)
 - [ ] Секрет `DEPLOY_SSH_KEY` содержит ключ, а не пароль (проверка в workflow: формат `-----BEGIN OPENSSH PRIVATE KEY-----`, без печати значения)
+- [ ] Мерж в main → stage обновлён, `/health` 200 (перенесено из 0.1.4: без сервера не проверить)
 - [ ] Definition of Done — AGENTS.md §3
 
 ## Тесты (пишутся первыми)
