@@ -1,0 +1,3 @@
+# Модели Laravel Scout, которые deploy/deploy.sh индексирует при выкатке (scout:import).
+# Класс пропускается, пока его нет в релизе или Scout не установлен.
+App\Domain\Catalog\Models\InstrumentModel

@@ -1,0 +1,73 @@
+name: Provision stage
+# Подготовка сервера stage и откат выкатки (задача 0.1.4). Только ручной запуск OWNER из main:
+#   provision — deploy/provision.sh: пакеты, сервисы, Nginx и HTTPS, пользователь деплоя, firewall
+#               (идемпотентно, от PROVISION_USER — по умолчанию root, по SSH-ключу DEPLOY_SSH_KEY);
+#   rollback  — deploy/deploy.sh rollback stage: вернуть предыдущий релиз (≤ 1 мин).
+# Пока в DEPLOY_SSH_KEY пароль (до 0.1.12), job падает на проверке формата ключа, ничего не делая.
+# Условия проверяет .github/scripts/workflow-guards.test.mjs в job docs.
+on:
+  workflow_dispatch:
+    inputs:
+      command:
+        description: 'provision — подготовить сервер; rollback — вернуть предыдущий релиз'
+        required: true
+        type: choice
+        options: [provision, rollback]
+        default: provision
+
+permissions:
+  contents: read
+
+# Общая очередь с deploy.yml: подготовка, откат и выкатка stage не идут одновременно.
+concurrency: deploy-stage
+
+jobs:
+  stage:
+    if: github.event_name == 'workflow_dispatch' && github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    timeout-minutes: 40
+    environment: stage
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
+        with:
+          persist-credentials: false
+      - name: Ключ деплоя — приватный ключ OpenSSH (без печати значения)
+        env:
+          KEY: ${{ secrets.DEPLOY_SSH_KEY }}
+        run: |
+          case "$KEY" in
+            "-----BEGIN OPENSSH PRIVATE KEY-----"*) echo "формат ключа верный" ;;
+            *) echo "::error::DEPLOY_SSH_KEY — не приватный ключ OpenSSH (задача 0.1.12)"; exit 1 ;;
+          esac
+      - uses: webfactory/ssh-agent@dc588b651fe13675774614f8e6a936a468676387 # v0.9.0
+        with:
+          ssh-private-key: ${{ secrets.DEPLOY_SSH_KEY }}
+      - name: Подготовка сервера (deploy/provision.sh)
+        if: inputs.command == 'provision'
+        run: ./deploy/provision.sh remote
+        env:
+          PROVISION_USER: ${{ vars.PROVISION_USER }}
+          DEPLOY_HOST: ${{ secrets.DEPLOY_HOST }}
+          DEPLOY_USER: ${{ secrets.DEPLOY_USER }}
+          DEPLOY_PORT: ${{ vars.DEPLOY_PORT }}
+          DEPLOY_KNOWN_HOSTS: ${{ secrets.DEPLOY_KNOWN_HOSTS }}
+          APP_URL: ${{ vars.STAGE_URL }}
+          CERTBOT_EMAIL: ${{ vars.CERTBOT_EMAIL }}
+          DB_PASSWORD: ${{ secrets.DB_PASSWORD }}
+          MEILISEARCH_KEY: ${{ secrets.MEILISEARCH_KEY }}
+          MINIO_ROOT_USER: ${{ secrets.MINIO_ROOT_USER }}
+          MINIO_ROOT_PASSWORD: ${{ secrets.MINIO_ROOT_PASSWORD }}
+          AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          STAGE_BASIC_AUTH_USER: ${{ secrets.STAGE_BASIC_AUTH_USER }}
+          STAGE_BASIC_AUTH_PASSWORD: ${{ secrets.STAGE_BASIC_AUTH_PASSWORD }}
+          MAILPIT_UI_USER: ${{ secrets.MAILPIT_UI_USER }}
+          MAILPIT_UI_PASSWORD: ${{ secrets.MAILPIT_UI_PASSWORD }}
+      - name: Откат на предыдущий релиз (deploy/deploy.sh rollback)
+        if: inputs.command == 'rollback'
+        run: ./deploy/deploy.sh rollback stage
+        env:
+          DEPLOY_HOST: ${{ secrets.DEPLOY_HOST }}
+          DEPLOY_USER: ${{ secrets.DEPLOY_USER }}
+          DEPLOY_PORT: ${{ vars.DEPLOY_PORT }}
+          DEPLOY_KNOWN_HOSTS: ${{ secrets.DEPLOY_KNOWN_HOSTS }}
