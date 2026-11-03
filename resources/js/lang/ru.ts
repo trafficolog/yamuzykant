@@ -9,6 +9,13 @@ export const ru = {
     layout: {
         skipLink: 'Перейти к содержимому',
     },
+    models: {
+        label: 'Бренд и модель',
+        placeholder: 'Например, Fender American Vintage ’57 Stratocaster',
+        hint: 'Как пишет производитель, латиницей',
+        empty: 'Такой модели нет в справочнике. Она сохранится как введена и уйдёт на проверку.',
+        listLabel: 'Модели из справочника',
+    },
     header: {
         sectionsLabel: 'Разделы',
         sections: {
