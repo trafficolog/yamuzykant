@@ -19,6 +19,7 @@ class CityFactory extends Factory
     {
         return [
             'name' => fake()->unique()->city(),
+            'slug' => fake()->unique()->slug(),
             'region' => fake()->word().' область',
             'lat' => fake()->latitude(41, 70),
             'lng' => fake()->longitude(20, 170),

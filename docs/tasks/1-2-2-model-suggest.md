@@ -14,7 +14,7 @@ uc: ["L1"]
 prototype: "Десктоп - Продать.dc.html"
 screens: []
 issue: 19
-sync_state: drifted
+sync_state: aligned
 escalations: []
 ---
 

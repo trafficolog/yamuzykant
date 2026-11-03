@@ -2,6 +2,7 @@ import { Button, IconButton, SearchBar, Wordmark } from '@ds';
 import { useCallback, useEffect, useRef, useState } from 'react';
 
 import CategoryMenu, { CATEGORY_MENU_ID } from '@/Components/CategoryMenu';
+import CitySelect, { type CityOption } from '@/Components/CitySelect';
 import { useFlag, type FlagName } from '@/Hooks/useFlag';
 import { CATEGORY_TREE, type CategoryNode } from '@/lang/categories';
 import { ru } from '@/lang/ru';
@@ -14,14 +15,13 @@ export interface SiteHeaderProps {
     active?: HeaderSection | 'none';
     /** Показать строку поиска. */
     search?: boolean;
-    /** Название города на кнопке; окно выбора — задача 1.1.4. */
-    city?: string;
+    /** Город из shared prop `city`; без него кнопка показывает «Москву». */
+    city?: CityOption | null;
     /** Число непрочитанных сообщений; 0 — без счётчика. */
     messages?: number;
     /** Дерево категорий; до справочника 1.2.1 — константа из макета. */
     categories?: readonly CategoryNode[];
     onSearch?: (query: string) => void;
-    onCityClick?: () => void;
     /** Окно входа — задача 1.1.2. */
     onLoginClick?: () => void;
 }
@@ -50,11 +50,10 @@ const TOGGLE_ID = 'site-category-toggle';
 export default function SiteHeader({
     active = 'none',
     search = true,
-    city = ru.header.defaultCity,
+    city = null,
     messages = 0,
     categories = CATEGORY_TREE,
     onSearch,
-    onCityClick,
     onLoginClick,
 }: SiteHeaderProps) {
     const enabled: Partial<Record<FlagName, boolean>> = {
@@ -188,9 +187,7 @@ export default function SiteHeader({
                     ) : null}
 
                     <div className="ym-site-header__actions">
-                        <Button variant="ghost" icon="map-pin" onClick={onCityClick}>
-                            {city}
-                        </Button>
+                        <CitySelect city={city} />
                         <Button variant="primary" icon="plus" href={HREF_SOON}>
                             {ru.header.sell}
                         </Button>

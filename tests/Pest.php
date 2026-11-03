@@ -17,6 +17,7 @@ uses(RefreshDatabase::class)->in(
     'Feature/FeatureFlagsTest.php',
     'Feature/HomeTest.php',
     'Feature/Catalog',
+    'Feature/City',
     'Unit/Domain/Catalog',
     'Feature/Auth',
     'Unit/Domain/Accounts',
