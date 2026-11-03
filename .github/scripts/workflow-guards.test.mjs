@@ -762,7 +762,24 @@ test('provision.yml: только ручной запуск с выбором pr
     const input = wf.on.workflow_dispatch.inputs.command;
     assert.equal(input.type, 'choice');
     assert.deepEqual(input.options, ['provision', 'rollback']);
-    assert.equal(wf.concurrency, load('deploy.yml').concurrency, 'общая очередь с deploy.yml');
+});
+
+// Ожидающий run в группе concurrency заменяется следующим: ручной откат не должен молча
+// отменяться очередным мержем (ревью PR #96, п. 8). Откат — своя группа без отмены, выкатка
+// и откат на сервере разводятся flock с ожиданием (deploy-scripts.test.mjs).
+test('provision.yml: rollback — своя группа concurrency без отмены, provision — общая с deploy.yml', () => {
+    const wf = load('provision.yml');
+    assert.ok(!Object.hasOwn(wf, 'concurrency'), 'concurrency — на уровне job');
+    const stage = load('deploy.yml').concurrency;
+    assert.equal(stage, 'deploy-stage');
+    for (const name of deployJobs(wf)) {
+        const c = wf.jobs[name].concurrency;
+        assert.equal(c?.['cancel-in-progress'], false, `${name}: cancel-in-progress: false`);
+        const group = (command) =>
+            evaluate(c.group, { ...dispatch('v1.0.0'), inputs: { command } });
+        assert.equal(group('provision'), stage, 'provision в очереди deploy-stage');
+        assert.equal(group('rollback'), 'stage-rollback', 'rollback в своей группе');
+    }
 });
 
 test('provision.yml: job идёт только из main, окружение stage', () => {

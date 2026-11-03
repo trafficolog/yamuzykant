@@ -20,6 +20,7 @@ import {
 import { tmpdir } from 'node:os';
 import { basename, dirname, join } from 'node:path';
 import process from 'node:process';
+import { setTimeout as delay } from 'node:timers/promises';
 import { fileURLToPath } from 'node:url';
 
 const ROOT = join(dirname(fileURLToPath(import.meta.url)), '..', '..');
@@ -139,7 +140,6 @@ test('Nginx: /build — кэш на год с immutable, /fonts — на год 
 test('Nginx: stage за паролем, /health и /up открыты, Mailpit — свой пароль', () => {
     const conf = read(DEPLOY, 'nginx', 'ymuzykant.conf');
     assert.match(conf, /auth_basic_user_file \/etc\/nginx\/ymuzykant\/stage\.htpasswd;/);
-    for (const p of ['= /health', '= /up']) assert.match(nginxLocation(conf, p), /auth_basic off;/);
     const mailpit = nginxLocation(conf, '/_mailpit/');
     assert.match(mailpit, /auth_basic_user_file \/etc\/nginx\/ymuzykant\/mailpit\.htpasswd;/);
     assert.match(mailpit, /proxy_pass http:\/\/127\.0\.0\.1:8025;/);
@@ -149,6 +149,141 @@ test('Nginx: stage за паролем, /health и /up открыты, Mailpit �
         conf,
         /fastcgi_param SCRIPT_FILENAME \$realpath_root\$fastcgi_script_name;/,
         'путь релиза, а не симлинка current',
+    );
+});
+
+// Настоящий nginx:1.27 с конфигом stage и PHP-FPM-заглушкой: /health и /up открыты (в том числе
+// после внутреннего редиректа try_files → /index.php), остальное — 401 (ревью PR #96, п. 1).
+const docker = (...args) => spawnSync('docker', args, { encoding: 'utf8' });
+const hasDocker = () => docker('version', '--format', '{{.Server.Version}}').status === 0;
+test(
+    'Nginx (nginx:1.27 в Docker): /health и /up — 200 без пароля, остальное — 401',
+    {
+        skip: hasDocker() ? false : !process.env.CI && 'нет Docker (в CI обязателен)',
+        timeout: 240_000,
+    },
+    () => {
+        const id = `ym-ngx-${process.pid}-${Date.now()}`;
+        const dir = mkdtempSync(join(tmpdir(), 'ym-ngx-'));
+        const pub = join(dir, 'public');
+        mkdirSync(pub);
+        writeFileSync(join(pub, 'index.php'), '<?php echo "ok";\n');
+        const conf = read(DEPLOY, 'nginx', 'ymuzykant.conf')
+            .replaceAll('__DOMAIN__', 'stage.example.test')
+            .replaceAll('__APP_ROOT__', '/var/www/ymuzykant')
+            // Заглушка upstream: PHP-FPM в соседнем контейнере вместо unix-сокета.
+            .replace('fastcgi_pass unix:/run/php/ymuzykant.sock;', 'fastcgi_pass php:9000;');
+        assert.match(conf, /fastcgi_pass php:9000;/);
+        writeFileSync(join(dir, 'site.conf'), conf);
+        cpSync(join(DEPLOY, 'nginx', 'security-headers.conf'), join(dir, 'security-headers.conf'));
+        const release = '/var/www/ymuzykant/releases/r1/public';
+        const setup = [
+            'set -e',
+            'mkdir -p /etc/nginx/ymuzykant /etc/letsencrypt/live/stage.example.test',
+            'cp /t/security-headers.conf /etc/nginx/ymuzykant/',
+            'echo "stage:$(openssl passwd -apr1 secret)" > /etc/nginx/ymuzykant/stage.htpasswd',
+            'cp /etc/nginx/ymuzykant/stage.htpasswd /etc/nginx/ymuzykant/mailpit.htpasswd',
+            'openssl req -x509 -newkey rsa:2048 -nodes -subj /CN=stage.example.test -days 1 -keyout /etc/letsencrypt/live/stage.example.test/privkey.pem -out /etc/letsencrypt/live/stage.example.test/fullchain.pem 2>/dev/null',
+            'ln -sfn releases/r1 /var/www/ymuzykant/current',
+            'rm -f /etc/nginx/conf.d/default.conf',
+            'cp /t/site.conf /etc/nginx/conf.d/ymuzykant.conf',
+            'nginx -t',
+            'exec nginx -g "daemon off;"',
+        ].join('\n');
+        try {
+            assert.equal(docker('network', 'create', id).status, 0, 'docker network');
+            const php = docker(
+                'run',
+                '-d',
+                '--name',
+                `${id}-php`,
+                '--network',
+                id,
+                '--network-alias',
+                'php',
+                '-v',
+                `${pub}:${release}:ro`,
+                'php:8.3-fpm-alpine',
+            );
+            assert.equal(php.status, 0, php.stderr);
+            const ngx = docker(
+                'run',
+                '-d',
+                '--name',
+                `${id}-ngx`,
+                '--network',
+                id,
+                '-v',
+                `${dir}:/t:ro`,
+                '-v',
+                `${pub}:${release}:ro`,
+                'nginx:1.27',
+                'bash',
+                '-c',
+                setup,
+            );
+            assert.equal(ngx.status, 0, ngx.stderr);
+            const code = (path, auth = []) => {
+                const r = docker(
+                    'exec',
+                    `${id}-ngx`,
+                    'curl',
+                    '-sk',
+                    '-o',
+                    '/dev/null',
+                    '-w',
+                    '%{http_code}',
+                    ...auth,
+                    '--resolve',
+                    'stage.example.test:443:127.0.0.1',
+                    `https://stage.example.test${path}`,
+                );
+                return r.stdout.trim();
+            };
+            let ready = '';
+            for (let i = 0; i < 60 && !/^(200|401)$/.test(ready); i++) {
+                ready = code('/health');
+                if (!/^(200|401)$/.test(ready)) spawnSync('sleep', ['1']);
+            }
+            const logs = () => docker('logs', `${id}-ngx`).stderr;
+            const expected = {
+                '/health': '200',
+                '/health?probe=1': '200',
+                '/up': '200',
+                '/': '401',
+                '/healthx': '401',
+                '/health/x': '401',
+                '/uptime': '401',
+                '/index.php': '401',
+                '/build/app.js': '401',
+                '/_mailpit/': '401',
+            };
+            for (const [path, want] of Object.entries(expected)) {
+                assert.equal(code(path), want, `${path}\n${logs()}`);
+            }
+            assert.equal(code('/', ['-u', 'stage:secret']), '200', 'с паролем stage открыт');
+        } finally {
+            docker('rm', '-f', `${id}-ngx`, `${id}-php`);
+            docker('network', 'rm', id);
+        }
+    },
+);
+
+test('Supervisor: журналы программ — в /var/log/ymuzykant (root), не под APP_ROOT', () => {
+    const conf = read(DEPLOY, 'supervisor', 'ymuzykant.conf');
+    const logs = [...conf.matchAll(/^(\w+_logfile)=(.*)$/gm)];
+    assert.ok(logs.length >= 4, 'у каждой программы свой журнал');
+    for (const [, key, path] of logs) {
+        assert.doesNotMatch(
+            path,
+            /__APP_ROOT__|\/var\/www/,
+            `${key}=${path}: каталог пользователя деплоя`,
+        );
+        assert.match(path, /^\/var\/log\/ymuzykant\/[\w.-]+\.log$/, `${key}=${path}`);
+    }
+    assert.match(
+        read(DEPLOY, 'provision.sh'),
+        /install -d -m 0750 -o root -g adm \/var\/log\/ymuzykant/,
     );
 });
 
@@ -191,6 +326,10 @@ test('сервисы в Docker слушают только 127.0.0.1', () => {
         'ключ Meilisearch из окружения',
     );
     assert.match(compose, /MP_WEBROOT: _mailpit/);
+    const images = [...compose.matchAll(/^\s+image: (\S+)/gm)].map((m) => m[1]);
+    assert.equal(images.length, 3);
+    for (const image of images)
+        assert.match(image, /@sha256:[0-9a-f]{64}$/, `${image}: закрепить digest`);
 });
 
 test('SSH: ключ сервера только из DEPLOY_KNOWN_HOSTS — без ssh-keyscan и StrictHostKeyChecking no', () => {
@@ -290,7 +429,8 @@ exit 0`,
     );
     stub(
         'sudo',
-        `if [[ "$*" == "-n supervisorctl status ymuzykant:*" ]]; then
+        `[[ "$*" == "-n systemctl reload"* && \${STUB_FAIL:-} == *fpm* ]] && exit 1
+if [[ "$*" == "-n supervisorctl status ymuzykant:*" ]]; then
   for p in queue reverb ssr scheduler; do
     s=RUNNING; [[ $p == ssr && \${STUB_FAIL:-} == *ssr* ]] && s=FATAL
     printf 'ymuzykant:ymuzykant-%s %s pid 1, uptime 0:00:05\\n' "$p" "$s"
@@ -742,4 +882,197 @@ test('provision.sh remote: пакет по SSH с known_hosts, значения 
         env: provisionEnv(bin, { PROVISION_DRY_RUN: '0', DEPLOY_KNOWN_HOSTS: '' }),
     });
     assert.equal(noHosts.status, 1, noHosts.out);
+});
+
+// ---------- ревью PR #96, круг 1 ----------
+
+// Ещё один распакованный релиз в песочнице.
+const addRelease = (root, id) => {
+    cpSync(DEPLOY, join(root, 'releases', id, 'deploy'), { recursive: true });
+    mkdirSync(join(root, 'releases', id, 'storage'), { recursive: true });
+};
+const releaseRun = (root, bin, id, extra) =>
+    bash([join(root, 'releases', id, 'deploy', 'deploy.sh'), 'server-release', id], {
+        cwd: root,
+        env: serverEnv(bin, root, extra),
+    });
+
+test('server-release: падение перезапуска после переключения — автооткат (п. 4)', bashOnly, () => {
+    const root = sandbox();
+    const bin = stubBin();
+    const r = serverRelease(root, bin, { STUB_FAIL: 'fpm' });
+    assert.equal(r.status, 1, r.out);
+    assert.equal(current(root), RELEASES[1], 'current вернулся на прежний релиз');
+    assert.match(r.out, /перезапуск .* не прошёл|не прошла — откат/);
+});
+
+test(
+    'релиз с автооткатом помечен, не входит в 5 хранимых и пропускается откатом (п. 5)',
+    bashOnly,
+    () => {
+        const old = Array.from(
+            { length: 5 },
+            (_, i) => `2026102${i}100000-${String(i).repeat(12)}`,
+        );
+        const root = sandbox({ releases: old });
+        const bin = stubBin();
+        assert.equal(serverRelease(root, bin, { STUB_FAIL: 'health' }).status, 1);
+        assert.equal(current(root), old.at(-1));
+        assert.ok(
+            existsSync(join(root, 'releases', NEW, '.deploy-failed')),
+            'нет пометки .deploy-failed',
+        );
+        // Ручной откат не уходит на неудачный релиз (он новее current, но и старше не выбирается).
+        const next = '20261104100000-dddddddddddd';
+        addRelease(root, next);
+        assert.equal(releaseRun(root, bin, next).status, 0);
+        assert.equal(current(root), next);
+        const left = readdirSync(join(root, 'releases')).sort();
+        assert.ok(!left.includes(NEW), 'неудачный релиз удаляется первым');
+        assert.equal(left.length, 5, left.join(' '));
+        assert.deepEqual(left, [...old.slice(1), next], 'хранятся 5 рабочих релизов');
+        const r = bash([join(root, 'current', 'deploy', 'deploy.sh'), 'rollback'], {
+            env: serverEnv(bin, root),
+        });
+        assert.equal(r.status, 0, r.out);
+        assert.equal(current(root), old.at(-1));
+    },
+);
+
+test('rollback пропускает помеченный неудачный релиз', bashOnly, () => {
+    const root = sandbox();
+    const bin = stubBin();
+    writeFileSync(join(root, 'releases', NEW, '.deploy-failed'), '');
+    const next = '20261104100000-ffffffffffff';
+    addRelease(root, next);
+    symlinkSync(`releases/${next}`, join(root, 'current.tmp'));
+    spawnSync('mv', ['-Tf', join(root, 'current.tmp'), join(root, 'current')]);
+    assert.equal(current(root), next);
+    const r = bash([join(root, 'current', 'deploy', 'deploy.sh'), 'rollback'], {
+        env: serverEnv(bin, root),
+    });
+    assert.equal(r.status, 0, r.out);
+    assert.equal(current(root), RELEASES[1], 'откат мимо неудачного релиза');
+});
+
+test(
+    'выкатка ждёт идущий откат (flock с ожиданием), а не падает сразу (п. 8)',
+    bashOnly,
+    async () => {
+        const root = sandbox();
+        const bin = stubBin();
+        const { spawn } = await import('node:child_process');
+        const holder = spawn('flock', [join(root, '.deploy.lock'), 'sleep', '3']);
+        await delay(300);
+        const started = Date.now();
+        const r = serverRelease(root, bin, { DEPLOY_LOCK_WAIT: '20' });
+        assert.equal(r.status, 0, r.out);
+        assert.ok(Date.now() - started >= 2000, 'выкатка дождалась освобождения блокировки');
+        holder.kill();
+        const busy = spawn('flock', [join(root, '.deploy.lock'), 'sleep', '5']);
+        await delay(300);
+        const r2 = bash([join(root, 'current', 'deploy', 'deploy.sh'), 'rollback'], {
+            env: serverEnv(bin, root, { DEPLOY_LOCK_WAIT: '1' }),
+        });
+        busy.kill();
+        assert.equal(r2.status, 1, r2.out);
+        assert.match(r2.out, /блокировк|другая выкатка/);
+    },
+);
+
+test('deploy.sh: DEPLOY_USER и DEPLOY_HOST проверяются до ssh (п. 9)', bashOnly, () => {
+    const { dir, sha } = fakeRepo();
+    const bin = stubBin();
+    for (const extra of [
+        { DEPLOY_USER: 'Root' },
+        { DEPLOY_USER: '-oProxyCommand=x' },
+        { DEPLOY_USER: 'a b' },
+        { DEPLOY_HOST: '-oProxyCommand=touch /tmp/x' },
+        { DEPLOY_HOST: 'host name' },
+        { DEPLOY_HOST: 'user@host' },
+    ]) {
+        const r = bash(['deploy/deploy.sh', 'stage', sha], {
+            cwd: dir,
+            env: runnerEnv(bin, extra),
+        });
+        assert.equal(r.status, 1, `${JSON.stringify(extra)}: ${r.out}`);
+        const rb = bash(['deploy/deploy.sh', 'rollback', 'stage'], {
+            cwd: dir,
+            env: runnerEnv(bin, extra),
+        });
+        assert.equal(rb.status, 1, `rollback ${JSON.stringify(extra)}`);
+    }
+    assert.doesNotMatch(calls(bin), /^ssh /m, 'ssh не вызывался');
+    for (const host of ['203.0.113.10', 'stage.example.test', '2001:db8::1']) {
+        const r = bash(['deploy/deploy.sh', 'stage', sha], {
+            cwd: dir,
+            env: runnerEnv(bin, { DEPLOY_HOST: host }),
+        });
+        assert.equal(r.status, 0, `${host}: ${r.out}`);
+    }
+});
+
+test(
+    'provision.sh remote: PROVISION_USER и DEPLOY_HOST проверяются до ssh (п. 9)',
+    bashOnly,
+    () => {
+        const bin = stubBin();
+        for (const extra of [{ PROVISION_USER: '-oProxyCommand=x' }, { DEPLOY_HOST: '-x' }]) {
+            const r = bash(['deploy/provision.sh', 'remote'], {
+                env: provisionEnv(bin, { PROVISION_DRY_RUN: '0', ...extra }),
+            });
+            assert.equal(r.status, 1, r.out);
+        }
+        assert.doesNotMatch(calls(bin), /^ssh /m);
+    },
+);
+
+test(
+    'provision.sh: каталоги пользователя деплоя создаются от его имени, симлинки не обходятся (п. 3)',
+    bashOnly,
+    () => {
+        const bin = stubBin();
+        const r = bash(['deploy/provision.sh', 'apply'], { env: provisionEnv(bin) });
+        assert.equal(r.status, 0, r.out);
+        const lines = r.out.split('\n').filter((l) => /^\+ .*install -d/.test(l));
+        for (const line of lines) {
+            if (/-o ymdeploy/.test(line))
+                assert.match(
+                    line,
+                    /^\+ install -d -m 0755 -o ymdeploy -g ymdeploy \/var\/www\/ymuzykant$/,
+                    line,
+                );
+        }
+        for (const path of [
+            '/var/www/ymuzykant/releases',
+            '/var/www/ymuzykant/shared/storage/logs',
+            '/home/ymdeploy/.ssh',
+        ]) {
+            assert.ok(
+                lines.some(
+                    (l) => l.startsWith('+ runuser -u ymdeploy -- install -d ') && l.endsWith(path),
+                ),
+                `${path} — через runuser от пользователя деплоя`,
+            );
+        }
+        assert.match(r.out, /\+ install -d -m 0750 -o root -g adm \/var\/log\/ymuzykant/);
+        // APP_ROOT — симлинк: отказ.
+        const dir = mkdtempSync(join(tmpdir(), 'ym-link-'));
+        symlinkSync('/etc', join(dir, 'app'));
+        const link = bash(['deploy/provision.sh', 'apply'], {
+            env: provisionEnv(bin, { DEPLOY_APP_ROOT: join(dir, 'app') }),
+        });
+        assert.equal(link.status, 1, link.out);
+        assert.match(link.out, /симлинк/);
+    },
+);
+
+test('deploy.sh: комментарий, почему .env пишется до сборки (п. 6)', () => {
+    const src = read(DEPLOY, 'deploy.sh');
+    assert.match(src, /config:cache/);
+    assert.match(
+        src,
+        /# .*shared\/\.env[\s\S]{0,400}config:cache/,
+        'обоснование рядом с записью .env',
+    );
 });
