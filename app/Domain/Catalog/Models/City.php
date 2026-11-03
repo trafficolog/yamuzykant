@@ -26,7 +26,7 @@ class City extends Model
     use HasFactory;
 
     /** @var list<string> */
-    protected $fillable = ['name', 'region', 'lat', 'lng'];
+    protected $fillable = ['name', 'slug', 'region', 'lat', 'lng'];
 
     /** @return array<string, string> */
     protected function casts(): array

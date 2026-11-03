@@ -110,7 +110,7 @@ describe('SiteHeader: состав шапки', () => {
     });
 
     it('кнопки «Продать инструмент», города и «Войти»; слов вне словаря нет', () => {
-        render(<SiteHeader city="Казань" />);
+        render(<SiteHeader city={{ id: 2, name: 'Казань' }} />);
 
         expect(screen.getByRole('link', { name: 'Продать инструмент' })).toBeInTheDocument();
         expect(screen.getByRole('button', { name: 'Казань' })).toBeInTheDocument();
@@ -124,15 +124,17 @@ describe('SiteHeader: состав шапки', () => {
         expect(screen.getByRole('button', { name: 'Москва' })).toBeInTheDocument();
     });
 
-    it('кнопки города и входа вызывают переданные обработчики (окна — задачи 1.1.2 и 1.1.4)', () => {
-        const onCity = vi.fn();
+    it('кнопка города открывает выбор города (1.1.4); кнопка входа вызывает обработчик (окно — 1.1.2)', () => {
         const onLogin = vi.fn();
-        render(<SiteHeader onCityClick={onCity} onLoginClick={onLogin} />);
+        render(<SiteHeader onLoginClick={onLogin} />);
 
         fireEvent.click(screen.getByRole('button', { name: 'Москва' }));
+        expect(screen.getByRole('button', { name: 'Москва' })).toHaveAttribute(
+            'aria-expanded',
+            'true',
+        );
         fireEvent.click(screen.getByRole('button', { name: 'Войти' }));
 
-        expect(onCity).toHaveBeenCalledTimes(1);
         expect(onLogin).toHaveBeenCalledTimes(1);
     });
 

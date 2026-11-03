@@ -3,7 +3,7 @@ id: "1.2.2"
 phase: "1"
 epic: "1.2"
 title: "Подсказка модели"
-status: review
+status: done
 gate: G1
 risk: low
 model_impl: haiku
@@ -14,7 +14,7 @@ uc: ["L1"]
 prototype: "Десктоп - Продать.dc.html"
 screens: []
 issue: 19
-sync_state: drifted
+sync_state: aligned
 escalations: []
 ---
 

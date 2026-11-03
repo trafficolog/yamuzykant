@@ -3,7 +3,7 @@ id: "1.1.4"
 phase: "1"
 epic: "1.1"
 title: "Выбор города"
-status: review
+status: done
 gate: G1
 risk: low
 model_impl: haiku
@@ -14,7 +14,7 @@ uc: ["S1"]
 prototype: "Шапка.dc.html"
 screens: ["header"]
 issue: 16
-sync_state: drifted
+sync_state: aligned
 escalations: []
 ---
 

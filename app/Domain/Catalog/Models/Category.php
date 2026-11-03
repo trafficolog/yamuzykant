@@ -4,7 +4,9 @@ declare(strict_types=1);
 
 namespace App\Domain\Catalog\Models;
 
+use App\Domain\Catalog\Observers\CategoryObserver;
 use Database\Factories\Catalog\CategoryFactory;
+use Illuminate\Database\Eloquent\Attributes\ObservedBy;
 use Illuminate\Database\Eloquent\Attributes\UseFactory;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
@@ -23,6 +25,7 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
  * @property bool $is_visible
  */
 #[UseFactory(CategoryFactory::class)]
+#[ObservedBy([CategoryObserver::class])]
 class Category extends Model
 {
     /** @use HasFactory<CategoryFactory> */
