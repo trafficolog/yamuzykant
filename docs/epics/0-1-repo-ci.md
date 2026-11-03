@@ -28,4 +28,5 @@ gate: G0
 | [0.1.10 Защита release.yml и deploy.yml без branch protection](../tasks/0-1-10-workflow-guards.md) | done | high | opus → opus |
 | [0.1.11 GitHub Actions: переход на актуальные мажорные версии](../tasks/0-1-11-actions-major-update.md) | todo | low | haiku → sonnet |
 | [0.1.12 SSH-ключ деплоя и отключение входа по паролю на stage](../tasks/0-1-12-deploy-ssh-key.md) | todo | high | opus → opus |
+| [0.1.13 Content-Security-Policy с nonce для Inertia и SSR](../tasks/0-1-13-csp.md) | todo | medium | sonnet → opus |
 <!-- docs:ops:end -->
