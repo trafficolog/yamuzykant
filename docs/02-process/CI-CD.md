@@ -12,11 +12,13 @@
 
 Права workflow — явный `permissions: contents: read`; `contents: write` — только у job `release`. Условия `if`, `needs`, `permissions`, триггеры и защиту от внедрения выражений в `run` проверяет `.github/scripts/workflow-guards.test.mjs` в job `docs`.
 
+Сторонние actions закреплены 40-символьным SHA с комментарием версии; обновление — отдельным PR, где для каждого SHA показана сверка с тегом официального репозитория (аннотированный тег — до коммита). У всех `actions/checkout` `persist-credentials: false`.
+
 ## 2. Состав CI
 
-- **docs:** `node --test .github/scripts/coverage-gate.test.mjs .github/scripts/workflow-guards.test.mjs` (порог покрытия; защита deploy.yml и release.yml), затем `node --test tools/lint-copy.test.mjs tools/copy-dictionary.test.mjs`, `node tools/docs-ops.mjs check` (структура карточек, зависимости, гейты), `node tools/lint-copy.mjs --styles`, сверка `resources/js/ds` с выводом `node tools/ds-sync.mjs` (ручная правка копии ДС роняет job). Оркестратор перед мержем запускает `docs-ops check --pr N`: PR, который меняет `resources/js/ds`, проходит только с заголовком `chore(ds): sync`.
+- **docs:** `node --test .github/scripts/coverage-gate.test.mjs .github/scripts/workflow-guards.test.mjs .github/scripts/workflow-pins.test.mjs` (порог покрытия по метрикам файла; защита deploy.yml и release.yml; закрепление `uses:` по SHA и `persist-credentials: false`), затем `node --test tools/lint-copy.test.mjs tools/copy-dictionary.test.mjs`, `node tools/docs-ops.mjs check` (структура карточек, зависимости, гейты), `node tools/lint-copy.mjs --styles`, сверка `resources/js/ds` с выводом `node tools/ds-sync.mjs` без пропуска (ручная правка или удаление копии ДС роняет job). Оркестратор перед мержем запускает `docs-ops check --pr N` (файлы PR — через `gh api --paginate`): PR, который меняет `resources/js/ds`, проходит только с заголовком `chore(ds): sync`.
 - **php:** PHP 8.3 (`composer.json` → `config.platform.php = 8.3.0`), сервисы PostgreSQL 16, Redis 7, Meilisearch → `composer install` → `pint --test` → `phpstan analyse` (Larastan 8) → `pest --coverage --min=75` (+ `app/Domain` ≥ 90 % через `.github/scripts/coverage-gate.mjs`). Pest в CI работает на PostgreSQL, локально — на sqlite.
-- **js:** Node 22 (≥ 22.22 — требование jsdom и undici) → `npm ci` → `eslint` → `tsc --noEmit` → `vitest run --coverage` → `vite build && vite build --ssr`.
+- **js:** Node 22 (`engines.node` = `>=22.22`: jsdom и undici) → `npm ci` → `eslint` → `tsc --noEmit` → `vitest run --coverage` → `vite build && vite build --ssr`.
 - **e2e:** PHP + Node + сервисы → миграции и сиды → `php artisan serve` + SSR + Reverb + queue worker → `playwright test`: UC, visual, a11y, copy. Артефакты: HTML-отчёт, diff-изображения визуальных тестов.
 - **Кэш:** composer, npm, браузеры Playwright.
 - **Конкурентность:** `concurrency: ci-${{ github.ref }}`, отмена устаревших запусков на PR.
