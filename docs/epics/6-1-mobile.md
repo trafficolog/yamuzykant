@@ -16,6 +16,6 @@ gate: G3
 <!-- docs:ops:begin tasks -->
 | Задача | Статус | Риск | Исполнитель → Ревьюер |
 |---|---|---|---|
-| [6.1.1 Мобильная шапка и нижняя панель](../tasks/6-1-1-mobile-shell.md) | in_progress | medium | sonnet → sonnet |
+| [6.1.1 Мобильная шапка и нижняя панель](../tasks/6-1-1-mobile-shell.md) | done | medium | sonnet → sonnet |
 | [6.1.2 Мобильная раскладка экранов](../tasks/6-1-2-mobile-screens.md) | todo | medium | sonnet → sonnet |
 <!-- docs:ops:end -->
