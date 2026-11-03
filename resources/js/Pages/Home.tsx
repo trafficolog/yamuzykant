@@ -1,9 +1,10 @@
+import type { ReactNode } from 'react';
+
+import PublicLayout from '@/Layouts/PublicLayout';
 import { ru } from '@/lang/ru';
 
 export default function Home() {
-    return (
-        <main>
-            <h1>{ru.brand}</h1>
-        </main>
-    );
+    return <h1>{ru.brand}</h1>;
 }
+
+Home.layout = (page: ReactNode) => <PublicLayout>{page}</PublicLayout>;

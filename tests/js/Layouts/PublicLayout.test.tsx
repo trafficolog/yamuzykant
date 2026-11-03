@@ -65,10 +65,9 @@ describe('PublicLayout', () => {
         );
 
         expect(screen.queryByRole('search')).not.toBeInTheDocument();
-        expect(screen.getByRole('link', { name: 'Барахолка' })).toHaveAttribute(
-            'aria-current',
-            'page',
-        );
+        expect(
+            within(screen.getByRole('banner')).getByRole('link', { name: 'Барахолка' }),
+        ).toHaveAttribute('aria-current', 'page');
     });
 
     it('по умолчанию поиск показан, раздел не выбран', () => {

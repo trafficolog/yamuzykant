@@ -9,6 +9,7 @@ vi.mock('@inertiajs/react', () => ({
     usePage: () => ({ props: { flags } }),
 }));
 
+const text = (element: Element): string => (element.textContent ?? '').replace(/\s+/g, ' ').trim();
 const ALL_ON = {
     catalog_new: true,
     accessories: true,
@@ -18,10 +19,7 @@ const ALL_ON = {
 };
 
 const sections = () => screen.getByRole('navigation', { name: 'Разделы' });
-const sectionNames = () =>
-    within(sections())
-        .getAllByRole('link')
-        .map((link) => link.textContent);
+const sectionNames = () => within(sections()).getAllByRole('link').map(text);
 
 beforeEach(() => {
     flags = {};
@@ -67,7 +65,7 @@ describe('SiteHeader: строка разделов и флаги', () => {
         const current = within(sections())
             .getAllByRole('link')
             .filter((link) => link.getAttribute('aria-current') === 'page');
-        expect(current.map((link) => link.textContent)).toEqual(['Аксессуары']);
+        expect(current.map(text)).toEqual(['Аксессуары']);
     });
 
     it('active="none": ни один раздел не помечен', () => {
@@ -235,7 +233,7 @@ describe('SiteHeader: меню категорий', () => {
         fireEvent.click(toggle());
 
         const list = within(screen.getByRole('navigation', { name: 'Категории' }));
-        const names = list.getAllByRole('button').map((button) => button.textContent);
+        const names = list.getAllByRole('button').map(text);
 
         expect(names).toEqual([
             'Гитары',
@@ -294,7 +292,7 @@ describe('SiteHeader: меню категорий', () => {
         fireEvent.click(toggle());
 
         const aside = within(screen.getByRole('complementary', { name: 'Сервисы' }));
-        const items = aside.getAllByRole('link').map((link) => link.textContent);
+        const items = aside.getAllByRole('link').map(text);
 
         expect(items).toEqual(['Доставка в защитной упаковке', 'Продать гитары']);
     });
@@ -306,7 +304,7 @@ describe('SiteHeader: меню категорий', () => {
 
         const aside = within(screen.getByRole('complementary', { name: 'Сервисы' }));
 
-        expect(aside.getAllByRole('link').map((link) => link.textContent)).toEqual([
+        expect(aside.getAllByRole('link').map(text)).toEqual([
             'Проверка мастером перед покупкой',
             'Цены продаж: гитары',
             'Как работает безопасная сделка',

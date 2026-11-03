@@ -133,6 +133,52 @@ test.describe('PublicLayout: шапка', () => {
     });
 });
 
+test.describe('PublicLayout: состояния', () => {
+    test('focus-visible: у каждого элемента шапки при Tab есть видимое кольцо фокуса', async ({
+        page,
+    }) => {
+        await openHome(page);
+
+        const missing: string[] = [];
+        // skip-link, раздел, три иконки, логотип, категории, поиск (поле и «Найти»), город, продать, войти
+        for (let stop = 0; stop < 12; stop++) {
+            await page.keyboard.press('Tab');
+            const state = await page.evaluate(() => {
+                const el = document.activeElement;
+                if (!el || el === document.body) return { name: 'body', ring: false };
+                const own = getComputedStyle(el);
+                const group = el.closest('.ym-search');
+                const wrapped = group ? getComputedStyle(group) : null;
+                const ring = (s: CSSStyleDeclaration) =>
+                    s.outlineStyle !== 'none' && parseFloat(s.outlineWidth) > 0;
+                return {
+                    name: (el.getAttribute('aria-label') ?? el.textContent ?? el.tagName).trim(),
+                    ring: ring(own) || (wrapped !== null && ring(wrapped)),
+                };
+            });
+            if (!state.ring) missing.push(state.name);
+        }
+
+        expect(missing).toEqual([]);
+    });
+
+    test('hover: строка меню категорий подсвечивается, активная остаётся выделенной', async ({
+        page,
+    }) => {
+        await openHome(page);
+        await page.getByRole('button', { name: 'Категории' }).click();
+        const menu = page.getByRole('dialog', { name: 'Все категории' });
+        const row = menu.getByRole('button', { name: 'Духовые' });
+
+        const before = await row.evaluate((el) => getComputedStyle(el).backgroundColor);
+        await row.hover();
+        const after = await row.evaluate((el) => getComputedStyle(el).backgroundColor);
+
+        expect(after).not.toBe(before);
+        await expect(row).toHaveAttribute('aria-current', 'true');
+    });
+});
+
 test.describe('PublicLayout: доступность', () => {
     test('axe: страница с закрытым меню без нарушений serious и critical', async ({ page }) => {
         await openHome(page);

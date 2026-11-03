@@ -9,6 +9,7 @@ vi.mock('@inertiajs/react', () => ({
     usePage: () => ({ props: { flags } }),
 }));
 
+const text = (element: Element): string => (element.textContent ?? '').replace(/\s+/g, ' ').trim();
 const ALL_ON = {
     catalog_new: true,
     accessories: true,
@@ -19,10 +20,7 @@ const ALL_ON = {
 };
 
 const services = () => screen.getByRole('navigation', { name: 'Сервисы' });
-const serviceNames = () =>
-    within(services())
-        .getAllByRole('link')
-        .map((link) => link.textContent);
+const serviceNames = () => within(services()).getAllByRole('link').map(text);
 
 beforeEach(() => {
     flags = {};
