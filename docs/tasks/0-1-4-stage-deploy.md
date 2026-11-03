@@ -31,6 +31,7 @@ escalations: []
 - Окружение GitHub `stage` и секреты (значения вводит OWNER)
 
 - Веб-сервер: долгий `Cache-Control: public, max-age=31536000` для `/fonts/*` (файлы без хеша — без `immutable`, ревью PR #84) и для `/build/*` (с хешем — `immutable`)
+- `deploy.sh` получает SHA только из проверенного источника: в release.yml — `needs.authorize.outputs.sha` и в `with.ref`, и в `env.SHA`; тест в workflow-guards (ревью PR #83, N8, N9: `if: false` у шага authorize, литерал `--tag`, `--allowlist /dev/stdin` тоже должны ронять тесты)
 - Окружение `stage` ограничено веткой `main` (deployment branch policy, включено 03.11.2026); выкатка — только `deploy.yml` после зелёного CI на push в main
 
 ## Критерии приёмки

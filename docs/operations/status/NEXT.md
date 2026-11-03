@@ -1,10 +1,9 @@
 <!-- AUTO-GENERATED -->
 # Можно брать в работу (гейт G1)
 
-- 0.1.8 CI и docs-ops: укрепление после ревью — sonnet → opus, risk medium
+- 0.1.4 Окружение stage и автодеплой — opus → opus, risk high
 - 0.1.9 Флаги и тестовый каркас: доработки после ревью — haiku → sonnet, risk low
 - 0.2.6 Визуальные и текстовые проверки: укрепление после ревью — sonnet → sonnet, risk low
 - 0.2.7 Меню категорий: доступность, высота подвала, скрытие доставки — haiku → sonnet, risk low
 - 1.1.4 Выбор города — haiku → sonnet, risk low
-- 1.2.2 Подсказка модели — haiku → sonnet, risk low
 - 1.2.3 Справочники: доработки после ревью — haiku → sonnet, risk low

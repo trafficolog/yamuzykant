@@ -3,7 +3,7 @@ id: "0.1.7"
 phase: "0"
 epic: "0.1"
 title: "Larastan для tests/ и config/"
-status: in_progress
+status: done
 gate: G1
 risk: low
 model_impl: haiku
@@ -14,7 +14,7 @@ uc: []
 prototype: ""
 screens: []
 issue: 66
-sync_state: drifted
+sync_state: aligned
 escalations: []
 ---
 

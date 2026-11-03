@@ -16,6 +16,10 @@ export async function keepOnly(page: Page, keep: 'header' | 'footer'): Promise<v
         )) {
             if (part.tagName.toLowerCase() !== kept) part.style.display = 'none';
         }
+        // Нижняя панель (6.1.1) на 390 px не входит в эталоны шапки и подвала.
+        for (const bar of document.querySelectorAll<HTMLElement>('body nav.ym-tabbar')) {
+            bar.style.display = 'none';
+        }
     }, keep);
 }
 
