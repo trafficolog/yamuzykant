@@ -12,7 +12,8 @@ use App\Domain\Accounts\Exceptions\InvalidLoginCode;
 use App\Domain\Accounts\Exceptions\TooManyLoginAttempts;
 
 /**
- * Проверяет код. Во время блокировки код не проверяется вовсе — даже верный не пускает.
+ * Проверяет код. Попытка засчитывается до сравнения: сверх лимита и во время блока
+ * код не сравнивается вовсе — даже верный не пускает.
  */
 final readonly class VerifyLoginCode
 {
@@ -25,19 +26,19 @@ final readonly class VerifyLoginCode
      * @throws TooManyLoginAttempts
      * @throws InvalidLoginCode
      */
-    public function handle(EmailAddress $email, string $code): VerifiedIdentity
+    public function handle(EmailAddress $email, string $code, string $ip): VerifiedIdentity
     {
-        $this->throttle->ensureNotLocked($email);
+        $attempt = $this->throttle->hitVerificationAttempt($email, $ip);
 
         if (! $this->store->matches($email, $code)) {
-            // При блокировке действующий код сгорает: после неё нужен новый.
-            $this->throttle->hitFailedAttempt($email, fn () => $this->store->forget($email));
+            // При блоке почты действующий код сгорает: после него нужен новый.
+            $this->throttle->failVerification($attempt, fn () => $this->store->forget($email));
 
             throw new InvalidLoginCode;
         }
 
         $this->store->forget($email);
-        $this->throttle->clearFailedAttempts($email);
+        $this->throttle->passVerification($attempt);
 
         return new VerifiedIdentity($email);
     }

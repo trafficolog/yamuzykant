@@ -18,8 +18,12 @@ use Illuminate\Support\Facades\Config;
  */
 final class EmailLoginController extends Controller
 {
-    public function sendCode(SendLoginCodeRequest $request, SendLoginCode $sendLoginCode): JsonResponse
-    {
+    public function sendCode(
+        SendLoginCodeRequest $request,
+        SendLoginCode $sendLoginCode,
+        CompleteLogin $completeLogin,
+    ): JsonResponse {
+        $completeLogin->startAttempt($request->emailAddress());
         $sendLoginCode->handle($request->emailAddress(), (string) $request->ip());
 
         // Ответ не зависит от того, есть ли аккаунт с этой почтой.
@@ -34,7 +38,8 @@ final class EmailLoginController extends Controller
         VerifyLoginCode $verifyLoginCode,
         CompleteLogin $completeLogin,
     ): JsonResponse {
-        $identity = $verifyLoginCode->handle($request->emailAddress(), $request->code());
+        $completeLogin->startAttempt($request->emailAddress());
+        $identity = $verifyLoginCode->handle($request->emailAddress(), $request->code(), (string) $request->ip());
 
         return response()->json($completeLogin->handle($identity)->toArray());
     }

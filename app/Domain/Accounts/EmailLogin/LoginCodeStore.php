@@ -27,11 +27,6 @@ final class LoginCodeStore
         return is_string($stored) && hash_equals($stored, $this->hash($email, $code));
     }
 
-    public function has(EmailAddress $email): bool
-    {
-        return $this->store()->has($this->key($email));
-    }
-
     public function forget(EmailAddress $email): void
     {
         $this->store()->forget($this->key($email));

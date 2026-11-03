@@ -25,7 +25,7 @@ final readonly class CompleteLogin
     /** Состояние «нужна регистрация»: подтверждённая личность до согласия. В users ничего не пишется. */
     public const string PENDING_KEY = 'auth.pending_registration';
 
-    /** Версия сессий пользователя на момент входа — для «выйти на всех устройствах». */
+    /** Версия сессий пользователя на момент входа — для «выйти на всех устройствах» (RememberSessionVersion). */
     public const string SESSION_VERSION_KEY = 'auth.session_version';
 
     public function __construct(
@@ -38,10 +38,13 @@ final readonly class CompleteLogin
         $user = $this->findUser($identity);
 
         if ($user === null) {
+            // Новый id сессии на шаге регистрации — защита от фиксации сессии.
+            $this->session->migrate(true);
             $this->session->put(self::PENDING_KEY, [
                 'email' => $identity->email->value,
                 'yandex_id' => $identity->yandexId,
                 'name' => $identity->name,
+                'expires_at' => now()->addSeconds(Config::integer('login.code_ttl'))->getTimestamp(),
             ]);
 
             return LoginResult::registrationRequired($identity->name);
@@ -53,6 +56,19 @@ final readonly class CompleteLogin
         }
 
         return $this->login($user);
+    }
+
+    /**
+     * Новая попытка входа: «нужна регистрация» для другой почты больше не действует
+     * (общий компьютер: чужая подтверждённая почта не должна дожить до регистрации).
+     */
+    public function startAttempt(EmailAddress $email): void
+    {
+        $pending = $this->pendingRegistration();
+
+        if ($pending !== null && $pending->email->value !== $email->value) {
+            $this->session->forget(self::PENDING_KEY);
+        }
     }
 
     /**
@@ -81,11 +97,20 @@ final readonly class CompleteLogin
         return $this->login($user);
     }
 
+    /**
+     * Действующее состояние «нужна регистрация» или null (нет, повреждено или истекло — срок = TTL кода).
+     */
     public function pendingRegistration(): ?VerifiedIdentity
     {
         $pending = $this->session->get(self::PENDING_KEY);
 
-        if (! is_array($pending) || ! is_string($pending['email'] ?? null)) {
+        if (! is_array($pending) || ! is_string($pending['email'] ?? null) || ! is_int($pending['expires_at'] ?? null)) {
+            return null;
+        }
+
+        if ($pending['expires_at'] <= now()->getTimestamp()) {
+            $this->session->forget(self::PENDING_KEY);
+
             return null;
         }
 
@@ -114,15 +139,44 @@ final readonly class CompleteLogin
         $user->last_login_at = now();
         $user->save();
 
-        // SessionGuard::login() меняет идентификатор сессии (защита от фиксации сессии).
+        // SessionGuard::login() меняет id сессии (защита от фиксации), событие Login ставит версию сессий.
         $this->guard()->login($user);
 
         $this->session->forget(self::PENDING_KEY);
-        $this->session->put(self::SESSION_VERSION_KEY, $user->session_version);
 
-        $intended = $this->session->pull('url.intended');
+        return LoginResult::authenticated($this->safeRedirect($this->session->pull('url.intended')));
+    }
 
-        return LoginResult::authenticated(is_string($intended) ? $intended : '/');
+    /**
+     * Адрес возврата — только относительный путь внутри приложения. Абсолютный URL допускается
+     * лишь со схемой http(s) и хостом из APP_URL и сводится к пути; всё остальное — главная.
+     */
+    private function safeRedirect(mixed $url): string
+    {
+        if (! is_string($url) || $url === '' || preg_match('/[\x00-\x1F\x7F\\\\]/', $url) === 1) {
+            return '/';
+        }
+
+        $parts = parse_url($url);
+        if ($parts === false) {
+            return '/';
+        }
+
+        if (isset($parts['scheme']) || isset($parts['host'])) {
+            $appHost = parse_url(Config::string('app.url'), PHP_URL_HOST);
+            $scheme = strtolower($parts['scheme'] ?? '');
+
+            if (! in_array($scheme, ['http', 'https'], true) || ($parts['host'] ?? null) !== $appHost) {
+                return '/';
+            }
+        }
+
+        $path = $parts['path'] ?? '/';
+        if (! str_starts_with($path, '/') || str_starts_with($path, '//')) {
+            return '/';
+        }
+
+        return isset($parts['query']) ? $path.'?'.$parts['query'] : $path;
     }
 
     private function guard(): StatefulGuard

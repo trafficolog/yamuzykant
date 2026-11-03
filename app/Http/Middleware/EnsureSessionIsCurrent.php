@@ -25,7 +25,8 @@ final class EnsureSessionIsCurrent
         if ($user instanceof User && $request->hasSession()) {
             $version = $request->session()->get(CompleteLogin::SESSION_VERSION_KEY);
 
-            if ($version !== null && $version !== $user->session_version) {
+            // Нет версии — сессия создана в обход входа (RememberSessionVersion), считаем её устаревшей.
+            if ($version !== $user->session_version) {
                 $this->logout->handle();
             }
         }

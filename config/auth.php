@@ -19,7 +19,8 @@ return [
 
     'defaults' => [
         'guard' => env('AUTH_GUARD', 'web'),
-        'passwords' => env('AUTH_PASSWORD_BROKER', 'users'),
+        // Паролей у пользователей нет (вход по коду и Яндекс ID) — брокера сброса паролей нет.
+        'passwords' => null,
     ],
 
     /*
@@ -94,14 +95,8 @@ return [
     |
     */
 
-    'passwords' => [
-        'users' => [
-            'provider' => 'users',
-            'table' => env('AUTH_PASSWORD_RESET_TOKEN_TABLE', 'password_reset_tokens'),
-            'expire' => 60,
-            'throttle' => 60,
-        ],
-    ],
+    // null, а не пустой массив: иначе Laravel подмешает брокер users из конфигурации фреймворка.
+    'passwords' => null,
 
     /*
     |--------------------------------------------------------------------------
