@@ -5,20 +5,23 @@ declare(strict_types=1);
 use App\Domain\Accounts\Mail\LoginCodeMail;
 use App\Domain\Accounts\Models\User;
 use Illuminate\Mail\SendQueuedMailable;
+use Illuminate\Mail\Transport\ArrayTransport;
 use Illuminate\Support\Facades\Exceptions;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Facades\Queue;
+use Mockery\MockInterface;
+use Symfony\Component\Mime\Email;
 
 /**
  * Проверяет, что ни один вызов логгера не содержит строку.
  */
-function assertNotLogged(string $needle): void
+function assertNotLogged(MockInterface $log, string $needle): void
 {
     $methods = ['emergency', 'alert', 'critical', 'error', 'warning', 'notice', 'info', 'debug', 'log', 'write', 'withContext', 'shareContext'];
 
     foreach ($methods as $method) {
-        Log::shouldNotHaveReceived($method, function (mixed ...$args) use ($needle): bool {
+        $log->shouldNotHaveReceived($method, function (mixed ...$args) use ($needle): bool {
             return str_contains(print_r($args, true), $needle);
         });
     }
@@ -29,7 +32,7 @@ beforeEach(function () {
 });
 
 it('код не попадает в логи и отчёты об ошибках (Log::spy) на всём пути входа', function () {
-    Log::spy();
+    $log = Log::spy();
     Exceptions::fake();
     Mail::fake();
     User::factory()->create(['email' => 'anna@example.com']);
@@ -42,24 +45,30 @@ it('код не попадает в логи и отчёты об ошибках
     $this->postJson('/auth/email/verify', ['email' => 'anna@example.com', 'code' => $code])->assertOk();
 
     // Логгер вызывался (событие отправки кода), но ни разу — с кодом.
-    Log::shouldHaveReceived('info')->withArgs(fn (string $message) => $message === 'auth.login_code.sent');
-    assertNotLogged($code);
-    assertNotLogged($wrong);
+    $log->shouldHaveReceived('info')->withArgs(fn (string $message) => $message === 'auth.login_code.sent');
+    assertNotLogged($log, $code);
+    assertNotLogged($log, $wrong);
     Exceptions::assertNothingReported();
 });
 
 it('код не попадает в логи при реальной отправке письма через очередь', function () {
-    Log::spy();
+    $log = Log::spy();
     config(['mail.default' => 'array']);
 
     $this->postJson('/auth/email/code', ['email' => 'anna@example.com'])->assertStatus(202);
 
-    $sent = app('mailer')->getSymfonyTransport()->messages();
-    expect($sent)->toHaveCount(1);
-    preg_match('/\b(\d{6})\b/', $sent->first()->getOriginalMessage()->getTextBody() ?? '', $m);
-    expect($m[1] ?? null)->not->toBeNull();
+    $transport = Mail::mailer('array')->getSymfonyTransport();
+    if (! $transport instanceof ArrayTransport) {
+        throw new LogicException('Ожидался array-транспорт почты');
+    }
+    $sent = $transport->messages();
+    $message = $sent->first()?->getOriginalMessage();
+    $body = $message instanceof Email ? (string) $message->getTextBody() : '';
 
-    assertNotLogged($m[1]);
+    expect($sent)->toHaveCount(1)
+        ->and(preg_match('/\b(\d{6})\b/', $body, $m))->toBe(1);
+
+    assertNotLogged($log, $m[1] ?? '');
 });
 
 it('код не попадает в ответы API', function () {

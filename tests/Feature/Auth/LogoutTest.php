@@ -2,6 +2,7 @@
 
 declare(strict_types=1);
 
+use App\Domain\Accounts\Actions\CompleteLogin;
 use App\Domain\Accounts\Models\User;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Mail;
@@ -15,7 +16,7 @@ function loginByCode(string $email): void
 {
     $code = requestLoginCode($email);
 
-    test()->postJson('/auth/email/verify', ['email' => $email, 'code' => $code])
+    currentTest()->postJson('/auth/email/verify', ['email' => $email, 'code' => $code])
         ->assertJsonPath('status', 'authenticated');
 }
 
@@ -61,6 +62,27 @@ it('сессия без смены версии продолжает дейст�
 
     $this->get('/')->assertOk();
     $this->assertAuthenticatedAs($user);
+});
+
+it('сессия вошедшего пользователя без версии считается устаревшей', function () {
+    $user = User::factory()->create(['email' => 'anna@example.com']);
+    loginByCode('anna@example.com');
+
+    session()->forget(CompleteLogin::SESSION_VERSION_KEY);
+    Auth::forgetGuards();
+
+    $this->postJson('/auth/logout')->assertUnauthorized();
+    $this->assertGuest();
+    expect($user->fresh()?->session_version)->toBe(0);
+});
+
+it('версия сессии ставится при любом входе через guard web (событие Login)', function () {
+    $user = User::factory()->create();
+    $user->forceFill(['session_version' => 3])->save();
+
+    Auth::guard('web')->login($user);
+
+    expect(session(CompleteLogin::SESSION_VERSION_KEY))->toBe(3);
 });
 
 it('выход недоступен гостю', function (string $uri) {

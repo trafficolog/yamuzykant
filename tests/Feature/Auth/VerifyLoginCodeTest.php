@@ -2,6 +2,9 @@
 
 declare(strict_types=1);
 
+use App\Domain\Accounts\EmailLogin\EmailAddress;
+use App\Domain\Accounts\EmailLogin\LoginThrottle;
+use App\Domain\Accounts\Exceptions\TooManyLoginAttempts;
 use App\Domain\Accounts\Mail\LoginCodeMail;
 use App\Domain\Accounts\Models\User;
 use Illuminate\Foundation\Http\Middleware\ValidateCsrfToken;
@@ -18,7 +21,8 @@ it('верный код входит в существующий аккаунт 
     $code = requestLoginCode('Anna@Example.com');
     $sessionBefore = session()->getId();
 
-    $this->postJson('/auth/email/verify', ['email' => 'ANNA@example.com', 'code' => $code])
+    $this->withCredentials()->withCookie((string) config('session.cookie'), $sessionBefore)
+        ->postJson('/auth/email/verify', ['email' => 'ANNA@example.com', 'code' => $code])
         ->assertOk()
         ->assertExactJson(['status' => 'authenticated', 'redirect' => '/']);
 
@@ -34,8 +38,28 @@ it('после входа возвращает к прерванному дей�
     $this->withSession(['url.intended' => 'http://localhost/sell'])
         ->postJson('/auth/email/verify', ['email' => 'anna@example.com', 'code' => $code])
         ->assertOk()
-        ->assertJsonPath('redirect', 'http://localhost/sell');
+        ->assertJsonPath('redirect', '/sell');
 });
+
+it('адрес возврата — только относительный путь внутри приложения', function (string $intended, string $expected) {
+    User::factory()->create(['email' => 'anna@example.com']);
+    $code = requestLoginCode('anna@example.com');
+
+    $this->withSession(['url.intended' => $intended])
+        ->postJson('/auth/email/verify', ['email' => 'anna@example.com', 'code' => $code])
+        ->assertOk()
+        ->assertJsonPath('redirect', $expected);
+})->with([
+    'свой абсолютный URL' => ['http://localhost/sell?step=2', '/sell?step=2'],
+    'относительный путь' => ['/account/favorites', '/account/favorites'],
+    'чужой хост' => ['https://evil.example/phish', '/'],
+    'свой хост, чужая схема' => ['ftp://localhost/sell', '/'],
+    'protocol-relative' => ['//evil.example/phish', '/'],
+    'обратный слэш' => ['/\evil.example', '/'],
+    'javascript:' => ['javascript:alert(1)', '/'],
+    'без слэша' => ['sell', '/'],
+    'пусто' => ['', '/'],
+]);
 
 it('код одноразовый', function () {
     User::factory()->create(['email' => 'anna@example.com']);
@@ -133,19 +157,109 @@ it('5 неверных кодов → блок 15 мин даже с верны�
         ->assertJsonPath('status', 'authenticated');
 });
 
-it('после блокировки прежний код больше не действует', function () {
+it('блок пары почта+IP не мешает другой паре: владелец входит тем же кодом со своего IP', function () {
+    User::factory()->create(['email' => 'anna@example.com']);
+    $code = requestLoginCode('anna@example.com', '203.0.113.10');
+
+    foreach (range(1, 5) as $ignored) {
+        $this->withServerVariables(['REMOTE_ADDR' => '198.51.100.66'])
+            ->postJson('/auth/email/verify', ['email' => 'anna@example.com', 'code' => wrongLoginCode($code)]);
+    }
+    $this->withServerVariables(['REMOTE_ADDR' => '198.51.100.66'])
+        ->postJson('/auth/email/verify', ['email' => 'anna@example.com', 'code' => $code])
+        ->assertStatus(429);
+
+    $this->withServerVariables(['REMOTE_ADDR' => '203.0.113.10'])
+        ->postJson('/auth/email/verify', ['email' => 'anna@example.com', 'code' => $code])
+        ->assertOk()
+        ->assertJsonPath('status', 'authenticated');
+});
+
+it('потолок по почте: 31-я попытка после 30 неверных с разных IP → блок на 1 ч', function () {
     $this->freezeSecond();
     User::factory()->create(['email' => 'anna@example.com']);
     $code = requestLoginCode('anna@example.com');
 
+    foreach (range(1, 29) as $i) {
+        $this->withServerVariables(['REMOTE_ADDR' => "198.51.100.{$i}"])
+            ->postJson('/auth/email/verify', ['email' => 'anna@example.com', 'code' => wrongLoginCode($code)])
+            ->assertStatus(422);
+    }
+    $this->withServerVariables(['REMOTE_ADDR' => '198.51.100.30'])
+        ->postJson('/auth/email/verify', ['email' => 'anna@example.com', 'code' => wrongLoginCode($code)])
+        ->assertStatus(429);
+
+    $this->withServerVariables(['REMOTE_ADDR' => '198.51.100.31'])
+        ->postJson('/auth/email/verify', ['email' => 'anna@example.com', 'code' => $code])
+        ->assertStatus(429)
+        ->assertJsonPath('message', 'Слишком много попыток. Повторите через 60 мин');
+    $this->assertGuest();
+
+    // После блока по почте код сгорел — нужен новый.
+    $this->travel(61)->minutes();
+    $this->withServerVariables(['REMOTE_ADDR' => '198.51.100.31'])
+        ->postJson('/auth/email/verify', ['email' => 'anna@example.com', 'code' => $code])
+        ->assertStatus(422);
+});
+
+it('параллельные попытки пары: после 5 засчитанных попыток код не сравнивается', function () {
+    User::factory()->create(['email' => 'anna@example.com']);
+    $code = requestLoginCode('anna@example.com', '203.0.113.10');
+    $throttle = app(LoginThrottle::class);
+    $email = EmailAddress::from('anna@example.com');
+
+    // 5 запросов «в полёте» уже прошли проверку блокировки и засчитали попытку, блок ещё не поставлен.
     foreach (range(1, 5) as $ignored) {
-        $this->postJson('/auth/email/verify', ['email' => 'anna@example.com', 'code' => wrongLoginCode($code)]);
+        $throttle->hitVerificationAttempt($email, '203.0.113.10');
     }
 
-    $this->travel(16)->minutes();
+    $this->withServerVariables(['REMOTE_ADDR' => '203.0.113.10'])
+        ->postJson('/auth/email/verify', ['email' => 'anna@example.com', 'code' => $code])
+        ->assertStatus(429);
+    $this->assertGuest();
+});
 
-    $this->postJson('/auth/email/verify', ['email' => 'anna@example.com', 'code' => $code])
-        ->assertStatus(422);
+it('параллельные попытки с разных IP: после 30 засчитанных попыток на почту код не сравнивается', function () {
+    User::factory()->create(['email' => 'anna@example.com']);
+    $code = requestLoginCode('anna@example.com');
+    $throttle = app(LoginThrottle::class);
+    $email = EmailAddress::from('anna@example.com');
+
+    foreach (range(1, 30) as $i) {
+        $throttle->hitVerificationAttempt($email, "198.51.100.{$i}");
+    }
+
+    $this->withServerVariables(['REMOTE_ADDR' => '198.51.100.99'])
+        ->postJson('/auth/email/verify', ['email' => 'anna@example.com', 'code' => $code])
+        ->assertStatus(429);
+    $this->assertGuest();
+});
+
+it('4 засчитанные попытки в полёте не мешают 5-й с верным кодом', function () {
+    User::factory()->create(['email' => 'anna@example.com']);
+    $code = requestLoginCode('anna@example.com', '203.0.113.10');
+    $throttle = app(LoginThrottle::class);
+
+    foreach (range(1, 4) as $ignored) {
+        $throttle->hitVerificationAttempt(EmailAddress::from('anna@example.com'), '203.0.113.10');
+    }
+
+    $this->withServerVariables(['REMOTE_ADDR' => '203.0.113.10'])
+        ->postJson('/auth/email/verify', ['email' => 'anna@example.com', 'code' => $code])
+        ->assertOk();
+});
+
+it('постановка блока не обнуляет счётчик: запросы в полёте не получают второе окно', function () {
+    User::factory()->create(['email' => 'anna@example.com']);
+    $code = requestLoginCode('anna@example.com', '203.0.113.10');
+
+    foreach (range(1, 5) as $ignored) {
+        $this->withServerVariables(['REMOTE_ADDR' => '203.0.113.10'])
+            ->postJson('/auth/email/verify', ['email' => 'anna@example.com', 'code' => wrongLoginCode($code)]);
+    }
+
+    expect(fn () => app(LoginThrottle::class)->hitVerificationAttempt(EmailAddress::from('anna@example.com'), '203.0.113.10'))
+        ->toThrow(TooManyLoginAttempts::class);
 });
 
 it('верный код сбрасывает счётчик неверных попыток', function () {

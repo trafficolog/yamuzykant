@@ -15,7 +15,7 @@ function verifyNewEmail(string $email): void
 {
     $code = requestLoginCode($email);
 
-    test()->postJson('/auth/email/verify', ['email' => $email, 'code' => $code])
+    currentTest()->postJson('/auth/email/verify', ['email' => $email, 'code' => $code])
         ->assertJsonPath('status', 'registration_required');
 }
 
@@ -99,4 +99,54 @@ it('если аккаунт с этой почтой появился, пока 
 
     expect(User::query()->count())->toBe(1);
     $this->assertAuthenticatedAs($existing);
+});
+
+it('«нужна регистрация» живёт не дольше TTL кода', function () {
+    $this->freezeSecond();
+    verifyNewEmail('boris@example.com');
+
+    $this->travel(601)->seconds();
+
+    $this->postJson('/auth/register', ['name' => 'Борис', 'consent' => true])->assertStatus(409);
+    expect(User::query()->count())->toBe(0);
+});
+
+it('при установке «нужна регистрация» меняется id сессии', function () {
+    $code = requestLoginCode('boris@example.com');
+    $before = session()->getId();
+
+    // Браузер присылает куку сессии: без смены id сессия осталась бы прежней.
+    $this->withCredentials()->withCookie((string) config('session.cookie'), $before)
+        ->postJson('/auth/email/verify', ['email' => 'boris@example.com', 'code' => $code])
+        ->assertJsonPath('status', 'registration_required');
+
+    expect(session()->getId())->not->toBe($before)
+        ->and(session('auth.pending_registration.email'))->toBe('boris@example.com');
+});
+
+it('запрос кода на другую почту сбрасывает «нужна регистрация»', function () {
+    verifyNewEmail('boris@example.com');
+
+    $this->postJson('/auth/email/code', ['email' => 'other@example.com'])->assertStatus(202);
+
+    $this->postJson('/auth/register', ['name' => 'Борис', 'consent' => true])->assertStatus(409);
+    expect(User::query()->count())->toBe(0);
+});
+
+it('попытка входа с другой почтой сбрасывает «нужна регистрация» даже с неверным кодом', function () {
+    verifyNewEmail('boris@example.com');
+
+    $this->postJson('/auth/email/verify', ['email' => 'other@example.com', 'code' => '000000'])->assertStatus(422);
+
+    $this->postJson('/auth/register', ['name' => 'Борис', 'consent' => true])->assertStatus(409);
+    expect(User::query()->count())->toBe(0);
+});
+
+it('новый код на ту же почту «нужна регистрация» не сбрасывает', function () {
+    verifyNewEmail('boris@example.com');
+
+    $this->postJson('/auth/email/code', ['email' => 'Boris@example.com'])->assertStatus(202);
+
+    $this->postJson('/auth/register', ['name' => 'Борис', 'consent' => true])->assertOk();
+    expect(User::query()->sole()->email)->toBe('boris@example.com');
 });

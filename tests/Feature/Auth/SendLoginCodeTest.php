@@ -2,10 +2,13 @@
 
 declare(strict_types=1);
 
+use App\Domain\Accounts\EmailLogin\EmailAddress;
 use App\Domain\Accounts\Mail\LoginCodeMail;
 use App\Domain\Accounts\Models\User;
+use Illuminate\Cache\RateLimiter;
 use Illuminate\Contracts\Queue\ShouldBeEncrypted;
 use Illuminate\Contracts\Queue\ShouldQueue;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Mail;
 
 beforeEach(function () {
@@ -107,6 +110,18 @@ it('через час лимит по адресу сбрасывается', fu
     $this->travel(61)->minutes();
 
     $this->postJson('/auth/email/code', ['email' => 'anna@example.com'])->assertStatus(202);
+});
+
+it('попытка засчитывается до проверки лимита: параллельная пачка не проходит дальше 5', function () {
+    foreach (range(1, 6) as $ignored) {
+        $this->postJson('/auth/email/code', ['email' => 'anna@example.com']);
+    }
+
+    // Счётчик увеличивается атомарно (INCR) раньше сравнения с лимитом: 6-й запрос тоже засчитан,
+    // поэтому параллельные запросы не могут одновременно увидеть «ещё есть попытки».
+    $limiter = new RateLimiter(Cache::store('array'));
+    expect($limiter->attempts('login:codes:email:'.EmailAddress::from('anna@example.com')->key()))->toBe(6);
+    Mail::assertQueued(LoginCodeMail::class, 5);
 });
 
 it('лимит по адресу не мешает другим адресам', function () {
