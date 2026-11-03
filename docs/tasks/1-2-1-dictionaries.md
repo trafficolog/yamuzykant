@@ -3,7 +3,7 @@ id: "1.2.1"
 phase: "1"
 epic: "1.2"
 title: "Справочники: категории, модели, города"
-status: review
+status: done
 gate: G1
 risk: medium
 model_impl: sonnet
@@ -14,7 +14,7 @@ uc: ["O4"]
 prototype: "Админ - Справочники.dc.html"
 screens: []
 issue: 18
-sync_state: drifted
+sync_state: aligned
 escalations: []
 ---
 

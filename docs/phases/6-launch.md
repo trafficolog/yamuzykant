@@ -1,7 +1,7 @@
 ---
 id: "6"
 title: "Мобильная версия и запуск"
-status: todo
+status: in_progress
 gate: G3
 ---
 

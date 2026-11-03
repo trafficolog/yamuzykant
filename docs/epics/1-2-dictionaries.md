@@ -2,7 +2,7 @@
 id: "1.2"
 phase: "1"
 title: "Справочники"
-status: todo
+status: in_progress
 gate: G1
 ---
 
@@ -16,6 +16,7 @@ gate: G1
 <!-- docs:ops:begin tasks -->
 | Задача | Статус | Риск | Исполнитель → Ревьюер |
 |---|---|---|---|
-| [1.2.1 Справочники: категории, модели, города](../tasks/1-2-1-dictionaries.md) | todo | medium | sonnet → sonnet |
+| [1.2.1 Справочники: категории, модели, города](../tasks/1-2-1-dictionaries.md) | done | medium | sonnet → sonnet |
 | [1.2.2 Подсказка модели](../tasks/1-2-2-model-suggest.md) | todo | low | haiku → sonnet |
+| [1.2.3 Справочники: доработки после ревью](../tasks/1-2-3-dictionaries-hardening.md) | todo | low | haiku → sonnet |
 <!-- docs:ops:end -->
