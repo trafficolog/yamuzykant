@@ -13,6 +13,8 @@ uses(RefreshDatabase::class)->in(
     'Feature/DsShowcaseTest.php',
     'Feature/FeatureFlagsTest.php',
     'Feature/HomeTest.php',
+    'Feature/Catalog',
+    'Unit/Domain/Catalog',
 );
 
 // Живые проверки сервисов compose: нужен запущенный `docker compose`. Запуск: composer test:docker.
