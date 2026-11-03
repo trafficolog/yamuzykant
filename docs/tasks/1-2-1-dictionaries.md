@@ -3,7 +3,7 @@ id: "1.2.1"
 phase: "1"
 epic: "1.2"
 title: "Справочники: категории, модели, города"
-status: todo
+status: in_progress
 gate: G1
 risk: medium
 model_impl: sonnet

@@ -3,7 +3,7 @@ id: "0.1.10"
 phase: "0"
 epic: "0.1"
 title: "Защита release.yml и deploy.yml без branch protection"
-status: todo
+status: in_progress
 gate: G1
 risk: high
 model_impl: opus
