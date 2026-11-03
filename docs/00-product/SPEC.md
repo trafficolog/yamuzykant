@@ -133,12 +133,15 @@ stateDiagram-v2
   published --> pending: substantial_edit
   published --> published: minor_edit / price_drop
   published --> withdrawn: withdraw(reason, final_price?)
-  published --> expired: 60 дней (уточнить)
+  pending --> withdrawn: withdraw(reason)
+  needs_changes --> withdrawn: withdraw(reason)
+  expired --> withdrawn: withdraw(reason, final_price?)
+  published --> expired: 60 дней
   expired --> pending: renew
   withdrawn --> pending: relist
   rejected --> [*]
 ```
-Существенная правка — изменение фото, модели, описания, состояния. Пока флаг `premoderation` выключен, существенная правка проходит автопроверки и остаётся `published`; переходы через `pending` включаются вместе с флагом (гейт G2). Цена вниз и способы передачи — без повторной модерации.
+Существенная правка — изменение фото, модели, категории, названия, серийного номера, описания, состояния (решение OWNER 04.11.2026). Год, город, цена, «Готов к торгу», способы передачи — несущественные. Пока флаг `premoderation` выключен, resubmit, renew и relist тоже ведут сразу в `published` (решение OWNER 04.11.2026); снять с продажи можно также из `pending`, `needs_changes` и `expired`, черновик удаляется. Пока флаг `premoderation` выключен, существенная правка проходит автопроверки и остаётся `published`; переходы через `pending` включаются вместе с флагом (гейт G2). Цена вниз и способы передачи — без повторной модерации.
 
 ### 6.2 Предложение цены
 ```mermaid

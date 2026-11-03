@@ -3,7 +3,7 @@ id: "2.1.1"
 phase: "2"
 epic: "2.1"
 title: "Объявление: модель и жизненный цикл"
-status: in_progress
+status: review
 gate: G1
 risk: high
 model_impl: opus
@@ -27,7 +27,8 @@ escalations: []
 - Миграции: listings, listing_photos, sale_records, moderation_decisions (поля SPEC §7)
 - Enum `ListingStatus`, `ListingStateMachine` с событиями на каждый переход
 - Серийный номер — `encrypted`, метод `serialMasked()`
-- Правило «существенная правка» (SPEC §6.1) — в одном месте
+- Правило «существенная правка» (SPEC §6.1) — в одном месте: фото, модель, категория, название, серийный номер, описание, состояние (решение OWNER 04.11.2026)
+- Снятие с продажи (withdraw) — из published, pending, needs_changes, expired; итоговая цена — только при «продал» из published/expired; срок показа 60 дней (подтверждено OWNER)
 - Флаг Pennant `premoderation` (выключен): publish ведёт `draft → published`, существенная правка оставляет `published`; при включённом флаге — переходы через `pending` по SPEC §6.1
 - `ListingPolicy`: владелец, сотрудник, гость
 

@@ -3,7 +3,7 @@ id: "0.1.4"
 phase: "0"
 epic: "0.1"
 title: "Окружение stage и автодеплой"
-status: review
+status: done
 gate: G1
 risk: high
 model_impl: opus
@@ -14,7 +14,7 @@ uc: []
 prototype: ""
 screens: []
 issue: 4
-sync_state: drifted
+sync_state: aligned
 escalations: []
 ---
 

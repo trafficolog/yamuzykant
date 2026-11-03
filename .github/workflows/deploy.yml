@@ -22,26 +22,54 @@ jobs:
       github.event.workflow_run.head_branch == 'main' &&
       github.event.workflow_run.head_repository.full_name == github.repository
     runs-on: ubuntu-latest
+    timeout-minutes: 20
     environment: stage
     steps:
+      # Выкатывается только head_sha проверенного запуска CI: он же в checkout и в env.SHA,
+      # deploy.sh сверяет его с HEAD (0.1.4, N9).
       - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
         with:
           persist-credentials: false
           ref: ${{ github.event.workflow_run.head_sha }}
-      - name: Пропуск, пока нет deploy/deploy.sh (до задачи 0.1.4)
-        id: has
-        run: echo "ok=$([ -f deploy/deploy.sh ] && echo true || echo false)" >> $GITHUB_OUTPUT
-      - if: steps.has.outputs.ok == 'true'
+      # Пока в DEPLOY_SSH_KEY пароль, а не ключ (до задачи 0.1.12), выкатка идёт в режиме dry-run:
+      # архив и .env собираются, на сервер ничего не уходит. Настоящая выкатка — переменная
+      # окружения stage STAGE_DEPLOY_LIVE = true (ставит OWNER после 0.1.12).
+      - name: Ключ деплоя — приватный ключ OpenSSH (без печати значения)
+        if: vars.STAGE_DEPLOY_LIVE == 'true'
+        env:
+          KEY: ${{ secrets.DEPLOY_SSH_KEY }}
+        run: |
+          case "$KEY" in
+            "-----BEGIN OPENSSH PRIVATE KEY-----"*) echo "формат ключа верный" ;;
+            *) echo "::error::DEPLOY_SSH_KEY — не приватный ключ OpenSSH (задача 0.1.12)"; exit 1 ;;
+          esac
+      - if: vars.STAGE_DEPLOY_LIVE == 'true'
         uses: webfactory/ssh-agent@dc588b651fe13675774614f8e6a936a468676387 # v0.9.0
         with:
           ssh-private-key: ${{ secrets.DEPLOY_SSH_KEY }}
-      - if: steps.has.outputs.ok == 'true'
+      - name: Выкатка на stage (deploy/deploy.sh)
         run: ./deploy/deploy.sh stage "$SHA"
         env:
           SHA: ${{ github.event.workflow_run.head_sha }}
+          DEPLOY_DRY_RUN: ${{ vars.STAGE_DEPLOY_LIVE == 'true' && '0' || '1' }}
           DEPLOY_HOST: ${{ secrets.DEPLOY_HOST }}
           DEPLOY_USER: ${{ secrets.DEPLOY_USER }}
-      - if: steps.has.outputs.ok == 'true'
+          DEPLOY_PORT: ${{ vars.DEPLOY_PORT }}
+          DEPLOY_KNOWN_HOSTS: ${{ secrets.DEPLOY_KNOWN_HOSTS }}
+          APP_URL: ${{ vars.STAGE_URL }}
+          APP_KEY: ${{ secrets.APP_KEY }}
+          DB_PASSWORD: ${{ secrets.DB_PASSWORD }}
+          MEILISEARCH_KEY: ${{ secrets.MEILISEARCH_KEY }}
+          AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          REVERB_APP_ID: ${{ secrets.REVERB_APP_ID }}
+          REVERB_APP_KEY: ${{ secrets.REVERB_APP_KEY }}
+          REVERB_APP_SECRET: ${{ secrets.REVERB_APP_SECRET }}
+          YANDEX_CLIENT_ID: ${{ secrets.YANDEX_CLIENT_ID }}
+          YANDEX_CLIENT_SECRET: ${{ secrets.YANDEX_CLIENT_SECRET }}
+          SENTRY_DSN: ${{ secrets.SENTRY_DSN }}
+      - name: stage отвечает на /health
+        if: vars.STAGE_DEPLOY_LIVE == 'true'
         env:
           STAGE_URL: ${{ vars.STAGE_URL }}
         run: curl -fsS --retry 10 --retry-delay 6 "$STAGE_URL/health"
