@@ -3,7 +3,7 @@ id: "0.2.8"
 phase: "0"
 epic: "0.2"
 title: "Самохостинг шрифтов ДС"
-status: in_progress
+status: review
 gate: G1
 risk: medium
 model_impl: sonnet
