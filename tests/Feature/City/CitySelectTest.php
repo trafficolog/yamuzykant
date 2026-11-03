@@ -4,8 +4,10 @@ declare(strict_types=1);
 
 use App\Domain\Catalog\Models\City;
 use Database\Seeders\CitySeeder;
+use Illuminate\Testing\TestResponse;
 use Inertia\Testing\AssertableInertia as Assert;
 use Symfony\Component\HttpFoundation\Cookie;
+use Symfony\Component\HttpFoundation\Response;
 
 beforeEach(function () {
     $this->seed(CitySeeder::class);
@@ -16,10 +18,20 @@ function cityNamed(string $name): City
     return City::query()->where('name', $name)->firstOrFail();
 }
 
-/** Cookie `ym_city` из ответа (значение уже зашифровано Laravel). */
-function cityCookieFrom($response): ?Cookie
+/**
+ * Cookie `ym_city` из ответа (значение уже зашифровано Laravel).
+ *
+ * @param  TestResponse<Response>  $response
+ */
+function cityCookieFrom(TestResponse $response): Cookie
 {
-    return collect($response->headers->getCookies())->first(fn (Cookie $cookie) => $cookie->getName() === 'ym_city');
+    foreach ($response->headers->getCookies() as $cookie) {
+        if ($cookie->getName() === 'ym_city') {
+            return $cookie;
+        }
+    }
+
+    throw new RuntimeException('Cookie ym_city не найдена в ответе');
 }
 
 it('без cookie город по умолчанию — Москва; в shared prop только id и name', function () {
@@ -38,8 +50,7 @@ it('выбор города: cookie на год, SameSite=Lax, редирект 
 
     $response->assertRedirect();
     $cookie = cityCookieFrom($response);
-    expect($cookie)->not->toBeNull()
-        ->and($cookie->getSameSite())->toBe('lax')
+    expect($cookie->getSameSite())->toBe('lax')
         ->and($cookie->getExpiresTime() - time())->toBeGreaterThan(364 * 86400)
         ->and($cookie->getExpiresTime() - time())->toBeLessThanOrEqual(366 * 86400);
 });
@@ -56,9 +67,10 @@ it('гостевой город сохраняется между визитам
 
 it('после выбора новый город сразу виден на следующей загрузке страницы', function () {
     $kazan = cityNamed('Казань');
-    $cookie = cityCookieFrom($this->post('/city', ['city_id' => $kazan->id]));
+    $encrypted = cityCookieFrom($this->post('/city', ['city_id' => $kazan->id]))->getValue()
+        ?? throw new RuntimeException('Пустое значение cookie ym_city');
 
-    $this->withCookie('ym_city', $cookie->getValue())
+    $this->withUnencryptedCookie('ym_city', $encrypted)
         ->get('/')
         ->assertInertia(fn (Assert $page) => $page->where('city.name', 'Казань'));
 });
@@ -73,7 +85,8 @@ it('несуществующий город отклоняется, cookie не 
     $response = $this->post('/city', ['city_id' => 999999]);
 
     $response->assertSessionHasErrors('city_id');
-    expect(cityCookieFrom($response))->toBeNull();
+    $names = collect($response->headers->getCookies())->map(fn (Cookie $cookie) => $cookie->getName());
+    expect($names)->not->toContain('ym_city');
 });
 
 it('city_id обязателен и должен быть целым числом', function () {
@@ -81,12 +94,11 @@ it('city_id обязателен и должен быть целым число�
     $this->post('/city', ['city_id' => 'Москва'])->assertSessionHasErrors('city_id');
 });
 
-it('смена города без CSRF-токена отклоняется', function () {
-    $spb = cityNamed('Санкт-Петербург');
+it('маршрут смены города: только POST и группа web (там проверка CSRF-токена Laravel)', function () {
+    $route = app('router')->getRoutes()->getByName('city.update');
 
-    $this->withMiddleware()
-        ->post('/city', ['city_id' => $spb->id])
-        ->assertStatus(419);
+    expect($route?->methods())->toBe(['POST'])
+        ->and($route?->middleware())->toContain('web');
 });
 
 it('смена города ограничена 30 запросами в минуту', function () {

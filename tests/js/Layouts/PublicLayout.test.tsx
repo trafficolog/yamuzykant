@@ -81,11 +81,7 @@ describe('PublicLayout', () => {
 
     it('город из shared prop `city` доходит до шапки без передачи страницей; счётчик сообщений — тоже', () => {
         city = { id: 2, name: 'Казань' };
-        render(
-            <PublicLayout messages={2}>
-                {null}
-            </PublicLayout>,
-        );
+        render(<PublicLayout messages={2}>{null}</PublicLayout>);
 
         expect(screen.getByRole('button', { name: 'Казань' })).toBeInTheDocument();
         expect(

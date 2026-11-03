@@ -27,9 +27,16 @@ function respondWith(data: unknown[]) {
 
 const trigger = () => screen.getByRole('button', { name: 'Москва' });
 const panel = () => screen.queryByRole('dialog', { name: ru.city.label });
+const panelOrFail = (): HTMLElement => {
+    const element = panel();
+    if (!element) throw new Error('Панель выбора города не открыта');
+    return element;
+};
 const open = async () => {
     fireEvent.click(trigger());
-    await waitFor(() => expect(within(panel()!).getAllByRole('button').length).toBeGreaterThan(0));
+    await waitFor(() =>
+        expect(within(panelOrFail()).getAllByRole('button').length).toBeGreaterThan(0),
+    );
 };
 
 beforeEach(() => {
@@ -67,11 +74,15 @@ describe('CitySelect: кнопка', () => {
         expect(panel()).toBeInTheDocument();
         expect(screen.getByRole('searchbox', { name: ru.city.search })).toHaveFocus();
         await waitFor(() =>
-            expect(within(panel()!).getByRole('button', { name: 'Санкт-Петербург' })).toBeVisible(),
+            expect(
+                within(panelOrFail()).getByRole('button', { name: 'Санкт-Петербург' }),
+            ).toBeVisible(),
         );
         expect(fetchMock).toHaveBeenCalledWith(
             '/cities',
-            expect.objectContaining({ headers: expect.objectContaining({ Accept: 'application/json' }) }),
+            expect.objectContaining({
+                headers: expect.objectContaining({ Accept: 'application/json' }),
+            }),
         );
     });
 });
@@ -81,7 +92,7 @@ describe('CitySelect: список и поиск', () => {
         render(<CitySelect city={moscow} />);
         await open();
 
-        const current = within(panel()!)
+        const current = within(panelOrFail())
             .getAllByRole('button')
             .filter((item) => item.getAttribute('aria-current') === 'true');
         expect(current.map((item) => item.textContent)).toEqual(['Москва']);
@@ -106,9 +117,10 @@ describe('CitySelect: список и поиск', () => {
     it('пустой результат — сообщение, без списка', async () => {
         fetchMock.mockImplementation(() => respondWith([]));
         render(<CitySelect city={moscow} />);
-        await open();
+        fireEvent.click(trigger());
 
         expect(await screen.findByText(ru.city.empty)).toBeInTheDocument();
+        expect(within(panelOrFail()).queryByRole('button')).toBeNull();
     });
 
     it('ошибка загрузки справочника — сообщение с повтором действия', async () => {
@@ -125,7 +137,7 @@ describe('CitySelect: выбор города', () => {
         render(<CitySelect city={moscow} />);
         await open();
 
-        fireEvent.click(within(panel()!).getByRole('button', { name: 'Санкт-Петербург' }));
+        fireEvent.click(within(panelOrFail()).getByRole('button', { name: 'Санкт-Петербург' }));
 
         expect(post).toHaveBeenCalledWith(
             '/city',
@@ -135,26 +147,30 @@ describe('CitySelect: выбор города', () => {
     });
 
     it('после успешной смены панель закрывается, фокус возвращается на кнопку города', async () => {
-        post.mockImplementation((_url: string, _data: unknown, options: { onSuccess: () => void }) => {
-            options.onSuccess();
-        });
+        post.mockImplementation(
+            (_url: string, _data: unknown, options: { onSuccess: () => void }) => {
+                options.onSuccess();
+            },
+        );
         render(<CitySelect city={moscow} />);
         await open();
 
-        fireEvent.click(within(panel()!).getByRole('button', { name: 'Санкт-Петербург' }));
+        fireEvent.click(within(panelOrFail()).getByRole('button', { name: 'Санкт-Петербург' }));
 
         expect(panel()).toBeNull();
         expect(trigger()).toHaveFocus();
     });
 
     it('ошибка смены города — панель остаётся, сообщение о сбое', async () => {
-        post.mockImplementation((_url: string, _data: unknown, options: { onError: () => void }) => {
-            options.onError();
-        });
+        post.mockImplementation(
+            (_url: string, _data: unknown, options: { onError: () => void }) => {
+                options.onError();
+            },
+        );
         render(<CitySelect city={moscow} />);
         await open();
 
-        fireEvent.click(within(panel()!).getByRole('button', { name: 'Санкт-Петербург' }));
+        fireEvent.click(within(panelOrFail()).getByRole('button', { name: 'Санкт-Петербург' }));
 
         expect(panel()).toBeInTheDocument();
         expect(await screen.findByText(ru.city.saveError)).toBeInTheDocument();

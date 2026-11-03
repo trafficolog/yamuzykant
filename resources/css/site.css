@@ -498,6 +498,80 @@
     }
 }
 
+/* Город в шапке (задача 1.1.4): кнопка и окно выбора под ней, выровнено по правому краю кнопки */
+.ym-city {
+    position: relative;
+    display: flex;
+    min-width: 0;
+}
+.ym-city__panel {
+    position: absolute;
+    top: calc(100% + var(--space-2));
+    right: 0;
+    z-index: 30;
+    width: min(360px, calc(100vw - 32px));
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-3);
+    padding: var(--space-4);
+    border-radius: var(--radius-lg);
+    background: var(--surface-raised);
+    box-shadow: var(--shadow-3);
+}
+.ym-city__caption,
+.ym-city__message {
+    margin: 0;
+    color: var(--ink-muted);
+}
+.ym-city__message[role='alert'] {
+    color: var(--ink);
+}
+.ym-city__list {
+    max-height: 320px;
+    margin: 0;
+    padding: 0;
+    overflow-y: auto;
+    list-style: none;
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-1);
+}
+.ym-city__item {
+    display: block;
+    width: 100%;
+    min-height: var(--hit-min);
+    padding: var(--space-1) var(--space-3);
+    border: 0;
+    border-radius: var(--radius-sm);
+    background: transparent;
+    color: var(--ink);
+    font: 500 var(--text-m)/22px var(--font-text);
+    text-align: left;
+    cursor: pointer;
+}
+.ym-city__item:hover {
+    background: var(--surface-recessed);
+}
+.ym-city__item[aria-current='true'] {
+    background: var(--surface-recessed);
+    font-weight: 600;
+}
+.ym-city__item:focus-visible {
+    outline: 2px solid var(--focus-ring);
+    outline-offset: 2px;
+}
+@media (max-width: 639px) {
+    /* Мобильная первая строка: кнопка города сжимается, как прежняя кнопка в actions */
+    .ym-site-header__actions > .ym-city {
+        max-width: 100%;
+        overflow: hidden;
+    }
+    .ym-site-header__actions > .ym-city .ym-btn {
+        max-width: 100%;
+        overflow: hidden;
+    }
+}
+
 @media (prefers-reduced-motion: reduce) {
     .ym-site-header__section {
         transition: none;
