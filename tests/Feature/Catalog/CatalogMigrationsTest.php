@@ -3,6 +3,7 @@
 declare(strict_types=1);
 
 use Illuminate\Support\Facades\Artisan;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Schema;
 
 it('создаёт таблицы справочников с нужными колонками', function () {
@@ -12,7 +13,9 @@ it('создаёт таблицы справочников с нужными к�
 });
 
 it('миграции обратимы: откат удаляет таблицы, повторный прогон возвращает', function () {
-    Artisan::call('migrate:rollback', ['--step' => 3]);
+    // Откатываем справочники и все миграции после них (например, users.city_id → cities из 1.1.1).
+    $steps = DB::table('migrations')->where('migration', '>=', '2026_11_03_100000')->count();
+    Artisan::call('migrate:rollback', ['--step' => $steps]);
 
     expect(Schema::hasTable('categories'))->toBeFalse()
         ->and(Schema::hasTable('instrument_models'))->toBeFalse()

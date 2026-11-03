@@ -3,7 +3,7 @@ id: "0.1.8"
 phase: "0"
 epic: "0.1"
 title: "CI и docs-ops: укрепление после ревью"
-status: in_progress
+status: done
 gate: G1
 risk: medium
 model_impl: sonnet
@@ -14,7 +14,7 @@ uc: []
 prototype: ""
 screens: []
 issue: 72
-sync_state: drifted
+sync_state: aligned
 escalations: []
 ---
 

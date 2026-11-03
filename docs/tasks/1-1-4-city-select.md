@@ -3,7 +3,7 @@ id: "1.1.4"
 phase: "1"
 epic: "1.1"
 title: "Выбор города"
-status: in_progress
+status: review
 gate: G1
 risk: low
 model_impl: haiku
