@@ -1,27 +1,116 @@
 name: Release
+# Без правил окружений и защиты тегов (бесплатный тариф, риск R1 аудита G0) тег сам ничего не выкатывает (0.1.10):
+# - push тега v* — сборка и GitHub Release, без выкатки (v0.1.0 после G0, v0.2.0 после G1 и т. д.);
+#   Release создаётся, только если коммит тега в main;
+# - выкатка production — только ручной запуск workflow_dispatch из main с параметром tag:
+#   job authorize пускает, если github.actor и github.triggering_actor есть в .github/production-deployers.txt,
+#   тег — vX.Y.Z с X ≥ 1 и его коммит в main; deploy выкатывает проверенный SHA (needs.authorize.outputs.sha).
+#   Версии v0.* в production не выкатываются.
+# У authorize и deploy нет статус-функций в if, continue-on-error и глушения ошибок: отказ authorize
+# пропускает deploy. Условия проверяет .github/scripts/workflow-guards.test.mjs в job docs.
 on:
   push:
     tags: ['v*']
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: 'Тег релиза vX.Y.Z (X ≥ 1), который выкатывается в production'
+        required: true
+        type: string
+
+permissions:
+  contents: read
+
 jobs:
-  deploy:
+  build:
+    if: github.event_name == 'push' && startsWith(github.ref, 'refs/tags/v')
     runs-on: ubuntu-latest
-    environment: production   # обязательный ревьюер — OWNER
+    timeout-minutes: 10
     steps:
       - uses: actions/checkout@v4
-      - uses: webfactory/ssh-agent@v0.9.0
+      - uses: actions/setup-node@v4
         with:
-          ssh-private-key: ${{ secrets.DEPLOY_SSH_KEY }}
-      - run: ./deploy/deploy.sh production ${{ github.sha }}
-        env:
-          DEPLOY_HOST: ${{ secrets.DEPLOY_HOST }}
-          DEPLOY_USER: ${{ secrets.DEPLOY_USER }}
-      - run: curl -fsS --retry 10 --retry-delay 6 "${{ vars.PRODUCTION_URL }}/health"
+          node-version: '22'
+          cache: npm
+      - run: npm ci --no-audit --no-fund
+      - name: Сборка клиента и SSR
+        run: npm run build && npm run build:ssr
+
   release:
-    needs: deploy
+    needs: build
     runs-on: ubuntu-latest
-    permissions: { contents: write }
+    timeout-minutes: 5
+    permissions:
+      contents: write
     steps:
       - uses: actions/checkout@v4
-      - run: gh release create "${{ github.ref_name }}" --generate-notes --verify-tag
+        with:
+          fetch-depth: 0
+      - name: Коммит тега в main (RELEASE-GATES — тег на коммите main)
+        env:
+          TAG: ${{ github.ref_name }}
+        run: |
+          git merge-base --is-ancestor "$GITHUB_SHA" origin/main || { echo "::error::Коммит тега $TAG ($GITHUB_SHA) не в main — GitHub Release не создаётся"; exit 1; }
+      - name: GitHub Release (тег с дефисом — pre-release)
         env:
           GH_TOKEN: ${{ github.token }}
+          TAG: ${{ github.ref_name }}
+        run: |
+          flags=""
+          case "$TAG" in *-*) flags="--prerelease" ;; esac
+          gh release create "$TAG" --repo "$GITHUB_REPOSITORY" --title "$TAG" --generate-notes --verify-tag $flags
+
+  authorize:
+    if: github.event_name == 'workflow_dispatch' && github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    outputs:
+      sha: ${{ steps.tag.outputs.sha }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Запускает OWNER из списка, тег vX.Y.Z с X ≥ 1
+        env:
+          ACTOR: ${{ github.actor }}
+          TRIGGERING_ACTOR: ${{ github.triggering_actor }}
+          TAG: ${{ inputs.tag }}
+        run: node .github/scripts/workflow-guards.mjs authorize --actor "$ACTOR" --triggering-actor "$TRIGGERING_ACTOR" --tag "$TAG"
+      - name: Тег существует, его коммит в main — SHA для выкатки
+        id: tag
+        env:
+          TAG: ${{ inputs.tag }}
+        run: |
+          git rev-parse --verify --quiet "refs/tags/$TAG^{commit}" > /dev/null || { echo "::error::Нет тега $TAG"; exit 1; }
+          sha="$(git rev-parse "refs/tags/$TAG^{commit}")"
+          git merge-base --is-ancestor "$sha" origin/main || { echo "::error::Коммит тега $TAG не в main"; exit 1; }
+          echo "sha=$sha" >> "$GITHUB_OUTPUT"
+
+  deploy:
+    needs: authorize
+    if: github.event_name == 'workflow_dispatch' && github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    environment: production
+    concurrency: deploy-production
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ needs.authorize.outputs.sha }}
+      - name: Пропуск, пока нет deploy/deploy.sh (до задачи 0.1.4)
+        id: has
+        run: echo "ok=$([ -f deploy/deploy.sh ] && echo true || echo false)" >> $GITHUB_OUTPUT
+      - if: steps.has.outputs.ok == 'true'
+        uses: webfactory/ssh-agent@v0.9.0
+        with:
+          ssh-private-key: ${{ secrets.DEPLOY_SSH_KEY }}
+      - if: steps.has.outputs.ok == 'true'
+        run: ./deploy/deploy.sh production "$SHA"
+        env:
+          SHA: ${{ needs.authorize.outputs.sha }}
+          DEPLOY_HOST: ${{ secrets.DEPLOY_HOST }}
+          DEPLOY_USER: ${{ secrets.DEPLOY_USER }}
+      - if: steps.has.outputs.ok == 'true'
+        env:
+          PRODUCTION_URL: ${{ vars.PRODUCTION_URL }}
+        run: curl -fsS --retry 10 --retry-delay 6 "$PRODUCTION_URL/health"

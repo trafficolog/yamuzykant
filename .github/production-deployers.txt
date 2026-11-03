@@ -1,0 +1,4 @@
+# Логины GitHub, которым разрешена выкатка production через release.yml (workflow_dispatch).
+# Читается из main командой node .github/scripts/workflow-guards.mjs authorize (задача 0.1.10).
+# Меняется только через PR с REVIEW: approve и подтверждением OWNER.
+trafficolog
