@@ -3,7 +3,7 @@ id: "0.1.4"
 phase: "0"
 epic: "0.1"
 title: "Окружение stage и автодеплой"
-status: todo
+status: in_progress
 gate: G1
 risk: high
 model_impl: opus
@@ -35,6 +35,10 @@ escalations: []
 - Воркеры очереди (Horizon) слушают `high,default` — письма с кодом входа идут в `high`
 - `deploy.sh` получает SHA только из проверенного источника: в release.yml — `needs.authorize.outputs.sha` и в `with.ref`, и в `env.SHA`; тест в workflow-guards (ревью PR #83, N8, N9: `if: false` у шага authorize, литерал `--tag`, `--allowlist /dev/stdin` тоже должны ронять тесты)
 - Окружение `stage` ограничено веткой `main` (deployment branch policy, включено 03.11.2026); выкатка — только `deploy.yml` после зелёного CI на push в main
+
+- Сервер stage (решение OWNER 03.11.2026): чистый VPS Ubuntu, без прокси/CDN (trustProxies — только 127.0.0.1); почта на stage — Mailpit на сервере (веб-интерфейс за паролем), файлы — MinIO на сервере; реальные провайдеры — к production
+- Provisioning — идемпотентный скрипт в репозитории (`deploy/provision.sh`): Nginx, PHP 8.3-FPM, PostgreSQL 16, Redis 7, Meilisearch, Supervisor (Horizon `high,default`, Reverb, SSR), Mailpit, MinIO, certbot (HTTPS); запускается workflow_dispatch-job только из `main` по SSH-ключу
+- Первая настоящая выкатка — после 0.1.12 (сейчас в `DEPLOY_SSH_KEY` пароль); до этого — dry-run и проверка скриптов (shellcheck, тесты)
 
 ## Критерии приёмки
 - [ ] Мерж в main → stage обновлён, `/health` 200
