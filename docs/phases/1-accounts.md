@@ -13,6 +13,6 @@ gate: G1
 <!-- docs:ops:begin epics -->
 | Эпик | Задач | Готово |
 |---|---|---|
-| [1.1 Аккаунт](../epics/1-1-account.md) | 5 | 0 |
+| [1.1 Аккаунт](../epics/1-1-account.md) | 5 | 1 |
 | [1.2 Справочники](../epics/1-2-dictionaries.md) | 3 | 1 |
 <!-- docs:ops:end -->

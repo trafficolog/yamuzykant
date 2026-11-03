@@ -3,7 +3,7 @@ id: "1.2.2"
 phase: "1"
 epic: "1.2"
 title: "Подсказка модели"
-status: in_progress
+status: review
 gate: G1
 risk: low
 model_impl: haiku
