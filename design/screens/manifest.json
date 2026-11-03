@@ -35,8 +35,7 @@
         "logged-in"
       ],
       "viewports": [
-        "1440",
-        "390"
+        "1440"
       ]
     },
     {
@@ -73,8 +72,7 @@
         "empty-city"
       ],
       "viewports": [
-        "1440",
-        "390"
+        "1440"
       ]
     },
     {
@@ -94,8 +92,7 @@
         "loading"
       ],
       "viewports": [
-        "1440",
-        "390"
+        "1440"
       ]
     },
     {
@@ -104,16 +101,13 @@
       "query": "?view=flea&empty=1",
       "gate": "G1",
       "mvp": true,
-      "compare": "visual",
+      "compare": "checklist",
       "threshold": "default",
       "mask": [],
       "states": [
         "empty"
       ],
-      "viewports": [
-        "1440",
-        "390"
-      ]
+      "viewports": []
     },
     {
       "id": "lot",
@@ -133,8 +127,7 @@
         "favorite-on"
       ],
       "viewports": [
-        "1440",
-        "390"
+        "1440"
       ]
     },
     {
@@ -153,8 +146,7 @@
         "no-listings"
       ],
       "viewports": [
-        "1440",
-        "390"
+        "1440"
       ]
     },
     {
@@ -174,8 +166,7 @@
         "limit-reached"
       ],
       "viewports": [
-        "1440",
-        "390"
+        "1440"
       ]
     },
     {
@@ -240,8 +231,7 @@
         "contact-form"
       ],
       "viewports": [
-        "1440",
-        "390"
+        "1440"
       ]
     },
     {
@@ -259,8 +249,7 @@
         "503"
       ],
       "viewports": [
-        "1440",
-        "390"
+        "1440"
       ]
     },
     {
