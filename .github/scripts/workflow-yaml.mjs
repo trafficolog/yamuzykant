@@ -39,7 +39,8 @@ const findColon = (text) => {
         } else if ((c === '"' || c === "'") && (i === 0 || /[\s[{,]/.test(text[i - 1]))) quote = c;
         else if (c === '[' || c === '{') depth++;
         else if (c === ']' || c === '}') depth--;
-        else if (c === ':' && depth === 0 && (i === text.length - 1 || text[i + 1] === ' ')) return i;
+        else if (c === ':' && depth === 0 && (i === text.length - 1 || text[i + 1] === ' '))
+            return i;
     }
     return -1;
 };
@@ -68,7 +69,8 @@ const splitFlow = (body) => {
 const scalar = (raw) => {
     const text = raw.trim();
     if (text === '') return null;
-    if (text.startsWith("'") && text.endsWith("'") && text.length > 1) return text.slice(1, -1).replace(/''/g, "'");
+    if (text.startsWith("'") && text.endsWith("'") && text.length > 1)
+        return text.slice(1, -1).replace(/''/g, "'");
     if (text.startsWith('"') && text.endsWith('"') && text.length > 1) return JSON.parse(text);
     if (text.startsWith('[') && text.endsWith(']')) return splitFlow(text.slice(1, -1)).map(scalar);
     if (text.startsWith('{') && text.endsWith('}') && !text.startsWith('{{')) {
@@ -92,7 +94,11 @@ export function parseYaml(source) {
         .replace(/\r\n?/g, '\n')
         .split('\n')
         .map((raw) => ({ raw, text: stripComment(raw) }))
-        .map((l) => ({ ...l, indent: l.text.length - l.text.trimStart().length, body: l.text.trim() }));
+        .map((l) => ({
+            ...l,
+            indent: l.text.length - l.text.trimStart().length,
+            body: l.text.trim(),
+        }));
     let pos = 0;
 
     const skipBlank = () => {
@@ -131,7 +137,10 @@ export function parseYaml(source) {
             skipBlank();
             if (pos >= lines.length) return null;
             const next = lines[pos];
-            if (next.indent > ownIndent || (next.indent === ownIndent && next.body.startsWith('- '))) {
+            if (
+                next.indent > ownIndent ||
+                (next.indent === ownIndent && next.body.startsWith('- '))
+            ) {
                 return block(next.indent);
             }
             return null;
@@ -172,14 +181,20 @@ export function parseYaml(source) {
             if (line.indent !== indent || !(line.body.startsWith('- ') || line.body === '-')) break;
             pos++;
             const rest = line.body.slice(1).trim();
-            const itemIndent = indent + (line.text.trimStart().length - line.text.trimStart().slice(1).trimStart().length);
-            if (rest !== '' && findColon(rest) >= 0 && !/^[[{'"]/.test(rest)) list.push(mapping(itemIndent, rest));
+            const itemIndent =
+                indent +
+                (line.text.trimStart().length - line.text.trimStart().slice(1).trimStart().length);
+            if (rest !== '' && findColon(rest) >= 0 && !/^[[{'"]/.test(rest))
+                list.push(mapping(itemIndent, rest));
             else list.push(value(rest, indent));
         }
         return list;
     };
 
-    const block = (indent) => (lines[pos].body.startsWith('- ') || lines[pos].body === '-' ? sequence(indent) : mapping(indent));
+    const block = (indent) =>
+        lines[pos].body.startsWith('- ') || lines[pos].body === '-'
+            ? sequence(indent)
+            : mapping(indent);
 
     skipBlank();
     if (pos >= lines.length) return null;
@@ -219,17 +234,21 @@ const toNumber = (v) => {
     return NaN;
 };
 
-const toStr = (v) => (v === null || v === undefined ? '' : typeof v === 'object' ? JSON.stringify(v) : String(v));
+const toStr = (v) =>
+    v === null || v === undefined ? '' : typeof v === 'object' ? JSON.stringify(v) : String(v);
 
-const truthy = (v) => !(v === null || v === undefined || v === false || v === 0 || v === '' || Number.isNaN(v));
+const truthy = (v) =>
+    !(v === null || v === undefined || v === false || v === 0 || v === '' || Number.isNaN(v));
 
 // Сравнение по правилам GitHub: строки — без учёта регистра, разные типы — через число.
 const looseEqual = (a, b) => {
     const na = a === undefined ? null : a;
     const nb = b === undefined ? null : b;
-    if (typeof na === 'string' && typeof nb === 'string') return na.toLowerCase() === nb.toLowerCase();
+    if (typeof na === 'string' && typeof nb === 'string')
+        return na.toLowerCase() === nb.toLowerCase();
     if (typeof na === typeof nb && (na === null || typeof na !== 'object')) return na === nb;
-    if (typeof na === 'object' && na !== null && typeof nb === 'object' && nb !== null) return na === nb;
+    if (typeof na === 'object' && na !== null && typeof nb === 'object' && nb !== null)
+        return na === nb;
     return toNumber(na) === toNumber(nb);
 };
 
@@ -237,7 +256,9 @@ const FUNCTIONS = {
     startsWith: (a, b) => toStr(a).toLowerCase().startsWith(toStr(b).toLowerCase()),
     endsWith: (a, b) => toStr(a).toLowerCase().endsWith(toStr(b).toLowerCase()),
     contains: (a, b) =>
-        Array.isArray(a) ? a.some((x) => looseEqual(x, b)) : toStr(a).toLowerCase().includes(toStr(b).toLowerCase()),
+        Array.isArray(a)
+            ? a.some((x) => looseEqual(x, b))
+            : toStr(a).toLowerCase().includes(toStr(b).toLowerCase()),
     format: (f, ...args) => toStr(f).replace(/\{(\d+)\}/g, (_, i) => toStr(args[Number(i)])),
     toJSON: (v) => JSON.stringify(v),
     fromJSON: (v) => JSON.parse(toStr(v)),
@@ -312,7 +333,11 @@ export function evaluate(expression, context) {
 
     const comparison = () => {
         let left = unary();
-        while (peek() && peek().t === 'op' && ['==', '!=', '<', '>', '<=', '>='].includes(peek().v)) {
+        while (
+            peek() &&
+            peek().t === 'op' &&
+            ['==', '!=', '<', '>', '<=', '>='].includes(peek().v)
+        ) {
             const op = peek().v;
             i++;
             const right = unary();

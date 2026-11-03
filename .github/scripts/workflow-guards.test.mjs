@@ -39,8 +39,12 @@ const needsClosure = (wf, name) => {
 };
 const text = (value) => JSON.stringify(value);
 // Job выкатки — тот, кому доступны секреты: есть environment или ссылка на secrets.
-const deployJobs = (wf) => Object.keys(wf.jobs).filter((n) => wf.jobs[n].environment || /secrets\./.test(text(wf.jobs[n])));
-const releaseJobs = (wf) => Object.keys(wf.jobs).filter((n) => /gh release create/.test(text(wf.jobs[n].steps)));
+const deployJobs = (wf) =>
+    Object.keys(wf.jobs).filter(
+        (n) => wf.jobs[n].environment || /secrets\./.test(text(wf.jobs[n])),
+    );
+const releaseJobs = (wf) =>
+    Object.keys(wf.jobs).filter((n) => /gh release create/.test(text(wf.jobs[n].steps)));
 
 // ---------- контексты событий ----------
 
@@ -124,10 +128,24 @@ test('workflow-yaml: блочные строки, однострочные сл�
 });
 
 test('workflow-yaml: выражения по правилам GitHub', () => {
-    const ctx = { github: { actor: 'Trafficolog', event: { inputs: { tag: 'v1.0.0' } } }, inputs: {} };
-    assert.equal(evaluate("${{ github.actor == 'trafficolog' }}", ctx), true, 'строки сравниваются без регистра');
-    assert.equal(evaluate("startsWith(github.event.inputs.tag, 'v1.') && !contains('a,b', 'c')", ctx), true);
-    assert.equal(evaluate("github.missing.deep == ''", ctx), true, 'нет свойства — null, равен пустой строке');
+    const ctx = {
+        github: { actor: 'Trafficolog', event: { inputs: { tag: 'v1.0.0' } } },
+        inputs: {},
+    };
+    assert.equal(
+        evaluate("${{ github.actor == 'trafficolog' }}", ctx),
+        true,
+        'строки сравниваются без регистра',
+    );
+    assert.equal(
+        evaluate("startsWith(github.event.inputs.tag, 'v1.') && !contains('a,b', 'c')", ctx),
+        true,
+    );
+    assert.equal(
+        evaluate("github.missing.deep == ''", ctx),
+        true,
+        'нет свойства — null, равен пустой строке',
+    );
     assert.equal(evaluate("(false || github.actor != 'x') && success()", ctx), true);
     assert.equal(jobRuns({}, ctx), true, 'без if — success()');
     assert.throws(() => evaluate('github.actor ==', ctx));
@@ -150,8 +168,15 @@ test('запись — только contents: write у job, создающего
         for (const [name, job] of Object.entries(wf.jobs)) {
             if (!/write/.test(text(job.permissions ?? {}))) continue;
             assert.equal(file, 'release.yml', `${file}/${name}: права на запись вне release.yml`);
-            assert.ok(releaseJobs(wf).includes(name), `${file}/${name}: запись у job, который не создаёт Release`);
-            assert.deepEqual(job.permissions, { contents: 'write' }, `${file}/${name}: лишние права`);
+            assert.ok(
+                releaseJobs(wf).includes(name),
+                `${file}/${name}: запись у job, который не создаёт Release`,
+            );
+            assert.deepEqual(
+                job.permissions,
+                { contents: 'write' },
+                `${file}/${name}: лишние права`,
+            );
         }
     }
 });
@@ -195,11 +220,16 @@ test('deploy.yml: зелёный CI от push в main этого репозит�
 });
 
 const deploySkipped = {
-    'PR из форка с веткой main': { event: 'pull_request', head_repository: { full_name: 'attacker/yamuzykant' } },
+    'PR из форка с веткой main': {
+        event: 'pull_request',
+        head_repository: { full_name: 'attacker/yamuzykant' },
+    },
     'push в main форка': { head_repository: { full_name: 'attacker/yamuzykant' } },
     'PR из ветки этого репозитория с именем main': { event: 'pull_request' },
     'push в другую ветку': { head_branch: 'task/x' },
-    'имя форка содержит имя репозитория': { head_repository: { full_name: 'attacker/trafficolog-yamuzykant' } },
+    'имя форка содержит имя репозитория': {
+        head_repository: { full_name: 'attacker/trafficolog-yamuzykant' },
+    },
     'ручной запуск CI': { event: 'workflow_dispatch' },
     'красный CI': { conclusion: 'failure' },
     'отменённый CI': { conclusion: 'cancelled' },
@@ -208,7 +238,8 @@ const deploySkipped = {
 for (const [label, over] of Object.entries(deploySkipped)) {
     test(`deploy.yml: ${label} — выкатка пропущена`, () => {
         const wf = load('deploy.yml');
-        for (const name of deployJobs(wf)) assert.equal(runs(wf, name, workflowRun(over)), false, name);
+        for (const name of deployJobs(wf))
+            assert.equal(runs(wf, name, workflowRun(over)), false, name);
     });
 }
 
@@ -218,7 +249,11 @@ test('release.yml: триггеры — тег v* и ручной запуск �
     const wf = load('release.yml');
     assert.deepEqual(wf.on.push?.tags, ['v*']);
     assert.ok(!wf.on.push?.branches, 'push веток не должен запускать release.yml');
-    assert.equal(wf.on.workflow_dispatch?.inputs?.tag?.required, true, 'нужен обязательный input tag');
+    assert.equal(
+        wf.on.workflow_dispatch?.inputs?.tag?.required,
+        true,
+        'нужен обязательный input tag',
+    );
     assert.ok(deployJobs(wf).length > 0, 'нет job выкатки production');
     assert.equal(releaseJobs(wf).length, 1, 'ровно один job создаёт GitHub Release');
 });
@@ -227,7 +262,8 @@ for (const tag of ['v0.1.0', 'v0.2.0', 'v0.0.0-probe.1', 'v1.0.0', 'v2.3.4']) {
     test(`release.yml: тег ${tag} создаёт GitHub Release и не запускает выкатку`, () => {
         const wf = load('release.yml');
         const ctx = tagPush(tag);
-        for (const name of deployJobs(wf)) assert.equal(runs(wf, name, ctx), false, `${name} запустился бы от тега`);
+        for (const name of deployJobs(wf))
+            assert.equal(runs(wf, name, ctx), false, `${name} запустился бы от тега`);
         const [release] = releaseJobs(wf);
         assert.equal(runs(wf, release, ctx), true, 'Release не создаётся');
     });
@@ -249,7 +285,9 @@ test('release.yml: ручной запуск из main — выкатка тол
     for (const name of deployJobs(wf)) {
         assert.equal(runs(wf, name, ctx), true, `${name} не запускается вручную`);
         const gate = [...needsClosure(wf, name)].filter((n) =>
-            (wf.jobs[n].steps ?? []).some((s) => /workflow-guards\.mjs authorize/.test(String(s.run ?? ''))),
+            (wf.jobs[n].steps ?? []).some((s) =>
+                /workflow-guards\.mjs authorize/.test(String(s.run ?? '')),
+            ),
         );
         assert.ok(gate.length > 0, `${name} не зависит от job с workflow-guards.mjs authorize`);
         for (const g of gate) assert.equal(runs(wf, g, ctx), true, `${g} не запускается`);
@@ -259,7 +297,8 @@ test('release.yml: ручной запуск из main — выкатка тол
 test('release.yml: ручной запуск не из main (workflow с чужой ветки) — выкатка пропущена', () => {
     const wf = load('release.yml');
     for (const ref of ['refs/heads/task/x', 'refs/tags/v1.0.0']) {
-        for (const name of deployJobs(wf)) assert.equal(runs(wf, name, dispatch('v1.0.0', { ref })), false, `${name} от ${ref}`);
+        for (const name of deployJobs(wf))
+            assert.equal(runs(wf, name, dispatch('v1.0.0', { ref })), false, `${name} от ${ref}`);
     }
 });
 
@@ -273,10 +312,19 @@ const authorize = (args, allowlist) => {
         writeFileSync(path, allowlist);
         extra.push('--allowlist', path);
     }
-    const r = spawnSync(process.execPath, [GUARDS, 'authorize', ...args, ...extra], { encoding: 'utf8' });
+    const r = spawnSync(process.execPath, [GUARDS, 'authorize', ...args, ...extra], {
+        encoding: 'utf8',
+    });
     return { status: r.status, out: `${r.stdout}${r.stderr}` };
 };
-const who = (actor, tag, triggering = actor) => ['--actor', actor, '--triggering-actor', triggering, '--tag', tag];
+const who = (actor, tag, triggering = actor) => [
+    '--actor',
+    actor,
+    '--triggering-actor',
+    triggering,
+    '--tag',
+    tag,
+];
 
 test('список выкатки production в репозитории — только trafficolog', () => {
     const logins = readFileSync(ALLOWLIST, 'utf8')
@@ -315,7 +363,16 @@ test('authorize: перезапуск чужим пользователем (tri
     assert.match(r.out, /stranger/);
 });
 
-for (const tag of ['', 'v1', 'v1.0', '1.0.0', 'v1.0.0-rc.1', 'v1.0.0; rm -rf /', 'refs/tags/v1.0.0', 'v01.0.0']) {
+for (const tag of [
+    '',
+    'v1',
+    'v1.0',
+    '1.0.0',
+    'v1.0.0-rc.1',
+    'v1.0.0; rm -rf /',
+    'refs/tags/v1.0.0',
+    'v01.0.0',
+]) {
     test(`authorize: некорректный тег «${tag}» — отказ`, () => {
         const r = authorize(who(OWNER, tag));
         assert.equal(r.status, 1, r.out);
@@ -324,7 +381,10 @@ for (const tag of ['', 'v1', 'v1.0', '1.0.0', 'v1.0.0-rc.1', 'v1.0.0; rm -rf /',
 }
 
 test('authorize: комментарии и пустые строки списка игнорируются, пустой список — отказ', () => {
-    assert.equal(authorize(who('alice', 'v1.0.0'), '# выкатка production\n\nbob\nalice # OWNER\n').status, 0);
+    assert.equal(
+        authorize(who('alice', 'v1.0.0'), '# выкатка production\n\nbob\nalice # OWNER\n').status,
+        0,
+    );
     const r = authorize(who(OWNER, 'v1.0.0'), '# никого\n\n');
     assert.equal(r.status, 1, r.out);
     assert.match(r.out, /пуст/);
