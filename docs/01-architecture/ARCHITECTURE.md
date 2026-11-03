@@ -96,7 +96,7 @@ flowchart LR
 ## 7. Безопасность
 
 - Сессии — cookie `HttpOnly`, `Secure`, `SameSite=Lax`. CSRF — стандартный Laravel. CSP — nonce для Inertia, без `unsafe-inline` в скриптах.
-- Вход по почте: код 6 цифр, хэш в Redis, TTL 10 мин (уточнить), 5 неверных попыток — блок 15 мин. Rate-limit (`RateLimiter`): коды входа — 5 в час на адрес и 20 на IP; сообщения — 30 в минуту; новые объявления — 10 в сутки (уточнить).
+- Вход по почте: код 6 цифр, хэш в Redis, TTL 10 мин (уточнить), 5 неверных попыток с одного IP — блок 15 мин для пары почта+IP, общий потолок 30 неверных в час на почту — блок 1 ч (решение OWNER 03.11.2026). Rate-limit (`RateLimiter`): коды входа — 5 в час на адрес и 20 на IP; сообщения — 30 в минуту; новые объявления — 10 в сутки (уточнить).
 - Загрузки: MIME по содержимому, размер ≤ 15 МБ, перекодирование всегда (исходник не отдаётся).
 - OAuth Яндекса: `state` и PKCE, redirect URI — только из конфига; почта из Яндекс ID считается подтверждённой (`default_email`), без почты — подтверждение кодом. Токены Яндекса не храним, только `yandex_id`.
 - Публикация без премодерации — флаг Pennant `premoderation` (выключен до G2); автопроверки работают всегда.
@@ -113,4 +113,4 @@ flowchart LR
 
 ## 9. Переменные окружения
 
-`APP_*`, `DB_*`, `REDIS_*`, `SCOUT_DRIVER=meilisearch`, `MEILISEARCH_HOST`, `MEILISEARCH_KEY`, `REVERB_APP_ID`, `REVERB_APP_KEY`, `REVERB_APP_SECRET`, `AWS_*` (S3-совместимое), `MAIL_*`, `YANDEX_CLIENT_ID`, `YANDEX_CLIENT_SECRET`, `YANDEX_REDIRECT_URI`, `SENTRY_LARAVEL_DSN`, `VITE_SENTRY_DSN`, `DS_SHOWCASE` (витрина `/_ds`: по умолчанию включена только в local и stage, в production закрыта всегда; в CI e2e — `true`). Каждая новая переменная добавляется сюда и в `.env.example` в том же PR.
+`APP_*`, `DB_*`, `REDIS_*`, `SCOUT_DRIVER=meilisearch`, `MEILISEARCH_HOST`, `MEILISEARCH_KEY`, `REVERB_APP_ID`, `REVERB_APP_KEY`, `REVERB_APP_SECRET`, `AWS_*` (S3-совместимое), `MAIL_*`, `YANDEX_CLIENT_ID`, `YANDEX_CLIENT_SECRET`, `YANDEX_REDIRECT_URI`, `SENTRY_LARAVEL_DSN`, `VITE_SENTRY_DSN`, `LOGIN_CODE_STORE` (хранилище кодов входа, по умолчанию `redis`), `LOGIN_CODE_FAKE` (фиксированный код только для `testing` и `e2e`), `DS_SHOWCASE` (витрина `/_ds`: по умолчанию включена только в local и stage, в production закрыта всегда; в CI e2e — `true`). Каждая новая переменная добавляется сюда и в `.env.example` в том же PR.
