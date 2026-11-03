@@ -66,6 +66,84 @@ test.describe('самохостинг шрифтов (0.2.8)', () => {
         expect(html).toMatch(/<link[^>]*rel="preload"[^>]*onest[^>]*>/i);
     });
 
+    // 0.2.6 (ревью PR #84): href preload — файл из реального @font-face Onest, а не просто похожий путь.
+    test('href preload совпадает с src реального @font-face Onest и грузится один раз', async ({
+        page,
+        request,
+    }) => {
+        const html = await (await request.get('/')).text();
+        const hrefs = [...html.matchAll(/<link[^>]*rel="preload"[^>]*as="font"[^>]*>/g)].map(
+            (match) => /href="([^"]+)"/.exec(match[0])?.[1] ?? '',
+        );
+        expect(hrefs.length).toBeGreaterThan(0);
+
+        await page.goto('/');
+        await page.waitForLoadState('networkidle');
+        await page.evaluate(() => document.fonts.ready);
+        const result = await page.evaluate(() => {
+            const sources: { family: string; src: string }[] = [];
+            for (const sheet of [...document.styleSheets]) {
+                for (const rule of [...sheet.cssRules]) {
+                    if (rule instanceof CSSFontFaceRule) {
+                        sources.push({
+                            family: rule.style.getPropertyValue('font-family').replace(/["']/g, ''),
+                            src: rule.style.getPropertyValue('src'),
+                        });
+                    }
+                }
+            }
+            const requests = performance
+                .getEntriesByType('resource')
+                .map((entry) => new URL(entry.name).pathname);
+            return { sources, requests };
+        });
+
+        const onestFiles = result.sources
+            .filter((face) => face.family === 'Onest')
+            .map((face) => new URL(/url\("?([^")]+)"?\)/.exec(face.src)?.[1] ?? '', page.url()))
+            .map((url) => url.pathname);
+        for (const href of hrefs) {
+            const path = new URL(href, page.url()).pathname;
+            expect(onestFiles, `preload ${href} не найден среди @font-face Onest`).toContain(path);
+            // Один запрос: preload и @font-face совпали по URL и crossorigin, браузер не грузит дважды.
+            expect(
+                result.requests.filter((name) => name === path),
+                href,
+            ).toHaveLength(1);
+        }
+    });
+
+    // 0.2.6 (ревью PR #84): JetBrains Mono 500 реально загружается со своего origin.
+    test('JetBrains Mono 500 загружается с нашего origin', async ({ page }) => {
+        await page.goto('/_ds');
+        await page.waitForLoadState('networkidle');
+
+        const result = await page.evaluate(async () => {
+            const faces = await document.fonts.load('500 16px "JetBrains Mono"', 'Aa Яя 0123');
+            return {
+                faces: faces.map((face) => ({
+                    family: face.family.replace(/["']/g, ''),
+                    weight: face.weight,
+                    status: face.status,
+                })),
+                files: performance
+                    .getEntriesByType('resource')
+                    .map((entry) => entry.name)
+                    .filter((name) => /jetbrains-mono[^/]*\.woff2$/i.test(new URL(name).pathname)),
+                origin: location.origin,
+            };
+        });
+
+        expect(result.faces.length).toBeGreaterThan(0);
+        for (const face of result.faces) {
+            expect(face).toEqual({ family: 'JetBrains Mono', weight: '500', status: 'loaded' });
+        }
+        expect(result.files.length).toBeGreaterThan(0);
+        for (const file of result.files) {
+            expect(file.startsWith(`${result.origin}/`), file).toBe(true);
+        }
+    });
+
     test('@font-face: font-display swap и unicode-range, файлы woff2 отдаются', async ({
         page,
         request,
