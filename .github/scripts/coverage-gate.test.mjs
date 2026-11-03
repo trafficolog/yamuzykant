@@ -12,16 +12,29 @@ import { fileURLToPath } from 'node:url';
 const SCRIPT = join(dirname(fileURLToPath(import.meta.url)), 'coverage-gate.mjs');
 const ROOT = '/home/runner/work/yamuzykant/yamuzykant';
 
+// Файл как в реальном clover PHPUnit: <class><metrics/></class>, <line/>, затем <metrics loc=…/> файла.
+// Элемент списка: [имя, statements, covered] (один класс на весь файл) или
+// [имя, statements, covered, [[класс, statements, covered], …]] (метрики файла — по всему файлу).
+const classTag = ([name, statements, covered]) =>
+    `<class name="${name}" namespace="App"><metrics complexity="1" methods="1" coveredmethods="0" conditionals="0" coveredconditionals="0" statements="${statements}" coveredstatements="${covered}" elements="${statements}" coveredelements="${covered}"/></class>`;
+
 const clover = (files) => {
     const body = files
-        .map(
-            ([name, statements, covered]) =>
-                `<file name="${ROOT}/${name}"><metrics loc="10" ncloc="10" classes="1" methods="1" coveredmethods="0" conditionals="0" coveredconditionals="0" statements="${statements}" coveredstatements="${covered}" elements="${statements}" coveredelements="${covered}"/></file>`,
-        )
+        .map(([name, statements, covered, classes]) => {
+            const parts = classes ?? [[name.split('/').pop().replace('.php', ''), statements, covered]];
+            return `<file name="${ROOT}/${name}">
+${parts.map(classTag).join('\n')}
+<line num="12" type="stmt" count="1"/>
+<metrics loc="40" ncloc="30" classes="${parts.length}" methods="1" coveredmethods="0" conditionals="0" coveredconditionals="0" statements="${statements}" coveredstatements="${covered}" elements="${statements}" coveredelements="${covered}"/>
+</file>`;
+        })
         .join('\n');
     const dir = mkdtempSync(join(tmpdir(), 'clover-'));
     const path = join(dir, 'clover.xml');
-    writeFileSync(path, `<?xml version="1.0"?>\n<coverage><project>\n${body}\n</project></coverage>\n`);
+    writeFileSync(
+        path,
+        `<?xml version="1.0"?>\n<coverage><project>\n<package name="App">\n${body}\n</package>\n</project></coverage>\n`,
+    );
     return path;
 };
 
@@ -80,4 +93,35 @@ test('нет файла отчёта — выход 2', () => {
 test('нет --min — выход 2', () => {
     const r = run(clover(FILES));
     assert.equal(r.status, 2, r.stdout + r.stderr);
+});
+
+test('файл с двумя классами, один без покрытия: считаются метрики файла, а не первого класса', () => {
+    const file = [
+        'app/Domain/Deals/Actions/Pair.php',
+        10,
+        5,
+        [
+            ['Covered', 5, 5],
+            ['Uncovered', 5, 0],
+        ],
+    ];
+    const r = run(clover([file]), '--path', 'app/Domain', '--min', '90');
+    assert.equal(r.status, 1, r.stdout + r.stderr);
+    assert.match(r.stdout + r.stderr, /50\.0\s?%/);
+    assert.match(r.stdout + r.stderr, /5\/10/);
+});
+
+test('метрики файла берутся и когда непокрытый класс идёт первым', () => {
+    const file = [
+        'app/Domain/Deals/Actions/Pair.php',
+        10,
+        8,
+        [
+            ['Uncovered', 2, 0],
+            ['Covered', 8, 8],
+        ],
+    ];
+    const r = run(clover([file]), '--min', '75');
+    assert.equal(r.status, 0, r.stdout + r.stderr);
+    assert.match(r.stdout, /80\.0\s?%/);
 });

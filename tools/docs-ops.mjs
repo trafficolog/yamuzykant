@@ -5,8 +5,8 @@
 //   next [--json]        задачи, которые можно брать: зависимости done, гейт open
 //   set <id> <status>    сменить статус карточки (и sync_state=aligned при done)
 //   session <id>         создать файл сессии из шаблона
-import { readFileSync, writeFileSync, readdirSync, existsSync, mkdirSync } from 'node:fs';
-import { join, resolve } from 'node:path';
+import { readFileSync, writeFileSync, readdirSync, existsSync, mkdirSync, realpathSync } from 'node:fs';
+import { join } from 'node:path';
 import { pathToFileURL } from 'node:url';
 import { execFileSync } from 'node:child_process';
 
@@ -54,6 +54,20 @@ export function checkDsPr(files, title) {
   return null;
 }
 
+// Все файлы PR. `gh pr view --json files` отдаёт не больше 100 файлов, поэтому REST API с пагинацией:
+// --jq применяется к каждой странице, имена приходят по одному на строку.
+export function prFiles(pr, exec = execFileSync) {
+  const out = exec('gh', ['api', '--paginate', `repos/{owner}/{repo}/pulls/${pr}/files`, '--jq', '.[].filename'], { encoding: 'utf8', maxBuffer: 64 * 1024 * 1024 });
+  return String(out).split('\n').map(s => s.trim()).filter(Boolean);
+}
+
+// Ошибка правила «resources/js/ds — только chore(ds): sync» для PR или null. Ошибки gh не глотает.
+export function checkDsForPr(pr, exec = execFileSync) {
+  const files = prFiles(pr, exec);
+  const title = String(exec('gh', ['pr', 'view', String(pr), '--json', 'title', '-q', '.title'], { encoding: 'utf8' })).trim();
+  return checkDsPr(files, title);
+}
+
 function check(pr) {
   const errs = [], ids = new Set();
   for (const d of [...phases, ...epics, ...tasks]) {
@@ -91,8 +105,7 @@ function check(pr) {
       if (!/REVIEW:\s*approve/i.test(body)) errs.push(`PR #${pr}: нет вердикта «REVIEW: approve»`);
     } catch { errs.push(`PR #${pr}: не удалось прочитать через gh`); }
     try {
-      const info = JSON.parse(execFileSync('gh', ['pr', 'view', String(pr), '--json', 'files,title'], { encoding: 'utf8' }));
-      const dsErr = checkDsPr((info.files || []).map(f => f.path), info.title);
+      const dsErr = checkDsForPr(pr);
       if (dsErr) errs.push(`PR #${pr}: ${dsErr}`);
     } catch { errs.push(`PR #${pr}: не удалось получить файлы через gh`); }
   }
@@ -153,5 +166,7 @@ else if (cmd === 'set' && a && b) setStatus(a, b);
 else if (cmd === 'session' && a) session(a);
 else { console.log('check [--pr N] | refresh | next [--json] | set <id> <status> | session <id>'); process.exit(1); }
 }
-// Запуск из CLI; при импорте (тесты) команды не выполняются.
-if (process.argv[1] && import.meta.url === pathToFileURL(resolve(process.argv[1])).href) main();
+// Запуск из CLI; при импорте (тесты) команды не выполняются. Node резолвит символические ссылки
+// в import.meta.url, поэтому argv[1] тоже приводим к realpath (запуск через ссылку, npm-bin).
+const entry = process.argv[1] && existsSync(process.argv[1]) ? realpathSync(process.argv[1]) : null;
+if (entry && import.meta.url === pathToFileURL(entry).href) main();
