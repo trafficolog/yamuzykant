@@ -2,10 +2,10 @@
 
 declare(strict_types=1);
 
+use App\Domain\Accounts\Models\User;
 use App\Domain\Catalog\Enums\InstrumentModelStatus;
 use App\Domain\Catalog\Models\Category;
 use App\Domain\Catalog\Models\InstrumentModel;
-use App\Models\User;
 use Tests\Support\MeilisearchIndex;
 
 // Критерии 1.2.2: «стратокастер» → Fender Stratocaster; опечатка в одну букву; 8 результатов; ≤ 100 мс;

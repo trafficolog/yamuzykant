@@ -24,6 +24,10 @@ interface ModelComboboxProps {
     onSelect: (model: ModelOption) => void;
 }
 
+type Failure = 'network' | 'limited';
+
+class RateLimitedError extends Error {}
+
 const MIN_QUERY_LENGTH = 2;
 const DEBOUNCE_MS = 200;
 
@@ -35,10 +39,13 @@ export function ModelCombobox({ id, value, onChange, onSelect }: ModelComboboxPr
     const [text, setText] = useState(value);
     const [results, setResults] = useState<ModelOption[]>([]);
     const [searched, setSearched] = useState(false);
+    const [failure, setFailure] = useState<Failure | null>(null);
     const [open, setOpen] = useState(false);
     const [active, setActive] = useState(-1);
     // Текст, который записан выбором из списка: по нему подсказку повторно не запрашиваем.
     const chosenText = useRef<string | null>(null);
+    // Номер последнего запроса: ответ на более ранний запрос не перетирает результаты нового.
+    const latestRequest = useRef(0);
 
     useEffect(() => {
         setText(value);
@@ -50,34 +57,50 @@ export function ModelCombobox({ id, value, onChange, onSelect }: ModelComboboxPr
         }
         const query = text.trim();
         if (query.length < MIN_QUERY_LENGTH) {
+            latestRequest.current += 1;
             setResults([]);
             setSearched(false);
+            setFailure(null);
 
             return;
         }
 
+        const requestId = ++latestRequest.current;
         const controller = new AbortController();
+        const isStale = () => requestId !== latestRequest.current;
+
         const timer = window.setTimeout(() => {
             fetch(`/api/models?q=${encodeURIComponent(query)}`, {
                 headers: { Accept: 'application/json' },
                 signal: controller.signal,
             })
-                .then((response) =>
-                    response.ok
-                        ? response.json()
-                        : Promise.reject(new Error(String(response.status))),
-                )
-                .then((json: { data: ModelOption[] }) => {
+                .then((response) => {
+                    if (response.status === 429) {
+                        throw new RateLimitedError();
+                    }
+                    if (!response.ok) {
+                        throw new Error(String(response.status));
+                    }
+
+                    return response.json() as Promise<{ data: ModelOption[] }>;
+                })
+                .then((json) => {
+                    if (isStale()) {
+                        return;
+                    }
                     setResults(json.data);
                     setSearched(true);
+                    setFailure(null);
                     setActive(-1);
                     setOpen(true);
                 })
-                .catch(() => {
-                    if (!controller.signal.aborted) {
-                        setResults([]);
-                        setSearched(true);
+                .catch((error: unknown) => {
+                    if (isStale() || controller.signal.aborted) {
+                        return;
                     }
+                    setResults([]);
+                    setSearched(true);
+                    setFailure(error instanceof RateLimitedError ? 'limited' : 'network');
                 });
         }, DEBOUNCE_MS);
 
@@ -135,10 +158,20 @@ export function ModelCombobox({ id, value, onChange, onSelect }: ModelComboboxPr
         }
     }
 
-    const hint =
-        searched && results.length === 0 && text.trim().length >= MIN_QUERY_LENGTH
-            ? ru.models.empty
-            : ru.models.hint;
+    const hasQuery = text.trim().length >= MIN_QUERY_LENGTH;
+    let hint: string = ru.models.hint;
+    if (failure === 'limited') {
+        hint = ru.models.errorLimited;
+    } else if (failure === 'network') {
+        hint = ru.models.errorNetwork;
+    } else if (searched && results.length === 0 && hasQuery) {
+        hint = ru.models.empty;
+    }
+
+    let status = '';
+    if (failure === null && searched && hasQuery) {
+        status = results.length > 0 ? ru.models.found(results.length) : ru.models.notFound;
+    }
 
     return (
         <div className="ym-combobox">
@@ -155,9 +188,12 @@ export function ModelCombobox({ id, value, onChange, onSelect }: ModelComboboxPr
                 autoComplete="off"
                 aria-autocomplete="list"
                 aria-expanded={showList}
-                aria-controls={listId}
+                aria-controls={showList ? listId : undefined}
                 aria-activedescendant={showList && active >= 0 ? optionId(active) : undefined}
             />
+            <p role="status" className="ym-combobox__status">
+                {status}
+            </p>
             {showList ? (
                 <ul
                     id={listId}

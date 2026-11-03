@@ -2,11 +2,11 @@
 
 declare(strict_types=1);
 
+use App\Domain\Accounts\Models\User;
 use App\Domain\Catalog\Actions\SuggestInstrumentModel;
 use App\Domain\Catalog\Enums\InstrumentModelStatus;
 use App\Domain\Catalog\Models\Category;
 use App\Domain\Catalog\Models\InstrumentModel;
-use App\Models\User;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Event;
 

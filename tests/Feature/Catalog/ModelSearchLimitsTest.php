@@ -2,13 +2,20 @@
 
 declare(strict_types=1);
 
+use App\Domain\Accounts\Models\User;
 use App\Domain\Catalog\Models\Category;
 use App\Domain\Catalog\Models\InstrumentModel;
-use App\Models\User;
-use Illuminate\Foundation\Http\Middleware\ThrottleRequests;
 use Illuminate\Support\Facades\Log;
 use Laravel\Scout\EngineManager;
+use Meilisearch\Client as MeilisearchClient;
 use Tests\Support\MeilisearchIndex;
+
+/** Сбрасывает клиент Scout, чтобы он заново прочитал адрес из конфигурации. */
+function resetScoutClient(): void
+{
+    app()->forgetInstance(MeilisearchClient::class);
+    app(EngineManager::class)->forgetDrivers();
+}
 
 // Ревью 1.2.2: лимит на GET /api/models, длина q, недоступный Meilisearch, дневной лимит предложений,
 // предложение только в видимую категорию.
@@ -25,7 +32,7 @@ function visibleGuitarCategory(): Category
 it('маршрут подсказки имеет явный лимит throttle:60,1', function () {
     $route = app('router')->getRoutes()->getByName('api.models.search');
 
-    expect($route->gatherMiddleware())->toContain('throttle:60,1');
+    expect($route?->gatherMiddleware())->toContain('throttle:60,1');
 });
 
 it('больше 60 запросов подсказки в минуту с одного IP отвечают 429', function () {
@@ -43,27 +50,25 @@ it('q длиннее 100 символов отклоняется с 422', functi
 });
 
 it('при недоступном Meilisearch подсказка отвечает пустым списком и пишет в лог, а не 500', function () {
-    Log::spy();
+    $logSpy = Log::spy();
     $host = config('scout.meilisearch.host');
     config(['scout.meilisearch.host' => 'http://127.0.0.1:9']);
-    app(EngineManager::class)->forgetDrivers();
+    resetScoutClient();
 
     try {
         $this->getJson('/api/models?q=stratocaster')
             ->assertOk()
             ->assertJsonCount(0, 'data');
-        Log::shouldHaveReceived('warning');
+        $logSpy->shouldHaveReceived('warning');
     } finally {
         config(['scout.meilisearch.host' => $host]);
-        app(EngineManager::class)->forgetDrivers();
+        resetScoutClient();
     }
 });
 
 it('дневной лимит предложений на пользователя: 21-е предложение за сутки отвечает 429', function () {
     $category = visibleGuitarCategory();
     $user = User::factory()->create();
-    // Минутный лимит маршрута здесь не тестируется: проверяется дневной.
-    $this->withoutMiddleware(ThrottleRequests::class);
 
     foreach (range(1, 20) as $number) {
         $this->actingAs($user)

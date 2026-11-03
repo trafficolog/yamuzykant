@@ -529,6 +529,15 @@
     font: 500 var(--text-m)/1.43 var(--font-text);
     cursor: pointer;
 }
+/* Сообщение для программ чтения экрана: число результатов, без вёрстки */
+.ym-combobox__status {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+    clip: rect(0 0 0 0);
+    white-space: nowrap;
+}
 .ym-combobox__option.is-active {
     background: var(--surface-recessed);
 }

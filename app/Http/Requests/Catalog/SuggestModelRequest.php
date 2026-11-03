@@ -20,7 +20,7 @@ final class SuggestModelRequest extends FormRequest
     {
         return [
             'text' => ['required', 'string', 'min:3', 'max:120', 'regex:/^\S+\s+\S.*$/u'],
-            'category_id' => ['required', 'integer', Rule::exists('categories', 'id')],
+            'category_id' => ['required', 'integer', Rule::exists('categories', 'id')->where('is_visible', true)],
         ];
     }
 
