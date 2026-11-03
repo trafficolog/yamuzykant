@@ -27,6 +27,8 @@ APP_ROOT=${DEPLOY_APP_ROOT:-$YM_DEFAULT_APP_ROOT}
 KEEP_RELEASES=${DEPLOY_KEEP_RELEASES:-5}
 SETTLE_SECONDS=${DEPLOY_SETTLE_SECONDS:-5}
 HEALTH_RETRIES=${DEPLOY_HEALTH_RETRIES:-10}
+LOCK_WAIT=${DEPLOY_LOCK_WAIT:-900}
+FAILED_MARK=.deploy-failed
 PHP_FPM_SERVICE=${DEPLOY_PHP_FPM_SERVICE:-php8.3-fpm}
 RELEASE_ID_RE='^[0-9]{14}-[0-9a-f]{12}$'
 PROGRAMS=(ymuzykant-queue ymuzykant-reverb ymuzykant-ssr ymuzykant-scheduler)
@@ -163,12 +165,18 @@ runner_deploy() {
     fi
 
     require_vars DEPLOY_HOST DEPLOY_USER
+    check_ssh_target "$DEPLOY_USER" "$DEPLOY_HOST"
     ssh_setup "$tmp"
     local root rel
     root=$(printf '%q' "$APP_ROOT")
     rel=$(printf '%q' "$APP_ROOT/releases/$id")
     log "Загрузка релиза ${id} на ${env}"
     remote "set -e; test -d ${root}/shared; mkdir ${rel}; tar -xzf - -C ${rel}" <"$tmp/release.tar.gz"
+    # shared/.env перезаписывается до сборки и вне flock сервера. Это безопасно: работающий релиз (и
+    # тот, на который откатываемся) читает конфигурацию из своего bootstrap/cache/config.php
+    # (config:cache при его выкатке), а не из shared/.env; новый .env применяется только релизом,
+    # который пройдёт config:cache в server-release. Откат .env не возвращает — значения берутся
+    # из кэша конфигурации релиза.
     log "Обновление shared/.env"
     remote "set -e; umask 077; cat > ${root}/shared/.env.next; mv -f ${root}/shared/.env.next ${root}/shared/.env" <"$tmp/env"
     log "Сборка и переключение на сервере"
@@ -179,6 +187,7 @@ runner_rollback() {
     local env=$1 tmp
     check_target "$env"
     require_vars DEPLOY_HOST DEPLOY_USER
+    check_ssh_target "$DEPLOY_USER" "$DEPLOY_HOST"
     tmp=$(mktemp -d)
     # shellcheck disable=SC2064
     trap "rm -rf '$tmp'" EXIT
@@ -195,9 +204,14 @@ has_command() {
     php artisan list --raw 2>/dev/null | awk '{print $1}' | grep -qx -- "$1"
 }
 
+# Выкатка и откат на сервере не идут одновременно: следующий ждёт (DEPLOY_LOCK_WAIT секунд),
+# а не отменяется — в том числе ручной откат из provision.yml, у которого своя группа concurrency.
 lock() {
     exec 9>"$APP_ROOT/.deploy.lock"
-    flock -n 9 || die "уже идёт другая выкатка или откат"
+    if ! flock -n 9; then
+        log "идёт другая выкатка или откат — ожидание блокировки до ${LOCK_WAIT} с"
+        flock -w "$LOCK_WAIT" 9 || die "блокировка выкатки не освободилась за ${LOCK_WAIT} с: идёт другая выкатка или откат"
+    fi
 }
 
 current_release() {
@@ -212,18 +226,25 @@ switch_to() {
     log "current -> releases/${id}"
 }
 
-# Перезапуск фоновых процессов на код из current.
+# Перезапуск фоновых процессов на код из current. Вызывается в `if !` (там set -e не действует),
+# поэтому каждая обязательная команда возвращает ошибку явно.
 restart_services() {
-    sudo -n systemctl reload "$PHP_FPM_SERVICE"
+    sudo -n systemctl reload "$PHP_FPM_SERVICE" || {
+        printf '::error::перезапуск: reload %s не прошёл\n' "$PHP_FPM_SERVICE" >&2
+        return 1
+    }
     (
-        cd "$APP_ROOT/current"
+        cd "$APP_ROOT/current" || exit 1
         if has_command horizon:terminate; then
-            artisan horizon:terminate
+            artisan horizon:terminate || exit 1
         else
-            artisan queue:restart
+            artisan queue:restart || exit 1
         fi
-        if has_command reverb:restart; then artisan reverb:restart; fi
-    )
+        if has_command reverb:restart; then artisan reverb:restart || exit 1; fi
+    ) || {
+        printf '::error::перезапуск: сигнал очереди или Reverb не прошёл\n' >&2
+        return 1
+    }
     # SSR и планировщик читают код только при старте. Reverb, пока не установлен, — программа-ожидание:
     # перезапуск подхватывает новый код. Ошибку supervisorctl (программа не запущена) не считаем
     # падением: состояние всех программ проверяет verify.
@@ -300,15 +321,24 @@ scout_steps() {
     done <deploy/scout-import.txt
 }
 
+# Рабочие релизы (без пометки неудачной выкатки) по возрастанию.
+good_releases() {
+    local id
+    while IFS= read -r id; do
+        [[ -e $APP_ROOT/releases/$id/$FAILED_MARK ]] || printf '%s\n' "$id"
+    done < <(find "$APP_ROOT/releases" -mindepth 1 -maxdepth 1 -type d -printf '%f\n' | sort)
+}
+
+# Сначала удаляются релизы с автооткатом, затем рабочие сверх KEEP_RELEASES (current не трогается).
 cleanup_releases() {
     local keep=() id cur
     cur=$(current_release)
-    mapfile -t keep < <(find "$APP_ROOT/releases" -mindepth 1 -maxdepth 1 -type d -printf '%f\n' | sort -r | head -n "$KEEP_RELEASES")
+    mapfile -t keep < <(good_releases | tail -n "$KEEP_RELEASES")
     while IFS= read -r id; do
         [[ $id == "$cur" ]] && continue
         printf '%s\n' "${keep[@]}" | grep -qx -- "$id" && continue
         rm -rf "${APP_ROOT:?}/releases/$id"
-        log "удалён старый релиз ${id}"
+        log "удалён релиз ${id}"
     done < <(find "$APP_ROOT/releases" -mindepth 1 -maxdepth 1 -type d -printf '%f\n')
 }
 
@@ -346,14 +376,17 @@ server_release() {
     switch_to "$id"
     SWITCHED=1
     trap - EXIT
-    restart_services
 
-    if ! verify; then
+    # Перезапуск или проверка не прошли — автооткат; релиз помечается и не считается рабочим
+    # (не входит в хранимые, ручной откат его пропускает, удаляется первым).
+    if ! restart_services || ! verify; then
+        : >"$rel/$FAILED_MARK"
         if [[ -n $prev && -d $APP_ROOT/releases/$prev ]]; then
             printf '::error::проверка после выкатки %s не прошла — откат на %s\n' "$id" "$prev" >&2
             switch_to "$prev"
-            restart_services
-            verify || printf '::error::после отката на %s проверка тоже не прошла\n' "$prev" >&2
+            if ! restart_services || ! verify; then
+                printf '::error::после отката на %s проверка тоже не прошла\n' "$prev" >&2
+            fi
         else
             printf '::error::проверка после выкатки %s не прошла, прежнего релиза нет\n' "$id" >&2
         fi
@@ -368,11 +401,12 @@ server_rollback() {
     lock
     cur=$(current_release)
     [[ -n $cur ]] || die "нет текущего релиза"
-    prev=$(find "$APP_ROOT/releases" -mindepth 1 -maxdepth 1 -type d -printf '%f\n' | sort | awk -v c="$cur" '$0 < c' | tail -n1)
-    [[ -n $prev ]] || die "нет релиза старше ${cur} — откатываться некуда"
+    # Релизы с автооткатом пропускаются.
+    prev=$(good_releases | awk -v c="$cur" '$0 < c' | tail -n1)
+    [[ -n $prev ]] || die "нет рабочего релиза старше ${cur} — откатываться некуда"
     log "Откат ${cur} -> ${prev}"
     switch_to "$prev"
-    restart_services
+    restart_services || die "после отката на ${prev} перезапуск не прошёл"
     verify || die "после отката на ${prev} проверка не прошла"
     log "Откат на ${prev} выполнен"
 }

@@ -1,11 +1,13 @@
-# Сервисы stage в Docker на сервере (задача 0.1.4): те же образы, что в compose.yaml для local.
+# Сервисы stage в Docker на сервере (задача 0.1.4): те же версии, что в compose.yaml для local,
+# закреплённые digest (как MinIO).
 # Порты слушают только 127.0.0.1: снаружи доступны лишь Nginx 80/443 (Mailpit — через Nginx за паролем).
 # Значения — из /etc/ymuzykant/services.env (0600, пишет deploy/provision.sh).
 name: ymuzykant-services
 
 services:
   meilisearch:
-    image: getmeili/meilisearch:v1.15
+    # v1.15 (Docker Hub getmeili/meilisearch, индекс мультиархитектурного образа)
+    image: getmeili/meilisearch@sha256:fe500cf9cca05cb9f027981583f28eccf17d35d94499c1f8b7b844e7418152fc
     restart: unless-stopped
     environment:
       MEILI_ENV: production
@@ -17,7 +19,8 @@ services:
       - meilisearch-data:/meili_data
 
   mailpit:
-    image: axllent/mailpit:v1.33
+    # v1.33 (Docker Hub axllent/mailpit)
+    image: axllent/mailpit@sha256:9b3a463be15354c0f0eba91697d80e3e0d8a5623ef0e627cacc836bc17fd5231
     restart: unless-stopped
     environment:
       MP_WEBROOT: _mailpit

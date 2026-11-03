@@ -18,15 +18,18 @@ on:
 permissions:
   contents: read
 
-# Общая очередь с deploy.yml: подготовка, откат и выкатка stage не идут одновременно.
-concurrency: deploy-stage
-
 jobs:
   stage:
     if: github.event_name == 'workflow_dispatch' && github.ref == 'refs/heads/main'
     runs-on: ubuntu-latest
     timeout-minutes: 40
     environment: stage
+    # provision — в общей очереди с deploy.yml. rollback — своя группа: ожидающий run в группе
+    # заменяется следующим, и очередной мерж молча отменил бы ручной откат. Одновременно
+    # выкатка и откат на сервере не идут: deploy.sh ждёт блокировку (flock -w).
+    concurrency:
+      group: ${{ inputs.command == 'rollback' && 'stage-rollback' || 'deploy-stage' }}
+      cancel-in-progress: false
     steps:
       - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
         with:

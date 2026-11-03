@@ -60,6 +60,8 @@ provision_remote() {
         return 0
     fi
     require_vars DEPLOY_HOST
+    # shellcheck disable=SC2153 # DEPLOY_HOST проверен require_vars
+    check_ssh_target "$user" "$DEPLOY_HOST"
     ssh_setup "$tmp"
     # Пакет — во временном каталоге 0700 на сервере, удаляется в любом случае.
     # shellcheck disable=SC2153 # DEPLOY_HOST проверен require_vars
@@ -143,6 +145,9 @@ check_os() {
     esac
 }
 
+# Команда от имени пользователя деплоя: права root не применяются к путям, которыми он владеет.
+as_deploy() { run runuser -u "$DEPLOY_USER" -- "$@"; }
+
 apt_has() { apt-cache policy "$1" 2>/dev/null | grep -q 'Candidate: [0-9]'; }
 
 setup_packages() {
@@ -181,11 +186,20 @@ setup_user() {
     if ! query id -u "$DEPLOY_USER"; then
         run useradd --create-home --shell /bin/bash "$DEPLOY_USER"
     fi
+    # Внутри своих каталогов пользователь деплоя может подложить симлинк (например shared/storage → /etc):
+    # root по таким путям не ходит. APP_ROOT лежит в /var/www (root) — его создаёт root, если это не
+    # симлинк; всё, что внутри, и ~/.ssh создаются от имени пользователя деплоя (runuser, без -o).
+    [[ ! -L $APP_ROOT ]] || die "${APP_ROOT} — симлинк, provisioning остановлен"
+    run install -d -m 0755 -o "$DEPLOY_USER" -g "$DEPLOY_USER" "$APP_ROOT"
+    as_deploy install -d -m 0755 "$APP_ROOT/releases"
+    as_deploy install -d -m 0755 "$APP_ROOT/shared"
+    as_deploy install -d -m 0775 "$APP_ROOT/shared/storage"
+    as_deploy install -d -m 0775 "$APP_ROOT/shared/storage/logs"
     # Каталог ключей; authorized_keys кладёт OWNER (задача 0.1.12), скрипт его не меняет.
-    run install -d -m 0700 -o "$DEPLOY_USER" -g "$DEPLOY_USER" "/home/$DEPLOY_USER/.ssh"
-    run install -d -m 0755 -o "$DEPLOY_USER" -g "$DEPLOY_USER" "$APP_ROOT" "$APP_ROOT/releases" "$APP_ROOT/shared"
-    run install -d -m 0775 -o "$DEPLOY_USER" -g "$DEPLOY_USER" "$APP_ROOT/shared/storage" "$APP_ROOT/shared/storage/logs"
+    as_deploy install -d -m 0700 "/home/$DEPLOY_USER/.ssh"
     run install -d -m 0755 /var/www/letsencrypt
+    # Журналы программ Supervisor: пишет supervisord от root, пользователю деплоя каталог недоступен.
+    run install -d -m 0750 -o root -g adm /var/log/ymuzykant
 
     # Только то, что нужно deploy.sh: перезагрузка своего пула PHP-FPM и своих программ Supervisor.
     local sudoers
