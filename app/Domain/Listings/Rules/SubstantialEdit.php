@@ -9,8 +9,8 @@ use App\Domain\Listings\Enums\ListingEvent;
 /**
  * Правило «существенная правка» (SPEC §6.1) — единственное место, где оно задано.
  *
- * Существенная: фото, модель, описание, состояние. Снижение цены и способы передачи — без повторной
- * модерации; прочие поля (торг, цена вверх, год, город…) по SPEC в список не входят — тоже несущественные.
+ * Существенная (решение OWNER 04.11.2026): фото, модель, категория, название, серийный номер, описание,
+ * состояние. Год, город, цена (вверх и вниз), «Готов к торгу», способы передачи — несущественные.
  */
 final class SubstantialEdit
 {
@@ -18,7 +18,7 @@ final class SubstantialEdit
     public const PHOTOS = 'photos';
 
     /** @var list<string> */
-    public const FIELDS = [self::PHOTOS, 'model_id', 'description', 'condition'];
+    public const FIELDS = [self::PHOTOS, 'model_id', 'category_id', 'title', 'serial_enc', 'description', 'condition'];
 
     /**
      * Событие правки опубликованного объявления.

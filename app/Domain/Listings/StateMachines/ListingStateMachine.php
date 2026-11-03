@@ -38,6 +38,7 @@ use Laravel\Pennant\Feature;
  * Флаг Pennant `premoderation` (решение OWNER, карточка 2.1.1): выключен — переходы «на проверку»
  * (publish, resubmit, substantial_edit, renew, relist) ведут сразу в published; включён — в pending.
  * Решения модератора из pending доступны при любом значении флага: в pending могли остаться объявления.
+ * Снять с продажи можно из published, pending, needs_changes и expired (решение OWNER 04.11.2026).
  *
  * Каждый переход идёт в транзакции по статусу из БД под блокировкой строки и отправляет своё событие
  * (подкласс ListingTransitioned) после фиксации.
@@ -50,8 +51,13 @@ final class ListingStateMachine
     /** @var array<string, array<string, string>> from → event → цель */
     private const TABLE = [
         'draft' => ['publish' => self::REVIEW],
-        'pending' => ['approve' => 'published', 'return' => 'needs_changes', 'reject' => 'rejected'],
-        'needs_changes' => ['resubmit' => self::REVIEW],
+        'pending' => [
+            'approve' => 'published',
+            'return' => 'needs_changes',
+            'reject' => 'rejected',
+            'withdraw' => 'withdrawn',
+        ],
+        'needs_changes' => ['resubmit' => self::REVIEW, 'withdraw' => 'withdrawn'],
         'published' => [
             'substantial_edit' => self::REVIEW,
             'minor_edit' => 'published',
@@ -59,10 +65,13 @@ final class ListingStateMachine
             'withdraw' => 'withdrawn',
             'expire' => 'expired',
         ],
-        'expired' => ['renew' => self::REVIEW],
+        'expired' => ['renew' => self::REVIEW, 'withdraw' => 'withdrawn'],
         'withdrawn' => ['relist' => self::REVIEW],
         'rejected' => [],
     ];
+
+    /** Статусы, из которых при снятии можно указать итоговую цену. */
+    private const SOLD_FROM = [ListingStatus::Published, ListingStatus::Expired];
 
     /** @var array<string, class-string<ListingTransitioned>> */
     private const EVENTS = [
@@ -178,7 +187,8 @@ final class ListingStateMachine
     }
 
     /**
-     * Снять с продажи (UC-L4). Итоговая цена — только для «продал», необязательна, больше нуля.
+     * Снять с продажи (UC-L4). Итоговая цена — только для «продал» из published или expired
+     * (решение OWNER 04.11.2026), необязательна, больше нуля.
      */
     public function withdraw(Listing $listing, WithdrawReason $reason, ?int $finalPrice = null): Listing
     {
@@ -188,7 +198,14 @@ final class ListingStateMachine
 
         return $this->transition(
             $listing,
-            fn (): ListingEvent => ListingEvent::Withdraw,
+            function (Listing $fresh) use ($finalPrice): ListingEvent {
+                // Статус проверяется по заблокированной копии: объявление на проверке ещё не продавалось.
+                if ($finalPrice !== null && ! in_array($fresh->status, self::SOLD_FROM, true)) {
+                    throw new InvalidArgumentException('Итоговая цена указывается только при снятии опубликованного объявления.');
+                }
+
+                return ListingEvent::Withdraw;
+            },
             fn (Listing $fresh) => SaleRecord::query()->updateOrCreate(
                 ['listing_id' => $fresh->id],
                 [
