@@ -30,11 +30,14 @@ export default defineConfig({
         {
             // Эталоны design/screens/{id}@{viewport}.png Playwright сам найти не может: он заменяет «@»
             // в имени снимка. Хелпер копирует эталон во временную папку, где его ждёт toHaveScreenshot;
-            // сами эталоны тест не меняет даже с --update-snapshots (_helpers.ts).
+            // сами эталоны тест не меняет даже с --update-snapshots (_helpers.ts). {testName} в пути: тесты
+            // одного эталона идут параллельно, и общий файл копировали одновременно («Could not decode PNG»).
             name: 'references',
+            // Без ретраев: повтор скрывал флаки сверки (0.2.6), эталон либо совпал, либо нет.
+            retries: 0,
             testMatch: referenceSpecs,
             snapshotDir: join(tmpdir(), 'ym-references'),
-            snapshotPathTemplate: '{snapshotDir}/{testFileName}/{arg}{ext}',
+            snapshotPathTemplate: '{snapshotDir}/{testFileName}/{testName}/{arg}{ext}',
             use: { ...devices['Desktop Chrome'] },
         },
     ],
