@@ -26,7 +26,9 @@ use App\Domain\Moderation\Enums\ModerationVerdict;
 use App\Domain\Moderation\Models\ModerationDecision;
 use App\Support\Flags\FeatureFlag;
 use Illuminate\Contracts\Events\ShouldDispatchAfterCommit;
+use Illuminate\Database\Events\QueryExecuted;
 use Illuminate\Support\Carbon;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Event;
 use Laravel\Pennant\Feature;
 use Tests\Support\ListingTransitions;
@@ -65,7 +67,7 @@ function fireListingEvent(ListingEvent $event): Closure
         // Итоговая цена — только из published и expired (решение OWNER 04.11.2026).
         ListingEvent::Withdraw => fn (ListingStateMachine $m, Listing $l) => $m->withdraw(
             $l,
-            WithdrawReason::SoldHere,
+            in_array($l->status, [ListingStatus::Published, ListingStatus::Expired], true) ? WithdrawReason::SoldHere : WithdrawReason::SoldElsewhere,
             in_array($l->status, [ListingStatus::Published, ListingStatus::Expired], true) ? 180_000 : null,
         ),
         ListingEvent::Expire => fn (ListingStateMachine $m, Listing $l) => $m->expire($l),
@@ -95,14 +97,16 @@ function listingEventClass(ListingEvent $event): string
 
 it('каждая пара (from, event) через машину: допустимая сохраняет статус и шлёт своё событие, недопустимая — IllegalTransition без изменений', function (ListingStatus $from, ListingEvent $event, bool $premoderation, ?ListingStatus $target) {
     setPremoderation($premoderation);
-    Event::fake();
+    // Подделываем все 12 событий машины (не события Eloquent): тогда «ничего не отправлено» значит «ни одного перехода».
+    Event::fake(array_map(fn (ListingEvent $e): string => listingEventClass($e), ListingEvent::cases()));
     $listing = Listing::factory()->inStatus($from)->create();
     $machine = app(ListingStateMachine::class);
 
     if ($target === null) {
         expect(fn () => fireListingEvent($event)($machine, $listing))->toThrow(IllegalTransition::class);
         expect($listing->fresh()?->status)->toBe($from);
-        Event::assertNotDispatched(ListingTransitioned::class);
+        // EventFake сравнивает точное имя класса, а машина шлёт подклассы: проверяем, что событий нет вовсе.
+        Event::assertNothingDispatched();
 
         return;
     }
@@ -306,3 +310,68 @@ it('из pending и needs_changes снимают без итоговой цен�
     expect($listing->fresh()?->status)->toBe(ListingStatus::Withdrawn)
         ->and($listing->saleRecord?->final_price)->toBeNull();
 })->with(fn (): array => [ListingStatus::Pending, ListingStatus::NeedsChanges]);
+
+it('причины снятия по статусам: «продал на ЯМузыканте» — только после публикации', function (ListingStatus $from, WithdrawReason $reason, bool $allowed) {
+    $listing = Listing::factory()->inStatus($from)->create();
+    $withdraw = fn () => app(ListingStateMachine::class)->withdraw($listing, $reason);
+
+    if (! $allowed) {
+        expect($withdraw)->toThrow(InvalidArgumentException::class);
+        expect($listing->fresh()?->status)->toBe($from)
+            ->and(SaleRecord::query()->count())->toBe(0);
+
+        return;
+    }
+
+    $withdraw();
+    expect($listing->fresh()?->status)->toBe(ListingStatus::Withdrawn);
+})->with(fn (): array => [
+    'published, продал здесь' => [ListingStatus::Published, WithdrawReason::SoldHere, true],
+    'published, продал в другом месте' => [ListingStatus::Published, WithdrawReason::SoldElsewhere, true],
+    'published, передумал' => [ListingStatus::Published, WithdrawReason::ChangedMind, true],
+    'expired, продал здесь' => [ListingStatus::Expired, WithdrawReason::SoldHere, true],
+    'expired, продал в другом месте' => [ListingStatus::Expired, WithdrawReason::SoldElsewhere, true],
+    'expired, передумал' => [ListingStatus::Expired, WithdrawReason::ChangedMind, true],
+    'pending, продал здесь' => [ListingStatus::Pending, WithdrawReason::SoldHere, false],
+    'pending, продал в другом месте' => [ListingStatus::Pending, WithdrawReason::SoldElsewhere, true],
+    'pending, передумал' => [ListingStatus::Pending, WithdrawReason::ChangedMind, true],
+    'needs_changes, продал здесь' => [ListingStatus::NeedsChanges, WithdrawReason::SoldHere, false],
+    'needs_changes, продал в другом месте' => [ListingStatus::NeedsChanges, WithdrawReason::SoldElsewhere, true],
+    'needs_changes, передумал' => [ListingStatus::NeedsChanges, WithdrawReason::ChangedMind, true],
+    'pending, модерация (SPEC §6.4)' => [ListingStatus::Pending, WithdrawReason::Moderation, true],
+]);
+
+it('переход читает объявление под блокировкой строки (SELECT … FOR UPDATE)', function () {
+    if (DB::getDriverName() !== 'pgsql') {
+        $this->markTestSkipped('SQLite не поддерживает блокировку строк; проверяется в CI на PostgreSQL.');
+    }
+
+    $listing = Listing::factory()->inStatus(ListingStatus::Draft)->create();
+    $queries = [];
+    DB::listen(function (QueryExecuted $query) use (&$queries): void {
+        $queries[] = strtolower($query->sql);
+    });
+
+    app(ListingStateMachine::class)->publish($listing);
+
+    $locked = array_filter($queries, fn (string $sql): bool => str_contains($sql, 'from "listings"') && str_contains($sql, 'for update'));
+    expect($locked)->toHaveCount(1);
+});
+
+it('статус меняется только внутри машины: прямое сохранение — исключение', function () {
+    $listing = Listing::factory()->inStatus(ListingStatus::Draft)->create();
+
+    $listing->status = ListingStatus::Published;
+
+    expect(fn () => $listing->save())->toThrow(LogicException::class);
+    expect(Listing::query()->whereKey($listing->id)->value('status'))->toBe('draft');
+});
+
+it('сохранение без смены статуса вне машины разрешено', function () {
+    $listing = Listing::factory()->inStatus(ListingStatus::Draft)->create();
+
+    $listing->title = 'Fender ’62 Stratocaster';
+    $listing->save();
+
+    expect($listing->fresh()?->title)->toBe('Fender ’62 Stratocaster');
+});

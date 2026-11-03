@@ -2,6 +2,8 @@
 
 declare(strict_types=1);
 
+use App\Domain\Listings\Models\Listing;
+use Illuminate\Database\QueryException;
 use Illuminate\Support\Facades\Artisan;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Schema;
@@ -71,3 +73,28 @@ it('миграции объявлений обратимы: откат удал�
         expect(Schema::hasTable($table))->toBeTrue();
     }
 });
+
+it('модель не сохраняет отрицательную цену', function () {
+    config(['scout.driver' => 'null']);
+
+    expect(fn () => Listing::factory()->create(['price' => -1]))->toThrow(InvalidArgumentException::class)
+        ->and(Listing::query()->count())->toBe(0);
+});
+
+it('CHECK в PostgreSQL: price ≥ 0, final_price > 0', function (string $table, string $column, int $value) {
+    if (DB::getDriverName() !== 'pgsql') {
+        $this->markTestSkipped('CHECK-ограничения денег заданы для PostgreSQL; проверяются в CI.');
+    }
+    config(['scout.driver' => 'null']);
+    $listing = Listing::factory()->create();
+
+    $write = $table === 'listings'
+        ? fn () => DB::table('listings')->where('id', $listing->id)->update([$column => $value])
+        : fn () => DB::table('sale_records')->insert(['listing_id' => $listing->id, 'reason' => 'sold_here', $column => $value]);
+
+    expect($write)->toThrow(QueryException::class);
+})->with([
+    'цена -1' => ['listings', 'price', -1],
+    'итоговая цена 0' => ['sale_records', 'final_price', 0],
+    'итоговая цена -1' => ['sale_records', 'final_price', -1],
+]);

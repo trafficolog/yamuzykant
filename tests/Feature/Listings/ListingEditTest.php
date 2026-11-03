@@ -2,6 +2,7 @@
 
 declare(strict_types=1);
 
+use App\Domain\Accounts\Models\User;
 use App\Domain\Catalog\Models\Category;
 use App\Domain\Catalog\Models\City;
 use App\Domain\Catalog\Models\InstrumentModel;
@@ -125,12 +126,54 @@ it('то же значение поля — не изменение', function (
     Event::assertDispatched(ListingMinorEdited::class);
 });
 
-it('статус через правку не меняется: поле status игнорируется', function () {
+it('правка принимает только поля содержания: владелец, статус, даты и id — отказ', function (string $field) {
     $listing = publishedStrat();
+    $owner = $listing->user_id;
+    $other = User::factory()->create();
+    $value = match ($field) {
+        'user_id' => $other->id,
+        'status' => 'rejected',
+        'published_at' => '2020-01-01 00:00:00',
+        'id' => '00000000-0000-0000-0000-000000000000',
+        default => '2020-01-01 00:00:00',
+    };
 
-    app(ListingStateMachine::class)->edit($listing, ['status' => 'rejected', 'price' => 180_000]);
+    expect(fn () => app(ListingStateMachine::class)->edit($listing, [$field => $value, 'price' => 180_000]))
+        ->toThrow(InvalidArgumentException::class);
 
     $listing->refresh();
-    expect($listing->status)->toBe(ListingStatus::Published)
-        ->and($listing->price)->toBe(180_000);
+    expect($listing->user_id)->toBe($owner)
+        ->and($listing->status)->toBe(ListingStatus::Published)
+        ->and($listing->price)->toBe(184_500);
+})->with(['user_id', 'status', 'published_at', 'id', 'created_at']);
+
+it('правка с чужим user_id не меняет владельца', function () {
+    $listing = publishedStrat();
+    $owner = $listing->user_id;
+
+    try {
+        app(ListingStateMachine::class)->edit($listing, ['user_id' => User::factory()->create()->id]);
+    } catch (InvalidArgumentException) {
+        // ожидаемо
+    }
+
+    expect($listing->fresh()?->user_id)->toBe($owner);
+});
+
+it('отрицательная цена в правке — отказ', function () {
+    $listing = publishedStrat();
+
+    expect(fn () => app(ListingStateMachine::class)->edit($listing, ['price' => -1]))
+        ->toThrow(InvalidArgumentException::class);
+    expect($listing->fresh()?->price)->toBe(184_500);
+});
+
+it('цена 0 допустима (отдам даром) и считается снижением', function () {
+    Event::fake();
+    $listing = publishedStrat();
+
+    app(ListingStateMachine::class)->edit($listing, ['price' => 0]);
+
+    expect($listing->fresh()?->price)->toBe(0);
+    Event::assertDispatched(ListingPriceDropped::class);
 });

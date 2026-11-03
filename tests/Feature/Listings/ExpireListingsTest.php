@@ -52,8 +52,19 @@ it('дата окончания показа — published_at + срок', funct
 
 it('снятие по сроку запланировано ежечасно', function () {
     $events = collect(app(Schedule::class)->events())
-        ->filter(fn ($event): bool => str_contains((string) $event->description, 'listings:expire'));
+        ->filter(fn ($event): bool => str_contains((string) $event->command, 'listings:expire'));
 
     expect($events)->toHaveCount(1)
-        ->and($events->first()?->expression)->toBe('0 * * * *');
+        ->and($events->first()?->expression)->toBe('0 * * * *')
+        ->and($events->first()?->withoutOverlapping)->toBeTrue();
+});
+
+it('команду listings:expire можно запустить вручную', function () {
+    $listing = Listing::factory()->inStatus(ListingStatus::Published)->create(['published_at' => now()->subDays(61)]);
+
+    $this->artisan('listings:expire')
+        ->expectsOutputToContain('1')
+        ->assertExitCode(0);
+
+    expect($listing->fresh()?->status)->toBe(ListingStatus::Expired);
 });

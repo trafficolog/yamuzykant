@@ -52,9 +52,10 @@ it('статусы и состояние объявления — PHP enum', fun
     expect('App\Domain\Listings\Enums')->toBeEnums();
 });
 
-it('status не входит в массовое заполнение модели объявления', function () {
+it('status и user_id не входят в массовое заполнение модели объявления', function () {
     $fillable = (new ReflectionClass('App\Domain\Listings\Models\Listing'))->getDefaultProperties()['fillable'] ?? [];
 
     expect($fillable)->toBeArray()->toContain('price')
-        ->and(in_array('status', (array) $fillable, true))->toBeFalse();
+        ->and(in_array('status', (array) $fillable, true))->toBeFalse()
+        ->and(in_array('user_id', (array) $fillable, true))->toBeFalse();
 });
