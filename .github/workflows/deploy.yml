@@ -35,9 +35,12 @@ jobs:
         with:
           ssh-private-key: ${{ secrets.DEPLOY_SSH_KEY }}
       - if: steps.has.outputs.ok == 'true'
-        run: ./deploy/deploy.sh stage ${{ github.event.workflow_run.head_sha }}
+        run: ./deploy/deploy.sh stage "$SHA"
         env:
+          SHA: ${{ github.event.workflow_run.head_sha }}
           DEPLOY_HOST: ${{ secrets.DEPLOY_HOST }}
           DEPLOY_USER: ${{ secrets.DEPLOY_USER }}
       - if: steps.has.outputs.ok == 'true'
-        run: curl -fsS --retry 10 --retry-delay 6 "${{ vars.STAGE_URL }}/health"
+        env:
+          STAGE_URL: ${{ vars.STAGE_URL }}
+        run: curl -fsS --retry 10 --retry-delay 6 "$STAGE_URL/health"

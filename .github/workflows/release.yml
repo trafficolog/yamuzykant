@@ -1,10 +1,13 @@
 name: Release
 # Без правил окружений и защиты тегов (бесплатный тариф, риск R1 аудита G0) тег сам ничего не выкатывает (0.1.10):
 # - push тега v* — сборка и GitHub Release, без выкатки (v0.1.0 после G0, v0.2.0 после G1 и т. д.);
+#   Release создаётся, только если коммит тега в main;
 # - выкатка production — только ручной запуск workflow_dispatch из main с параметром tag:
 #   job authorize пускает, если github.actor и github.triggering_actor есть в .github/production-deployers.txt,
-#   тег — vX.Y.Z с X ≥ 1 и его коммит в main. Версии v0.* в production не выкатываются.
-# Условия проверяет .github/scripts/workflow-guards.test.mjs в job docs.
+#   тег — vX.Y.Z с X ≥ 1 и его коммит в main; deploy выкатывает проверенный SHA (needs.authorize.outputs.sha).
+#   Версии v0.* в production не выкатываются.
+# У authorize и deploy нет статус-функций в if, continue-on-error и глушения ошибок: отказ authorize
+# пропускает deploy. Условия проверяет .github/scripts/workflow-guards.test.mjs в job docs.
 on:
   push:
     tags: ['v*']
@@ -40,6 +43,14 @@ jobs:
     permissions:
       contents: write
     steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Коммит тега в main (RELEASE-GATES — тег на коммите main)
+        env:
+          TAG: ${{ github.ref_name }}
+        run: |
+          git merge-base --is-ancestor "$GITHUB_SHA" origin/main || { echo "::error::Коммит тега $TAG ($GITHUB_SHA) не в main — GitHub Release не создаётся"; exit 1; }
       - name: GitHub Release (тег с дефисом — pre-release)
         env:
           GH_TOKEN: ${{ github.token }}
@@ -53,6 +64,8 @@ jobs:
     if: github.event_name == 'workflow_dispatch' && github.ref == 'refs/heads/main'
     runs-on: ubuntu-latest
     timeout-minutes: 5
+    outputs:
+      sha: ${{ steps.tag.outputs.sha }}
     steps:
       - uses: actions/checkout@v4
         with:
@@ -63,12 +76,15 @@ jobs:
           TRIGGERING_ACTOR: ${{ github.triggering_actor }}
           TAG: ${{ inputs.tag }}
         run: node .github/scripts/workflow-guards.mjs authorize --actor "$ACTOR" --triggering-actor "$TRIGGERING_ACTOR" --tag "$TAG"
-      - name: Тег существует, его коммит в main
+      - name: Тег существует, его коммит в main — SHA для выкатки
+        id: tag
         env:
           TAG: ${{ inputs.tag }}
         run: |
           git rev-parse --verify --quiet "refs/tags/$TAG^{commit}" > /dev/null || { echo "::error::Нет тега $TAG"; exit 1; }
-          git merge-base --is-ancestor "refs/tags/$TAG" origin/main || { echo "::error::Коммит тега $TAG не в main"; exit 1; }
+          sha="$(git rev-parse "refs/tags/$TAG^{commit}")"
+          git merge-base --is-ancestor "$sha" origin/main || { echo "::error::Коммит тега $TAG не в main"; exit 1; }
+          echo "sha=$sha" >> "$GITHUB_OUTPUT"
 
   deploy:
     needs: authorize
@@ -80,7 +96,7 @@ jobs:
     steps:
       - uses: actions/checkout@v4
         with:
-          ref: refs/tags/${{ inputs.tag }}
+          ref: ${{ needs.authorize.outputs.sha }}
       - name: Пропуск, пока нет deploy/deploy.sh (до задачи 0.1.4)
         id: has
         run: echo "ok=$([ -f deploy/deploy.sh ] && echo true || echo false)" >> $GITHUB_OUTPUT
@@ -89,9 +105,12 @@ jobs:
         with:
           ssh-private-key: ${{ secrets.DEPLOY_SSH_KEY }}
       - if: steps.has.outputs.ok == 'true'
-        run: ./deploy/deploy.sh production "$(git rev-parse HEAD)"
+        run: ./deploy/deploy.sh production "$SHA"
         env:
+          SHA: ${{ needs.authorize.outputs.sha }}
           DEPLOY_HOST: ${{ secrets.DEPLOY_HOST }}
           DEPLOY_USER: ${{ secrets.DEPLOY_USER }}
       - if: steps.has.outputs.ok == 'true'
-        run: curl -fsS --retry 10 --retry-delay 6 "${{ vars.PRODUCTION_URL }}/health"
+        env:
+          PRODUCTION_URL: ${{ vars.PRODUCTION_URL }}
+        run: curl -fsS --retry 10 --retry-delay 6 "$PRODUCTION_URL/health"
