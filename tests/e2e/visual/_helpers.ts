@@ -1,5 +1,6 @@
 import { copyFileSync, mkdirSync, readFileSync } from 'node:fs';
-import { dirname } from 'node:path';
+import { createRequire } from 'node:module';
+import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import {
     expect,
@@ -25,6 +26,8 @@ export interface ManifestScreen {
     gate: string;
     compare: 'visual' | 'checklist';
     threshold: string;
+    /** Селектор блока: эталон — снимок этого элемента, а не страницы (header, footer). */
+    block?: string;
     mask: string[];
     states: string[];
     viewports: string[];
@@ -72,18 +75,69 @@ export function prototypeUrl(id: string): string {
     return `${PROTOTYPES_BASE}/${encodeURI(screen.file)}${screen.query}`;
 }
 
+/** Заморозка анимаций и переходов: `animations: 'disabled'` у скриншота не трогает стили до съёмки. */
+export const FREEZE_MOTION_CSS =
+    '*, *::before, *::after { animation: none !important; transition: none !important; scroll-behavior: auto !important; caret-color: transparent !important; }';
+
+const reactDir = (name: string): string =>
+    dirname(createRequire(import.meta.url).resolve(`${name}/package.json`));
+
+/**
+ * Тот же React 18.3.1, что runtime прототипа берёт с unpkg (support.js). Подкладывается до загрузки
+ * страницы: бандл ДС выполняется раньше, чем runtime догрузит React с CDN, и при неудачном
+ * порядке отрисовка падает с «__ds_scope.h is not a function». Так кадр не зависит от сети.
+ */
+const REACT_UMD: string[] = [
+    readFileSync(join(reactDir('react'), 'umd/react.production.min.js'), 'utf8'),
+    readFileSync(join(reactDir('react-dom'), 'umd/react-dom.production.min.js'), 'utf8'),
+];
+
+/** Подготовка страницы до перехода: без анимаций, reduced motion, React без CDN. */
+export async function prepareDeterministicPage(page: Page): Promise<void> {
+    await page.emulateMedia({ reducedMotion: 'reduce' });
+    for (const content of REACT_UMD) await page.addInitScript({ content });
+    await page.addInitScript((css) => {
+        const add = (): void => {
+            if (document.getElementById('ym-freeze-motion')) return;
+            const style = document.createElement('style');
+            style.id = 'ym-freeze-motion';
+            style.textContent = css;
+            (document.head ?? document.documentElement).append(style);
+        };
+        if (document.documentElement) add();
+        document.addEventListener('DOMContentLoaded', add);
+    }, FREEZE_MOTION_CSS);
+}
+
+/** Ждёт сеть и шрифты: ни один шрифт не должен оставаться в состоянии loading. */
 async function settle(page: Page): Promise<void> {
     await page.waitForLoadState('networkidle');
     await page.evaluate(() => document.fonts.ready);
+    await page.waitForFunction(
+        () =>
+            document.fonts.status === 'loaded' &&
+            ![...document.fonts].some((face) => face.status === 'loading'),
+    );
 }
 
 /** Открывает прототип экрана в viewport из manifest и ждёт шрифты и отрисовку. */
 export async function openPrototype(page: Page, id: string, viewportName: string): Promise<void> {
     const viewport = viewportOf(viewportName);
+    const errors: string[] = [];
+    page.on('console', (message) => {
+        if (message.type() === 'error') errors.push(message.text());
+    });
+    page.on('pageerror', (error) => errors.push(error.message));
+
     await page.setViewportSize({ width: viewport.width, height: viewport.height });
+    await prepareDeterministicPage(page);
     await page.goto(prototypeUrl(id));
     await settle(page);
     await page.waitForTimeout(1500);
+    // Прототип с ошибкой отрисовки нельзя сверять: ни самосравнение, ни эталон из него не имеют смысла.
+    if (errors.length > 0) {
+        throw new Error(`Прототип «${id}» отрисован с ошибками: ${errors.join(' | ')}`);
+    }
 }
 
 export type ReferenceOptions = Pick<
@@ -92,8 +146,8 @@ export type ReferenceOptions = Pick<
 >;
 
 /**
- * Сравнивает уже открытую страницу с эталоном `{id}@{viewportName}.png`: полный экран, маски
- * `mask` экрана из manifest, порог `threshold` экрана. `options` переопределяет порог.
+ * Сравнивает уже открытую страницу с эталоном `{id}@{viewportName}.png`: полный экран (или блок
+ * `block` из manifest), маски `mask` экрана из manifest, порог `threshold` экрана. `options` переопределяет порог.
  */
 export async function expectMatchesReference(
     page: Page,
@@ -118,13 +172,18 @@ export async function expectMatchesReference(
     await settle(page);
 
     const overridesRatio = options.maxDiffPixels !== undefined;
-    await expect(page).toHaveScreenshot(snapshotName, {
-        fullPage: true,
+    const common: PageAssertionsToHaveScreenshotOptions = {
         animations: 'disabled',
         caret: 'hide',
         scale: 'css',
         mask: screen.mask.map((selector) => page.locator(selector)),
         ...(overridesRatio ? {} : { maxDiffPixelRatio: thresholdOf(screen) }),
         ...options,
-    });
+    };
+    if (screen.block) {
+        // Блок целиком: доля пикселей считается от самого блока, белое поле её не разбавляет (R5).
+        await expect(page.locator(screen.block).first()).toHaveScreenshot(snapshotName, common);
+    } else {
+        await expect(page).toHaveScreenshot(snapshotName, { fullPage: true, ...common });
+    }
 }

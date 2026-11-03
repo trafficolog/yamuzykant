@@ -27,6 +27,7 @@
       "mvp": true,
       "compare": "visual",
       "threshold": "default",
+      "block": "header",
       "mask": [],
       "states": [
         "default",
@@ -46,6 +47,7 @@
       "mvp": true,
       "compare": "visual",
       "threshold": "default",
+      "block": "footer",
       "mask": [],
       "states": [
         "default"
