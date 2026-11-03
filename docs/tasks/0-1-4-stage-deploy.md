@@ -31,6 +31,8 @@ escalations: []
 - Окружение GitHub `stage` и секреты (значения вводит OWNER)
 
 - Веб-сервер: долгий `Cache-Control: public, max-age=31536000` для `/fonts/*` (файлы без хеша — без `immutable`, ревью PR #84) и для `/build/*` (с хешем — `immutable`)
+- `trustProxies`: OWNER сообщает, что стоит перед сервером (CDN, балансировщик) — их адреса в `bootstrap/app.php`; без прокси — только 127.0.0.1; тест, что поддельный `X-Forwarded-For` не меняет IP для лимитов (решение OWNER 03.11.2026)
+- Воркеры очереди (Horizon) слушают `high,default` — письма с кодом входа идут в `high`
 - `deploy.sh` получает SHA только из проверенного источника: в release.yml — `needs.authorize.outputs.sha` и в `with.ref`, и в `env.SHA`; тест в workflow-guards (ревью PR #83, N8, N9: `if: false` у шага authorize, литерал `--tag`, `--allowlist /dev/stdin` тоже должны ронять тесты)
 - Окружение `stage` ограничено веткой `main` (deployment branch policy, включено 03.11.2026); выкатка — только `deploy.yml` после зелёного CI на push в main
 

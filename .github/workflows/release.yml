@@ -27,8 +27,10 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 10
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4.4.0
         with:
           node-version: '22'
           cache: npm
@@ -43,8 +45,9 @@ jobs:
     permissions:
       contents: write
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
         with:
+          persist-credentials: false
           fetch-depth: 0
       - name: Коммит тега в main (RELEASE-GATES — тег на коммите main)
         env:
@@ -67,8 +70,9 @@ jobs:
     outputs:
       sha: ${{ steps.tag.outputs.sha }}
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
         with:
+          persist-credentials: false
           fetch-depth: 0
       - name: Запускает OWNER из списка, тег vX.Y.Z с X ≥ 1
         env:
@@ -94,14 +98,15 @@ jobs:
     environment: production
     concurrency: deploy-production
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
         with:
+          persist-credentials: false
           ref: ${{ needs.authorize.outputs.sha }}
       - name: Пропуск, пока нет deploy/deploy.sh (до задачи 0.1.4)
         id: has
         run: echo "ok=$([ -f deploy/deploy.sh ] && echo true || echo false)" >> $GITHUB_OUTPUT
       - if: steps.has.outputs.ok == 'true'
-        uses: webfactory/ssh-agent@v0.9.0
+        uses: webfactory/ssh-agent@dc588b651fe13675774614f8e6a936a468676387 # v0.9.0
         with:
           ssh-private-key: ${{ secrets.DEPLOY_SSH_KEY }}
       - if: steps.has.outputs.ok == 'true'
