@@ -3,7 +3,7 @@ id: "1.1.1"
 phase: "1"
 epic: "1.1"
 title: "Вход по коду на почту: бэкенд"
-status: todo
+status: in_progress
 gate: G1
 risk: high
 model_impl: opus

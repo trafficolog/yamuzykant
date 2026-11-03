@@ -3,7 +3,7 @@ id: "0.1.7"
 phase: "0"
 epic: "0.1"
 title: "Larastan для tests/ и config/"
-status: todo
+status: in_progress
 gate: G1
 risk: low
 model_impl: haiku

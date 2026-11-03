@@ -28,6 +28,7 @@ escalations: []
 - Маски `[data-dynamic]` закрашивать и при съёмке эталона (`tools/capture-reference.mjs`), либо описать ограничение в `design/screens/README.md`
 - `playwright`, `@playwright/test`, `http-server` — точные версии
 - Порог визуального сравнения не «разбавляется» пустым полем (аудит G0, R5): снимок блока (локатор) вместо всей страницы для header/footer, либо порог в пикселях
+- Шрифты (ревью PR #84): тест сверяет `href` preload с реальным `@font-face`; e2e проверяет загрузку JetBrains Mono 500
 - `copy.spec.ts`: кроме `innerText` проверять `title`, `placeholder`, `aria-label`, `alt`
 
 ## Критерии приёмки

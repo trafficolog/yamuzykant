@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace App\Http\Middleware;
 
+use App\Domain\Catalog\Queries\CategoryTree;
+use App\Http\Resources\Catalog\CategoryResource;
 use App\Support\Flags\FeatureFlag;
 use Illuminate\Http\Request;
 use Inertia\Middleware;
@@ -29,6 +31,9 @@ final class HandleInertiaRequests extends Middleware
                     $flag->value => Feature::for(null)->active($flag->value),
                 ])
                 ->all(),
+            // Справочник категорий для меню шапки: только видимые, явный список полей (CategoryResource).
+            'categories' => fn (): array => CategoryResource::collection((new CategoryTree)->public())
+                ->resolve($request),
         ];
     }
 }

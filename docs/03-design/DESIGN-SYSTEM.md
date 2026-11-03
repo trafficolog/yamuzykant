@@ -14,12 +14,13 @@
 
 `resources/css/app.css` — строго в этом порядке:
 ```css
-@import "../js/ds/tokens/webfonts.css";
 @import "../js/ds/tokens/tokens.css";
 @import "../js/ds/tokens/page.css";
 @import "../js/ds/tokens/components.css";
 @import "../js/ds/tokens/forms.css";
 ```
+Шрифты Onest и JetBrains Mono подключаются своими `@font-face` в `app.css` из `public/fonts` (самохостинг, задача 0.2.8, решение OWNER 03.11.2026); `tokens/webfonts.css` ДС с Google Fonts в приложение **не** подключается. Preload основного начертания — в `resources/views/app.blade.php`.
+
 `ym-compat.css` в приложение **не** подключается — это только для прототипов.
 
 Компоненты: `import { ListingCard, Button, FilterChip } from '@ds'`. Список экспортов — `resources/js/ds/index.ts`, его генерирует `npm run ds:sync`.

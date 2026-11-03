@@ -23,5 +23,5 @@ gate: G0
 | [0.2.5 Консоль сотрудников: каркас Filament](../tasks/0-2-5-console-shell.md) | todo | medium | sonnet → sonnet |
 | [0.2.6 Визуальные и текстовые проверки: укрепление после ревью](../tasks/0-2-6-visual-copy-hardening.md) | todo | low | sonnet → sonnet |
 | [0.2.7 Меню категорий: доступность, высота подвала, скрытие доставки](../tasks/0-2-7-category-menu-a11y.md) | todo | low | haiku → sonnet |
-| [0.2.8 Самохостинг шрифтов ДС](../tasks/0-2-8-self-hosted-fonts.md) | todo | medium | sonnet → sonnet |
+| [0.2.8 Самохостинг шрифтов ДС](../tasks/0-2-8-self-hosted-fonts.md) | done | medium | sonnet → sonnet |
 <!-- docs:ops:end -->
