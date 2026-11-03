@@ -55,7 +55,7 @@ it('включение и выключение флага в БД меняет s
 });
 
 it('миграция Pennant обратима', function () {
-    $files = glob(database_path('migrations/*_create_features_table.php'));
+    $files = glob(database_path('migrations/*_create_features_table.php')) ?: [];
     expect($files)->toHaveCount(1);
 
     $migration = require $files[0];
