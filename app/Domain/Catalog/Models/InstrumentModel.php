@@ -6,6 +6,7 @@ namespace App\Domain\Catalog\Models;
 
 use App\Domain\Catalog\Enums\InstrumentModelStatus;
 use App\Domain\Catalog\Queries\CategoryTree;
+use App\Domain\Catalog\Search\ModelAliases;
 use Database\Factories\Catalog\InstrumentModelFactory;
 use Illuminate\Database\Eloquent\Attributes\UseFactory;
 use Illuminate\Database\Eloquent\Builder;
@@ -83,6 +84,7 @@ class InstrumentModel extends Model
             'id' => $this->id,
             'brand' => $this->brand,
             'name' => $this->name,
+            'aliases' => ModelAliases::for($this->brand, $this->name),
         ];
     }
 
