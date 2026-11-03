@@ -63,19 +63,37 @@ function startYandexLogin(string $query = ''): array
 /**
  * Подменяет HTTP Яндекса для настоящего провайдера: ответ на обмен кода и login.yandex.ru/info.
  *
- * @param  list<Response>  $responses
- * @return ArrayObject<int, array{request: RequestInterface}>
+ * @param  array<int, Response>  $responses
+ * @return ArrayObject<int, array<mixed>>
  */
 function mockYandexHttp(array $responses): ArrayObject
 {
-    /** @var ArrayObject<int, array{request: RequestInterface}> $history */
+    /** @var ArrayObject<int, array<mixed>> $history */
     $history = new ArrayObject;
     $stack = HandlerStack::create(new MockHandler($responses));
-    $stack->push(Middleware::history($history));
+    // history() принимает контейнер по ссылке; объект тот же, поэтому записи видны через $history.
+    $container = $history;
+    $stack->push(Middleware::history($container));
 
     config(['services.yandex.guzzle' => ['handler' => $stack]]);
 
     return $history;
+}
+
+/**
+ * N-й запрос к Яндексу из истории mockYandexHttp().
+ *
+ * @param  ArrayObject<int, array<mixed>>  $history
+ */
+function yandexRequest(ArrayObject $history, int $index): RequestInterface
+{
+    $request = $history[$index]['request'] ?? null;
+
+    if (! $request instanceof RequestInterface) {
+        throw new LogicException("Запроса к Яндексу #{$index} не было");
+    }
+
+    return $request;
 }
 
 function yandexTokenResponse(): Response
@@ -102,7 +120,7 @@ it('ведёт на oauth.yandex.ru со scopes login:email и login:info, state
     $response = $this->get('/auth/yandex/redirect')->assertRedirect();
     $location = (string) $response->headers->get('Location');
     parse_str((string) parse_url($location, PHP_URL_QUERY), $params);
-
+    /** @var array<string, string> $params */
     expect($location)->toStartWith('https://oauth.yandex.ru/authorize?')
         ->and($params['response_type'])->toBe('code')
         ->and($params['client_id'])->toBe('test-client-id')
@@ -134,8 +152,8 @@ it('полный вход: код меняется на токен с code_verif
     $this->get('/auth/yandex/callback?code=auth-code-1&state='.$params['state'])->assertRedirect('/');
 
     $this->assertAuthenticatedAs($user);
-    parse_str((string) $history[0]['request']->getBody(), $tokenFields);
-    expect((string) $history[0]['request']->getUri())->toBe('https://oauth.yandex.ru/token')
+    parse_str((string) yandexRequest($history, 0)->getBody(), $tokenFields);
+    expect((string) yandexRequest($history, 0)->getUri())->toBe('https://oauth.yandex.ru/token')
         ->and($tokenFields['code'])->toBe('auth-code-1')
         ->and($tokenFields['code_verifier'])->toBe($verifier)
         ->and($tokenFields['redirect_uri'])->toBe('http://localhost/auth/yandex/callback')
@@ -304,6 +322,7 @@ it('отказ с неверным state → 403', function () {
     $this->assertGuest();
 });
 
+/** @param array<int, Response> $responses */
 it('ошибка Яндекса при обмене кода или чтении профиля → возврат в окно входа с текстом', function (array $responses) {
     User::factory()->create(['email' => 'anna@example.com', 'yandex_id' => '1000001']);
     mockYandexHttp($responses);
