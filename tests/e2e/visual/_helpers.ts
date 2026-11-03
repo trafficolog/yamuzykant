@@ -7,6 +7,7 @@ import {
     type Page,
     type PageAssertionsToHaveScreenshotOptions,
 } from '@playwright/test';
+import { prepareDeterministicPage, waitForFonts } from '../../../tools/deterministic-page.mjs';
 
 // Сверка страницы с эталоном design/screens/{id}@{viewport}.png по design/screens/manifest.json.
 // Порог и маски берутся из manifest (DESIGN-SYSTEM.md §6). При расхождении Playwright кладёт
@@ -25,6 +26,10 @@ export interface ManifestScreen {
     gate: string;
     compare: 'visual' | 'checklist';
     threshold: string;
+    /** Селектор блока: эталон — снимок этого элемента, а не страницы (header, footer). */
+    block?: string;
+    /** Эталоны состояний, снятые с реализации: `{id}--{state}@{vp}.png`. */
+    stateReferences?: { state: string; viewports: string[] }[];
     mask: string[];
     states: string[];
     viewports: string[];
@@ -72,34 +77,49 @@ export function prototypeUrl(id: string): string {
     return `${PROTOTYPES_BASE}/${encodeURI(screen.file)}${screen.query}`;
 }
 
+/** Ждёт сеть и шрифты: ни один шрифт не должен оставаться в состоянии loading. */
 async function settle(page: Page): Promise<void> {
     await page.waitForLoadState('networkidle');
-    await page.evaluate(() => document.fonts.ready);
+    await waitForFonts(page);
 }
 
 /** Открывает прототип экрана в viewport из manifest и ждёт шрифты и отрисовку. */
 export async function openPrototype(page: Page, id: string, viewportName: string): Promise<void> {
     const viewport = viewportOf(viewportName);
+    const errors: string[] = [];
+    page.on('console', (message) => {
+        if (message.type() === 'error') errors.push(message.text());
+    });
+    page.on('pageerror', (error) => errors.push(error.message));
+
     await page.setViewportSize({ width: viewport.width, height: viewport.height });
+    await prepareDeterministicPage(page);
     await page.goto(prototypeUrl(id));
     await settle(page);
     await page.waitForTimeout(1500);
+    // Прототип с ошибкой отрисовки нельзя сверять: ни самосравнение, ни эталон из него не имеют смысла.
+    if (errors.length > 0) {
+        throw new Error(`Прототип «${id}» отрисован с ошибками: ${errors.join(' | ')}`);
+    }
 }
 
 export type ReferenceOptions = Pick<
     PageAssertionsToHaveScreenshotOptions,
     'maxDiffPixelRatio' | 'maxDiffPixels' | 'threshold'
->;
+> & {
+    /** Состояние: эталон `{id}--{state}@{vp}.png`, снятый с реализации (manifest.stateReferences). */
+    state?: string;
+};
 
 /**
- * Сравнивает уже открытую страницу с эталоном `{id}@{viewportName}.png`: полный экран, маски
- * `mask` экрана из manifest, порог `threshold` экрана. `options` переопределяет порог.
+ * Сравнивает уже открытую страницу с эталоном `{id}@{viewportName}.png`: полный экран (или блок
+ * `block` из manifest), маски `mask` экрана из manifest, порог `threshold` экрана. `options` переопределяет порог.
  */
 export async function expectMatchesReference(
     page: Page,
     id: string,
     viewportName: string,
-    options: ReferenceOptions = {},
+    { state, ...options }: ReferenceOptions = {},
 ): Promise<void> {
     const screen = screenOf(id);
     const viewport = viewportOf(viewportName);
@@ -107,8 +127,15 @@ export async function expectMatchesReference(
         throw new Error(`У экрана «${id}» нет эталона для viewport «${viewportName}» (manifest)`);
     }
 
-    const referenceFile = `design/screens/${id}@${viewportName}.png`;
-    const snapshotName = `${id}@${viewportName}.png`;
+    const stem = state ? `${id}--${state}` : id;
+    const declared = screen.stateReferences?.find((item) => item.state === state);
+    if (state && !declared?.viewports.includes(viewportName)) {
+        throw new Error(
+            `В manifest нет эталона состояния ${stem}@${viewportName}.png (stateReferences)`,
+        );
+    }
+    const referenceFile = `design/screens/${stem}@${viewportName}.png`;
+    const snapshotName = `${stem}@${viewportName}.png`;
     // Эталон копируется туда, где toHaveScreenshot ищет снимок (см. проект references в конфиге).
     const target = test.info().snapshotPath(snapshotName);
     mkdirSync(dirname(target), { recursive: true });
@@ -118,13 +145,18 @@ export async function expectMatchesReference(
     await settle(page);
 
     const overridesRatio = options.maxDiffPixels !== undefined;
-    await expect(page).toHaveScreenshot(snapshotName, {
-        fullPage: true,
+    const common: PageAssertionsToHaveScreenshotOptions = {
         animations: 'disabled',
         caret: 'hide',
         scale: 'css',
         mask: screen.mask.map((selector) => page.locator(selector)),
         ...(overridesRatio ? {} : { maxDiffPixelRatio: thresholdOf(screen) }),
         ...options,
-    });
+    };
+    if (screen.block) {
+        // Блок целиком: доля пикселей считается от самого блока, белое поле её не разбавляет (R5).
+        await expect(page.locator(screen.block).first()).toHaveScreenshot(snapshotName, common);
+    } else {
+        await expect(page).toHaveScreenshot(snapshotName, { fullPage: true, ...common });
+    }
 }
