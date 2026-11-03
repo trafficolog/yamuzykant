@@ -2,6 +2,7 @@
 // coverage-gate — порог покрытия строк по clover-отчёту (SDD-TDD §4).
 //   node .github/scripts/coverage-gate.mjs <clover.xml> --min <процент> [--path <каталог>]
 // С --path считаются только файлы внутри каталога (например, app/Domain).
+// Для каждого файла берутся метрики самого файла (<metrics loc=…> после <class>), а не первого класса.
 // Каталога ещё нет в отчёте — проверка пропускается (выход 0) с пояснением.
 // Выход: 0 — порог выполнен, 1 — ниже порога, 2 — ошибка ввода.
 import { existsSync, readFileSync } from 'node:fs';
@@ -34,7 +35,10 @@ let files = 0;
 for (const [, name, inner] of xml.matchAll(/<file\s+name="([^"]*)"[^>]*>([\s\S]*?)<\/file>/g)) {
     const file = name.replace(/\\/g, '/');
     if (path && !(file.startsWith(`${path}/`) || file.includes(`/${path}/`))) continue;
-    const metrics = inner.match(/<metrics\b[^>]*>/)?.[0];
+    // В <file> PHPUnit сначала пишет <class><metrics/></class> каждого класса и трейта, и только потом
+    // <metrics loc=…/> самого файла. Классы вырезаем: берём метрики файла, а не первого класса.
+    const fileLevel = inner.replace(/<(class|trait)\b[^>]*?(?:\/>|>[\s\S]*?<\/\1>)/g, '');
+    const metrics = fileLevel.match(/<metrics\b[^>]*>/)?.[0];
     if (!metrics) continue;
     statements += Number(attr(metrics, 'statements') ?? 0);
     covered += Number(attr(metrics, 'coveredstatements') ?? 0);
