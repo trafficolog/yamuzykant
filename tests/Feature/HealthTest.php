@@ -2,6 +2,9 @@
 
 declare(strict_types=1);
 
+// ПРОБА 0.1.7: намеренная ошибка типа, откатывается следующим коммитом.
+strlen(42);
+
 it('/health отвечает 200 и {"status":"ok"}', function () {
     $this->getJson('/health')
         ->assertOk()
