@@ -49,3 +49,47 @@ test.describe('UC-S1: выбор города гостем', () => {
         await expect(cityButton).toBeFocused();
     });
 });
+
+const seriousOrCritical = async (page: Page) => {
+    const result = await new AxeBuilder({ page }).withTags(['wcag2a', 'wcag2aa']).analyze();
+    return result.violations
+        .filter((violation) => violation.impact === 'serious' || violation.impact === 'critical')
+        .map((violation) => `${violation.id}: ${violation.nodes.map((n) => n.target).join(' | ')}`);
+};
+
+test.describe('UC-S1: окно города в мобильной шапке', () => {
+    for (const width of [320, 390]) {
+        test(`${width} px: окно видно в пределах экрана, выбор работает, без горизонтальной прокрутки, пункт не меньше 44 px, axe`, async ({
+            page,
+        }) => {
+            await page.setViewportSize({ width, height: 740 });
+            await page.goto('/');
+            const header = page.getByRole('banner');
+
+            await header.getByRole('button', { name: 'Москва' }).click();
+            const panel = page.getByRole('dialog', { name: 'Выбор города' });
+            await expect(panel).toBeVisible();
+
+            const box = await panel.boundingBox();
+            expect(box).not.toBeNull();
+            expect(box!.x).toBeGreaterThanOrEqual(0);
+            expect(box!.x + box!.width).toBeLessThanOrEqual(width);
+
+            const item = panel.getByRole('button', { name: 'Санкт-Петербург' });
+            await expect(item).toBeVisible();
+            const itemBox = await item.boundingBox();
+            expect(itemBox!.height).toBeGreaterThanOrEqual(44);
+
+            const scrollsSideways = await page.evaluate(
+                () => document.documentElement.scrollWidth > document.documentElement.clientWidth,
+            );
+            expect(scrollsSideways).toBe(false);
+
+            expect(await seriousOrCritical(page)).toEqual([]);
+
+            await item.click();
+            await expect(panel).toBeHidden();
+            await expect(header.getByRole('button', { name: 'Санкт-Петербург' })).toBeVisible();
+        });
+    }
+});

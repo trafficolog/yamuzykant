@@ -2,8 +2,10 @@
 
 declare(strict_types=1);
 
+use App\Domain\Accounts\Models\User;
 use App\Domain\Catalog\Models\City;
 use Database\Seeders\CitySeeder;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Testing\TestResponse;
 use Inertia\Testing\AssertableInertia as Assert;
 use Symfony\Component\HttpFoundation\Cookie;
@@ -34,6 +36,18 @@ function cityCookieFrom(TestResponse $response): Cookie
     throw new RuntimeException('Cookie ym_city не найдена в ответе');
 }
 
+/** Число запросов к таблице cities за блок. */
+function citiesQueries(Closure $callback): int
+{
+    DB::flushQueryLog();
+    DB::enableQueryLog();
+    $callback();
+    $count = collect(DB::getQueryLog())->filter(fn (array $log) => str_contains($log['query'], 'cities'))->count();
+    DB::disableQueryLog();
+
+    return $count;
+}
+
 it('без cookie город по умолчанию — Москва; в shared prop только id и name', function () {
     $moscow = cityNamed('Москва');
 
@@ -43,7 +57,15 @@ it('без cookie город по умолчанию — Москва; в shared
         ->where('city.name', 'Москва'));
 });
 
-it('выбор города: cookie на год, SameSite=Lax, редирект назад', function () {
+it('Москва по умолчанию находится по стабильному slug из конфига, а не по названию', function () {
+    expect(config('city.default_slug'))->toBe('moscow');
+
+    City::query()->where('slug', 'moscow')->update(['name' => 'Москва переименована']);
+
+    $this->get('/')->assertInertia(fn (Assert $page) => $page->where('city.name', 'Москва переименована'));
+});
+
+it('выбор города: cookie на год, SameSite=Lax, HttpOnly, значение зашифровано', function () {
     $spb = cityNamed('Санкт-Петербург');
 
     $response = $this->post('/city', ['city_id' => $spb->id]);
@@ -51,8 +73,10 @@ it('выбор города: cookie на год, SameSite=Lax, редирект 
     $response->assertRedirect();
     $cookie = cityCookieFrom($response);
     expect($cookie->getSameSite())->toBe('lax')
+        ->and($cookie->isHttpOnly())->toBeTrue()
         ->and($cookie->getExpiresTime() - time())->toBeGreaterThan(364 * 86400)
-        ->and($cookie->getExpiresTime() - time())->toBeLessThanOrEqual(366 * 86400);
+        ->and($cookie->getExpiresTime() - time())->toBeLessThanOrEqual(366 * 86400)
+        ->and($cookie->getValue())->not->toBe((string) $spb->id);
 });
 
 it('гостевой город сохраняется между визитами по cookie', function () {
@@ -75,9 +99,31 @@ it('после выбора новый город сразу виден на с�
         ->assertInertia(fn (Assert $page) => $page->where('city.name', 'Казань'));
 });
 
-it('cookie с удалённым городом — возврат к Москве', function () {
-    $this->withCookie('ym_city', '999999')
+it('подменённая cookie (не зашифрована Laravel) не даёт города — возврат к Москве', function () {
+    $spb = cityNamed('Санкт-Петербург');
+
+    $this->withUnencryptedCookie('ym_city', (string) $spb->id)
         ->get('/')
+        ->assertInertia(fn (Assert $page) => $page->where('city.name', 'Москва'));
+});
+
+it('cookie с некорректным значением — возврат к Москве', function (string $value) {
+    $this->withCookie('ym_city', $value)
+        ->get('/')
+        ->assertOk()
+        ->assertInertia(fn (Assert $page) => $page->where('city.name', 'Москва'));
+})->with([
+    'мусор' => ['abc'],
+    'пустая строка' => [''],
+    'огромное число' => ['99999999999999999999999999'],
+    'отрицательное число' => ['-1'],
+    'удалённый город' => ['999999'],
+]);
+
+it('массив в cookie (ym_city[]) — возврат к Москве, без ошибки', function () {
+    $this->withHeader('Cookie', 'ym_city[]=1')
+        ->get('/')
+        ->assertOk()
         ->assertInertia(fn (Assert $page) => $page->where('city.name', 'Москва'));
 });
 
@@ -94,11 +140,12 @@ it('city_id обязателен и должен быть целым число�
     $this->post('/city', ['city_id' => 'Москва'])->assertSessionHasErrors('city_id');
 });
 
-it('маршрут смены города: только POST и группа web (там проверка CSRF-токена Laravel)', function () {
-    $route = app('router')->getRoutes()->getByName('city.update');
+it('POST без CSRF-токена отклоняется с 419', function () {
+    // В тестах Laravel пропускает проверку CSRF только при окружении testing.
+    $this->app['env'] = 'local';
+    $spb = cityNamed('Санкт-Петербург');
 
-    expect($route?->methods())->toBe(['POST'])
-        ->and($route?->middleware())->toContain('web');
+    $this->post('/city', ['city_id' => $spb->id])->assertStatus(419);
 });
 
 it('смена города ограничена 30 запросами в минуту', function () {
@@ -109,6 +156,48 @@ it('смена города ограничена 30 запросами в мин
     }
 
     $this->post('/city', ['city_id' => $spb->id])->assertStatus(429);
+});
+
+it('вошедший: выбор пишется в users.city_id и читается раньше cookie', function () {
+    $moscow = cityNamed('Москва');
+    $spb = cityNamed('Санкт-Петербург');
+    $kazan = cityNamed('Казань');
+    $user = User::factory()->create(['city_id' => $moscow->id]);
+
+    $this->actingAs($user)->post('/city', ['city_id' => $spb->id])->assertRedirect();
+
+    expect($user->fresh()->city_id)->toBe($spb->id);
+
+    $this->actingAs($user)
+        ->withCookie('ym_city', (string) $kazan->id)
+        ->get('/')
+        ->assertInertia(fn (Assert $page) => $page->where('city.name', 'Санкт-Петербург'));
+});
+
+it('вошедший без выбора в users.city_id получает город из cookie', function () {
+    $kazan = cityNamed('Казань');
+    $user = User::factory()->create(['city_id' => null]);
+
+    $this->actingAs($user)
+        ->withCookie('ym_city', (string) $kazan->id)
+        ->get('/')
+        ->assertInertia(fn (Assert $page) => $page->where('city.name', 'Казань'));
+});
+
+it('на страницах город читается одним запросом к cities', function () {
+    $spb = cityNamed('Санкт-Петербург');
+
+    $count = citiesQueries(fn () => $this->withCookie('ym_city', (string) $spb->id)->get('/'));
+
+    expect($count)->toBeLessThanOrEqual(1);
+});
+
+it('выбор города: не больше одного запроса к cities (проверка существования и запись вместе)', function () {
+    $spb = cityNamed('Санкт-Петербург');
+
+    $count = citiesQueries(fn () => $this->post('/city', ['city_id' => $spb->id]));
+
+    expect($count)->toBeLessThanOrEqual(1);
 });
 
 it('поиск по справочнику: без запроса все города по алфавиту, с запросом — подстрока без учёта регистра', function () {
@@ -130,4 +219,16 @@ it('поиск отдаёт только явные поля (без коорд�
     $item = $this->getJson('/cities?q=Москва')->json('data.0');
 
     expect(array_keys($item))->toBe(['id', 'name', 'region']);
+});
+
+it('поиск: строка запроса длиннее 100 символов отклоняется с 422', function () {
+    $this->getJson('/cities?q='.str_repeat('а', 101))->assertStatus(422)->assertJsonValidationErrors('q');
+});
+
+it('поиск ограничен 60 запросами в минуту', function () {
+    for ($i = 0; $i < 60; $i++) {
+        $this->getJson('/cities')->assertOk();
+    }
+
+    $this->getJson('/cities')->assertStatus(429);
 });

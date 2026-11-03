@@ -35,7 +35,7 @@ const panelOrFail = (): HTMLElement => {
 const open = async () => {
     fireEvent.click(trigger());
     await waitFor(() =>
-        expect(within(panelOrFail()).getAllByRole('button').length).toBeGreaterThan(0),
+        expect(panelOrFail().querySelectorAll('.ym-city__item').length).toBeGreaterThan(0),
     );
 };
 
@@ -120,7 +120,7 @@ describe('CitySelect: список и поиск', () => {
         fireEvent.click(trigger());
 
         expect(await screen.findByText(ru.city.empty)).toBeInTheDocument();
-        expect(within(panelOrFail()).queryByRole('button')).toBeNull();
+        expect(panelOrFail().querySelectorAll('.ym-city__item')).toHaveLength(0);
     });
 
     it('ошибка загрузки справочника — сообщение с повтором действия', async () => {
@@ -202,6 +202,34 @@ describe('CitySelect: закрытие', () => {
         fireEvent.pointerDown(screen.getByRole('button', { name: 'Вне панели' }));
 
         expect(panel()).toBeNull();
+    });
+});
+
+describe('CitySelect: клавиатура и закрытие кнопкой', () => {
+    it('стрелки вверх и вниз переводят фокус по списку городов', async () => {
+        render(<CitySelect city={moscow} />);
+        await open();
+
+        const items = Array.from(panelOrFail().querySelectorAll<HTMLElement>('.ym-city__item'));
+        items[0]?.focus();
+        fireEvent.keyDown(items[0] as HTMLElement, { key: 'ArrowDown' });
+        expect(items[1]).toHaveFocus();
+
+        fireEvent.keyDown(items[1] as HTMLElement, { key: 'ArrowDown' });
+        expect(items[2]).toHaveFocus();
+
+        fireEvent.keyDown(items[2] as HTMLElement, { key: 'ArrowUp' });
+        expect(items[1]).toHaveFocus();
+    });
+
+    it('кнопка закрытия в панели закрывает окно и возвращает фокус на кнопку города', async () => {
+        render(<CitySelect city={moscow} />);
+        await open();
+
+        fireEvent.click(screen.getByRole('button', { name: ru.city.close }));
+
+        expect(panel()).toBeNull();
+        expect(trigger()).toHaveFocus();
     });
 });
 
