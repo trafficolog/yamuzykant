@@ -5,6 +5,8 @@ declare(strict_types=1);
 /**
  * Блоки сервисов из compose.yaml: имя => текст блока (строки с отступом).
  * YAML-парсер не подключаем: для проверки структуры хватает разбора по отступам.
+ *
+ * @return array<string, string>
  */
 function localEnvComposeServices(): array
 {
@@ -12,7 +14,7 @@ function localEnvComposeServices(): array
     $inServices = false;
     $name = null;
 
-    foreach (file(base_path('compose.yaml'), FILE_IGNORE_NEW_LINES) as $line) {
+    foreach (file(base_path('compose.yaml'), FILE_IGNORE_NEW_LINES) ?: [] as $line) {
         if (preg_match('/^[a-z]/', $line) === 1) {
             $inServices = $line === 'services:';
             $name = null;
@@ -39,11 +41,15 @@ function localEnvComposeServices(): array
     return $blocks;
 }
 
-/** Пары NAME => value из .env.example (без кавычек). */
+/**
+ * Пары NAME => value из .env.example (без кавычек).
+ *
+ * @return array<string, string>
+ */
 function localEnvExample(): array
 {
     $vars = [];
-    foreach (file(base_path('.env.example'), FILE_IGNORE_NEW_LINES) as $line) {
+    foreach (file(base_path('.env.example'), FILE_IGNORE_NEW_LINES) ?: [] as $line) {
         if (preg_match('/^([A-Z][A-Z0-9_]*)=(.*)$/', $line, $m) === 1) {
             $vars[$m[1]] = trim($m[2], '"');
         }
@@ -89,7 +95,7 @@ it('ни один образ compose не использует :latest и не �
 });
 
 it('значения по умолчанию в compose.yaml совпадают с .env.example, поэтому make up работает без правок .env', function () {
-    $raw = file_get_contents(base_path('compose.yaml'));
+    $raw = file_get_contents(base_path('compose.yaml')) ?: '';
     $env = localEnvExample();
 
     preg_match_all('/\$\{([A-Z][A-Z0-9_]*):-([^}]*)\}/', $raw, $matches, PREG_SET_ORDER);

@@ -46,7 +46,7 @@ it('публичная коллекция моделей не содержит �
     InstrumentModel::factory()->for($category, 'category')->hiddenStatus()->create(['brand' => 'Boss', 'name' => 'DS-2']);
 
     $rows = InstrumentModelResource::collection(InstrumentModel::query()->public()->get())
-        ->toArray(new Request);
+        ->resolve(new Request);
 
     expect($rows)->toHaveCount(1)
         ->and($rows[0]['name'])->toBe('DS-1 Distortion');

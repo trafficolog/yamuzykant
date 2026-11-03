@@ -1,15 +1,38 @@
 includes:
     - vendor/larastan/larastan/extension.neon
+    - vendor/odinns/phpstan-pest-this/extension.neon
 
 parameters:
     level: 8
-    # config/ — стандартные файлы Laravel (env() возвращает mixed), tests/ — Pest-замыкания
-    # с `$this`, которые PHPStan без отдельного расширения не разбирает.
+    # env() без этого возвращает тип из внутренностей хелпера (bool|string): config/ не проходит argument.type.
+    # Тип берётся из значения по умолчанию (env('X', '') → string), как описано в документации Larastan.
+    generalizeEnvReturnType: true
     paths:
         - app
         - bootstrap
+        - config
         - database
         - routes
+        - tests
     excludePaths:
         - bootstrap/cache (?)
         - bootstrap/ssr (?)
+    # Замыкания Pest (it/test/beforeEach) выполняются в контексте Tests\TestCase.
+    # Без этого PHPStan берёт $this как PHPUnit\Framework\TestCase и не видит get(), getJson(), $app.
+    pestClosureThisTypeMap:
+        -
+            pathContains: '/tests/Feature/'
+            class: Tests\TestCase
+        -
+            pathContains: '/tests/Unit/'
+            class: Tests\TestCase
+
+    ignoreErrors:
+        # Исключение 1 из 1 (tests/Arch, 3 места): arch('…')->expect(…) из pest-plugin-arch.
+        # arch() объявлен как возвращающий Pest\PendingCalls\TestCall, и PHPStan не видит метод expect() у него.
+        # В рантайме цепочка работает (тесты ArchitectureTest зелёные). Код не меняем: другого синтаксиса Pest arch() нет.
+        -
+            message: '#^Call to an undefined method Pest.PendingCalls.TestCall::expect\(\)\.$#'
+            identifier: method.notFound
+            path: tests/Arch/ArchitectureTest.php
+            count: 3
