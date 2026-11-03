@@ -1,6 +1,12 @@
 import { Button, Field } from '@ds';
 import { router } from '@inertiajs/react';
-import { useCallback, useEffect, useRef, useState } from 'react';
+import {
+    type KeyboardEvent as ReactKeyboardEvent,
+    useCallback,
+    useEffect,
+    useRef,
+    useState,
+} from 'react';
 
 import { ru } from '@/lang/ru';
 
@@ -102,6 +108,23 @@ export default function CitySelect({ city }: CitySelectProps) {
         };
     }, [open, close]);
 
+    const focusItem = (index: number) => {
+        const items = document.querySelectorAll<HTMLButtonElement>(`#${PANEL_ID} .ym-city__item`);
+        items[Math.min(Math.max(index, 0), items.length - 1)]?.focus();
+    };
+
+    // Стрелки вверх и вниз переводят фокус по списку; Home и End — к первому и последнему городу.
+    const onItemKeyDown = (event: ReactKeyboardEvent<HTMLButtonElement>, index: number) => {
+        const last = document.querySelectorAll(`#${PANEL_ID} .ym-city__item`).length - 1;
+
+        if (event.key === 'ArrowDown') focusItem(index + 1);
+        else if (event.key === 'ArrowUp') focusItem(index - 1);
+        else if (event.key === 'Home') focusItem(0);
+        else if (event.key === 'End') focusItem(last);
+        else return;
+        event.preventDefault();
+    };
+
     const choose = (item: CityOption) => {
         setSaveFailed(false);
         router.post(
@@ -136,6 +159,16 @@ export default function CitySelect({ city }: CitySelectProps) {
                     aria-label={ru.city.label}
                     className="ym-city__panel"
                 >
+                    <div className="ym-city__head">
+                        <p className="ym-city__title type-h3">{ru.city.label}</p>
+                        <Button
+                            variant="ghost"
+                            icon="x"
+                            aria-label={ru.city.close}
+                            onClick={() => close(true)}
+                        />
+                    </div>
+
                     <Field
                         id={SEARCH_ID}
                         type="search"
@@ -143,6 +176,13 @@ export default function CitySelect({ city }: CitySelectProps) {
                         value={query}
                         autoComplete="off"
                         onChange={(event) => setQuery(event.target.value)}
+                        onKeyDown={(event) => {
+                            // Вниз из поля поиска — к первому городу списка.
+                            if (event.key === 'ArrowDown') {
+                                event.preventDefault();
+                                focusItem(0);
+                            }
+                        }}
                     />
 
                     {saveFailed ? (
@@ -169,13 +209,14 @@ export default function CitySelect({ city }: CitySelectProps) {
                                 {key === '' ? ru.city.popular : ru.city.found}
                             </p>
                             <ul className="ym-city__list">
-                                {current.items.map((item) => (
+                                {current.items.map((item, index) => (
                                     <li key={item.id}>
                                         <button
                                             type="button"
                                             className="ym-city__item"
                                             aria-current={item.id === city?.id ? 'true' : undefined}
                                             onClick={() => choose(item)}
+                                            onKeyDown={(event) => onItemKeyDown(event, index)}
                                         >
                                             {item.name}
                                         </button>

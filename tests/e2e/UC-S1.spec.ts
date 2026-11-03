@@ -1,4 +1,5 @@
-import { expect, test } from '@playwright/test';
+import AxeBuilder from '@axe-core/playwright';
+import { expect, test, type Page } from '@playwright/test';
 
 // UC-S1 «Выбрать город» (SPEC §4, BR-01): город в шапке, смена без перезагрузки страницы,
 // гостевой выбор сохраняется между визитами (cookie).
@@ -71,14 +72,13 @@ test.describe('UC-S1: окно города в мобильной шапке', (
             await expect(panel).toBeVisible();
 
             const box = await panel.boundingBox();
-            expect(box).not.toBeNull();
-            expect(box!.x).toBeGreaterThanOrEqual(0);
-            expect(box!.x + box!.width).toBeLessThanOrEqual(width);
+            expect(box?.x).toBeGreaterThanOrEqual(0);
+            expect((box?.x ?? 0) + (box?.width ?? 0)).toBeLessThanOrEqual(width);
 
             const item = panel.getByRole('button', { name: 'Санкт-Петербург' });
             await expect(item).toBeVisible();
             const itemBox = await item.boundingBox();
-            expect(itemBox!.height).toBeGreaterThanOrEqual(44);
+            expect(itemBox?.height ?? 0).toBeGreaterThanOrEqual(44);
 
             const scrollsSideways = await page.evaluate(
                 () => document.documentElement.scrollWidth > document.documentElement.clientWidth,

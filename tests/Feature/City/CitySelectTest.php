@@ -166,7 +166,7 @@ it('вошедший: выбор пишется в users.city_id и читает
 
     $this->actingAs($user)->post('/city', ['city_id' => $spb->id])->assertRedirect();
 
-    expect($user->fresh()->city_id)->toBe($spb->id);
+    expect(User::query()->find($user->id)?->city_id)->toBe($spb->id);
 
     $this->actingAs($user)
         ->withCookie('ym_city', (string) $kazan->id)

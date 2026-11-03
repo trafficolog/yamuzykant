@@ -560,15 +560,33 @@
     outline: 2px solid var(--focus-ring);
     outline-offset: 2px;
 }
+.ym-city__head {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: var(--space-2);
+}
+.ym-city__title {
+    margin: 0;
+}
 @media (max-width: 639px) {
     /* Мобильная первая строка: кнопка города сжимается, как прежняя кнопка в actions */
     .ym-site-header__actions > .ym-city {
         max-width: 100%;
-        overflow: hidden;
     }
     .ym-site-header__actions > .ym-city .ym-btn {
         max-width: 100%;
         overflow: hidden;
+    }
+    /* На телефоне окно — полноэкранная шторка поверх шапки: не обрезается контейнером шапки */
+    .ym-city__panel {
+        position: fixed;
+        inset: 0;
+        z-index: 60;
+        width: auto;
+        border-radius: 0;
+        overflow-y: auto;
+        padding: var(--space-4);
     }
 }
 
