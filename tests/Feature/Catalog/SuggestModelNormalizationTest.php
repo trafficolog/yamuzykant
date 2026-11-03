@@ -8,7 +8,6 @@ use App\Domain\Catalog\Enums\InstrumentModelStatus;
 use App\Domain\Catalog\Models\Category;
 use App\Domain\Catalog\Models\InstrumentModel;
 use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Facades\Event;
 
 // Ревью 1.2.2: нормализация текста предложения, поиск без учёта регистра, гонка при вставке.
 
@@ -59,15 +58,14 @@ it('существующая активная модель не меняет с�
 
 it('гонка: запись появилась между проверкой и вставкой, возвращается существующая, а не 500', function () {
     $category = guitarsForSuggestion();
-    $event = 'eloquent.creating: '.InstrumentModel::class;
-    $fired = false;
+    $state = new ArrayObject(['armed' => true, 'fired' => false]);
 
-    Event::listen($event, function () use (&$fired, $category): void {
-        if ($fired) {
+    // Перед вставкой нашей модели параллельный запрос успевает вставить ту же (после нашей проверки).
+    DB::beforeExecuting(function (string $sql) use ($state, $category): void {
+        if ($state['armed'] !== true || $state['fired'] === true || ! str_starts_with(strtolower($sql), 'insert')) {
             return;
         }
-        $fired = true;
-        // Параллельный запрос успел вставить ту же модель после нашей проверки.
+        $state['fired'] = true;
         DB::table('instrument_models')->insert([
             'brand' => 'Ibanez',
             'name' => 'RG9999 Custom',
@@ -81,10 +79,11 @@ it('гонка: запись появилась между проверкой и
     try {
         $model = app(SuggestInstrumentModel::class)('Ibanez RG9999 Custom', $category->id);
 
-        expect($model)->toBeInstanceOf(InstrumentModel::class)
+        expect($state['fired'])->toBeTrue()
+            ->and($model)->toBeInstanceOf(InstrumentModel::class)
             ->and($model->brand)->toBe('Ibanez')
             ->and(InstrumentModel::query()->where('brand', 'Ibanez')->count())->toBe(1);
     } finally {
-        Event::forget($event);
+        $state['armed'] = false;
     }
 });

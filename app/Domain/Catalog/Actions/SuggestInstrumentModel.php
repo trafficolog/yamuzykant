@@ -6,8 +6,8 @@ namespace App\Domain\Catalog\Actions;
 
 use App\Domain\Catalog\Enums\InstrumentModelStatus;
 use App\Domain\Catalog\Models\InstrumentModel;
-use Illuminate\Database\UniqueConstraintViolationException;
 use InvalidArgumentException;
+use LogicException;
 
 /**
  * Продавец ввёл бренд и модель без выбора из подсказки: текст сохраняется моделью со статусом suggested,
@@ -25,17 +25,20 @@ final class SuggestInstrumentModel
             return $existing;
         }
 
-        try {
-            return InstrumentModel::query()->create([
-                'brand' => $brand,
-                'name' => $name,
-                'category_id' => $categoryId,
-                'status' => InstrumentModelStatus::Suggested,
-            ]);
-        } catch (UniqueConstraintViolationException $exception) {
-            // Между проверкой и вставкой другой запрос создал ту же модель.
-            return self::find($brand, $name) ?? throw $exception;
-        }
+        // INSERT ... ON CONFLICT DO NOTHING: если между проверкой и вставкой другой запрос создал ту же модель,
+        // ошибка уникальности не возникает и транзакция не прерывается (в PostgreSQL прерванная транзакция
+        // ломает последующие запросы). Предложенная модель не индексируется, поэтому событий Eloquent не нужно.
+        $now = now();
+        InstrumentModel::query()->insertOrIgnore([
+            'brand' => $brand,
+            'name' => $name,
+            'category_id' => $categoryId,
+            'status' => InstrumentModelStatus::Suggested->value,
+            'created_at' => $now,
+            'updated_at' => $now,
+        ]);
+
+        return self::find($brand, $name) ?? throw new LogicException('Предложенная модель не найдена после вставки.');
     }
 
     /**
