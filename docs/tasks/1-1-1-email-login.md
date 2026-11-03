@@ -3,7 +3,7 @@ id: "1.1.1"
 phase: "1"
 epic: "1.1"
 title: "Вход по коду на почту: бэкенд"
-status: review
+status: done
 gate: G1
 risk: high
 model_impl: opus
@@ -14,7 +14,7 @@ uc: ["A1"]
 prototype: ""
 screens: []
 issue: 13
-sync_state: drifted
+sync_state: aligned
 escalations: []
 ---
 
