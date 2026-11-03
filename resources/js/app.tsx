@@ -4,6 +4,9 @@ import { createRoot, hydrateRoot } from 'react-dom/client';
 
 import { ru } from '@/lang/ru';
 
+// Стили каркаса PublicLayout: после токенов ДС из resources/css/app.css.
+import '../css/site.css';
+
 void createInertiaApp({
     title: (title) => (title ? `${title} — ${ru.brand}` : ru.brand),
     resolve: (name) =>
