@@ -30,6 +30,9 @@ escalations: []
 - HTTPS, домен stage (уточнить), basic-auth на stage
 - Окружение GitHub `stage` и секреты (значения вводит OWNER)
 
+- Веб-сервер: долгий `Cache-Control: public, max-age=31536000` для `/fonts/*` (файлы без хеша — без `immutable`, ревью PR #84) и для `/build/*` (с хешем — `immutable`)
+- Окружение `stage` ограничено веткой `main` (deployment branch policy, включено 03.11.2026); выкатка — только `deploy.yml` после зелёного CI на push в main
+
 ## Критерии приёмки
 - [ ] Мерж в main → stage обновлён, `/health` 200
 - [ ] `deploy/deploy.sh rollback` возвращает предыдущий релиз ≤ 1 мин
