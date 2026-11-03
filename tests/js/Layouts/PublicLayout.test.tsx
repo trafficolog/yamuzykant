@@ -4,10 +4,11 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 import PublicLayout from '@/Layouts/PublicLayout';
 
 let flags: Record<string, boolean> = {};
+let city: { id: number; name: string } | null = null;
 const headProps: Array<Record<string, unknown>> = [];
 
 vi.mock('@inertiajs/react', () => ({
-    usePage: () => ({ props: { flags } }),
+    usePage: () => ({ props: { flags, city } }),
     Head: (props: Record<string, unknown>) => {
         headProps.push(props);
         return null;
@@ -16,6 +17,7 @@ vi.mock('@inertiajs/react', () => ({
 
 beforeEach(() => {
     flags = {};
+    city = null;
     headProps.length = 0;
 });
 
@@ -77,9 +79,10 @@ describe('PublicLayout', () => {
         expect(document.querySelector('[aria-current="page"]')).toBeNull();
     });
 
-    it('город и счётчик сообщений доходят до шапки', () => {
+    it('город из shared prop `city` доходит до шапки без передачи страницей; счётчик сообщений — тоже', () => {
+        city = { id: 2, name: 'Казань' };
         render(
-            <PublicLayout city="Казань" messages={2}>
+            <PublicLayout messages={2}>
                 {null}
             </PublicLayout>,
         );
