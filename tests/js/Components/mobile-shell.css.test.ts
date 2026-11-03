@@ -93,6 +93,12 @@ describe('site.css: мобильная оболочка', () => {
         expect(ruleBody(base, '.ym-site-menu__back')).toMatch(/display:\s*none/);
     });
 
+    it('верхняя панель шторки учитывает safe-area сверху (вырез iPhone)', () => {
+        expect(ruleBody(mobileBlocks(), '.ym-site-menu__bar')).toContain(
+            'env(safe-area-inset-top)',
+        );
+    });
+
     it('цвета только из токенов: ни hex, ни rgb в мобильных правилах', () => {
         expect(mobileBlocks()).not.toMatch(/#[0-9a-f]{3,8}\b|rgba?\(/i);
         expect(mobileBlocks().length).toBeGreaterThan(0);

@@ -1,5 +1,5 @@
-import { fireEvent, render, screen, within } from '@testing-library/react';
-import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { act, fireEvent, render, screen, within } from '@testing-library/react';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 import SiteHeader from '@/Components/SiteHeader';
 
@@ -16,6 +16,24 @@ const ALL_ON = {
     masters: true,
     sale_prices: true,
     safe_deal: true,
+    delivery_service: true,
+};
+
+/** Меню категорий в DOM (id из CategoryMenu): открыто — элемент есть, закрыто — нет. */
+const menuEl = (): HTMLElement | null => document.getElementById('site-category-menu');
+
+/** Подменяет matchMedia: `narrow` — экран < 640 px (шторка), иначе выпадающая панель. */
+const mockViewport = (narrow: boolean) => {
+    window.matchMedia = ((query: string) => ({
+        matches: narrow && query === '(max-width: 639px)',
+        media: query,
+        onchange: null,
+        addEventListener: () => {},
+        removeEventListener: () => {},
+        addListener: () => {},
+        removeListener: () => {},
+        dispatchEvent: () => false,
+    })) as unknown as typeof window.matchMedia;
 };
 
 const sections = () => screen.getByRole('navigation', { name: 'Разделы' });
@@ -169,24 +187,28 @@ describe('SiteHeader: состав шапки', () => {
     });
 });
 
-describe('SiteHeader: меню категорий', () => {
+describe('SiteHeader: меню категорий (выпадающая панель, >= 640 px)', () => {
     const toggle = () => screen.getByRole('button', { name: 'Категории' });
 
-    it('закрыто по умолчанию: aria-expanded="false", окна нет', () => {
+    it('закрыто по умолчанию: aria-expanded="false", меню не отрисовано', () => {
         render(<SiteHeader />);
 
         expect(toggle()).toHaveAttribute('aria-expanded', 'false');
-        expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
+        expect(menuEl()).toBeNull();
     });
 
-    it('кнопка «Категории» открывает меню и связана с ним через aria-controls', () => {
+    it('кнопка «Категории» раскрывает панель, связана с ней через aria-controls; роли dialog нет', () => {
         render(<SiteHeader />);
 
         fireEvent.click(toggle());
 
-        const menu = screen.getByRole('dialog', { name: 'Все категории' });
+        const menu = menuEl();
+        expect(menu).not.toBeNull();
         expect(toggle()).toHaveAttribute('aria-expanded', 'true');
-        expect(toggle().getAttribute('aria-controls')).toBe(menu.id);
+        expect(toggle().getAttribute('aria-controls')).toBe(menu?.id);
+        expect(menu).not.toHaveAttribute('role');
+        expect(menu).not.toHaveAttribute('aria-modal');
+        expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
     });
 
     it('повторное нажатие закрывает меню', () => {
@@ -195,7 +217,7 @@ describe('SiteHeader: меню категорий', () => {
         fireEvent.click(toggle());
         fireEvent.click(toggle());
 
-        expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
+        expect(menuEl()).toBeNull();
     });
 
     it('Esc закрывает меню и возвращает фокус на кнопку', () => {
@@ -204,7 +226,7 @@ describe('SiteHeader: меню категорий', () => {
 
         fireEvent.keyDown(document, { key: 'Escape' });
 
-        expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
+        expect(menuEl()).toBeNull();
         expect(toggle()).toHaveFocus();
         expect(toggle()).toHaveAttribute('aria-expanded', 'false');
     });
@@ -212,22 +234,43 @@ describe('SiteHeader: меню категорий', () => {
     it('клик вне меню закрывает его, клик внутри нет', () => {
         render(<SiteHeader />);
         fireEvent.click(toggle());
-        const menu = screen.getByRole('dialog', { name: 'Все категории' });
+        const menu = menuEl() as HTMLElement;
 
         fireEvent.pointerDown(menu);
-        expect(screen.getByRole('dialog')).toBeInTheDocument();
+        expect(menuEl()).not.toBeNull();
 
         fireEvent.pointerDown(document.body);
-        expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
+        expect(menuEl()).toBeNull();
     });
 
-    it('Esc при закрытом меню ничего не меняет и не забирает фокус', () => {
+    it('фокус ушёл из меню на поле поиска (за пределами меню, но в шапке) — меню закрывается', () => {
         render(<SiteHeader />);
-        screen.getByRole('searchbox').focus();
+        fireEvent.click(toggle());
 
-        fireEvent.keyDown(document, { key: 'Escape' });
+        act(() => screen.getByRole('searchbox').focus());
 
-        expect(screen.getByRole('searchbox')).toHaveFocus();
+        expect(menuEl()).toBeNull();
+        expect(toggle()).toHaveAttribute('aria-expanded', 'false');
+    });
+
+    it('фокус внутри меню (вид инструментов) меню не закрывает', () => {
+        render(<SiteHeader />);
+        fireEvent.click(toggle());
+
+        act(() =>
+            within(menuEl() as HTMLElement)
+                .getByRole('button', { name: 'Ударные' })
+                .focus(),
+        );
+
+        expect(menuEl()).not.toBeNull();
+    });
+
+    it('в меню нет заголовков: иерархия страницы не сдвигается (h2 раньше h1)', () => {
+        render(<SiteHeader />);
+        fireEvent.click(toggle());
+
+        expect(menuEl()?.querySelectorAll('h1, h2, h3, h4, h5, h6')).toHaveLength(0);
     });
 
     it('виды инструментов — в порядке макета, первый выбран', () => {
@@ -256,7 +299,7 @@ describe('SiteHeader: меню категорий', () => {
     it('наведение и фокус на виде переключают правую панель', () => {
         render(<SiteHeader />);
         fireEvent.click(toggle());
-        const menu = within(screen.getByRole('dialog'));
+        const menu = within(menuEl() as HTMLElement);
 
         expect(menu.getByRole('link', { name: /Электрогитары/ })).toBeInTheDocument();
 
@@ -273,7 +316,7 @@ describe('SiteHeader: меню категорий', () => {
     it('виды вне MVP («Аксессуары и запчасти», «Мастера и ремонт») скрыты флагами', () => {
         render(<SiteHeader />);
         fireEvent.click(toggle());
-        const menu = within(screen.getByRole('dialog'));
+        const menu = within(menuEl() as HTMLElement);
 
         expect(menu.queryByRole('button', { name: 'Аксессуары и запчасти' })).toBeNull();
         expect(menu.queryByRole('button', { name: 'Мастера и ремонт' })).toBeNull();
@@ -283,23 +326,30 @@ describe('SiteHeader: меню категорий', () => {
         flags = ALL_ON;
         render(<SiteHeader />);
         fireEvent.click(toggle());
-        const menu = within(screen.getByRole('dialog'));
+        const menu = within(menuEl() as HTMLElement);
 
         expect(menu.getByRole('button', { name: 'Аксессуары и запчасти' })).toBeInTheDocument();
         expect(menu.getByRole('button', { name: 'Мастера и ремонт' })).toBeInTheDocument();
     });
 
-    it('блок «Сервисы»: без флагов только доставка и «Продать …»', () => {
+    it('блок «Сервисы» назван подписью, не заголовком страницы', () => {
+        render(<SiteHeader />);
+        fireEvent.click(toggle());
+
+        expect(screen.getByRole('complementary', { name: 'Сервисы' })).toBeInTheDocument();
+        expect(screen.queryByRole('heading', { name: 'Сервисы' })).toBeNull();
+    });
+
+    it('блок «Сервисы»: без флагов только «Продать …» — доставка скрыта флагом delivery_service', () => {
         render(<SiteHeader />);
         fireEvent.click(toggle());
 
         const aside = within(screen.getByRole('complementary', { name: 'Сервисы' }));
-        const items = aside.getAllByRole('link').map(text);
 
-        expect(items).toEqual(['Доставка в защитной упаковке', 'Продать гитары']);
+        expect(aside.getAllByRole('link').map(text)).toEqual(['Продать гитары']);
     });
 
-    it('блок «Сервисы»: с флагами masters, sale_prices, safe_deal — все пять пунктов', () => {
+    it('блок «Сервисы»: с флагами masters, sale_prices, safe_deal, delivery_service — все пять пунктов', () => {
         flags = ALL_ON;
         render(<SiteHeader />);
         fireEvent.click(toggle());
@@ -314,14 +364,40 @@ describe('SiteHeader: меню категорий', () => {
             'Продать гитары',
         ]);
     });
+
+    it('delivery_service включён: пункт «Доставка в защитной упаковке» один, без других флагов', () => {
+        flags = { delivery_service: true };
+        render(<SiteHeader />);
+        fireEvent.click(toggle());
+
+        const aside = within(screen.getByRole('complementary', { name: 'Сервисы' }));
+
+        expect(aside.getAllByRole('link').map(text)).toEqual([
+            'Доставка в защитной упаковке',
+            'Продать гитары',
+        ]);
+    });
 });
 
-describe('SiteHeader: меню категорий — шторка на < 640 px', () => {
+describe('SiteHeader: меню категорий — шторка на < 640 px (модальный диалог)', () => {
+    beforeEach(() => mockViewport(true));
+    afterEach(() => {
+        delete (window as { matchMedia?: unknown }).matchMedia;
+    });
+
     const toggle = () => screen.getByRole('button', { name: 'Категории' });
     const open = () => {
         fireEvent.click(toggle());
         return screen.getByRole('dialog', { name: 'Все категории' });
     };
+
+    it('шторка — модальный диалог: role="dialog", aria-modal="true", aria-controls кнопки указывает на неё', () => {
+        render(<SiteHeader />);
+
+        const sheet = open();
+        expect(sheet).toHaveAttribute('aria-modal', 'true');
+        expect(toggle().getAttribute('aria-controls')).toBe(sheet.id);
+    });
 
     it('сначала виден список видов инструментов', () => {
         render(<SiteHeader />);
@@ -329,22 +405,50 @@ describe('SiteHeader: меню категорий — шторка на < 640 px
         expect(open()).toHaveAttribute('data-view', 'list');
     });
 
+    it('при открытии фокус переносится в шторку (на выбранный вид), а не остаётся на «Категории»', () => {
+        render(<SiteHeader />);
+        open();
+
+        expect(screen.getByRole('button', { name: 'Гитары' })).toHaveFocus();
+    });
+
+    it('фокус, уведённый из шторки (поле поиска под ней), возвращается внутрь', () => {
+        render(<SiteHeader />);
+        const sheet = open();
+
+        act(() => screen.getByRole('searchbox').focus());
+
+        expect(sheet).toBeInTheDocument();
+        expect(sheet.contains(document.activeElement)).toBe(true);
+    });
+
     it('выбор вида переводит шторку к его группам, «Все категории» возвращает к списку', () => {
         render(<SiteHeader />);
-        const menu = open();
+        const sheet = open();
 
-        fireEvent.click(within(menu).getByRole('button', { name: 'Ударные' }));
-        expect(menu).toHaveAttribute('data-view', 'panel');
+        fireEvent.click(within(sheet).getByRole('button', { name: 'Ударные' }));
+        expect(sheet).toHaveAttribute('data-view', 'panel');
 
-        fireEvent.click(within(menu).getByRole('button', { name: 'Все категории' }));
-        expect(menu).toHaveAttribute('data-view', 'list');
+        fireEvent.click(within(sheet).getByRole('button', { name: 'Все категории' }));
+        expect(sheet).toHaveAttribute('data-view', 'list');
+    });
+
+    it('переключение видов не теряет фокус: «виды → группы» ставит фокус на «Все категории», «назад» — на вид', () => {
+        render(<SiteHeader />);
+        const sheet = open();
+
+        fireEvent.click(within(sheet).getByRole('button', { name: 'Ударные' }));
+        expect(within(sheet).getByRole('button', { name: 'Все категории' })).toHaveFocus();
+
+        fireEvent.click(within(sheet).getByRole('button', { name: 'Все категории' }));
+        expect(within(sheet).getByRole('button', { name: 'Ударные' })).toHaveFocus();
     });
 
     it('кнопка «Закрыть меню» закрывает шторку и возвращает фокус на «Категории»', () => {
         render(<SiteHeader />);
-        const menu = open();
+        const sheet = open();
 
-        fireEvent.click(within(menu).getByRole('button', { name: 'Закрыть меню' }));
+        fireEvent.click(within(sheet).getByRole('button', { name: 'Закрыть меню' }));
 
         expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
         expect(toggle()).toHaveFocus();

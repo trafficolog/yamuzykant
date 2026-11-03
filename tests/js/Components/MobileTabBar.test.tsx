@@ -1,7 +1,10 @@
+import { readFileSync } from 'node:fs';
+import { fileURLToPath } from 'node:url';
 import { render, screen, within } from '@testing-library/react';
 import { describe, expect, it } from 'vitest';
 
 import MobileTabBar from '@/Components/MobileTabBar';
+import { ru } from '@/lang/ru';
 
 const bar = () => screen.getByRole('navigation', { name: 'Нижнее меню' });
 const tabs = () => within(bar()).getAllByRole('link');
@@ -69,5 +72,22 @@ describe('MobileTabBar', () => {
             expect(text(tab).length).toBeGreaterThan(0);
         }
         expect(document.body.textContent).not.toMatch(/гир/i);
+    });
+
+    it('подпись вкладки «Сообщения» со счётчиком берётся из словаря lang/ru.ts', () => {
+        expect(ru.tabBar.messagesLabel('3')).toBe('Сообщения, 3');
+        expect(ru.tabBar.messagesLabel('99+')).toBe('Сообщения, 99+');
+    });
+
+    it('в разметке панели нет склейки подписи шаблонной строкой (aria-label берётся из lang)', () => {
+        const source = readFileSync(
+            fileURLToPath(
+                new URL('../../../resources/js/Components/MobileTabBar.tsx', import.meta.url),
+            ),
+            'utf8',
+        );
+
+        expect(source).not.toMatch(/aria-label=\{`/);
+        expect(source).not.toMatch(/aria-label=\{[^}]*`/);
     });
 });
