@@ -8,7 +8,11 @@ use Illuminate\Support\Facades\Schema;
 
 const LISTING_TABLES = ['listings', 'listing_photos', 'sale_records', 'moderation_decisions'];
 
-/** Первая колонка каждого индекса таблицы: по ней индекс работает для фильтра и FK. */
+/**
+ * Первая колонка каждого индекса таблицы: по ней индекс работает для фильтра и FK.
+ *
+ * @return list<string>
+ */
 function leadingIndexColumns(string $table): array
 {
     return array_map(fn (array $index): string => $index['columns'][0], Schema::getIndexes($table));

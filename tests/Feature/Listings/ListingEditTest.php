@@ -38,9 +38,9 @@ it('снижение цены у published не меняет статус при
 
     app(ListingStateMachine::class)->edit($listing, ['price' => 170_000]);
 
-    expect($listing->fresh())
-        ->status->toBe(ListingStatus::Published)
-        ->price->toBe(170_000);
+    $listing->refresh();
+    expect($listing->status)->toBe(ListingStatus::Published)
+        ->and($listing->price)->toBe(170_000);
     Event::assertDispatched(ListingPriceDropped::class);
 })->with('premoderation');
 
@@ -82,7 +82,7 @@ it('модель, описание, состояние — существенн�
     $changes = match ($field) {
         'model_id' => ['model_id' => InstrumentModel::factory()->create()->id],
         'description' => ['description' => 'Переделан звукосниматель.'],
-        'condition' => ['condition' => Condition::Good],
+        default => ['condition' => Condition::Good],
     };
 
     app(ListingStateMachine::class)->edit($listing, $changes);
@@ -98,10 +98,10 @@ it('существенная правка вместе со снижением �
 
     app(ListingStateMachine::class)->edit($listing, ['price' => 170_000, 'description' => 'Новый текст']);
 
-    expect($listing->fresh())
-        ->status->toBe(ListingStatus::Pending)
-        ->price->toBe(170_000)
-        ->description->toBe('Новый текст');
+    $listing->refresh();
+    expect($listing->status)->toBe(ListingStatus::Pending)
+        ->and($listing->price)->toBe(170_000)
+        ->and($listing->description)->toBe('Новый текст');
     Event::assertDispatched(ListingSubstantiallyEdited::class);
     Event::assertNotDispatched(ListingPriceDropped::class);
 });
@@ -122,7 +122,7 @@ it('статус через правку не меняется: поле status 
 
     app(ListingStateMachine::class)->edit($listing, ['status' => 'rejected', 'price' => 180_000]);
 
-    expect($listing->fresh())
-        ->status->toBe(ListingStatus::Published)
-        ->price->toBe(180_000);
+    $listing->refresh();
+    expect($listing->status)->toBe(ListingStatus::Published)
+        ->and($listing->price)->toBe(180_000);
 });

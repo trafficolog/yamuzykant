@@ -21,7 +21,7 @@ final class StatusWriteScanner
         'присваивание ->status' => '/->\s*status\s*(?:\?\?=|=(?![=>]))/',
         'присваивание [\'status\']' => '/\[\s*[\'"]status[\'"]\s*\]\s*(?:\?\?=|=(?![=>]))/',
         'setAttribute(\'status\')' => '/->\s*setAttribute\s*\(\s*[\'"]status[\'"]/',
-        'массовая запись status' => '/->\s*(?:update|updateQuietly|updateOrFail|fill|forceFill|forceFillQuietly|setRawAttributes|updateOrCreate|updateOrInsert|upsert|incrementEach)\s*\([^;]*?[\'"]status[\'"]\s*=>/s',
+        'массовая запись status' => '/(?:->|::)\s*(?:update|updateQuietly|updateOrFail|fill|forceFill|forceFillQuietly|setRawAttributes|updateOrCreate|updateOrInsert|upsert|incrementEach)\s*\([^;]*?[\'"]status[\'"]\s*=>/s',
         'SQL SET status' => '/\bset\s+[`"]?status[`"]?\s*=/i',
     ];
 

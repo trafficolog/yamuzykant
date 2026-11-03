@@ -25,6 +25,7 @@ use App\Domain\Listings\StateMachines\ListingStateMachine;
 use App\Domain\Moderation\Enums\ModerationVerdict;
 use App\Domain\Moderation\Models\ModerationDecision;
 use App\Support\Flags\FeatureFlag;
+use Illuminate\Contracts\Events\ShouldDispatchAfterCommit;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\Event;
 use Laravel\Pennant\Feature;
@@ -170,18 +171,14 @@ it('решения модерации пишутся в moderation_decisions с 
     $approved = Listing::factory()->inStatus(ListingStatus::Pending)->create();
     $machine->approve($approved, staffId: 13);
 
-    expect(ModerationDecision::query()->where('listing_id', $returned->id)->sole())
-        ->verdict->toBe(ModerationVerdict::Returned)
-        ->reason->toBe('Добавьте фото серийного номера')
-        ->staff_id->toBe(11)
-        ->and(ModerationDecision::query()->where('listing_id', $rejected->id)->sole())
-        ->verdict->toBe(ModerationVerdict::Rejected)
-        ->reason->toBe('Запрещённый товар')
-        ->staff_id->toBe(12)
-        ->and(ModerationDecision::query()->where('listing_id', $approved->id)->sole())
-        ->verdict->toBe(ModerationVerdict::Approved)
-        ->reason->toBeNull()
-        ->staff_id->toBe(13)
+    $decision = fn (Listing $listing): array => ModerationDecision::query()
+        ->where('listing_id', $listing->id)
+        ->sole()
+        ->only(['verdict', 'reason', 'staff_id']);
+
+    expect($decision($returned))->toBe(['verdict' => ModerationVerdict::Returned, 'reason' => 'Добавьте фото серийного номера', 'staff_id' => 11])
+        ->and($decision($rejected))->toBe(['verdict' => ModerationVerdict::Rejected, 'reason' => 'Запрещённый товар', 'staff_id' => 12])
+        ->and($decision($approved))->toBe(['verdict' => ModerationVerdict::Approved, 'reason' => null, 'staff_id' => 13])
         ->and($approved->moderationDecisions()->count())->toBe(1);
 });
 
@@ -249,12 +246,12 @@ it('повторное снятие после возврата в продаж�
 
     $machine->withdraw($listing, WithdrawReason::SoldElsewhere, 160_000);
 
-    expect(SaleRecord::query()->where('listing_id', $listing->id)->sole())
-        ->reason->toBe(WithdrawReason::SoldElsewhere)
-        ->final_price->toBe(160_000);
+    $record = SaleRecord::query()->where('listing_id', $listing->id)->sole();
+    expect($record->reason)->toBe(WithdrawReason::SoldElsewhere)
+        ->and($record->final_price)->toBe(160_000);
 });
 
 it('события перехода отправляются после фиксации транзакции', function () {
     expect(new ListingPublished(Listing::factory()->make(), ListingStatus::Draft, ListingStatus::Published, ListingEvent::Publish))
-        ->toBeInstanceOf(Illuminate\Contracts\Events\ShouldDispatchAfterCommit::class);
+        ->toBeInstanceOf(ShouldDispatchAfterCommit::class);
 });

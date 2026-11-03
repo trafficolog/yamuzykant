@@ -55,5 +55,6 @@ it('статусы и состояние объявления — PHP enum', fun
 it('status не входит в массовое заполнение модели объявления', function () {
     $fillable = (new ReflectionClass('App\Domain\Listings\Models\Listing'))->getDefaultProperties()['fillable'] ?? [];
 
-    expect($fillable)->toBeArray()->not->toBeEmpty()->not->toContain('status');
+    expect($fillable)->toBeArray()->toContain('price')
+        ->and(in_array('status', (array) $fillable, true))->toBeFalse();
 });

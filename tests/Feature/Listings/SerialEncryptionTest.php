@@ -18,7 +18,7 @@ it('серийный номер в БД зашифрован ключом при
     $raw = DB::table('listings')->where('id', $listing->id)->value('serial_enc');
 
     expect($raw)->toBeString()
-        ->not->toContain('V091234')
+        ->and(str_contains((string) $raw, 'V091234'))->toBeFalse()
         ->and(Crypt::decryptString((string) $raw))->toBe('V091234')
         ->and($listing->fresh()?->serial_enc)->toBe('V091234');
 });
