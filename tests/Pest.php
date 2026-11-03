@@ -21,6 +21,7 @@ uses(RefreshDatabase::class)->in(
     'Unit/Domain/Catalog',
     'Feature/Auth',
     'Unit/Domain/Accounts',
+    'Feature/Listings',
 );
 
 // Живые проверки сервисов compose: нужен запущенный `docker compose`. Запуск: composer test:docker.
