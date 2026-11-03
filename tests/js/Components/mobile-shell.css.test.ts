@@ -10,20 +10,10 @@ const css = readFileSync(
     'utf8',
 );
 
-/** Тело первого блока `@media (max-width: 639px) { … }` с учётом вложенных скобок. */
-function mobileBlock(): string {
-    const start = css.indexOf('@media (max-width: 639px)');
-    if (start === -1) return '';
-    let depth = 0;
-    for (let i = css.indexOf('{', start); i < css.length; i++) {
-        if (css[i] === '{') depth++;
-        if (css[i] === '}' && --depth === 0) return css.slice(css.indexOf('{', start) + 1, i);
-    }
-    return '';
-}
-
-const mobileBlocks = (): string => {
-    const parts: string[] = [];
+/** Делит файл на тела блоков `@media (max-width: 639px) { … }` и всё остальное. */
+function split(): { mobile: string; base: string } {
+    const mobile: string[] = [];
+    const base: string[] = [];
     let from = 0;
     for (;;) {
         const start = css.indexOf('@media (max-width: 639px)', from);
@@ -35,21 +25,27 @@ const mobileBlocks = (): string => {
             if (css[end] === '{') depth++;
             if (css[end] === '}' && --depth === 0) break;
         }
-        parts.push(css.slice(open + 1, end));
-        from = end;
+        base.push(css.slice(from, start));
+        mobile.push(css.slice(open + 1, end));
+        from = end + 1;
     }
-    return parts.join('\n');
-};
+    base.push(css.slice(from));
+    return { mobile: mobile.join('\n'), base: base.join('\n') };
+}
+
+const mobileBlocks = (): string => split().mobile;
 
 const ruleBody = (source: string, selector: string): string => {
     const escaped = selector.replace(/[.[\]()]/g, '\\$&');
-    const match = new RegExp(`(?:^|[}\\s,])${escaped}\\s*\\{([^}]*)\\}`, 'm').exec(source);
+    const match = new RegExp(`(?:^|[}\\s,])${escaped}\\s*(?:,[^{}]*)?\\{([^}]*)\\}`, 'm').exec(
+        source,
+    );
     return match?.[1] ?? '';
 };
 
 describe('site.css: мобильная оболочка', () => {
     it('нижняя панель скрыта по умолчанию и показывается только на < 640 px', () => {
-        expect(ruleBody(css.replace(mobileBlocks(), ''), '.ym-tabbar')).toMatch(/display:\s*none/);
+        expect(ruleBody(split().base, '.ym-tabbar')).toMatch(/display:\s*none/);
         expect(ruleBody(mobileBlocks(), '.ym-tabbar')).toMatch(/display:\s*flex/);
     });
 
@@ -66,7 +62,7 @@ describe('site.css: мобильная оболочка', () => {
 
         expect(rule).toContain('var(--hit-min)');
         expect(rule).toMatch(/flex:\s*1 1 0/);
-        expect(rule).toMatch(/min-width:\s*0/);
+        expect(rule).toMatch(/min-width:\s*min-content/);
     });
 
     it('верхняя строка шапки (разделы, иконки) на < 640 px скрыта: её роль берёт нижняя панель', () => {
@@ -91,7 +87,7 @@ describe('site.css: мобильная оболочка', () => {
     });
 
     it('верхняя панель шторки и кнопка «Назад» на широких экранах скрыты', () => {
-        const base = css.replace(mobileBlocks(), '');
+        const base = split().base;
 
         expect(ruleBody(base, '.ym-site-menu__bar')).toMatch(/display:\s*none/);
         expect(ruleBody(base, '.ym-site-menu__back')).toMatch(/display:\s*none/);
@@ -99,6 +95,6 @@ describe('site.css: мобильная оболочка', () => {
 
     it('цвета только из токенов: ни hex, ни rgb в мобильных правилах', () => {
         expect(mobileBlocks()).not.toMatch(/#[0-9a-f]{3,8}\b|rgba?\(/i);
-        expect(mobileBlock().length).toBeGreaterThan(0);
+        expect(mobileBlocks().length).toBeGreaterThan(0);
     });
 });

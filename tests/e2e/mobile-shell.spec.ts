@@ -138,8 +138,8 @@ test.describe('MobileTabBar на < 640 px', () => {
         expect(footer.y + footer.height).toBeLessThanOrEqual(bar.y + 1);
     });
 
-    test('вкладки делят ширину поровну, подписи не обрезаны (320 px)', async ({ page }) => {
-        await open(page, 320);
+    test('390 px: вкладки делят ширину поровну', async ({ page }) => {
+        await open(page, 390);
 
         const widths = await tabBar(page)
             .getByRole('link')
@@ -147,6 +147,10 @@ test.describe('MobileTabBar на < 640 px', () => {
                 links.map((link) => Math.round(link.getBoundingClientRect().width)),
             );
         expect(new Set(widths).size).toBe(1);
+    });
+
+    test('320 px: подписи вкладок не обрезаны', async ({ page }) => {
+        await open(page, 320);
 
         const clipped = await tabBar(page)
             .getByRole('link')
