@@ -268,7 +268,8 @@ const FUNCTIONS = {
  * Вычисляет выражение `if` (с `${{ }}` или без) в контексте {github, inputs, needs, …}.
  * Статус-функции: success() — true, always() — true, failure() и cancelled() — false.
  */
-export function evaluate(expression, context) {
+export function evaluate(expression, context, status = {}) {
+    const statusFns = { success: true, always: true, failure: false, cancelled: false, ...status };
     const tokens = tokenize(String(expression));
     let i = 0;
     const peek = () => tokens[i];
@@ -300,8 +301,7 @@ export function evaluate(expression, context) {
                 if (isOp(',')) i++;
             }
             expect(')');
-            const status = { success: true, always: true, failure: false, cancelled: false };
-            if (Object.hasOwn(status, tok.v)) return status[tok.v];
+            if (Object.hasOwn(statusFns, tok.v)) return statusFns[tok.v];
             const fn = FUNCTIONS[tok.v];
             if (!fn) throw new Error(`Выражение: неизвестная функция ${tok.v}`);
             return fn(...args);
@@ -376,8 +376,20 @@ export function evaluate(expression, context) {
     return result;
 }
 
-/** Запустится ли job: `if` job (по умолчанию success()) истинно в контексте. */
-export function jobRuns(job, context) {
-    const condition = job.if === undefined || job.if === null ? 'success()' : job.if;
-    return truthy(evaluate(condition, context));
+export const STATUS_FUNCTION = /\b(success|always|failure|cancelled)\s*\(/;
+
+/**
+ * Запустится ли job. Как в GitHub: `if` без статус-функции неявно получает `success() &&`,
+ * без `if` — `success()`. status — результат needs: {success, failure} (по умолчанию все needs успешны).
+ */
+export function jobRuns(job, context, status = {}) {
+    const raw = job.if === undefined || job.if === null ? '' : String(job.if);
+    const body = raw.trim().replace(/^\$\{\{([\s\S]*)\}\}$/, '$1');
+    const condition =
+        body.trim() === ''
+            ? 'success()'
+            : STATUS_FUNCTION.test(body)
+              ? body
+              : `success() && (${body})`;
+    return truthy(evaluate(condition, context, status));
 }
