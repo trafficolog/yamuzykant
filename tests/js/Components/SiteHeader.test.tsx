@@ -313,3 +313,54 @@ describe('SiteHeader: меню категорий', () => {
         ]);
     });
 });
+
+describe('SiteHeader: меню категорий — шторка на < 640 px', () => {
+    const toggle = () => screen.getByRole('button', { name: 'Категории' });
+    const open = () => {
+        fireEvent.click(toggle());
+        return screen.getByRole('dialog', { name: 'Все категории' });
+    };
+
+    it('сначала виден список видов инструментов', () => {
+        render(<SiteHeader />);
+
+        expect(open()).toHaveAttribute('data-view', 'list');
+    });
+
+    it('выбор вида переводит шторку к его группам, «Все категории» возвращает к списку', () => {
+        render(<SiteHeader />);
+        const menu = open();
+
+        fireEvent.click(within(menu).getByRole('button', { name: 'Ударные' }));
+        expect(menu).toHaveAttribute('data-view', 'panel');
+
+        fireEvent.click(within(menu).getByRole('button', { name: 'Все категории' }));
+        expect(menu).toHaveAttribute('data-view', 'list');
+    });
+
+    it('кнопка «Закрыть меню» закрывает шторку и возвращает фокус на «Категории»', () => {
+        render(<SiteHeader />);
+        const menu = open();
+
+        fireEvent.click(within(menu).getByRole('button', { name: 'Закрыть меню' }));
+
+        expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
+        expect(toggle()).toHaveFocus();
+        expect(toggle()).toHaveAttribute('aria-expanded', 'false');
+    });
+
+    it('после закрытия шторка открывается снова со списком', () => {
+        render(<SiteHeader />);
+        fireEvent.click(within(open()).getByRole('button', { name: 'Ударные' }));
+
+        fireEvent.keyDown(document, { key: 'Escape' });
+
+        expect(open()).toHaveAttribute('data-view', 'list');
+    });
+
+    it('подпись кнопки «Категории» в отдельном элементе: на телефоне остаётся иконка, имя сохраняется', () => {
+        render(<SiteHeader />);
+
+        expect(toggle().querySelector('.ym-site-header__cats-label')).not.toBeNull();
+    });
+});

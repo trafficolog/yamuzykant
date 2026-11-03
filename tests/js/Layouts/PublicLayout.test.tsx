@@ -85,6 +85,40 @@ describe('PublicLayout', () => {
         );
 
         expect(screen.getByRole('button', { name: 'Казань' })).toBeInTheDocument();
-        expect(screen.getByRole('link', { name: 'Сообщения, 2' })).toBeInTheDocument();
+        expect(
+            within(screen.getByRole('banner')).getByRole('link', { name: 'Сообщения, 2' }),
+        ).toBeInTheDocument();
+    });
+});
+
+describe('PublicLayout: нижняя панель', () => {
+    const bar = () => screen.getByRole('navigation', { name: 'Нижнее меню' });
+
+    it('нижняя панель — последний блок каркаса, после подвала', () => {
+        render(<PublicLayout>{null}</PublicLayout>);
+
+        const footer = screen.getByRole('contentinfo');
+        expect(
+            footer.compareDocumentPosition(bar()) & Node.DOCUMENT_POSITION_FOLLOWING,
+        ).toBeTruthy();
+    });
+
+    it('счётчик сообщений доходит до нижней панели', () => {
+        render(<PublicLayout messages={2}>{null}</PublicLayout>);
+
+        expect(within(bar()).getByRole('link', { name: 'Сообщения, 2' })).toBeInTheDocument();
+    });
+
+    it('без сообщений счётчика на панели нет', () => {
+        render(<PublicLayout>{null}</PublicLayout>);
+
+        expect(within(bar()).getByRole('link', { name: 'Сообщения' })).toBeInTheDocument();
+    });
+
+    it('tab отмечает вкладку текущего раздела', () => {
+        render(<PublicLayout tab="home">{null}</PublicLayout>);
+
+        const current = bar().querySelector('[aria-current="page"]');
+        expect(current).toHaveTextContent('Главная');
     });
 });
