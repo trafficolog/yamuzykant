@@ -7,10 +7,29 @@ namespace Tests;
 use App\Domain\Accounts\Actions\CompleteLogin;
 use App\Domain\Accounts\Models\User;
 use Illuminate\Contracts\Auth\Authenticatable as UserContract;
+use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Foundation\Testing\TestCase as BaseTestCase;
 
 abstract class TestCase extends BaseTestCase
 {
+    use RefreshDatabase {
+        refreshDatabase as private runRefreshDatabase;
+    }
+
+    /** Группа теста без базы данных: например, HealthTest (/health работает без БД). */
+    public const NO_DATABASE_GROUP = 'no-database';
+
+    /**
+     * Каждый тест получает чистую БД. Страницы Inertia читают флаги из таблицы `features`,
+     * поэтому Feature- и Unit-тесты работают с БД по умолчанию; исключение — группа NO_DATABASE_GROUP.
+     */
+    public function refreshDatabase(): void
+    {
+        if (! in_array(self::NO_DATABASE_GROUP, $this->groups(), true)) {
+            $this->runRefreshDatabase();
+        }
+    }
+
     protected function setUp(): void
     {
         parent::setUp();

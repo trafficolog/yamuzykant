@@ -2,6 +2,11 @@
 
 declare(strict_types=1);
 
+use Tests\TestCase;
+
+// /health проверяет приложение без базы данных: группа no-database отключает RefreshDatabase (см. Tests\TestCase).
+uses()->group(TestCase::NO_DATABASE_GROUP);
+
 it('/health отвечает 200 и {"status":"ok"}', function () {
     $this->getJson('/health')
         ->assertOk()

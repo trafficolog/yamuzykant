@@ -2,6 +2,8 @@
 
 declare(strict_types=1);
 
+use App\Support\Flags\FeatureFlag;
+use Illuminate\Database\Events\QueryExecuted;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Schema;
 use Inertia\Testing\AssertableInertia as Assert;
@@ -52,6 +54,23 @@ it('включение и выключение флага в БД меняет s
     Feature::for(null)->deactivate('masters');
 
     $this->get('/')->assertInertia(fn (Assert $page) => $page->where('flags.masters', false));
+});
+
+it('shared prop flags читает таблицу features не больше одного раза на Inertia-ответ', function () {
+    // Строки флагов уже есть в БД: тогда ответ делает только SELECT, без INSERT первого показа.
+    Feature::for(null)->values(array_map(fn (FeatureFlag $flag): string => $flag->value, FeatureFlag::cases()));
+    Feature::flushCache();
+
+    $queries = [];
+    DB::listen(function (QueryExecuted $query) use (&$queries): void {
+        if (preg_match('/\b(from|into|update|join)\s+["`]?features["`]?\b/i', $query->sql) === 1) {
+            $queries[] = $query->sql;
+        }
+    });
+
+    $this->get('/')->assertOk();
+
+    expect(count($queries))->toBeLessThanOrEqual(1);
 });
 
 it('миграция Pennant обратима', function () {
