@@ -8,8 +8,8 @@ use Illuminate\Database\QueryException;
 it('координаты города приводятся к float', function () {
     $city = City::factory()->create(['name' => 'Москва', 'region' => 'Москва', 'lat' => 55.7558, 'lng' => 37.6173]);
 
-    expect($city->fresh()->lat)->toBeFloat()->toBe(55.7558)
-        ->and($city->fresh()->lng)->toBeFloat()->toBe(37.6173);
+    expect($city->refresh()->lat)->toBeFloat()->toBe(55.7558)
+        ->and($city->lng)->toBeFloat()->toBe(37.6173);
 });
 
 it('город уникален в паре название + регион', function () {

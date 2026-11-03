@@ -17,13 +17,20 @@ function menuTreeFromPrototype(): array
 {
     $html = (string) file_get_contents(base_path('design/prototypes/Шапка.dc.html'));
     $kinds = [];
+    $kind = null;
     foreach ((array) preg_split('/\R/u', $html) as $line) {
         if (preg_match("/^  \{ name: '([^']+)', icon: '[^']+'/u", (string) $line, $m)) {
-            $kinds[] = ['name' => $m[1], 'groups' => []];
-        } elseif ($kinds !== [] && preg_match("/\{ title: '([^']+)', items: \[(.*?)\]/u", (string) $line, $m)) {
+            if ($kind !== null) {
+                $kinds[] = $kind;
+            }
+            $kind = ['name' => $m[1], 'groups' => []];
+        } elseif ($kind !== null && preg_match("/\{ title: '([^']+)', items: \[(.*?)\]/u", (string) $line, $m)) {
             preg_match_all("/'([^']+)'/u", $m[2], $items);
-            $kinds[array_key_last($kinds)]['groups'][] = ['title' => $m[1], 'items' => $items[1]];
+            $kind['groups'][] = ['title' => $m[1], 'items' => $items[1]];
         }
+    }
+    if ($kind !== null) {
+        $kinds[] = $kind;
     }
 
     return array_values(array_filter($kinds, fn (array $k) => $k['name'] !== 'Мастера и ремонт'));
@@ -81,8 +88,8 @@ it('модели покрывают все 8 видимых видов', functio
     $kindIds = (new CategoryTree)->public()->pluck('id')->all();
     $covered = [];
     foreach (InstrumentModel::query()->with('category.parent.parent')->get() as $model) {
-        $node = $model->category;
-        while ($node->parent !== null) {
+        $node = $model->category ?? throw new LogicException("у модели {$model->id} нет категории");
+        while ($node->parent instanceof Category) {
             $node = $node->parent;
         }
         $covered[$node->id] = true;
@@ -103,7 +110,7 @@ it('16 городов-миллионников с координатами в п
             ->and($city->region)->not->toBe('');
     }
 
-    $moscow = $cities->firstWhere('name', 'Москва');
+    $moscow = $cities->sole('name', 'Москва');
     expect($moscow->lat)->toBe(55.7558)->and($moscow->lng)->toBe(37.6173);
 });
 

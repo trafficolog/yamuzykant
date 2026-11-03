@@ -15,7 +15,7 @@ it('статус модели — active, suggested или hidden', function () 
 it('по умолчанию модель активна, статус приводится к enum', function () {
     $model = InstrumentModel::factory()->create();
 
-    expect($model->fresh()->status)->toBe(InstrumentModelStatus::Active);
+    expect($model->refresh()->status)->toBe(InstrumentModelStatus::Active);
 });
 
 it('публичный список — только active в видимых категориях', function () {
@@ -50,6 +50,6 @@ it('полное название собирается из бренда и на
 it('годы выпуска — целые числа или null', function () {
     $model = InstrumentModel::factory()->create(['year_from' => 2018, 'year_to' => null]);
 
-    expect($model->fresh()->year_from)->toBe(2018)
-        ->and($model->fresh()->year_to)->toBeNull();
+    expect($model->refresh()->year_from)->toBe(2018)
+        ->and($model->year_to)->toBeNull();
 });

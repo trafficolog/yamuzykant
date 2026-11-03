@@ -14,12 +14,14 @@ it('собирает дерево в три уровня и сортирует �
     Category::factory()->for($groupA, 'parent')->create(['name' => 'Stratocaster-тип', 'sort_order' => 1]);
 
     $tree = (new CategoryTree)->all();
+    $guitars = $tree->firstOrFail();
+    $pedals = $tree->skip(1)->firstOrFail();
 
     expect($tree->pluck('name')->all())->toBe(['Гитары', 'Педали и усилители'])
-        ->and($tree[0]->children->pluck('name')->all())->toBe(['Электрогитары', 'Бас-гитары'])
-        ->and($tree[0]->children[0]->children->pluck('name')->all())->toBe(['Stratocaster-тип', 'Telecaster-тип'])
-        ->and($tree[1]->children)->toHaveCount(0)
-        ->and($second->is($tree[1]))->toBeTrue();
+        ->and($guitars->children->pluck('name')->all())->toBe(['Электрогитары', 'Бас-гитары'])
+        ->and($guitars->children->firstOrFail()->children->pluck('name')->all())->toBe(['Stratocaster-тип', 'Telecaster-тип'])
+        ->and($pedals->children)->toHaveCount(0)
+        ->and($second->is($pedals))->toBeTrue();
 });
 
 it('публичное дерево без скрытой категории и всех её потомков', function () {
@@ -32,7 +34,7 @@ it('публичное дерево без скрытой категории и 
     $tree = (new CategoryTree)->public();
 
     expect($tree->pluck('name')->all())->toBe(['Гитары'])
-        ->and($tree[0]->children->pluck('name')->all())->toBe(['Электрогитары']);
+        ->and($tree->firstOrFail()->children->pluck('name')->all())->toBe(['Электрогитары']);
 });
 
 it('скрытая подкатегория исчезает, а соседние и родитель остаются', function () {
@@ -40,8 +42,8 @@ it('скрытая подкатегория исчезает, а соседни�
     Category::factory()->for($kind, 'parent')->create(['name' => 'Электрогитары', 'sort_order' => 1]);
     Category::factory()->for($kind, 'parent')->hidden()->create(['name' => 'Укулеле', 'sort_order' => 2]);
 
-    expect((new CategoryTree)->public()[0]->children->pluck('name')->all())->toBe(['Электрогитары'])
-        ->and((new CategoryTree)->all()[0]->children->pluck('name')->all())->toBe(['Электрогитары', 'Укулеле']);
+    expect((new CategoryTree)->public()->firstOrFail()->children->pluck('name')->all())->toBe(['Электрогитары'])
+        ->and((new CategoryTree)->all()->firstOrFail()->children->pluck('name')->all())->toBe(['Электрогитары', 'Укулеле']);
 });
 
 it('отдаёт идентификаторы видимых категорий для фильтрации моделей', function () {
