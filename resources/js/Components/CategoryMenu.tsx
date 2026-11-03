@@ -1,5 +1,5 @@
 import { Button, Icon } from '@ds';
-import { useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 
 import type { FlagName } from '@/Hooks/useFlag';
 import type { CategoryNode } from '@/lang/categories';
@@ -12,28 +12,77 @@ const SERVICES_TITLE_ID = 'site-category-services';
 /** Выдача Барахолки (карточка 3.1.2); адреса отдельных видов появятся вместе со справочником 1.2.1. */
 const FLEA_HREF = '/baraholka';
 
-/** Страницы сервисов (проверка, цены продаж, безопасная сделка, доставка, форма продажи) — другие задачи. */
+/** Страницы сервисов (проверка, цены продаж, безопасная сделка, форма продажи) — другие задачи. */
 const SERVICE_HREF = '#';
+
+type View = 'list' | 'panel';
 
 export interface CategoryMenuProps {
     categories: readonly CategoryNode[];
     /** Включён ли флаг; элементы с выключенным флагом не рендерятся. */
     isEnabled: (flag: FlagName | undefined) => boolean;
+    /** Экран < 640 px: меню — модальная шторка (SiteHeader определяет по useNarrow). */
+    narrow: boolean;
     /** Закрыть меню; кнопка есть только в шторке на экранах < 640 px. */
     onClose: () => void;
 }
 
 /**
  * Меню категорий шапки: слева виды инструментов, справа группы выбранного вида и блок «Сервисы».
- * Открытием и закрытием (кнопка, Esc, клик вне) управляет SiteHeader.
- * На экранах < 640 px меню — полноэкранная шторка: сначала список видов, по выбору вида — его группы
- * с кнопкой «Все категории» для возврата (`data-view` переключает показ стилем).
+ *
+ * Роль зависит от экрана (решение 0.2.7):
+ * - от 640 px — раскрывающаяся панель без роли диалога: кнопка «Категории» связана с ней через
+ *   `aria-controls` и `aria-expanded`, фокус свободно ходит по шапке; уход фокуса из меню закрывает его
+ *   (SiteHeader). Для выпадающего списка ссылок диалог с переносом фокуса избыточен;
+ * - < 640 px — шторка на весь экран закрывает страницу, поэтому это модальный диалог (`aria-modal`):
+ *   фокус переходит в шторку при открытии, не уходит из неё по Tab и сохраняется при переключении видов.
+ *
+ * Открытием и закрытием (кнопка, Esc, клик вне, уход фокуса) управляет SiteHeader.
+ * На < 640 px список видов и группы показывает `data-view` (стиль site.css).
+ * В меню нет заголовков: блок «Сервисы» подписан `<p>`, чтобы не нарушать иерархию страницы (h1 первым).
  */
-export default function CategoryMenu({ categories, isEnabled, onClose }: CategoryMenuProps) {
+export default function CategoryMenu({
+    categories,
+    isEnabled,
+    narrow,
+    onClose,
+}: CategoryMenuProps) {
     const [current, setCurrent] = useState(0);
-    const [view, setView] = useState<'list' | 'panel'>('list');
+    const [view, setView] = useState<View>('list');
+    const rootRef = useRef<HTMLDivElement>(null);
+    const rowRefs = useRef<(HTMLButtonElement | null)[]>([]);
+    /** Куда перевести фокус после смены вида (шторка); при открытии — на первый вид. */
+    const pendingFocus = useRef<View | null>(narrow ? 'list' : null);
+
     const visible = categories.filter((category) => isEnabled(category.flag));
     const selected = visible[current] ?? visible[0];
+
+    /** Кнопка «Все категории» (DS Button не передаёт ref, поэтому ищем её внутри корня меню). */
+    const backButton = (): HTMLButtonElement | null | undefined =>
+        rootRef.current?.querySelector<HTMLButtonElement>('.ym-site-menu__back');
+
+    // Фокус в шторке: при открытии и после смены вида (скрытый элемент фокус не принимает).
+    useEffect(() => {
+        const target = pendingFocus.current;
+        pendingFocus.current = null;
+        if (!target || !narrow) return;
+        if (target === 'panel') backButton()?.focus();
+        else rowRefs.current[current]?.focus();
+    }, [view, narrow, current]);
+
+    // Шторка — модальный диалог: фокус, уведённый за её пределы (поле поиска под ней), возвращается внутрь.
+    useEffect(() => {
+        if (!narrow) return;
+
+        const onFocusIn = (event: FocusEvent) => {
+            const target = event.target;
+            if (!(target instanceof Node) || rootRef.current?.contains(target)) return;
+            if (view === 'panel') backButton()?.focus();
+            else rowRefs.current[current]?.focus();
+        };
+        document.addEventListener('focusin', onFocusIn);
+        return () => document.removeEventListener('focusin', onFocusIn);
+    }, [narrow, view, current]);
 
     if (!selected) return null;
 
@@ -44,8 +93,10 @@ export default function CategoryMenu({ categories, isEnabled, onClose }: Categor
             <div className="ym-site-menu__scrim" aria-hidden="true" />
             <div
                 id={CATEGORY_MENU_ID}
-                role="dialog"
-                aria-label={ru.categoryMenu.label}
+                ref={rootRef}
+                role={narrow ? 'dialog' : undefined}
+                aria-modal={narrow ? true : undefined}
+                aria-label={narrow ? ru.categoryMenu.label : undefined}
                 data-view={view}
                 className="ym-site-menu"
             >
@@ -63,12 +114,16 @@ export default function CategoryMenu({ categories, isEnabled, onClose }: Categor
                         {visible.map((category, index) => (
                             <button
                                 key={category.name}
+                                ref={(element) => {
+                                    rowRefs.current[index] = element;
+                                }}
                                 type="button"
                                 className="ym-site-menu__row"
                                 aria-current={category === selected ? 'true' : undefined}
                                 onMouseEnter={() => setCurrent(index)}
                                 onFocus={() => setCurrent(index)}
                                 onClick={() => {
+                                    pendingFocus.current = narrow ? 'panel' : null;
                                     setCurrent(index);
                                     setView('panel');
                                 }}
@@ -90,7 +145,10 @@ export default function CategoryMenu({ categories, isEnabled, onClose }: Categor
                             variant="ghost"
                             icon="chevron-right"
                             className="ym-site-menu__back"
-                            onClick={() => setView('list')}
+                            onClick={() => {
+                                pendingFocus.current = narrow ? 'list' : null;
+                                setView('list');
+                            }}
                         >
                             {ru.categoryMenu.back}
                         </Button>
@@ -131,9 +189,9 @@ export default function CategoryMenu({ categories, isEnabled, onClose }: Categor
                                 aria-labelledby={SERVICES_TITLE_ID}
                                 className="ym-site-menu__services"
                             >
-                                <h2 id={SERVICES_TITLE_ID} className="ym-site-menu__services-title">
+                                <p id={SERVICES_TITLE_ID} className="ym-site-menu__services-title">
                                     {ru.categoryMenu.servicesLabel}
-                                </h2>
+                                </p>
                                 {services.map((service) => (
                                     <a
                                         key={service.label}

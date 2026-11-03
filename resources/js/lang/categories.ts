@@ -35,7 +35,7 @@ const servicesFor = (kind: string): readonly CategoryService[] => [
     { icon: 'badge-check', label: t.masterCheck, flag: 'masters' },
     { icon: 'sliders-horizontal', label: t.salePrices(kind), flag: 'sale_prices' },
     { icon: 'shield-check', label: t.safeDeal, flag: 'safe_deal' },
-    { icon: 'truck', label: t.delivery },
+    { icon: 'truck', label: t.delivery, flag: 'delivery_service' },
     { icon: 'plus', label: t.sell(kind) },
 ];
 

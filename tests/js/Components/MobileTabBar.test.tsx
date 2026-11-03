@@ -1,5 +1,5 @@
 import { readFileSync } from 'node:fs';
-import { fileURLToPath } from 'node:url';
+import { join } from 'node:path';
 import { render, screen, within } from '@testing-library/react';
 import { describe, expect, it } from 'vitest';
 
@@ -80,10 +80,9 @@ describe('MobileTabBar', () => {
     });
 
     it('в разметке панели нет склейки подписи шаблонной строкой (aria-label берётся из lang)', () => {
+        // Vitest запускается из корня репозитория; в jsdom import.meta.url не file:-URL.
         const source = readFileSync(
-            fileURLToPath(
-                new URL('../../../resources/js/Components/MobileTabBar.tsx', import.meta.url),
-            ),
+            join(process.cwd(), 'resources/js/Components/MobileTabBar.tsx'),
             'utf8',
         );
 

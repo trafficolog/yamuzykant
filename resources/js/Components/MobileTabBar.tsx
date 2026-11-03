@@ -51,7 +51,11 @@ export default function MobileTabBar({ active = 'none', messages = 0 }: MobileTa
                         href={tab.href}
                         className="ym-iconbtn ym-tabbar__item"
                         aria-current={tab.key === active ? 'page' : undefined}
-                        aria-label={count > 0 ? `${tab.label}, ${shown}` : undefined}
+                        aria-label={
+                            tab.key === 'messages' && count > 0
+                                ? ru.tabBar.messagesLabel(shown)
+                                : undefined
+                        }
                     >
                         <Icon name={tab.icon} size={22} />
                         <span className="ym-tabbar__label">{tab.label}</span>
