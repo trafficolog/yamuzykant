@@ -19,3 +19,5 @@ node tools/capture-reference.mjs               # → design/screens/{id}@{1440|3
 - Если у экрана в manifest задан `block` (сейчас `header` и `footer`), эталон — снимок этого элемента, а не страницы на белом поле. Порог `maxDiffPixelRatio` считается от площади блока, белое поле его не разбавляет. Ширина эталона равна ширине viewport, высота — высоте блока.
 - Версии `playwright`, `@playwright/test` и `http-server` закреплены точно: версия Playwright задаёт образ контейнера эталонов `mcr.microsoft.com/playwright:v{версия}-noble`. Обновляя её, обновите образ и пересними эталоны отдельным коммитом.
 - Проект `references` идёт без ретраев (`retries: 0`).
+- Эталоны состояния R1 (флаги вне MVP выключены, то, что видят пользователи): `header--r1@1440.png`, `footer--r1@1440.png`, `footer--r1@390.png`. Снимаются с реализации блоком (`header` / `footer`) в контейнере Playwright; объявлены в manifest (`stateReferences`), принимает OWNER на G1. Перегенерация — отдельным коммитом `chore(design)` с причиной.
+- Общий код детерминизма (заморозка анимаций, React без CDN, ожидание шрифтов) — `tools/deterministic-page.mjs`, его используют и съёмка, и сверка.

@@ -16,7 +16,13 @@ export interface ForbiddenHit {
     source: CopyPiece['source'];
 }
 
-/** Тексты страницы: `document.body.innerText` и значения атрибутов всех элементов (в том числе скрытых). */
+/**
+ * Тексты страницы: `document.body.innerText` и значения атрибутов всех элементов (в том числе скрытых).
+ *
+ * Ограничения: не заходит в shadow DOM и iframe; не раскрывает `aria-labelledby` и `aria-describedby`
+ * (проверяется текст элемента-источника, но не сама связь); не читает `<title>` внутри `<svg>`.
+ * Для текущего набора страниц этого достаточно; при появлении таких конструкций расширить сбор.
+ */
 export async function collectCopy(page: Page): Promise<CopyPiece[]> {
     return page.evaluate((attributes) => {
         const pieces: { source: string; value: string }[] = [

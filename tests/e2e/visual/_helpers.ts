@@ -1,6 +1,5 @@
 import { copyFileSync, mkdirSync, readFileSync } from 'node:fs';
-import { createRequire } from 'node:module';
-import { dirname, join } from 'node:path';
+import { dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import {
     expect,
@@ -8,6 +7,7 @@ import {
     type Page,
     type PageAssertionsToHaveScreenshotOptions,
 } from '@playwright/test';
+import { prepareDeterministicPage, waitForFonts } from '../../../tools/deterministic-page.mjs';
 
 // Сверка страницы с эталоном design/screens/{id}@{viewport}.png по design/screens/manifest.json.
 // Порог и маски берутся из manifest (DESIGN-SYSTEM.md §6). При расхождении Playwright кладёт
@@ -28,6 +28,8 @@ export interface ManifestScreen {
     threshold: string;
     /** Селектор блока: эталон — снимок этого элемента, а не страницы (header, footer). */
     block?: string;
+    /** Эталоны состояний, снятые с реализации: `{id}--{state}@{vp}.png`. */
+    stateReferences?: { state: string; viewports: string[] }[];
     mask: string[];
     states: string[];
     viewports: string[];
@@ -75,49 +77,10 @@ export function prototypeUrl(id: string): string {
     return `${PROTOTYPES_BASE}/${encodeURI(screen.file)}${screen.query}`;
 }
 
-/** Заморозка анимаций и переходов: `animations: 'disabled'` у скриншота не трогает стили до съёмки. */
-export const FREEZE_MOTION_CSS =
-    '*, *::before, *::after { animation: none !important; transition: none !important; scroll-behavior: auto !important; caret-color: transparent !important; }';
-
-const reactDir = (name: string): string =>
-    dirname(createRequire(import.meta.url).resolve(`${name}/package.json`));
-
-/**
- * Тот же React 18.3.1, что runtime прототипа берёт с unpkg (support.js). Подкладывается до загрузки
- * страницы: бандл ДС выполняется раньше, чем runtime догрузит React с CDN, и при неудачном
- * порядке отрисовка падает с «__ds_scope.h is not a function». Так кадр не зависит от сети.
- */
-const REACT_UMD: string[] = [
-    readFileSync(join(reactDir('react'), 'umd/react.production.min.js'), 'utf8'),
-    readFileSync(join(reactDir('react-dom'), 'umd/react-dom.production.min.js'), 'utf8'),
-];
-
-/** Подготовка страницы до перехода: без анимаций, reduced motion, React без CDN. */
-export async function prepareDeterministicPage(page: Page): Promise<void> {
-    await page.emulateMedia({ reducedMotion: 'reduce' });
-    for (const content of REACT_UMD) await page.addInitScript({ content });
-    await page.addInitScript((css) => {
-        const add = (): void => {
-            if (document.getElementById('ym-freeze-motion')) return;
-            const style = document.createElement('style');
-            style.id = 'ym-freeze-motion';
-            style.textContent = css;
-            (document.head ?? document.documentElement).append(style);
-        };
-        if (document.documentElement) add();
-        document.addEventListener('DOMContentLoaded', add);
-    }, FREEZE_MOTION_CSS);
-}
-
 /** Ждёт сеть и шрифты: ни один шрифт не должен оставаться в состоянии loading. */
 async function settle(page: Page): Promise<void> {
     await page.waitForLoadState('networkidle');
-    await page.evaluate(() => document.fonts.ready);
-    await page.waitForFunction(
-        () =>
-            document.fonts.status === 'loaded' &&
-            ![...document.fonts].some((face) => face.status === 'loading'),
-    );
+    await waitForFonts(page);
 }
 
 /** Открывает прототип экрана в viewport из manifest и ждёт шрифты и отрисовку. */
@@ -143,7 +106,10 @@ export async function openPrototype(page: Page, id: string, viewportName: string
 export type ReferenceOptions = Pick<
     PageAssertionsToHaveScreenshotOptions,
     'maxDiffPixelRatio' | 'maxDiffPixels' | 'threshold'
->;
+> & {
+    /** Состояние: эталон `{id}--{state}@{vp}.png`, снятый с реализации (manifest.stateReferences). */
+    state?: string;
+};
 
 /**
  * Сравнивает уже открытую страницу с эталоном `{id}@{viewportName}.png`: полный экран (или блок
@@ -153,7 +119,7 @@ export async function expectMatchesReference(
     page: Page,
     id: string,
     viewportName: string,
-    options: ReferenceOptions = {},
+    { state, ...options }: ReferenceOptions = {},
 ): Promise<void> {
     const screen = screenOf(id);
     const viewport = viewportOf(viewportName);
@@ -161,8 +127,15 @@ export async function expectMatchesReference(
         throw new Error(`У экрана «${id}» нет эталона для viewport «${viewportName}» (manifest)`);
     }
 
-    const referenceFile = `design/screens/${id}@${viewportName}.png`;
-    const snapshotName = `${id}@${viewportName}.png`;
+    const stem = state ? `${id}--${state}` : id;
+    const declared = screen.stateReferences?.find((item) => item.state === state);
+    if (state && !declared?.viewports.includes(viewportName)) {
+        throw new Error(
+            `В manifest нет эталона состояния ${stem}@${viewportName}.png (stateReferences)`,
+        );
+    }
+    const referenceFile = `design/screens/${stem}@${viewportName}.png`;
+    const snapshotName = `${stem}@${viewportName}.png`;
     // Эталон копируется туда, где toHaveScreenshot ищет снимок (см. проект references в конфиге).
     const target = test.info().snapshotPath(snapshotName);
     mkdirSync(dirname(target), { recursive: true });

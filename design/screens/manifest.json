@@ -28,6 +28,14 @@
       "compare": "visual",
       "threshold": "default",
       "block": "header",
+      "stateReferences": [
+        {
+          "state": "r1",
+          "viewports": [
+            "1440"
+          ]
+        }
+      ],
       "mask": [],
       "states": [
         "default",
@@ -48,6 +56,15 @@
       "compare": "visual",
       "threshold": "default",
       "block": "footer",
+      "stateReferences": [
+        {
+          "state": "r1",
+          "viewports": [
+            "1440",
+          "390"
+          ]
+        }
+      ],
       "mask": [],
       "states": [
         "default"

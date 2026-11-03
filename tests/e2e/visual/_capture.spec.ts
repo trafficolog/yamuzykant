@@ -1,8 +1,9 @@
-import { execFileSync } from 'node:child_process';
+import { execFile } from 'node:child_process';
 import { createServer } from 'node:http';
 import { mkdtempSync, readFileSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
+import { promisify } from 'node:util';
 import { expect, test, type Page } from '@playwright/test';
 import { MANIFEST, PROTOTYPES_BASE } from './_helpers';
 
@@ -11,7 +12,10 @@ import { MANIFEST, PROTOTYPES_BASE } from './_helpers';
 // Скрипт запускается на временном манифесте (REF_MANIFEST) и пишет во временную папку.
 const ROOT = join(import.meta.dirname, '../../..');
 
-function capture(mask: string[], base = PROTOTYPES_BASE): string {
+const run = promisify(execFile);
+
+// Асинхронно: скрипт ходит на сервер, который тест поднимает в этом же процессе.
+async function capture(mask: string[], base = PROTOTYPES_BASE): Promise<string> {
     const dir = mkdtempSync(join(tmpdir(), 'ym-capture-'));
     const footer = MANIFEST.screens.find((screen) => screen.id === 'footer');
     if (!footer) throw new Error('В manifest нет экрана footer');
@@ -22,10 +26,9 @@ function capture(mask: string[], base = PROTOTYPES_BASE): string {
     };
     const file = join(dir, 'manifest.json');
     writeFileSync(file, JSON.stringify(manifest));
-    execFileSync(process.execPath, ['tools/capture-reference.mjs'], {
+    await run(process.execPath, ['tools/capture-reference.mjs'], {
         cwd: ROOT,
         env: { ...process.env, REF_MANIFEST: file, REF_BASE: base },
-        stdio: 'pipe',
     });
     return join(dir, 'footer@1440.png');
 }
@@ -51,12 +54,12 @@ async function pixelAt(page: Page, file: string, x: number, y: number): Promise<
 
 test.describe('@visual capture-reference: маски', () => {
     test('маска из manifest закрашена в эталоне', async ({ page }) => {
-        const file = capture(['body']);
+        const file = await capture(['body']);
         expect(await pixelAt(page, file, 5, 5)).toEqual([255, 0, 255, 255]);
     });
 
     test('без маски эталон не закрашен', async ({ page }) => {
-        const file = capture([]);
+        const file = await capture([]);
         expect(await pixelAt(page, file, 5, 5)).not.toEqual([255, 0, 255, 255]);
     });
 });
@@ -84,10 +87,10 @@ test.describe('@visual capture-reference: ошибки прототипа', () =
         let status = 0;
         let output = '';
         try {
-            capture([], `http://127.0.0.1:${port}`);
+            await capture([], `http://127.0.0.1:${port}`);
         } catch (error) {
-            const failure = error as { status?: number; stdout?: Buffer };
-            status = failure.status ?? -1;
+            const failure = error as { code?: number; stdout?: string };
+            status = failure.code ?? -1;
             output = String(failure.stdout ?? '');
         } finally {
             server.close();

@@ -11,17 +11,10 @@
 // Экран с `block` в manifest снимается как элемент (локатор), без белого поля вокруг.
 // REF_MANIFEST — путь к другому manifest (тесты скрипта).
 import { readFileSync, mkdirSync } from 'node:fs';
-import { createRequire } from 'node:module';
-import { dirname, join } from 'node:path';
 import { chromium } from 'playwright';
+import { prepareDeterministicPage, waitForFonts } from './deterministic-page.mjs';
 
 const M = JSON.parse(readFileSync(process.env.REF_MANIFEST || 'design/screens/manifest.json', 'utf8'));
-const FREEZE_MOTION_CSS = '*, *::before, *::after { animation: none !important; transition: none !important; scroll-behavior: auto !important; caret-color: transparent !important; }';
-const reactDir = name => dirname(createRequire(import.meta.url).resolve(`${name}/package.json`));
-const REACT_UMD = [
-  readFileSync(join(reactDir('react'), 'umd/react.production.min.js'), 'utf8'),
-  readFileSync(join(reactDir('react-dom'), 'umd/react-dom.production.min.js'), 'utf8'),
-];
 const BASE = process.env.REF_BASE || 'http://localhost:8123';
 const onlyArg = process.argv.findIndex(a => a === '--only' || a.startsWith('--only='));
 const onlyRaw = onlyArg < 0 ? '' : process.argv[onlyArg].includes('=') ? process.argv[onlyArg].slice(7) : (process.argv[onlyArg + 1] || '');
@@ -40,27 +33,15 @@ let failed = 0;
 for (const s of targets) {
   for (const vpName of s.viewports) {
     const vp = M.viewports.find(v => v.name === vpName);
-    const page = await browser.newPage({ viewport: { width: vp.width, height: vp.height }, deviceScaleFactor: 1, reducedMotion: 'reduce' });
-    for (const content of REACT_UMD) await page.addInitScript({ content });
-    await page.addInitScript(css => {
-      const add = () => {
-        if (document.getElementById('ym-freeze-motion')) return;
-        const style = document.createElement('style');
-        style.id = 'ym-freeze-motion';
-        style.textContent = css;
-        (document.head ?? document.documentElement).append(style);
-      };
-      if (document.documentElement) add();
-      document.addEventListener('DOMContentLoaded', add);
-    }, FREEZE_MOTION_CSS);
+    const page = await browser.newPage({ viewport: { width: vp.width, height: vp.height }, deviceScaleFactor: 1 });
+    await prepareDeterministicPage(page);
     const problems = [];
     page.on('pageerror', e => problems.push(`pageerror: ${e.message}`));
     page.on('console', m => { if (m.type() === 'error') problems.push(`console.error: ${m.text()}`); });
     page.on('requestfailed', r => problems.push(`запрос не прошёл: ${r.url()} (${r.failure()?.errorText})`));
     page.on('response', r => { if (r.status() >= 400) problems.push(`HTTP ${r.status()}: ${r.url()}`); });
     await page.goto(`${BASE}/${encodeURI(s.file)}${s.query || ''}`, { waitUntil: 'networkidle' });
-    await page.evaluate(() => document.fonts.ready);
-    await page.waitForFunction(() => document.fonts.status === 'loaded' && ![...document.fonts].some(f => f.status === 'loading'));
+    await waitForFonts(page);
     await page.waitForTimeout(1500);
     const out = `${M.outDir}/${s.id}@${vpName}.png`;
     // Полный экран по высоте, по ширине — ровно viewport: прототипы местами шире 390 px

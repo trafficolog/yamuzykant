@@ -72,7 +72,7 @@ describe('эталоны состояния R1 (header, footer)', () => {
         );
         const dir = 'tests/e2e/visual';
         const used = readdirSync(dir)
-            .filter((name) => name.endsWith('.spec.ts'))
+            .filter((name) => name.endsWith('.spec.ts') && !name.startsWith('_'))
             .flatMap((name) =>
                 [...readFileSync(`${dir}/${name}`, 'utf8').matchAll(/state: '([^']+)'/g)].map(
                     (match) => match[1],
