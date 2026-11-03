@@ -1,5 +1,5 @@
 import AxeBuilder from '@axe-core/playwright';
-import { expect, test, type Page } from '@playwright/test';
+import { expect, test, type Locator, type Page } from '@playwright/test';
 import { mkdirSync } from 'node:fs';
 import { join } from 'node:path';
 
@@ -23,6 +23,12 @@ const open = async (page: Page, width: number, height = 844) => {
     await page.waitForLoadState('networkidle');
 };
 
+const rect = async (locator: Locator) => {
+    const box = await locator.boundingBox();
+    if (!box) throw new Error('Элемент не отрисован');
+    return box;
+};
+
 const header = (page: Page) => page.getByRole('banner');
 const tabBar = (page: Page) => page.getByRole('navigation', { name: 'Нижнее меню' });
 const sheet = (page: Page) => page.getByRole('dialog', { name: 'Все категории' });
@@ -35,20 +41,19 @@ test.describe('Мобильная шапка: порядок и размеры',
     }) => {
         await open(page, 390);
 
-        const logo = await header(page).getByRole('link', { name: 'ЯМузыкант' }).boundingBox();
-        const city = await header(page).getByRole('button', { name: 'Москва' }).boundingBox();
-        const search = await header(page).getByRole('search').boundingBox();
-        const cats = await header(page).getByRole('button', { name: 'Категории' }).boundingBox();
+        const logo = await rect(header(page).getByRole('link', { name: 'ЯМузыкант' }));
+        const city = await rect(header(page).getByRole('button', { name: 'Москва' }));
+        const search = await rect(header(page).getByRole('search'));
+        const cats = await rect(header(page).getByRole('button', { name: 'Категории' }));
 
-        expect(logo && city && search && cats).toBeTruthy();
         // Первая строка: логотип слева, город правее на той же линии.
-        expect(Math.abs(logo!.y + logo!.height / 2 - (city!.y + city!.height / 2))).toBeLessThan(4);
-        expect(city!.x).toBeGreaterThan(logo!.x + logo!.width);
+        expect(Math.abs(logo.y + logo.height / 2 - (city.y + city.height / 2))).toBeLessThan(4);
+        expect(city.x).toBeGreaterThan(logo.x + logo.width);
         // Вторая строка: «Категории», затем поиск на всю оставшуюся ширину; ниже первой строки.
-        expect(search!.y).toBeGreaterThanOrEqual(logo!.y + logo!.height - 1);
-        expect(Math.abs(search!.y - cats!.y)).toBeLessThan(2);
-        expect(search!.x).toBeGreaterThan(cats!.x + cats!.width - 1);
-        expect(search!.x + search!.width).toBeGreaterThan(390 - 24);
+        expect(search.y).toBeGreaterThanOrEqual(logo.y + logo.height - 1);
+        expect(Math.abs(search.y - cats.y)).toBeLessThan(2);
+        expect(search.x).toBeGreaterThan(cats.x + cats.width - 1);
+        expect(search.x + search.width).toBeGreaterThan(390 - 24);
     });
 
     test('390 px: строки разделов, «Продать инструмент» и «Войти» скрыты (роль берёт панель)', async ({
@@ -116,9 +121,9 @@ test.describe('MobileTabBar на < 640 px', () => {
             'Сообщения',
             'Кабинет',
         ]);
-        const box = await tabBar(page).boundingBox();
-        expect(box!.y + box!.height).toBeCloseTo(844, 0);
-        expect(box!.width).toBe(390);
+        const box = await rect(tabBar(page));
+        expect(box.y + box.height).toBeCloseTo(844, 0);
+        expect(box.width).toBe(390);
     });
 
     test('панель остаётся у нижнего края и на длинной странице, подвал не перекрыт', async ({
@@ -127,10 +132,10 @@ test.describe('MobileTabBar на < 640 px', () => {
         await open(page, 390, 500);
         await page.evaluate(() => window.scrollTo(0, document.body.scrollHeight));
 
-        const bar = await tabBar(page).boundingBox();
-        const footer = await page.getByRole('contentinfo').boundingBox();
-        expect(bar!.y + bar!.height).toBeCloseTo(500, 0);
-        expect(footer!.y + footer!.height).toBeLessThanOrEqual(bar!.y + 1);
+        const bar = await rect(tabBar(page));
+        const footer = await rect(page.getByRole('contentinfo'));
+        expect(bar.y + bar.height).toBeCloseTo(500, 0);
+        expect(footer.y + footer.height).toBeLessThanOrEqual(bar.y + 1);
     });
 
     test('вкладки делят ширину поровну, подписи не обрезаны (320 px)', async ({ page }) => {
@@ -198,7 +203,9 @@ test.describe('Меню категорий — полноэкранная што
         expect(box).toEqual({ x: 0, y: 0, width: 390, height: 844 });
 
         const covered = await page.evaluate(() => {
-            const bar = document.querySelector('nav.ym-tabbar')!.getBoundingClientRect();
+            const bar = (
+                document.querySelector('nav.ym-tabbar') as Element
+            ).getBoundingClientRect();
             const top = document.elementFromPoint(bar.x + bar.width / 2, bar.y + bar.height / 2);
             return top?.closest('.ym-site-menu') !== null;
         });
@@ -264,8 +271,8 @@ test.describe('Меню категорий — полноэкранная што
 
         await expect(sheet(page)).toBeVisible();
         await expect(sheet(page).getByRole('button', { name: 'Закрыть меню' })).toBeHidden();
-        const box = await sheet(page).boundingBox();
-        expect(box!.y).toBeGreaterThan(0);
+        const box = await rect(sheet(page));
+        expect(box.y).toBeGreaterThan(0);
     });
 });
 
