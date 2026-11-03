@@ -135,6 +135,18 @@ it('несуществующий город отклоняется, cookie не 
     expect($names)->not->toContain('ym_city');
 });
 
+it('вошедший с несуществующим city_id получает 422, users.city_id не меняется', function () {
+    $moscow = cityNamed('Москва');
+    $user = User::factory()->create(['city_id' => $moscow->id]);
+
+    $this->actingAs($user)
+        ->postJson('/city', ['city_id' => 999999])
+        ->assertUnprocessable()
+        ->assertJsonValidationErrors('city_id');
+
+    expect(User::query()->find($user->id)?->city_id)->toBe($moscow->id);
+});
+
 it('city_id обязателен и должен быть целым числом', function () {
     $this->post('/city', [])->assertSessionHasErrors('city_id');
     $this->post('/city', ['city_id' => 'Москва'])->assertSessionHasErrors('city_id');

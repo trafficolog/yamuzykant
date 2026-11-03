@@ -70,7 +70,7 @@ it('shared prop flags читает таблицу features не больше о�
 
     $this->get('/')->assertOk();
 
-    expect(count($queries))->toBeLessThanOrEqual(1);
+    expect(count($queries))->toBe(1);
 });
 
 it('миграция Pennant обратима', function () {

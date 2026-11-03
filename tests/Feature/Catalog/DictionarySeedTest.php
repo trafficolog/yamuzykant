@@ -7,6 +7,7 @@ use App\Domain\Catalog\Models\City;
 use App\Domain\Catalog\Models\InstrumentModel;
 use App\Domain\Catalog\Queries\CategoryTree;
 use Database\Seeders\CatalogSeeder;
+use Tests\Support\MenuPrototype;
 
 /**
  * Дерево из макета «Шапка»: вид → группа → пункты. «Мастера и ремонт» — раздел услуг, не вид инструмента.
@@ -126,4 +127,18 @@ it('DatabaseSeeder запускает справочники', function () {
     $this->seed();
 
     expect(City::query()->count())->toBe(16);
+});
+
+it('годы выпуска: Gibson Les Paul Studio с 1983, Strymon Timeline с 2012', function () {
+    expect(InstrumentModel::query()->where('brand', 'Gibson')->where('name', 'Les Paul Studio')->firstOrFail()->year_from)->toBe(1983)
+        ->and(InstrumentModel::query()->where('brand', 'Strymon')->where('name', 'Timeline')->firstOrFail()->year_from)->toBe(2012);
+});
+
+it('разбор меню устойчив к отступам, переносам строк и кавычкам', function () {
+    $html = (string) file_get_contents(base_path('design/prototypes/Шапка.dc.html'));
+    // Тот же макет: двойные кавычки, другие отступы и перенос перед items.
+    $variant = str_replace("'", '"', (string) preg_replace(['/^[ \t]+/m', '/,\s*items:/'], ['        ', ",\n      items:"], $html));
+
+    expect(MenuPrototype::parse($variant))->toBe(MenuPrototype::parse($html))
+        ->and(MenuPrototype::parse($html))->toHaveCount(9);
 });
