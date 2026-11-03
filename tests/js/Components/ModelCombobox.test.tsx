@@ -3,12 +3,30 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { ModelCombobox, type ModelOption } from '@/Components/ModelCombobox';
 
 const models: ModelOption[] = [
-    { id: 1, brand: 'Fender', name: 'American Vintage ’57 Stratocaster', year_from: 2007, year_to: 2012, category_id: 10 },
-    { id: 2, brand: 'Fender', name: 'Player Stratocaster', year_from: 2018, year_to: null, category_id: 10 },
+    {
+        id: 1,
+        brand: 'Fender',
+        name: 'American Vintage ’57 Stratocaster',
+        year_from: 2007,
+        year_to: 2012,
+        category_id: 10,
+    },
+    {
+        id: 2,
+        brand: 'Fender',
+        name: 'Player Stratocaster',
+        year_from: 2018,
+        year_to: null,
+        category_id: 10,
+    },
 ];
 
 function stubSearch(data: ModelOption[] = models) {
-    const fetchMock = vi.fn(async () => ({ ok: true, status: 200, json: async () => ({ data }) }));
+    const fetchMock = vi.fn<(...args: unknown[]) => Promise<unknown>>(async () => ({
+        ok: true,
+        status: 200,
+        json: async () => ({ data }),
+    }));
     vi.stubGlobal('fetch', fetchMock);
 
     return fetchMock;
@@ -32,6 +50,15 @@ async function typeAndWaitForOptions(input: HTMLElement, text: string) {
     await screen.findAllByRole('option');
 }
 
+function option(index: number): HTMLElement {
+    const element = screen.getAllByRole('option')[index];
+    if (!element) {
+        throw new Error(`Нет варианта с индексом ${index}`);
+    }
+
+    return element;
+}
+
 describe('ModelCombobox', () => {
     beforeEach(() => {
         stubSearch();
@@ -48,7 +75,9 @@ describe('ModelCombobox', () => {
         await typeAndWaitForOptions(input, 'стратокастер');
 
         await waitFor(() => expect(fetchMock).toHaveBeenCalled());
-        expect(String(fetchMock.mock.calls[0][0])).toContain(`/api/models?q=${encodeURIComponent('стратокастер')}`);
+        expect(String(fetchMock.mock.calls[0]?.[0])).toContain(
+            `/api/models?q=${encodeURIComponent('стратокастер')}`,
+        );
         expect(screen.getByRole('listbox')).toBeInTheDocument();
         expect(input).toHaveAttribute('aria-expanded', 'true');
         expect(input).toHaveAttribute('aria-autocomplete', 'list');
@@ -59,13 +88,12 @@ describe('ModelCombobox', () => {
         await typeAndWaitForOptions(input, 'stratocaster');
 
         fireEvent.keyDown(input, { key: 'ArrowDown' });
-        const [first, second] = screen.getAllByRole('option');
-        expect(first).toHaveAttribute('aria-selected', 'true');
-        expect(input).toHaveAttribute('aria-activedescendant', first.id);
+        expect(option(0)).toHaveAttribute('aria-selected', 'true');
+        expect(input).toHaveAttribute('aria-activedescendant', option(0).id);
 
         fireEvent.keyDown(input, { key: 'ArrowDown' });
-        expect(second).toHaveAttribute('aria-selected', 'true');
-        expect(input).toHaveAttribute('aria-activedescendant', second.id);
+        expect(option(1)).toHaveAttribute('aria-selected', 'true');
+        expect(input).toHaveAttribute('aria-activedescendant', option(1).id);
     });
 
     it('ArrowDown на последнем варианте и ArrowUp на первом не уходят за границы списка', async () => {
@@ -73,13 +101,12 @@ describe('ModelCombobox', () => {
         await typeAndWaitForOptions(input, 'stratocaster');
 
         fireEvent.keyDown(input, { key: 'ArrowUp' });
-        const [first, second] = screen.getAllByRole('option');
-        expect(first).toHaveAttribute('aria-selected', 'true');
+        expect(option(0)).toHaveAttribute('aria-selected', 'true');
 
         fireEvent.keyDown(input, { key: 'ArrowDown' });
         fireEvent.keyDown(input, { key: 'ArrowDown' });
         fireEvent.keyDown(input, { key: 'ArrowDown' });
-        expect(second).toHaveAttribute('aria-selected', 'true');
+        expect(option(1)).toHaveAttribute('aria-selected', 'true');
     });
 
     it('Enter выбирает подсвеченную модель и закрывает список', async () => {
