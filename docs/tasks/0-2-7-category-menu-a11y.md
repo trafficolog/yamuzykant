@@ -3,7 +3,7 @@ id: "0.2.7"
 phase: "0"
 epic: "0.2"
 title: "Меню категорий: доступность, высота подвала, скрытие доставки"
-status: in_progress
+status: review
 gate: G1
 risk: low
 model_impl: haiku
