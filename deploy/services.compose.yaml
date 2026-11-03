@@ -1,0 +1,50 @@
+# Сервисы stage в Docker на сервере (задача 0.1.4): те же версии, что в compose.yaml для local,
+# закреплённые digest (как MinIO).
+# Порты слушают только 127.0.0.1: снаружи доступны лишь Nginx 80/443 (Mailpit — через Nginx за паролем).
+# Значения — из /etc/ymuzykant/services.env (0600, пишет deploy/provision.sh).
+name: ymuzykant-services
+
+services:
+  meilisearch:
+    # v1.15 (Docker Hub getmeili/meilisearch, индекс мультиархитектурного образа)
+    image: getmeili/meilisearch@sha256:fe500cf9cca05cb9f027981583f28eccf17d35d94499c1f8b7b844e7418152fc
+    restart: unless-stopped
+    environment:
+      MEILI_ENV: production
+      MEILI_MASTER_KEY: ${MEILISEARCH_KEY:?}
+      MEILI_NO_ANALYTICS: "true"
+    ports:
+      - "127.0.0.1:7700:7700"
+    volumes:
+      - meilisearch-data:/meili_data
+
+  mailpit:
+    # v1.33 (Docker Hub axllent/mailpit)
+    image: axllent/mailpit@sha256:9b3a463be15354c0f0eba91697d80e3e0d8a5623ef0e627cacc836bc17fd5231
+    restart: unless-stopped
+    environment:
+      MP_WEBROOT: _mailpit
+      MP_MAX_MESSAGES: "5000"
+      MP_DATABASE: /data/mailpit.db
+    ports:
+      - "127.0.0.1:1025:1025"
+      - "127.0.0.1:8025:8025"
+    volumes:
+      - mailpit-data:/data
+
+  minio:
+    image: chainguard/minio@sha256:090010a3f73f6aa2dff606c61cd0de3640b22748abe19f4e48cce6dc9de7a53f
+    restart: unless-stopped
+    command: ["server", "/data", "--console-address", "127.0.0.1:9001"]
+    environment:
+      MINIO_ROOT_USER: ${MINIO_ROOT_USER:?}
+      MINIO_ROOT_PASSWORD: ${MINIO_ROOT_PASSWORD:?}
+    ports:
+      - "127.0.0.1:9000:9000"
+    volumes:
+      - minio-data:/data
+
+volumes:
+  meilisearch-data:
+  mailpit-data:
+  minio-data:
