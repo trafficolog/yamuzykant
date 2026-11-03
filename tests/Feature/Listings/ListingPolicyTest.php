@@ -81,20 +81,20 @@ it('менять объявление может только владелец �
     [ListingStatus::Expired, false],
 ]);
 
-it('действия продавца — только владельцу и только из допустимого статуса', function (string $ability, ListingStatus $allowedFrom) {
+it('действия продавца — только владельцу и только из допустимого статуса', function (string $ability, array $allowedFrom) {
     foreach (ListingStatus::cases() as $status) {
         $listing = Listing::factory()->inStatus($status)->create();
 
-        expect(Gate::forUser($listing->user)->allows($ability, $listing))->toBe($status === $allowedFrom, "{$ability} из {$status->value}")
+        expect(Gate::forUser($listing->user)->allows($ability, $listing))->toBe(in_array($status, $allowedFrom, true), "{$ability} из {$status->value}")
             ->and(Gate::forUser(User::factory()->create())->allows($ability, $listing))->toBeFalse()
             ->and(Gate::forUser(null)->allows($ability, $listing))->toBeFalse();
     }
 })->with(fn (): array => [
-    ['publish', ListingStatus::Draft],
-    ['resubmit', ListingStatus::NeedsChanges],
-    ['withdraw', ListingStatus::Published],
-    ['renew', ListingStatus::Expired],
-    ['relist', ListingStatus::Withdrawn],
+    ['publish', [ListingStatus::Draft]],
+    ['resubmit', [ListingStatus::NeedsChanges]],
+    ['withdraw', [ListingStatus::Published, ListingStatus::Pending, ListingStatus::NeedsChanges, ListingStatus::Expired]],
+    ['renew', [ListingStatus::Expired]],
+    ['relist', [ListingStatus::Withdrawn]],
 ]);
 
 it('решение модерации — только сотрудник и только по объявлению на проверке', function (ListingStatus $status, bool $allowed) {

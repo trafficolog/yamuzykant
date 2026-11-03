@@ -11,7 +11,8 @@ use App\Domain\Listings\Enums\ListingStatus;
  * Таблица переходов объявления SPEC §6.1 — независимая от реализации копия диаграммы.
  *
  * Ключ — "from:event", значение — [цель при включённом premoderation, цель при выключенном].
- * Решение OWNER (карточка 2.1.1): без флага переходы «в pending» ведут сразу в published.
+ * Решения OWNER (карточка 2.1.1, 04.11.2026): без флага переходы «в pending» ведут сразу в published;
+ * снять с продажи можно из published, pending, needs_changes и expired.
  * Любая пара (from, event), которой нет в таблице, — IllegalTransition при обоих значениях флага.
  */
 final class ListingTransitions
@@ -21,13 +22,16 @@ final class ListingTransitions
         'pending:approve' => ['published', 'published'],
         'pending:return' => ['needs_changes', 'needs_changes'],
         'pending:reject' => ['rejected', 'rejected'],
+        'pending:withdraw' => ['withdrawn', 'withdrawn'],
         'needs_changes:resubmit' => ['pending', 'published'],
+        'needs_changes:withdraw' => ['withdrawn', 'withdrawn'],
         'published:substantial_edit' => ['pending', 'published'],
         'published:minor_edit' => ['published', 'published'],
         'published:price_drop' => ['published', 'published'],
         'published:withdraw' => ['withdrawn', 'withdrawn'],
         'published:expire' => ['expired', 'expired'],
         'expired:renew' => ['pending', 'published'],
+        'expired:withdraw' => ['withdrawn', 'withdrawn'],
         'withdrawn:relist' => ['pending', 'published'],
     ];
 

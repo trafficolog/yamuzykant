@@ -2,6 +2,8 @@
 
 declare(strict_types=1);
 
+use App\Domain\Catalog\Models\Category;
+use App\Domain\Catalog\Models\City;
 use App\Domain\Catalog\Models\InstrumentModel;
 use App\Domain\Listings\Enums\Condition;
 use App\Domain\Listings\Enums\ListingStatus;
@@ -44,22 +46,25 @@ it('снижение цены у published не меняет статус при
     Event::assertDispatched(ListingPriceDropped::class);
 })->with('premoderation');
 
-it('способы передачи, торг и цена вверх — несущественная правка, статус published', function (array $changes, bool $premoderation) {
+it('год, город, цена вверх, торг, способы передачи — несущественная правка, статус published', function (string $field, bool $premoderation) {
     $premoderation ? Feature::for(null)->activate(FeatureFlag::Premoderation->value) : null;
     Event::fake();
     $listing = publishedStrat();
+    $changes = match ($field) {
+        'year' => ['year' => 1962],
+        'city_id' => ['city_id' => City::factory()->create()->id],
+        'price' => ['price' => 190_000],
+        'negotiable' => ['negotiable' => ! $listing->negotiable],
+        'meet' => ['meet' => false],
+        default => ['ship' => true],
+    };
 
     app(ListingStateMachine::class)->edit($listing, $changes);
 
     expect($listing->fresh()?->status)->toBe(ListingStatus::Published);
     Event::assertDispatched(ListingMinorEdited::class);
     Event::assertNotDispatched(ListingSubstantiallyEdited::class);
-})->with([
-    'доставка' => [['ship' => true]],
-    'встреча' => [['meet' => false]],
-    'готов к торгу' => [['negotiable' => true]],
-    'цена вверх' => [['price' => 190_000]],
-])->with('premoderation');
+})->with(['year', 'city_id', 'price', 'negotiable', 'meet', 'ship'])->with('premoderation');
 
 it('изменение фото переводит в pending только при включённом premoderation', function (bool $premoderation, ListingStatus $expected) {
     $premoderation ? Feature::for(null)->activate(FeatureFlag::Premoderation->value) : null;
@@ -75,12 +80,15 @@ it('изменение фото переводит в pending только пр�
     'флаг выключен' => [false, ListingStatus::Published],
 ]);
 
-it('модель, описание, состояние — существенная правка', function (string $field, bool $premoderation) {
+it('модель, категория, название, серийный номер, описание, состояние — существенная правка', function (string $field, bool $premoderation) {
     $premoderation ? Feature::for(null)->activate(FeatureFlag::Premoderation->value) : null;
     Event::fake();
     $listing = publishedStrat();
     $changes = match ($field) {
         'model_id' => ['model_id' => InstrumentModel::factory()->create()->id],
+        'category_id' => ['category_id' => Category::factory()->create()->id],
+        'title' => ['title' => 'Fender ’62 Stratocaster'],
+        'serial_enc' => ['serial_enc' => 'L123456'],
         'description' => ['description' => 'Переделан звукосниматель.'],
         default => ['condition' => Condition::Good],
     };
@@ -89,7 +97,7 @@ it('модель, описание, состояние — существенн�
 
     expect($listing->fresh()?->status)->toBe($premoderation ? ListingStatus::Pending : ListingStatus::Published);
     Event::assertDispatched(ListingSubstantiallyEdited::class);
-})->with(['model_id', 'description', 'condition'])->with('premoderation');
+})->with(['model_id', 'category_id', 'title', 'serial_enc', 'description', 'condition'])->with('premoderation');
 
 it('существенная правка вместе со снижением цены — существенная', function () {
     Feature::for(null)->activate(FeatureFlag::Premoderation->value);

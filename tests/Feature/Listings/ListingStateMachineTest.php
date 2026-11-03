@@ -62,7 +62,12 @@ function fireListingEvent(ListingEvent $event): Closure
         ListingEvent::SubstantialEdit => fn (ListingStateMachine $m, Listing $l) => $m->edit($l, ['description' => 'Новое описание']),
         ListingEvent::MinorEdit => fn (ListingStateMachine $m, Listing $l) => $m->edit($l, ['ship' => ! $l->ship]),
         ListingEvent::PriceDrop => fn (ListingStateMachine $m, Listing $l) => $m->edit($l, ['price' => (int) $l->price - 1000]),
-        ListingEvent::Withdraw => fn (ListingStateMachine $m, Listing $l) => $m->withdraw($l, WithdrawReason::SoldHere, 180_000),
+        // Итоговая цена — только из published и expired (решение OWNER 04.11.2026).
+        ListingEvent::Withdraw => fn (ListingStateMachine $m, Listing $l) => $m->withdraw(
+            $l,
+            WithdrawReason::SoldHere,
+            in_array($l->status, [ListingStatus::Published, ListingStatus::Expired], true) ? 180_000 : null,
+        ),
         ListingEvent::Expire => fn (ListingStateMachine $m, Listing $l) => $m->expire($l),
         ListingEvent::Renew => fn (ListingStateMachine $m, Listing $l) => $m->renew($l),
         ListingEvent::Relist => fn (ListingStateMachine $m, Listing $l) => $m->relist($l),
@@ -255,3 +260,49 @@ it('события перехода отправляются после фикс
     expect(new ListingPublished(Listing::factory()->make(), ListingStatus::Draft, ListingStatus::Published, ListingEvent::Publish))
         ->toBeInstanceOf(ShouldDispatchAfterCommit::class);
 });
+
+it('снять можно из published, pending, needs_changes и expired, черновик — нет', function (ListingStatus $from, bool $allowed) {
+    $listing = Listing::factory()->inStatus($from)->create();
+    $withdraw = fn () => app(ListingStateMachine::class)->withdraw($listing, WithdrawReason::ChangedMind);
+
+    if (! $allowed) {
+        expect($withdraw)->toThrow(IllegalTransition::class);
+        expect($listing->fresh()?->status)->toBe($from);
+
+        return;
+    }
+
+    $withdraw();
+    expect($listing->fresh()?->status)->toBe(ListingStatus::Withdrawn)
+        ->and($listing->saleRecord?->reason)->toBe(WithdrawReason::ChangedMind);
+})->with(fn (): array => [
+    'published' => [ListingStatus::Published, true],
+    'pending' => [ListingStatus::Pending, true],
+    'needs_changes' => [ListingStatus::NeedsChanges, true],
+    'expired' => [ListingStatus::Expired, true],
+    'draft' => [ListingStatus::Draft, false],
+    'rejected' => [ListingStatus::Rejected, false],
+    'withdrawn' => [ListingStatus::Withdrawn, false],
+]);
+
+it('итоговая цена при «продал» — из published и expired', function (ListingStatus $from) {
+    $listing = Listing::factory()->inStatus($from)->create();
+
+    app(ListingStateMachine::class)->withdraw($listing, WithdrawReason::SoldHere, 170_000);
+
+    expect($listing->saleRecord?->final_price)->toBe(170_000);
+})->with(fn (): array => [ListingStatus::Published, ListingStatus::Expired]);
+
+it('из pending и needs_changes снимают без итоговой цены', function (ListingStatus $from) {
+    $listing = Listing::factory()->inStatus($from)->create();
+
+    expect(fn () => app(ListingStateMachine::class)->withdraw($listing, WithdrawReason::SoldHere, 170_000))
+        ->toThrow(InvalidArgumentException::class);
+    expect($listing->fresh()?->status)->toBe($from)
+        ->and(SaleRecord::query()->count())->toBe(0);
+
+    app(ListingStateMachine::class)->withdraw($listing, WithdrawReason::SoldElsewhere);
+
+    expect($listing->fresh()?->status)->toBe(ListingStatus::Withdrawn)
+        ->and($listing->saleRecord?->final_price)->toBeNull();
+})->with(fn (): array => [ListingStatus::Pending, ListingStatus::NeedsChanges]);
