@@ -11,9 +11,13 @@ Artisan::command('inspire', function () {
     $this->comment(Inspiring::quote());
 })->purpose('Display an inspiring quote');
 
-// SPEC §6.1: published → expired через config listings.expire_after_days. Ежечасно — опоздание не больше часа.
-Schedule::call(fn () => app(ExpireListings::class)())
-    ->name('listings:expire')
+// SPEC §6.1: published → expired через config listings.expire_after_days. Можно запустить вручную.
+Artisan::command('listings:expire', function (ExpireListings $expire) {
+    $this->info('Снято по сроку: '.$expire());
+})->purpose('Перевести в expired объявления, опубликованные дольше срока показа');
+
+// Ежечасно — опоздание не больше часа; без наложения запусков.
+Schedule::command('listings:expire')
     ->hourly()
     ->withoutOverlapping()
     ->onOneServer();

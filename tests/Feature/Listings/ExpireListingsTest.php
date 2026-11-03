@@ -8,6 +8,7 @@ use App\Domain\Listings\Events\ListingExpired;
 use App\Domain\Listings\Models\Listing;
 use Illuminate\Console\Scheduling\Schedule;
 use Illuminate\Support\Carbon;
+use Illuminate\Support\Facades\Artisan;
 use Illuminate\Support\Facades\Event;
 
 beforeEach(function () {
@@ -62,9 +63,9 @@ it('снятие по сроку запланировано ежечасно', f
 it('команду listings:expire можно запустить вручную', function () {
     $listing = Listing::factory()->inStatus(ListingStatus::Published)->create(['published_at' => now()->subDays(61)]);
 
-    $this->artisan('listings:expire')
-        ->expectsOutputToContain('1')
-        ->assertExitCode(0);
+    $exitCode = Artisan::call('listings:expire');
 
-    expect($listing->fresh()?->status)->toBe(ListingStatus::Expired);
+    expect($exitCode)->toBe(0)
+        ->and(Artisan::output())->toContain('Снято по сроку: 1')
+        ->and($listing->fresh()?->status)->toBe(ListingStatus::Expired);
 });

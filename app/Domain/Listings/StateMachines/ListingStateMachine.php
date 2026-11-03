@@ -166,13 +166,22 @@ final class ListingStateMachine
 
     /**
      * Правка опубликованного объявления. Вид правки (substantial_edit, price_drop, minor_edit)
-     * определяет SubstantialEdit; поле status из $attributes не применяется.
+     * определяет SubstantialEdit. Принимаются только поля Listing::EDITABLE: владелец, статус,
+     * даты и id — отказ целиком, ничего не сохраняется.
      *
      * @param  array<string, mixed>  $attributes
+     *
+     * @throws InvalidArgumentException поле вне белого списка или отрицательная цена
      */
     public function edit(Listing $listing, array $attributes, bool $photosChanged = false): Listing
     {
-        unset($attributes['status'], $attributes['published_at']);
+        $foreign = array_diff(array_keys($attributes), Listing::EDITABLE);
+        if ($foreign !== []) {
+            throw new InvalidArgumentException('Эти поля объявления не меняются правкой: '.implode(', ', $foreign).'.');
+        }
+        if (isset($attributes['price']) && (! is_int($attributes['price']) || $attributes['price'] < 0)) {
+            throw new InvalidArgumentException('Цена — целое число рублей, не меньше нуля.');
+        }
 
         return $this->transition($listing, function (Listing $fresh) use ($attributes, $photosChanged): ListingEvent {
             $oldPrice = $fresh->price;
@@ -198,9 +207,17 @@ final class ListingStateMachine
 
         return $this->transition(
             $listing,
-            function (Listing $fresh) use ($finalPrice): ListingEvent {
-                // Статус проверяется по заблокированной копии: объявление на проверке ещё не продавалось.
-                if ($finalPrice !== null && ! in_array($fresh->status, self::SOLD_FROM, true)) {
+            function (Listing $fresh) use ($reason, $finalPrice): ListingEvent {
+                // Сначала — допустим ли переход вообще (IllegalTransition важнее ошибки аргументов).
+                self::target($fresh->status, ListingEvent::Withdraw, false);
+
+                // Статус проверяется по заблокированной копии: объявление на проверке ещё не показывалось,
+                // продать его на ЯМузыканте и указать итоговую цену нельзя (решение оркестратора по UC-L4, OWNER — на G1).
+                $wasShown = in_array($fresh->status, self::SOLD_FROM, true);
+                if (! $wasShown && $reason === WithdrawReason::SoldHere) {
+                    throw new InvalidArgumentException('«Продал на ЯМузыканте» — только для опубликованного объявления.');
+                }
+                if (! $wasShown && $finalPrice !== null) {
                     throw new InvalidArgumentException('Итоговая цена указывается только при снятии опубликованного объявления.');
                 }
 
@@ -258,7 +275,7 @@ final class ListingStateMachine
                 } elseif ($to === ListingStatus::Pending) {
                     $fresh->published_at = null;
                 }
-                $fresh->save();
+                Listing::withStatusChange(fn (): bool => $fresh->save());
 
                 if ($after !== null) {
                     $after($fresh);

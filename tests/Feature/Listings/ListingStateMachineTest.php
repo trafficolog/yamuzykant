@@ -364,7 +364,7 @@ it('статус меняется только внутри машины: пря
     $listing->status = ListingStatus::Published;
 
     expect(fn () => $listing->save())->toThrow(LogicException::class);
-    expect(Listing::query()->whereKey($listing->id)->value('status'))->toBe('draft');
+    expect(DB::table('listings')->where('id', $listing->id)->value('status'))->toBe('draft');
 });
 
 it('сохранение без смены статуса вне машины разрешено', function () {

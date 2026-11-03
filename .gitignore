@@ -25,3 +25,6 @@ npm-debug.log
 # Локальные снимки Playwright с Windows и macOS; эталоны только linux (0.2.3)
 /tests/e2e/**/*-win32.png
 /tests/e2e/**/*-darwin.png
+
+# Артефакт SQLite от прогона тестов с DB_DATABASE из .env (источник — задача 1.2.3)
+/ymuzykant

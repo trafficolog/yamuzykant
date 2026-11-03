@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Schema;
 
 /**
@@ -23,6 +24,11 @@ return new class extends Migration
             $table->date('sold_at')->nullable();
             $table->timestamps();
         });
+
+        // В PostgreSQL unsignedInteger — обычный integer: итоговая цена, если указана, больше нуля.
+        if (DB::getDriverName() === 'pgsql') {
+            DB::statement('ALTER TABLE sale_records ADD CONSTRAINT sale_records_final_price_positive CHECK (final_price > 0)');
+        }
     }
 
     public function down(): void

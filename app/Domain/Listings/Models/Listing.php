@@ -11,6 +11,7 @@ use App\Domain\Catalog\Models\InstrumentModel;
 use App\Domain\Listings\Enums\Condition;
 use App\Domain\Listings\Enums\ListingStatus;
 use App\Domain\Moderation\Models\ModerationDecision;
+use Closure;
 use Database\Factories\Listings\ListingFactory;
 use Illuminate\Database\Eloquent\Attributes\UseFactory;
 use Illuminate\Database\Eloquent\Concerns\HasUuids;
@@ -20,6 +21,8 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\HasOne;
 use Illuminate\Support\Carbon;
+use InvalidArgumentException;
+use LogicException;
 
 /**
  * Объявление (SPEC §7 LISTING). Статус — только через ListingStateMachine: его нет в $fillable,
@@ -58,9 +61,32 @@ class Listing extends Model
     /** Скрытая часть маски: всегда 4 звезды, чтобы маска не выдавала длину номера. */
     private const SERIAL_HIDDEN = '****';
 
+    /**
+     * Поля содержания, которые меняет продавец (белый список правки). Владелец (user_id), статус,
+     * даты и id сюда не входят: владелец задаётся явно при создании, статус — только машиной.
+     *
+     * @var list<string>
+     */
+    public const EDITABLE = [
+        'category_id',
+        'model_id',
+        'title',
+        'year',
+        'serial_enc',
+        'condition',
+        'description',
+        'price',
+        'negotiable',
+        'meet',
+        'ship',
+        'city_id',
+    ];
+
+    /** Смена статуса разрешена только внутри withStatusChange() — её вызывает ListingStateMachine. */
+    private static bool $statusChangeAllowed = false;
+
     /** @var list<string> */
     protected $fillable = [
-        'user_id',
         'category_id',
         'model_id',
         'title',
@@ -108,6 +134,45 @@ class Listing extends Model
             'ship' => 'boolean',
             'published_at' => 'datetime',
         ];
+    }
+
+    /**
+     * Защита в глубину к arch-тесту: смена статуса существующего объявления вне машины — исключение;
+     * цена не бывает отрицательной (деньги — целые рубли ≥ 0).
+     */
+    protected static function booted(): void
+    {
+        static::saving(function (Listing $listing): void {
+            if ($listing->price !== null && $listing->price < 0) {
+                throw new InvalidArgumentException('Цена не может быть отрицательной.');
+            }
+
+            if ($listing->exists && $listing->isDirty('status') && ! self::$statusChangeAllowed) {
+                throw new LogicException('Статус объявления меняет только ListingStateMachine.');
+            }
+        });
+    }
+
+    /**
+     * Выполнить сохранение со сменой статуса. Только для ListingStateMachine.
+     *
+     * @internal
+     *
+     * @template T
+     *
+     * @param  Closure(): T  $callback
+     * @return T
+     */
+    public static function withStatusChange(Closure $callback): mixed
+    {
+        $previous = self::$statusChangeAllowed;
+        self::$statusChangeAllowed = true;
+
+        try {
+            return $callback();
+        } finally {
+            self::$statusChangeAllowed = $previous;
+        }
     }
 
     /**
