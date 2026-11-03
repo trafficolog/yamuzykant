@@ -6,12 +6,14 @@ namespace App\Domain\Catalog\Models;
 
 use App\Domain\Catalog\Enums\InstrumentModelStatus;
 use App\Domain\Catalog\Queries\CategoryTree;
+use App\Domain\Catalog\Search\ModelAliases;
 use Database\Factories\Catalog\InstrumentModelFactory;
 use Illuminate\Database\Eloquent\Attributes\UseFactory;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Laravel\Scout\Searchable;
 
 /**
  * Модель инструмента из справочника.
@@ -29,6 +31,8 @@ class InstrumentModel extends Model
 {
     /** @use HasFactory<InstrumentModelFactory> */
     use HasFactory;
+
+    use Searchable;
 
     /** @var list<string> */
     protected $fillable = ['brand', 'name', 'year_from', 'year_to', 'category_id', 'status'];
@@ -65,5 +69,35 @@ class InstrumentModel extends Model
     public function fullName(): string
     {
         return $this->brand.' '.$this->name;
+    }
+
+    /** Индекс подсказки; имя совпадает с таблицей и ключом в config/scout.php. */
+    public function searchableAs(): string
+    {
+        return 'instrument_models';
+    }
+
+    /** @return array<string, mixed> */
+    public function toSearchableArray(): array
+    {
+        return [
+            'id' => $this->id,
+            'brand' => $this->brand,
+            'name' => $this->name,
+            'aliases' => ModelAliases::for($this->brand, $this->name),
+        ];
+    }
+
+    /** В индексе только публичные модели: активные и в видимой категории (с предками). */
+    public function shouldBeSearchable(): bool
+    {
+        return $this->status === InstrumentModelStatus::Active
+            && in_array($this->category_id, (new CategoryTree)->visibleIds(), true);
+    }
+
+    /** Любое сохранение (статус, категория, название) сверяет документ в индексе. */
+    public function searchIndexShouldBeUpdated(): bool
+    {
+        return true;
     }
 }

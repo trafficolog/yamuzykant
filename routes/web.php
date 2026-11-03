@@ -5,12 +5,18 @@ declare(strict_types=1);
 use App\Http\Controllers\Auth\EmailLoginController;
 use App\Http\Controllers\Auth\LogoutController;
 use App\Http\Controllers\Auth\RegistrationController;
+use App\Http\Controllers\Catalog\SuggestModelController;
 use App\Http\Controllers\CityController;
 use App\Http\Controllers\DsShowcaseController;
 use App\Http\Controllers\HomeController;
 use Illuminate\Support\Facades\Route;
 
 Route::get('/', HomeController::class)->name('home');
+
+// Предложение модели — с сессией и CSRF (группа web), поэтому маршрут здесь, а не в api.php.
+Route::post('/api/models/suggestions', SuggestModelController::class)
+    ->middleware(['auth', 'throttle:30,1'])
+    ->name('api.models.suggest');
 
 // Город шапки (UC-S1): смена — 30 запросов в минуту с одного адреса; справочник для окна выбора — 60 в минуту.
 Route::post('/city', [CityController::class, 'update'])->middleware('throttle:30,1')->name('city.update');

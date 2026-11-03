@@ -2,7 +2,7 @@
 id: "2.1"
 phase: "2"
 title: "Объявление"
-status: todo
+status: in_progress
 gate: G1
 ---
 
@@ -16,7 +16,7 @@ gate: G1
 <!-- docs:ops:begin tasks -->
 | Задача | Статус | Риск | Исполнитель → Ревьюер |
 |---|---|---|---|
-| [2.1.1 Объявление: модель и жизненный цикл](../tasks/2-1-1-listing-domain.md) | todo | high | opus → opus |
+| [2.1.1 Объявление: модель и жизненный цикл](../tasks/2-1-1-listing-domain.md) | in_progress | high | opus → opus |
 | [2.1.2 Загрузка и обработка фото](../tasks/2-1-2-photos.md) | todo | high | opus → opus |
 | [2.1.3 Форма «Продать инструмент»](../tasks/2-1-3-sell-form.md) | todo | medium | sonnet → sonnet |
 | [2.1.4 Черновик, публикация, экран «Опубликовано»](../tasks/2-1-4-sell-publish.md) | todo | medium | sonnet → sonnet |
