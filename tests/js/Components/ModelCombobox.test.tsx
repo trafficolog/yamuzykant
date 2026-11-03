@@ -159,4 +159,81 @@ describe('ModelCombobox', () => {
 
         expect(await screen.findByText(/сохранится как введена/)).toBeInTheDocument();
     });
+
+    it('aria-controls есть только при открытом списке', async () => {
+        const { input } = renderCombobox();
+        expect(input).not.toHaveAttribute('aria-controls');
+
+        await typeAndWaitForOptions(input, 'stratocaster');
+        expect(input).toHaveAttribute('aria-controls', screen.getByRole('listbox').id);
+
+        fireEvent.keyDown(input, { key: 'Escape' });
+        expect(input).not.toHaveAttribute('aria-controls');
+    });
+
+    it('live-регион сообщает число найденных моделей', async () => {
+        const { input } = renderCombobox();
+        await typeAndWaitForOptions(input, 'stratocaster');
+
+        expect(screen.getByRole('status')).toHaveTextContent('Найдено: 2');
+    });
+
+    it('ошибка сети показывает отдельное сообщение', async () => {
+        vi.stubGlobal(
+            'fetch',
+            vi.fn<(...args: unknown[]) => Promise<unknown>>(async () =>
+                Promise.reject(new TypeError('network')),
+            ),
+        );
+        const { input } = renderCombobox();
+        fireEvent.change(input, { target: { value: 'stratocaster' } });
+
+        expect(await screen.findByText(/Не удалось получить подсказку/)).toBeInTheDocument();
+    });
+
+    it('ответ 429 показывает сообщение о лимите, а не об ошибке сети', async () => {
+        vi.stubGlobal(
+            'fetch',
+            vi.fn<(...args: unknown[]) => Promise<unknown>>(async () => ({
+                ok: false,
+                status: 429,
+                json: async () => ({}),
+            })),
+        );
+        const { input } = renderCombobox();
+        fireEvent.change(input, { target: { value: 'stratocaster' } });
+
+        expect(await screen.findByText(/Слишком много запросов/)).toBeInTheDocument();
+        expect(screen.queryByText(/Не удалось получить подсказку/)).not.toBeInTheDocument();
+    });
+
+    it('гонка ответов: старый ответ не перетирает новый', async () => {
+        const pending: Array<{ resolve: (value: unknown) => void }> = [];
+        vi.stubGlobal(
+            'fetch',
+            vi.fn<(...args: unknown[]) => Promise<unknown>>(
+                () =>
+                    new Promise((resolve) => {
+                        pending.push({ resolve });
+                    }),
+            ),
+        );
+        const { input } = renderCombobox();
+
+        fireEvent.change(input, { target: { value: 'str' } });
+        await waitFor(() => expect(pending).toHaveLength(1));
+        fireEvent.change(input, { target: { value: 'stratocaster' } });
+        await waitFor(() => expect(pending).toHaveLength(2));
+
+        pending[1]?.resolve({ ok: true, status: 200, json: async () => ({ data: [models[1]] }) });
+        expect(
+            await screen.findByRole('option', { name: /Player Stratocaster/ }),
+        ).toBeInTheDocument();
+
+        pending[0]?.resolve({ ok: true, status: 200, json: async () => ({ data: [models[0]] }) });
+        await new Promise((resolve) => setTimeout(resolve, 0));
+
+        expect(screen.getByRole('option', { name: /Player Stratocaster/ })).toBeInTheDocument();
+        expect(screen.queryByRole('option', { name: /American Vintage/ })).not.toBeInTheDocument();
+    });
 });
