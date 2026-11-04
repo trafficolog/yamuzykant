@@ -4,8 +4,11 @@ declare(strict_types=1);
 
 use App\Domain\Accounts\Exceptions\ConsentRequired;
 use App\Domain\Accounts\Exceptions\InvalidLoginCode;
+use App\Domain\Accounts\Exceptions\InvalidYandexState;
 use App\Domain\Accounts\Exceptions\RegistrationNotPending;
 use App\Domain\Accounts\Exceptions\TooManyLoginAttempts;
+use App\Domain\Accounts\Exceptions\YandexLoginFailed;
+use App\Domain\Accounts\Exceptions\YandexLoginNotPending;
 use App\Http\Controllers\HealthController;
 use App\Http\Middleware\EnsureSessionIsCurrent;
 use App\Http\Middleware\HandleInertiaRequests;
@@ -52,6 +55,9 @@ return Application::configure(basePath: dirname(__DIR__))
             InvalidLoginCode::class,
             RegistrationNotPending::class,
             ConsentRequired::class,
+            InvalidYandexState::class,
+            YandexLoginFailed::class,
+            YandexLoginNotPending::class,
         ]);
 
         $exceptions->render(fn (TooManyLoginAttempts $e): JsonResponse => response()->json([
@@ -71,5 +77,9 @@ return Application::configure(basePath: dirname(__DIR__))
 
         $exceptions->render(fn (RegistrationNotPending $e): JsonResponse => response()->json([
             'message' => __('login.registration_not_pending'),
+        ], 409));
+
+        $exceptions->render(fn (YandexLoginNotPending $e): JsonResponse => response()->json([
+            'message' => __('login.yandex_cancelled'),
         ], 409));
     })->create();
