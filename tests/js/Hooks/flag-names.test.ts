@@ -4,16 +4,14 @@ import { describe, expect, it } from 'vitest';
 
 import { FLAG_NAMES } from '@/Hooks/useFlag';
 
+import { parseFlagEnumCases } from '../support/flagEnum';
+
 // Vitest запускается из корня репозитория (npm run test:js); в jsdom import.meta.url не file:-URL.
 const ENUM_PATH = join(process.cwd(), 'app/Support/Flags/FeatureFlag.php');
 
 /** Значения case-ов backed enum FeatureFlag: единственный источник списка флагов. */
 function enumFlagNames(): string[] {
-    const source = readFileSync(ENUM_PATH, 'utf8');
-
-    return [...source.matchAll(/^\s*case\s+\w+\s*=\s*'([^']+)';/gm)].map(
-        (match): string => match[1] ?? '',
-    );
+    return parseFlagEnumCases(readFileSync(ENUM_PATH, 'utf8'));
 }
 
 describe('FlagName сверяется с enum FeatureFlag', () => {

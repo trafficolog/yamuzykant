@@ -34,5 +34,7 @@ it('устаревшие документы индекса не уменьшаю
     $response = $this->getJson('/api/models?q=Les Paul');
 
     $response->assertOk()->assertJsonCount(8, 'data');
-    expect(collect($response->json('data'))->pluck('name')->every(fn (string $name): bool => str_contains($name, 'Live')))->toBeTrue();
+    foreach (range(1, 16) as $number) {
+        $response->assertJsonMissing(['name' => "Les Paul Stale {$number}"]);
+    }
 });

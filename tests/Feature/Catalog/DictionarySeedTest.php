@@ -16,25 +16,7 @@ use Tests\Support\MenuPrototype;
  */
 function menuTreeFromPrototype(): array
 {
-    $html = (string) file_get_contents(base_path('design/prototypes/Шапка.dc.html'));
-    $kinds = [];
-    $kind = null;
-    foreach ((array) preg_split('/\R/u', $html) as $line) {
-        if (preg_match("/^  \{ name: '([^']+)', icon: '[^']+'/u", (string) $line, $m)) {
-            if ($kind !== null) {
-                $kinds[] = $kind;
-            }
-            $kind = ['name' => $m[1], 'groups' => []];
-        } elseif ($kind !== null && preg_match("/\{ title: '([^']+)', items: \[(.*?)\]/u", (string) $line, $m)) {
-            preg_match_all("/'([^']+)'/u", $m[2], $items);
-            $kind['groups'][] = ['title' => $m[1], 'items' => $items[1]];
-        }
-    }
-    if ($kind !== null) {
-        $kinds[] = $kind;
-    }
-
-    return array_values(array_filter($kinds, fn (array $k) => $k['name'] !== 'Мастера и ремонт'));
+    return MenuPrototype::parse((string) file_get_contents(base_path('design/prototypes/Шапка.dc.html')));
 }
 
 beforeEach(function () {

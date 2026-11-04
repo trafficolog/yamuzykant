@@ -14,6 +14,8 @@
 /.phpunit.cache
 .phpunit.result.cache
 /storage/pail
+# Файл SQLite из DB_DATABASE в .env: тесты его не создают (Tests\TestCase), но локальные запуски могли оставить
+/ymuzykant
 /public/storage
 /.idea
 /.vscode

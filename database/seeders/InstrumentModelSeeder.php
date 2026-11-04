@@ -26,7 +26,7 @@ class InstrumentModelSeeder extends Seeder
         ['Squier', 'Classic Vibe ’60s Stratocaster', null, null, 'Гитары/Электрогитары/Stratocaster-тип'],
         ['Fender', 'American Professional II Telecaster', 2020, null, 'Гитары/Электрогитары/Telecaster-тип'],
         ['Fender', 'Player Telecaster', 2018, null, 'Гитары/Электрогитары/Telecaster-тип'],
-        ['Gibson', 'Les Paul Studio', 2012, 2018, 'Гитары/Электрогитары/Les Paul-тип'],
+        ['Gibson', 'Les Paul Studio', 1983, null, 'Гитары/Электрогитары/Les Paul-тип'],
         ['Gibson', 'Les Paul Standard ’60s', null, null, 'Гитары/Электрогитары/Les Paul-тип'],
         ['Epiphone', 'Les Paul Standard', null, null, 'Гитары/Электрогитары/Les Paul-тип'],
         ['Ibanez', 'RG550', null, null, 'Гитары/Электрогитары/Суперстраты'],
@@ -43,7 +43,7 @@ class InstrumentModelSeeder extends Seeder
         ['ProCo', 'RAT 2', 1987, null, 'Педали и усилители/Педали эффектов/Овердрайв и дисторшн'],
         ['Dunlop', 'Fuzz Face', 1966, null, 'Педали и усилители/Педали эффектов/Фузз'],
         ['Electro-Harmonix', 'Big Muff Pi', 1969, null, 'Педали и усилители/Педали эффектов/Фузз'],
-        ['Strymon', 'Timeline', 2011, null, 'Педали и усилители/Педали эффектов/Дилэй и ревербератор'],
+        ['Strymon', 'Timeline', 2012, null, 'Педали и усилители/Педали эффектов/Дилэй и ревербератор'],
         ['Boss', 'DD-3 Digital Delay', 1986, null, 'Педали и усилители/Педали эффектов/Дилэй и ревербератор'],
         ['MXR', 'Phase 90', 1974, null, 'Педали и усилители/Педали эффектов/Модуляция'],
         ['Line 6', 'Helix', 2015, null, 'Педали и усилители/Процессоры и мультиэффекты/Напольные'],
@@ -85,15 +85,18 @@ class InstrumentModelSeeder extends Seeder
     public function run(): void
     {
         foreach (self::MODELS as [$brand, $name, $from, $to, $path]) {
-            InstrumentModel::query()->updateOrCreate(
-                ['brand' => $brand, 'name' => $name],
-                [
-                    'year_from' => $from,
-                    'year_to' => $to,
-                    'category_id' => $this->categoryId($path),
-                    'status' => InstrumentModelStatus::Active,
-                ],
-            );
+            $model = InstrumentModel::query()->firstOrNew(['brand' => $brand, 'name' => $name]);
+
+            // Статус задаётся только при создании: модерация и скрытие из консоли повторный сид не отменяет.
+            if (! $model->exists) {
+                $model->status = InstrumentModelStatus::Active;
+            }
+
+            $model->fill([
+                'year_from' => $from,
+                'year_to' => $to,
+                'category_id' => $this->categoryId($path),
+            ])->save();
         }
     }
 

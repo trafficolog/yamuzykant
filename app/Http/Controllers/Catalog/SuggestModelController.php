@@ -28,7 +28,7 @@ final class SuggestModelController extends Controller
 
         if ($model === false) {
             return response()->json(
-                ['message' => 'Сегодня уже отправлено много предложений. Попробуйте завтра.'],
+                ['message' => __('catalog.suggestions_daily_limit')],
                 Response::HTTP_TOO_MANY_REQUESTS,
             );
         }
