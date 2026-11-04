@@ -16,10 +16,11 @@ gate: G1
 <!-- docs:ops:begin tasks -->
 | Задача | Статус | Риск | Исполнитель → Ревьюер |
 |---|---|---|---|
-| [2.1.1 Объявление: модель и жизненный цикл](../tasks/2-1-1-listing-domain.md) | review | high | opus → opus |
+| [2.1.1 Объявление: модель и жизненный цикл](../tasks/2-1-1-listing-domain.md) | done | high | opus → opus |
 | [2.1.2 Загрузка и обработка фото](../tasks/2-1-2-photos.md) | todo | high | opus → opus |
 | [2.1.3 Форма «Продать инструмент»](../tasks/2-1-3-sell-form.md) | todo | medium | sonnet → sonnet |
 | [2.1.4 Черновик, публикация, экран «Опубликовано»](../tasks/2-1-4-sell-publish.md) | todo | medium | sonnet → sonnet |
 | [2.1.5 Мои объявления: изменить, снизить цену, снять](../tasks/2-1-5-my-listings.md) | todo | medium | sonnet → sonnet |
 | [2.1.6 Лимит активных объявлений](../tasks/2-1-6-listing-limit.md) | todo | low | haiku → sonnet |
+| [2.1.7 Объявление: защита владельца и смены статуса в глубину](../tasks/2-1-7-listing-defense-in-depth.md) | todo | medium | sonnet → opus |
 <!-- docs:ops:end -->
