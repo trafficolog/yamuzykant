@@ -26,7 +26,7 @@ class InstrumentModelSeeder extends Seeder
         ['Squier', 'Classic Vibe ’60s Stratocaster', null, null, 'Гитары/Электрогитары/Stratocaster-тип'],
         ['Fender', 'American Professional II Telecaster', 2020, null, 'Гитары/Электрогитары/Telecaster-тип'],
         ['Fender', 'Player Telecaster', 2018, null, 'Гитары/Электрогитары/Telecaster-тип'],
-        ['Gibson', 'Les Paul Studio', 1983, null, 'Гитары/Электрогитары/Les Paul-тип'],
+        ['Gibson', 'Les Paul Studio', 1983, 2018, 'Гитары/Электрогитары/Les Paul-тип'],
         ['Gibson', 'Les Paul Standard ’60s', null, null, 'Гитары/Электрогитары/Les Paul-тип'],
         ['Epiphone', 'Les Paul Standard', null, null, 'Гитары/Электрогитары/Les Paul-тип'],
         ['Ibanez', 'RG550', null, null, 'Гитары/Электрогитары/Суперстраты'],
