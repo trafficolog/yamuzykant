@@ -1,7 +1,7 @@
 ---
 id: "3"
 title: "Поиск и просмотр"
-status: todo
+status: in_progress
 gate: G1
 ---
 
