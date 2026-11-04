@@ -77,7 +77,14 @@ final readonly class YandexOAuth
      */
     public function account(): YandexAccount
     {
-        if ($this->request->query->has('error')) {
+        $query = $this->request->query;
+
+        // Не ответ OAuth (нет ни code, ни state, ни error) — просто открыли адрес: входа нет, сессия не трогается.
+        if (! $query->has('code') && ! $query->has('state') && ! $query->has('error')) {
+            throw new YandexLoginFailed('not an OAuth response');
+        }
+
+        if ($query->has('error')) {
             // Отказ тоже проверяет state: страницу «вход отменён» нельзя вызвать с чужого сайта.
             if (! $this->consumeState()) {
                 throw new InvalidYandexState;
