@@ -80,7 +80,7 @@ test.describe('PublicLayout: шапка', () => {
     }) => {
         await openHome(page);
         const toggle = page.getByRole('button', { name: 'Категории' });
-        const menu = page.getByRole('dialog', { name: 'Все категории' });
+        const menu = page.locator('#site-category-menu');
 
         await toggle.focus();
         await page.keyboard.press('Enter');
@@ -105,12 +105,12 @@ test.describe('PublicLayout: шапка', () => {
         await page.getByRole('button', { name: 'Категории' }).focus();
         await page.keyboard.press('Space');
 
-        await expect(page.getByRole('dialog', { name: 'Все категории' })).toBeVisible();
+        await expect(page.locator('#site-category-menu')).toBeVisible();
     });
 
     test('меню категорий: клик вне меню закрывает, клик внутри нет', async ({ page }) => {
         await openHome(page);
-        const menu = page.getByRole('dialog', { name: 'Все категории' });
+        const menu = page.locator('#site-category-menu');
 
         await page.getByRole('button', { name: 'Категории' }).click();
         await expect(menu).toBeVisible();
@@ -126,7 +126,7 @@ test.describe('PublicLayout: шапка', () => {
         await openHome(page);
 
         await page.getByRole('button', { name: 'Категории' }).click();
-        const menu = page.getByRole('dialog', { name: 'Все категории' });
+        const menu = page.locator('#site-category-menu');
         await menu.getByRole('button', { name: 'Студия и запись' }).hover();
 
         await expect(menu.getByRole('link', { name: /Микрофоны/ })).toBeVisible();
@@ -167,7 +167,7 @@ test.describe('PublicLayout: состояния', () => {
     }) => {
         await openHome(page);
         await page.getByRole('button', { name: 'Категории' }).click();
-        const menu = page.getByRole('dialog', { name: 'Все категории' });
+        const menu = page.locator('#site-category-menu');
         const row = menu.getByRole('button', { name: 'Духовые' });
 
         const before = await row.evaluate((el) => getComputedStyle(el).backgroundColor);
@@ -189,7 +189,7 @@ test.describe('PublicLayout: доступность', () => {
     test('axe: открытое меню категорий без нарушений serious и critical', async ({ page }) => {
         await openHome(page);
         await page.getByRole('button', { name: 'Категории' }).click();
-        await expect(page.getByRole('dialog', { name: 'Все категории' })).toBeVisible();
+        await expect(page.locator('#site-category-menu')).toBeVisible();
 
         expect(await seriousOrCritical(page)).toEqual([]);
     });

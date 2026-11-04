@@ -3,7 +3,7 @@ id: "0.2.6"
 phase: "0"
 epic: "0.2"
 title: "Визуальные и текстовые проверки: укрепление после ревью"
-status: review
+status: done
 gate: G1
 risk: low
 model_impl: sonnet
@@ -14,7 +14,7 @@ uc: []
 prototype: ""
 screens: []
 issue: 78
-sync_state: drifted
+sync_state: aligned
 escalations: []
 ---
 
