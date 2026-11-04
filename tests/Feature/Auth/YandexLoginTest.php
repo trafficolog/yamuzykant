@@ -209,18 +209,54 @@ it('повторно использованный state → 403, без вход
     User::factory()->create(['email' => 'anna@example.com', 'yandex_id' => '1000001']);
     mockYandexHttp([
         yandexTokenResponse(),
-        yandexInfoResponse(['id' => '1000001', 'default_email' => 'anna@example.com']),
+        yandexInfoResponse(['id' => '1000001', 'login' => 'anna', 'default_email' => 'anna@example.com']),
         yandexTokenResponse(),
-        yandexInfoResponse(['id' => '1000001', 'default_email' => 'anna@example.com']),
+        yandexInfoResponse(['id' => '1000001', 'login' => 'anna', 'default_email' => 'anna@example.com']),
     ]);
     $params = startYandexLogin();
     $this->get('/auth/yandex/callback?code=auth-code-1&state='.$params['state'])->assertRedirect('/');
+    // Первый вход удался: 403 ниже — из-за повтора state, а не из-за ошибки профиля.
+    $this->assertAuthenticated();
+    expect(session('login_window'))->toBeNull();
     auth()->logout();
 
     $this->get('/auth/yandex/callback?code=auth-code-1&state='.$params['state'])->assertForbidden();
 
     $this->assertGuest();
 });
+
+it('провайдер не переносит пользователя между запросами: второй callback с поддельным state → 403', function () {
+    $anna = User::factory()->create(['email' => 'anna@example.com', 'yandex_id' => '1000001']);
+    mockYandexHttp([
+        yandexTokenResponse(),
+        yandexInfoResponse(['id' => '1000001', 'login' => 'anna', 'default_email' => 'anna@example.com']),
+    ]);
+    $params = startYandexLogin();
+    $this->get('/auth/yandex/callback?code=auth-code-1&state='.$params['state'])->assertRedirect('/');
+    $this->assertAuthenticatedAs($anna);
+    auth()->logout();
+    session()->flush();
+
+    $this->get('/auth/yandex/callback?code=auth-code-2&state=forged')->assertForbidden();
+
+    $this->assertGuest();
+});
+
+it('профиль Яндекса без id → «ошибка Яндекса»: возврат в окно входа, без входа', function (mixed $id) {
+    Socialite::fake('yandex', (new SocialiteUser)->setRaw(['login' => 'anna'])->map([
+        'id' => $id,
+        'email' => 'anna@example.com',
+    ]));
+
+    $this->get(SOCIALITE_FAKE_CALLBACK)->assertRedirect('/');
+
+    $this->assertGuest();
+    expect(session('login_window'))->toBe(['status' => 'yandex_cancelled', 'message' => YANDEX_CANCELLED])
+        ->and(User::query()->count())->toBe(0);
+})->with([
+    'null' => [null],
+    'пустая строка' => [''],
+]);
 
 // --- Привязка аккаунта ---
 
@@ -429,6 +465,50 @@ it('вошедшего пользователя вход через Яндекс
 });
 
 // --- Яндекс не отдал почту: шаг «Введите почту» с кодом (1.1.1) ---
+
+it('Яндекс не отдал почту, но yandex_id уже привязан → вход сразу, без шага «Введите почту»', function () {
+    $anna = User::factory()->create(['email' => 'anna@example.com', 'yandex_id' => '4000004']);
+    fakeYandexUser(['id' => '4000004', 'first_name' => 'Анна']);
+
+    $this->get(SOCIALITE_FAKE_CALLBACK)->assertRedirect('/');
+
+    $this->assertAuthenticatedAs($anna);
+    expect(session('login_window'))->toBeNull()
+        ->and(session()->has('auth.pending_yandex'))->toBeFalse()
+        ->and($anna->fresh()?->email)->toBe('anna@example.com');
+});
+
+it('привязанный yandex_id без почты: шаг почты недоступен, подтвердив почту B в аккаунт A не войти', function () {
+    User::factory()->create(['email' => 'anna@example.com', 'yandex_id' => '4000004']);
+    fakeYandexUser(['id' => '4000004']);
+    $this->get(SOCIALITE_FAKE_CALLBACK);
+    $this->post('/auth/logout')->assertOk();
+
+    $this->postJson('/auth/yandex/email/code', ['email' => 'boris@example.com'])->assertStatus(409);
+
+    $this->assertGuest();
+});
+
+it('yandex_id привязали к аккаунту A во время шага почты: подтверждена почта B → вход в B, A не затронут', function () {
+    fakeYandexUser(['id' => '4000004']);
+    $this->get(SOCIALITE_FAKE_CALLBACK);
+    expect(session('login_window'))->toBe(['status' => 'email_required']);
+
+    // Тот же Яндекс ID успели привязать к A (например, параллельный вход в другой вкладке).
+    $anna = User::factory()->create(['email' => 'anna@example.com', 'yandex_id' => '4000004']);
+    $boris = User::factory()->create(['email' => 'boris@example.com', 'yandex_id' => null]);
+
+    $this->postJson('/auth/yandex/email/code', ['email' => 'boris@example.com'])->assertStatus(202);
+    /** @var LoginCodeMail $mail */
+    $mail = Mail::queued(LoginCodeMail::class)->last();
+    $this->postJson('/auth/yandex/email/verify', ['email' => 'boris@example.com', 'code' => $mail->code])
+        ->assertOk()
+        ->assertJsonPath('status', 'authenticated');
+
+    $this->assertAuthenticatedAs($boris);
+    expect($boris->fresh()?->yandex_id)->toBeNull()
+        ->and($anna->fresh()?->yandex_id)->toBe('4000004');
+});
 
 it('Яндекс не отдал почту → шаг «Введите почту», в users ничего', function (?string $email) {
     fakeYandexUser(['id' => '4000004', 'first_name' => 'Вера', 'default_email' => $email]);

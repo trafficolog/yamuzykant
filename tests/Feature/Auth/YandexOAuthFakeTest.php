@@ -3,8 +3,8 @@
 declare(strict_types=1);
 
 use App\Domain\Accounts\Models\User;
-use App\Domain\Accounts\YandexLogin\FakeYandexProvider;
-use App\Domain\Accounts\YandexLogin\YandexOAuth;
+use App\Support\YandexId\FakeYandexProvider;
+use App\Support\YandexId\YandexOAuth;
 use GuzzleHttp\Handler\MockHandler;
 use GuzzleHttp\HandlerStack;
 use Laravel\Socialite\Facades\Socialite;
