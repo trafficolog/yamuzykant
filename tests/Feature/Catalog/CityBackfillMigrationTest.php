@@ -37,6 +37,20 @@ it('миграция проставляет slug городам-миллионн
         ->and(DB::table('cities')->where('name', 'Тверь')->value('slug'))->toBe('tver-custom');
 });
 
+it('повторный запуск миграции не меняет уже проставленные slug', function () {
+    DB::table('cities')->insert([cityRow('Москва', 'Москва', null)]);
+
+    $migration = require database_path('migrations/2026_11_04_100200_backfill_city_slugs.php');
+    $migration->up();
+    $migration->up();
+    expect(DB::table('cities')->where('name', 'Москва')->value('slug'))->toBe('moscow');
+
+    DB::table('cities')->where('name', 'Москва')->update(['slug' => 'moscow-custom']);
+    $migration->up();
+
+    expect(DB::table('cities')->where('name', 'Москва')->value('slug'))->toBe('moscow-custom');
+});
+
 it('после миграции город по умолчанию находится по slug', function () {
     DB::table('cities')->insert([cityRow('Москва', 'Москва', null)]);
 

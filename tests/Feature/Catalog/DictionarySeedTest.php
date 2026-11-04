@@ -111,8 +111,11 @@ it('DatabaseSeeder запускает справочники', function () {
     expect(City::query()->count())->toBe(16);
 });
 
-it('годы выпуска: Gibson Les Paul Studio с 1983, Strymon Timeline с 2012', function () {
-    expect(InstrumentModel::query()->where('brand', 'Gibson')->where('name', 'Les Paul Studio')->firstOrFail()->year_from)->toBe(1983)
+it('годы выпуска: Gibson Les Paul Studio с 1983 по 2018, Strymon Timeline с 2012', function () {
+    $gibson = InstrumentModel::query()->where('brand', 'Gibson')->where('name', 'Les Paul Studio')->firstOrFail();
+
+    expect($gibson->year_from)->toBe(1983)
+        ->and($gibson->year_to)->toBe(2018)
         ->and(InstrumentModel::query()->where('brand', 'Strymon')->where('name', 'Timeline')->firstOrFail()->year_from)->toBe(2012);
 });
 
