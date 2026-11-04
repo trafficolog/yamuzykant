@@ -3,7 +3,7 @@ id: "1.1.5"
 phase: "1"
 epic: "1.1"
 title: "Вход через Яндекс ID: бэкенд"
-status: review
+status: done
 gate: G1
 risk: high
 model_impl: opus
@@ -14,7 +14,7 @@ uc: ["A1"]
 prototype: ""
 screens: []
 issue: 17
-sync_state: drifted
+sync_state: aligned
 escalations: []
 ---
 

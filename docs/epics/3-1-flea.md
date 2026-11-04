@@ -2,7 +2,7 @@
 id: "3.1"
 phase: "3"
 title: "Барахолка, главная, лот, продавец"
-status: todo
+status: in_progress
 gate: G1
 ---
 
@@ -16,7 +16,7 @@ gate: G1
 <!-- docs:ops:begin tasks -->
 | Задача | Статус | Риск | Исполнитель → Ревьюер |
 |---|---|---|---|
-| [3.1.1 Поисковый индекс объявлений](../tasks/3-1-1-search-index.md) | todo | medium | sonnet → sonnet |
+| [3.1.1 Поисковый индекс объявлений](../tasks/3-1-1-search-index.md) | in_progress | medium | sonnet → sonnet |
 | [3.1.2 Барахолка: выдача и фильтры](../tasks/3-1-2-flea-page.md) | todo | medium | sonnet → sonnet |
 | [3.1.3 Барахолка: пусто, загрузка, ошибка](../tasks/3-1-3-flea-states.md) | todo | low | haiku → sonnet |
 | [3.1.4 Главная](../tasks/3-1-4-home.md) | todo | medium | sonnet → sonnet |
