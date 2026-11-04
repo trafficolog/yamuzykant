@@ -3,10 +3,13 @@
 declare(strict_types=1);
 
 use Illuminate\Support\Facades\Artisan;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Schema;
 
 it('миграция users обратима', function () {
-    Artisan::call('migrate:rollback', ['--step' => 1]);
+    // Откатываем миграцию users и все более поздние (например, listings → users из 2.1.1).
+    $steps = DB::table('migrations')->where('migration', '>=', '2026_11_03_120000')->count();
+    Artisan::call('migrate:rollback', ['--step' => $steps]);
 
     expect(Schema::hasColumn('users', 'password'))->toBeTrue()
         ->and(Schema::hasColumn('users', 'yandex_id'))->toBeFalse()
