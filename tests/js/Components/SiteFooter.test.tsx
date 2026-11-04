@@ -17,6 +17,7 @@ const ALL_ON = {
     sale_prices: true,
     safe_deal: true,
     companies: true,
+    delivery_service: true,
 };
 
 const services = () => screen.getByRole('navigation', { name: 'Сервисы' });
@@ -27,7 +28,15 @@ beforeEach(() => {
 });
 
 describe('SiteFooter', () => {
-    it('все флаги выключены: полоса сервисов — «Барахолка» и «Доставка с упаковкой»', () => {
+    it('все флаги выключены: полоса сервисов — только «Барахолка», доставка скрыта флагом delivery_service', () => {
+        render(<SiteFooter />);
+
+        expect(serviceNames()).toEqual(['Барахолка']);
+        expect(screen.queryByRole('link', { name: 'Доставка с упаковкой' })).toBeNull();
+    });
+
+    it('флаг delivery_service включает «Доставка с упаковкой» и только её', () => {
+        flags = { delivery_service: true };
         render(<SiteFooter />);
 
         expect(serviceNames()).toEqual(['Барахолка', 'Доставка с упаковкой']);

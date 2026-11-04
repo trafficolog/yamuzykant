@@ -14,6 +14,7 @@ export const FLAG_NAMES = [
     'safe_deal',
     'r1_public',
     'premoderation',
+    'delivery_service',
 ] as const;
 
 export type FlagName = (typeof FLAG_NAMES)[number];

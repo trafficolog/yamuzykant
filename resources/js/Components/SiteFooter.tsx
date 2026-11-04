@@ -18,7 +18,7 @@ const SERVICES: readonly (Entry & { icon: string })[] = [
     { label: t.services.masters, icon: 'wrench', flag: 'masters' },
     { label: t.services.salePrices, icon: 'sliders-horizontal', flag: 'sale_prices' },
     { label: t.services.safeDeal, icon: 'shield-check', flag: 'safe_deal' },
-    { label: t.services.delivery, icon: 'truck' },
+    { label: t.services.delivery, icon: 'truck', flag: 'delivery_service' },
 ];
 
 /**
@@ -33,6 +33,7 @@ export default function SiteFooter() {
         sale_prices: useFlag('sale_prices'),
         safe_deal: useFlag('safe_deal'),
         companies: useFlag('companies'),
+        delivery_service: useFlag('delivery_service'),
     };
     const shown = (entries: readonly Entry[]): string[] =>
         entries

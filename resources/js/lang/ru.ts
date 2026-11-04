@@ -71,6 +71,8 @@ export const ru = {
         search: 'Поиск',
         sell: 'Продать',
         messages: 'Сообщения',
+        /** Подпись вкладки со счётчиком непрочитанных: «Сообщения, 3». */
+        messagesLabel: (count: string) => `Сообщения, ${count}`,
         account: 'Кабинет',
     },
     footer: {
