@@ -20,5 +20,5 @@ gate: G1
 | [1.1.2 Окно входа](../tasks/1-1-2-login-dialog.md) | todo | medium | sonnet → sonnet |
 | [1.1.3 Профиль, город и уведомления](../tasks/1-1-3-profile.md) | todo | medium | sonnet → sonnet |
 | [1.1.4 Выбор города](../tasks/1-1-4-city-select.md) | done | low | haiku → sonnet |
-| [1.1.5 Вход через Яндекс ID: бэкенд](../tasks/1-1-5-yandex-id.md) | in_progress | high | opus → opus |
+| [1.1.5 Вход через Яндекс ID: бэкенд](../tasks/1-1-5-yandex-id.md) | review | high | opus → opus |
 <!-- docs:ops:end -->

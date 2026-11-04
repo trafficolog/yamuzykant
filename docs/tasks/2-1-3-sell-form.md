@@ -9,7 +9,7 @@ risk: medium
 model_impl: sonnet
 model_review: sonnet
 roles: ["FRONT", "BACK"]
-depends_on: ["2.1.2", "1.2.2"]
+depends_on: ["2.1.2", "1.2.2", "2.1.7"]
 uc: ["L1"]
 prototype: "Десктоп - Продать.dc.html"
 screens: ["sell"]

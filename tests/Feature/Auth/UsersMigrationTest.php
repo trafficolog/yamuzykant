@@ -7,8 +7,8 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Schema;
 
 it('миграция users обратима', function () {
-    // Откат до миграции users и всех более поздних (справочники 1.2.3 идут после неё по имени файла).
-    $steps = DB::table('migrations')->where('migration', '>=', '2026_11_03_120000_reshape_users_for_email_login')->count();
+    // Откатываем миграцию users и все более поздние (например, listings → users из 2.1.1).
+    $steps = DB::table('migrations')->where('migration', '>=', '2026_11_03_120000')->count();
     Artisan::call('migrate:rollback', ['--step' => $steps]);
 
     expect(Schema::hasColumn('users', 'password'))->toBeTrue()
