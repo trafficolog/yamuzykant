@@ -3,7 +3,7 @@ id: "2.1.1"
 phase: "2"
 epic: "2.1"
 title: "Объявление: модель и жизненный цикл"
-status: review
+status: done
 gate: G1
 risk: high
 model_impl: opus
@@ -14,7 +14,7 @@ uc: ["L1", "L3", "L4"]
 prototype: ""
 screens: []
 issue: 20
-sync_state: drifted
+sync_state: aligned
 escalations: []
 ---
 
