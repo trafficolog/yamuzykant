@@ -3,7 +3,7 @@ id: "0.1.5"
 phase: "0"
 epic: "0.1"
 title: "Логи, ошибки, health"
-status: todo
+status: in_progress
 gate: G1
 risk: medium
 model_impl: sonnet
