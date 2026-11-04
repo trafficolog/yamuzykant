@@ -43,6 +43,8 @@ it('добавляет опубликованное, которого нет в 
     $ghost = ListingFixtures::published();
     Listing::query()->whereKey($ghost->id)->toBase()->delete();
 
+    MeilisearchIndex::waitForTasks();
+
     $exit = Artisan::call('listings:reconcile-index');
 
     expect($exit)->toBe(0)
@@ -57,10 +59,10 @@ it('сообщает, сколько добавлено и сколько убр
     Listing::query()->whereKey($withdrawn->id)->toBase()->update(['status' => 'withdrawn']);
     MeilisearchIndex::waitForTasks();
 
-    $this->artisan('listings:reconcile-index')
-        ->expectsOutputToContain('добавлено 1')
-        ->expectsOutputToContain('убрано 1')
-        ->assertExitCode(0);
+    $exit = Artisan::call('listings:reconcile-index');
+
+    expect($exit)->toBe(0)
+        ->and(Artisan::output())->toContain('добавлено 1, убрано 1');
 });
 
 it('на согласованном индексе ничего не меняет', function () {
@@ -68,10 +70,10 @@ it('на согласованном индексе ничего не меняе�
     ListingFixtures::published();
     MeilisearchIndex::waitForTasks();
 
-    $this->artisan('listings:reconcile-index')
-        ->expectsOutputToContain('добавлено 0')
-        ->expectsOutputToContain('убрано 0')
-        ->assertExitCode(0);
+    $exit = Artisan::call('listings:reconcile-index');
+
+    expect($exit)->toBe(0)
+        ->and(Artisan::output())->toContain('добавлено 0, убрано 0');
 });
 
 it('сверка выполняется по расписанию раз в сутки ночью, без наложения запусков', function () {
@@ -81,7 +83,9 @@ it('сверка выполняется по расписанию раз в су
     $event = collect($schedule->events())
         ->first(fn (ScheduledEvent $event): bool => str_contains((string) $event->command, 'listings:reconcile-index'));
 
-    expect($event)->toBeInstanceOf(ScheduledEvent::class);
+    if (! $event instanceof ScheduledEvent) {
+        throw new LogicException('Сверка индекса не стоит в расписании.');
+    }
     [, $hour, $day, $month, $weekday] = explode(' ', $event->expression);
     expect([$day, $month, $weekday])->toBe(['*', '*', '*'])
         ->and((int) $hour)->toBeGreaterThanOrEqual(1)->toBeLessThanOrEqual(5)

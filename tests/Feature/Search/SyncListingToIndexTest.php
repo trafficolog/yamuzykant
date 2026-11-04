@@ -27,10 +27,10 @@ function indexedIds(): array
 {
     MeilisearchIndex::waitForTasks();
 
-    return array_map(
+    return array_values(array_map(
         fn (array $document): string => $document['id'],
         ListingIndex::default()->client()->index(ListingIndex::default()->name)->getDocuments()->getResults(),
-    );
+    ));
 }
 
 it('публикация кладёт объявление в индекс', function () {

@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 use App\Domain\Search\ListingIndex;
 use Illuminate\Support\Facades\Artisan;
+use Meilisearch\Contracts\DocumentsQuery;
 use Tests\Support\MeilisearchIndex;
 
 // Критерий 3.1.1: «p95 поиска ≤ 300 мс на 100 тыс.» — команды сида и замера. Здесь проверяются на малом объёме
@@ -21,10 +22,10 @@ it('сид нагрузочных данных кладёт заданное ч�
     MeilisearchIndex::waitForTasks();
 
     $index = ListingIndex::named(BENCH_INDEX);
-    $stats = $index->client()->index($index->name)->stats();
+    $total = $index->client()->index($index->name)->getDocuments((new DocumentsQuery)->setLimit(1))->getTotal();
 
     expect($exit)->toBe(0)
-        ->and($stats['numberOfDocuments'])->toBe(250);
+        ->and($total)->toBe(250);
 });
 
 it('документы нагрузочного сида — той же схемы, что и боевой индекс, без персональных данных', function () {
@@ -49,24 +50,24 @@ it('сид не трогает боевой индекс listings', function () 
     MeilisearchIndex::waitForTasks();
 
     $main = ListingIndex::default();
-    expect($main->client()->index($main->name)->stats()['numberOfDocuments'])->toBe(0);
+    expect($main->client()->index($main->name)->getDocuments((new DocumentsQuery)->setLimit(1))->getTotal())->toBe(0);
 });
 
 it('замер печатает p50, p95, p99 и укладывается в порог', function () {
     Artisan::call('listings:seed-load', ['count' => 500, '--index' => BENCH_INDEX]);
     MeilisearchIndex::waitForTasks();
 
-    $this->artisan('listings:benchmark-search', ['--index' => BENCH_INDEX, '--runs' => 40, '--threshold' => 300])
-        ->expectsOutputToContain('p50')
-        ->expectsOutputToContain('p95')
-        ->expectsOutputToContain('p99')
-        ->assertExitCode(0);
+    $exit = Artisan::call('listings:benchmark-search', ['--index' => BENCH_INDEX, '--runs' => 40, '--threshold' => 300]);
+
+    expect($exit)->toBe(0)
+        ->and(Artisan::output())->toContain('p50')->toContain('p95')->toContain('p99');
 });
 
 it('замер завершается с ошибкой, если p95 выше порога', function () {
     Artisan::call('listings:seed-load', ['count' => 100, '--index' => BENCH_INDEX]);
     MeilisearchIndex::waitForTasks();
 
-    $this->artisan('listings:benchmark-search', ['--index' => BENCH_INDEX, '--runs' => 20, '--threshold' => 0])
-        ->assertExitCode(1);
+    $exit = Artisan::call('listings:benchmark-search', ['--index' => BENCH_INDEX, '--runs' => 20, '--threshold' => 0]);
+
+    expect($exit)->toBe(1);
 });

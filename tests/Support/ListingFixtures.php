@@ -57,11 +57,10 @@ final class ListingFixtures
 
     public static function stratocaster(Category $category): InstrumentModel
     {
-        return InstrumentModel::factory()->for($category, 'category')->create([
-            'brand' => 'Fender',
-            'name' => 'American Vintage ’57 Stratocaster',
-            'status' => InstrumentModelStatus::Active,
-        ]);
+        return InstrumentModel::query()->firstOrCreate(
+            ['brand' => 'Fender', 'name' => 'American Vintage ’57 Stratocaster'],
+            ['category_id' => $category->id, 'status' => InstrumentModelStatus::Active],
+        );
     }
 
     /**
