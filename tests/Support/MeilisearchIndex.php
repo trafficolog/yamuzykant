@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Tests\Support;
 
 use App\Domain\Catalog\Models\InstrumentModel;
+use App\Domain\Listings\Models\Listing;
 use Illuminate\Support\Facades\Artisan;
 use Meilisearch\Client;
 use Meilisearch\Contracts\TasksQuery;
@@ -21,6 +22,14 @@ final class MeilisearchIndex
     {
         Artisan::call('scout:sync-index-settings');
         Artisan::call('scout:flush', ['model' => InstrumentModel::class]);
+        self::waitForTasks();
+    }
+
+    /** Пустой индекс объявлений с применёнными настройками. */
+    public static function resetListings(): void
+    {
+        Artisan::call('scout:sync-index-settings');
+        Artisan::call('scout:flush', ['model' => Listing::class]);
         self::waitForTasks();
     }
 
