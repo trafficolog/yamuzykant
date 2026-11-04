@@ -27,9 +27,9 @@ test.describe('smoke', () => {
         expect(html).toMatch(/<h1[^>]*>ЯМузыкант<\/h1>/);
     });
 
-    test('/health отвечает {"status":"ok"}', async ({ request }) => {
+    test('/health отвечает 200, status ok и проверки зависимостей', async ({ request }) => {
         const response = await request.get('/health');
         expect(response.status()).toBe(200);
-        expect(await response.json()).toEqual({ status: 'ok' });
+        expect(await response.json()).toMatchObject({ status: 'ok', checks: { database: { status: 'ok' } } });
     });
 });
