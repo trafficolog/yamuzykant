@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Http\Controllers\Auth;
 
 use App\Domain\Accounts\Actions\CompleteLogin;
+use App\Domain\Accounts\Actions\LoginWithYandex;
 use App\Domain\Accounts\Actions\SendLoginCode;
 use App\Domain\Accounts\Actions\VerifyLoginCode;
 use App\Http\Controllers\Controller;
@@ -22,7 +23,10 @@ final class EmailLoginController extends Controller
         SendLoginCodeRequest $request,
         SendLoginCode $sendLoginCode,
         CompleteLogin $completeLogin,
+        LoginWithYandex $loginWithYandex,
     ): JsonResponse {
+        // Обычный вход по почте: Яндекс ID, ждущий шага «Введите почту», не привяжется к этой почте.
+        $loginWithYandex->abandon();
         $completeLogin->startAttempt($request->emailAddress());
         $sendLoginCode->handle($request->emailAddress(), (string) $request->ip());
 
@@ -37,7 +41,9 @@ final class EmailLoginController extends Controller
         VerifyLoginCodeRequest $request,
         VerifyLoginCode $verifyLoginCode,
         CompleteLogin $completeLogin,
+        LoginWithYandex $loginWithYandex,
     ): JsonResponse {
+        $loginWithYandex->abandon();
         $completeLogin->startAttempt($request->emailAddress());
         $identity = $verifyLoginCode->handle($request->emailAddress(), $request->code(), (string) $request->ip());
 
