@@ -3,7 +3,7 @@ id: "1.2.3"
 phase: "1"
 epic: "1.2"
 title: "Справочники: доработки после ревью"
-status: todo
+status: review
 gate: G1
 risk: low
 model_impl: haiku

@@ -4,6 +4,7 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 import CategoryMenu, { CATEGORY_MENU_ID } from '@/Components/CategoryMenu';
 import CitySelect, { type CityOption } from '@/Components/CitySelect';
 import { useFlag, type FlagName } from '@/Hooks/useFlag';
+import { useNarrow } from '@/Hooks/useNarrow';
 import { CATEGORY_TREE, type CategoryNode } from '@/lang/categories';
 import { ru } from '@/lang/ru';
 
@@ -62,19 +63,33 @@ export default function SiteHeader({
         masters: useFlag('masters'),
         sale_prices: useFlag('sale_prices'),
         safe_deal: useFlag('safe_deal'),
+        delivery_service: useFlag('delivery_service'),
     };
     const isEnabled = (flag: FlagName | undefined): boolean =>
         flag === undefined || enabled[flag] === true;
 
     const [open, setOpen] = useState(false);
-    const headerRef = useRef<HTMLElement>(null);
+    const narrow = useNarrow();
+    /** Нажатие мышью на «Категории»: фокус на кнопке от мыши не должен закрывать меню до клика. */
+    const togglePressed = useRef(false);
 
-    const closeMenu = useCallback((restoreFocus: boolean) => {
+    /** Фокус возвращаем на кнопку уже после размонтирования меню: иначе шторка вернула бы его внутрь. */
+    const restoreFocus = useRef(false);
+
+    const closeMenu = useCallback((withFocus: boolean) => {
+        restoreFocus.current = withFocus;
         setOpen(false);
-        if (restoreFocus) document.getElementById(TOGGLE_ID)?.focus();
     }, []);
 
-    // Пока меню открыто: Esc закрывает и возвращает фокус на кнопку; клик и фокус вне меню закрывают.
+    useEffect(() => {
+        if (open || !restoreFocus.current) return;
+        restoreFocus.current = false;
+        document.getElementById(TOGGLE_ID)?.focus();
+    }, [open]);
+
+    // Пока меню открыто: Esc закрывает и возвращает фокус на кнопку; клик вне меню закрывает;
+    // фокус, ушедший из самого меню (в том числе на поле поиска), закрывает его. На < 640 px шторка
+    // модальная и удерживает фокус сама (CategoryMenu), поэтому здесь её не трогаем.
     useEffect(() => {
         if (!open) return;
 
@@ -90,8 +105,13 @@ export default function SiteHeader({
             if (!inside) closeMenu(false);
         };
         const onFocusIn = (event: FocusEvent) => {
+            if (narrow) return;
             const target = event.target;
-            if (target instanceof Node && !headerRef.current?.contains(target)) closeMenu(false);
+            if (!(target instanceof Node)) return;
+            if (document.getElementById(CATEGORY_MENU_ID)?.contains(target)) return;
+            if (togglePressed.current && document.getElementById(TOGGLE_ID)?.contains(target))
+                return;
+            closeMenu(false);
         };
 
         document.addEventListener('keydown', onKeyDown);
@@ -102,12 +122,12 @@ export default function SiteHeader({
             document.removeEventListener('pointerdown', onPointerDown);
             document.removeEventListener('focusin', onFocusIn);
         };
-    }, [open, closeMenu]);
+    }, [open, closeMenu, narrow]);
 
     const sections = SECTIONS.filter((section) => isEnabled(section.flag));
 
     return (
-        <header ref={headerRef} className="ym-site-header">
+        <header className="ym-site-header">
             <div className="ym-site-header__strip">
                 <div className="ym-site-header__strip-in">
                     <nav aria-label={ru.header.sectionsLabel} className="ym-site-header__sections">
@@ -157,7 +177,14 @@ export default function SiteHeader({
                             icon={open ? 'x' : 'layout-grid'}
                             aria-expanded={open}
                             aria-controls={CATEGORY_MENU_ID}
-                            onClick={() => (open ? closeMenu(false) : setOpen(true))}
+                            onPointerDown={() => {
+                                togglePressed.current = true;
+                            }}
+                            onClick={() => {
+                                togglePressed.current = false;
+                                if (open) closeMenu(false);
+                                else setOpen(true);
+                            }}
                         >
                             <span className="ym-site-header__cats-label">
                                 {ru.header.categories}
@@ -167,6 +194,7 @@ export default function SiteHeader({
                             <CategoryMenu
                                 categories={categories}
                                 isEnabled={isEnabled}
+                                narrow={narrow}
                                 onClose={() => closeMenu(true)}
                             />
                         ) : null}

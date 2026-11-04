@@ -42,4 +42,22 @@ describe('package.json: версии инструментов (0.1.8)', () => {
         expect(lock.packages['node_modules/@vitest/coverage-v8']?.version).toBe(coverage);
         expect(lock.packages['']?.devDependencies?.['@vitest/coverage-v8']).toBe(coverage);
     });
+
+    // 0.2.6: версия Playwright задаёт образ контейнера эталонов (mcr.microsoft.com/playwright:vX-noble)
+    // и браузер в CI, http-server отдаёт прототипы. Плавающий ^ ломает сверку при обновлении.
+    const PINNED = ['playwright', '@playwright/test', 'http-server'];
+
+    it.each(PINNED)('%s — точная версия без ^ и ~', (name) => {
+        expect(pkg.devDependencies[name] ?? '').toMatch(/^\d+\.\d+\.\d+$/);
+    });
+
+    it.each(PINNED)('%s — в lock-файле та же версия, что в package.json', (name) => {
+        const wanted = pkg.devDependencies[name];
+        expect(lock.packages[`node_modules/${name}`]?.version).toBe(wanted);
+        expect(lock.packages['']?.devDependencies?.[name]).toBe(wanted);
+    });
+
+    it('playwright и @playwright/test — одной версии', () => {
+        expect(pkg.devDependencies['@playwright/test']).toBe(pkg.devDependencies['playwright']);
+    });
 });

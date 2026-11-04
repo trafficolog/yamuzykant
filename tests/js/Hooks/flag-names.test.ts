@@ -4,6 +4,8 @@ import { describe, expect, it } from 'vitest';
 
 import { FLAG_NAMES } from '@/Hooks/useFlag';
 
+// Флаг `delivery_service` (0.2.7) должен попасть и в enum, и в FLAG_NAMES: сверка ниже это проверит.
+
 // Vitest запускается из корня репозитория (npm run test:js); в jsdom import.meta.url не file:-URL.
 const ENUM_PATH = join(process.cwd(), 'app/Support/Flags/FeatureFlag.php');
 

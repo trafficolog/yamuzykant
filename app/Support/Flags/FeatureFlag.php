@@ -20,4 +20,6 @@ enum FeatureFlag: string
     case SafeDeal = 'safe_deal';
     case R1Public = 'r1_public';
     case Premoderation = 'premoderation';
+    /** Доставка через службы (SPEC §2, решение OWNER 03.11.2026): после R1. */
+    case DeliveryService = 'delivery_service';
 }

@@ -273,9 +273,11 @@ test.describe('Меню категорий — полноэкранная што
         await open(page, 1440, 900);
         await page.getByRole('button', { name: 'Категории' }).click();
 
-        await expect(sheet(page)).toBeVisible();
-        await expect(sheet(page).getByRole('button', { name: 'Закрыть меню' })).toBeHidden();
-        const box = await rect(sheet(page));
+        const panel = page.locator('#site-category-menu');
+        await expect(panel).toBeVisible();
+        await expect(panel).not.toHaveAttribute('role', 'dialog');
+        await expect(panel.getByRole('button', { name: 'Закрыть меню' })).toBeHidden();
+        const box = await rect(panel);
         expect(box.y).toBeGreaterThan(0);
     });
 });

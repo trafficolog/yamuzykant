@@ -20,6 +20,7 @@ dataset('feature_flags', [
     'safe_deal',
     'r1_public',
     'premoderation',
+    'delivery_service',
 ]);
 
 it('хранит флаги в драйвере database', function () {
@@ -43,6 +44,7 @@ it('shared prop flags отдаёт явный список флагов, все 
             'safe_deal' => false,
             'r1_public' => false,
             'premoderation' => false,
+            'delivery_service' => false,
         ]));
 });
 
