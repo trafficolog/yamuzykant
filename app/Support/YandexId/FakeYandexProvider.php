@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace App\Domain\Accounts\YandexLogin;
+namespace App\Support\YandexId;
 
 use SocialiteProviders\Yandex\Provider;
 

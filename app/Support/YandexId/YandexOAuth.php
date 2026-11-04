@@ -2,16 +2,18 @@
 
 declare(strict_types=1);
 
-namespace App\Domain\Accounts\YandexLogin;
+namespace App\Support\YandexId;
 
 use App\Domain\Accounts\Exceptions\InvalidYandexState;
 use App\Domain\Accounts\Exceptions\YandexLoginFailed;
+use App\Domain\Accounts\YandexLogin\YandexAccount;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\App;
 use Illuminate\Support\Facades\Config;
 use Illuminate\Support\Facades\Log;
 use Laravel\Socialite\Contracts\Provider as ProviderContract;
 use Laravel\Socialite\Facades\Socialite;
+use Laravel\Socialite\SocialiteManager;
 use Laravel\Socialite\Two\AbstractProvider;
 use Laravel\Socialite\Two\InvalidStateException;
 use SocialiteProviders\Yandex\Provider;
@@ -21,6 +23,9 @@ use Throwable;
 /**
  * OAuth Яндекс ID (ARCHITECTURE §7): state и PKCE (S256), адрес возврата — только из конфига,
  * токены Яндекса не хранятся — из ответа берутся только id, почта и имя.
+ *
+ * Адаптер инфраструктуры, а не домен: работает с HTTP-запросом и сессией через Socialite.
+ * Домен получает от него только YandexAccount.
  */
 final readonly class YandexOAuth
 {
@@ -111,14 +116,14 @@ final readonly class YandexOAuth
 
     private function provider(): ProviderContract
     {
-        $provider = Socialite::driver(self::DRIVER);
-
-        // Драйвер кэшируется менеджером Socialite: сессия и параметры — только из текущего запроса.
-        if ($provider instanceof AbstractProvider) {
-            $provider->setRequest($this->request);
+        // Свежий провайдер на каждый вызов: менеджер Socialite кэширует драйвер, а провайдер помнит
+        // пользователя прошлого user() и отдал бы его без проверки state (долгоживущий воркер, тесты).
+        $socialite = Socialite::getFacadeRoot();
+        if ($socialite instanceof SocialiteManager) {
+            $socialite->forgetDrivers();
         }
 
-        return $provider;
+        return Socialite::driver(self::DRIVER);
     }
 
     /**

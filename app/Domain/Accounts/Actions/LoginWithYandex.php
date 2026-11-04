@@ -8,6 +8,7 @@ use App\Domain\Accounts\Data\LoginResult;
 use App\Domain\Accounts\Data\VerifiedIdentity;
 use App\Domain\Accounts\EmailLogin\EmailAddress;
 use App\Domain\Accounts\Exceptions\YandexLoginNotPending;
+use App\Domain\Accounts\Models\User;
 use App\Domain\Accounts\YandexLogin\PendingYandexLink;
 use App\Domain\Accounts\YandexLogin\YandexAccount;
 use Illuminate\Contracts\Session\Session;
@@ -27,6 +28,16 @@ final readonly class LoginWithYandex
 
     public function handle(YandexAccount $account): LoginResult
     {
+        // Порядок карточки: сначала yandex_id. Привязанный Яндекс ID входит сразу, даже без почты.
+        $linked = User::query()->where('yandex_id', $account->id)->first();
+        if ($linked !== null) {
+            $this->pending->forget();
+
+            return $this->completeLogin->handle(
+                new VerifiedIdentity(EmailAddress::from($linked->email), $account->id, $account->name),
+            );
+        }
+
         if ($account->email === null) {
             // Новый id сессии на промежуточном шаге — защита от фиксации сессии.
             $this->session->migrate(true);
@@ -65,7 +76,18 @@ final readonly class LoginWithYandex
         $account = $this->pending->get() ?? throw new YandexLoginNotPending;
         $this->pending->forget();
 
-        return $this->completeLogin->handle(new VerifiedIdentity($verified->email, $account->id, $account->name));
+        // Вход — только в аккаунт подтверждённой почты. Если этот Яндекс ID тем временем привязали
+        // к другому аккаунту, он не переносится и не открывает тот аккаунт (почта B → аккаунт A невозможно).
+        $linkedElsewhere = User::query()
+            ->where('yandex_id', $account->id)
+            ->where('email', '!=', $verified->email->value)
+            ->exists();
+
+        return $this->completeLogin->handle(new VerifiedIdentity(
+            $verified->email,
+            $linkedElsewhere ? null : $account->id,
+            $account->name,
+        ));
     }
 
     /**
