@@ -3,7 +3,7 @@ id: "1.1.5"
 phase: "1"
 epic: "1.1"
 title: "Вход через Яндекс ID: бэкенд"
-status: in_progress
+status: review
 gate: G1
 risk: high
 model_impl: opus
