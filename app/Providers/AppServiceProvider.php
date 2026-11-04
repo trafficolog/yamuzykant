@@ -8,6 +8,7 @@ use App\Domain\Accounts\Listeners\RememberSessionVersion;
 use App\Support\Flags\FeatureFlag;
 use Illuminate\Auth\Events\Login;
 use Illuminate\Support\Facades\Event;
+use Illuminate\Support\Facades\Queue;
 use Illuminate\Support\ServiceProvider;
 use Laravel\Pennant\Feature;
 
@@ -33,5 +34,8 @@ class AppServiceProvider extends ServiceProvider
 
         // Версия сессий в сессии при любом входе — для «выйти на всех устройствах».
         Event::listen(Login::class, RememberSessionVersion::class);
+
+        // Время постановки задания в очередь: по нему /health считает возраст старейшего задания в Redis.
+        Queue::createPayloadUsing(static fn (): array => ['pushed_at' => time()]);
     }
 }

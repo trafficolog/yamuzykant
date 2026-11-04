@@ -3,6 +3,7 @@
 declare(strict_types=1);
 
 use App\Domain\Accounts\Mail\LoginCodeMail;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Mail;
 use Pest\Support\HigherOrderTapProxy;
 use Tests\TestCase;
@@ -48,4 +49,35 @@ function currentTest(): TestCase
     }
 
     throw new LogicException('Хелпер вызван вне теста');
+}
+
+/**
+ * Направляет канал `single` во временный файл и возвращает путь (файл удаляется по окончании прогона).
+ */
+function useTempJsonLog(): string
+{
+    $path = sys_get_temp_dir().'/ym-log-'.uniqid().'.log';
+    register_shutdown_function(static fn (): bool => @unlink($path));
+
+    config([
+        'logging.default' => 'single',
+        'logging.channels.single.path' => $path,
+        'logging.channels.single.level' => 'debug',
+    ]);
+    Log::forgetChannel('single');
+
+    return $path;
+}
+
+/**
+ * Строки журнала (после сброса канала, чтобы обработчик закрыл файл).
+ *
+ * @return list<string>
+ */
+function readLogLines(string $path): array
+{
+    Log::forgetChannel('single');
+    $lines = file($path, FILE_IGNORE_NEW_LINES | FILE_SKIP_EMPTY_LINES);
+
+    return $lines === false ? [] : $lines;
 }

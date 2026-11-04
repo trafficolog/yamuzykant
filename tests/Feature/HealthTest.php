@@ -5,49 +5,35 @@ declare(strict_types=1);
 use Illuminate\Contracts\Redis\Factory as RedisFactory;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Http;
+use Tests\Support\FakeRedisConnection;
+use Tests\Support\FakeRedisFactory;
 use Tests\TestCase;
 
 // /health работает и при пустой БД без миграций: группа no-database отключает RefreshDatabase (см. Tests\TestCase).
 uses()->group(TestCase::NO_DATABASE_GROUP);
 
 /**
- * Подмена Redis: connection() отдаёт объект с ping() и lindex().
+ * Ответ Meilisearch на /health: HTTP-код, который вернёт подмена.
  */
+function meilisearchAnswers(?int $status = null): int
+{
+    static $current = 200;
+
+    if ($status !== null) {
+        $current = $status;
+    }
+
+    return $current;
+}
+
 function fakeRedis(bool $pingFails = false, ?string $oldestPayload = null): void
 {
-    $connection = new class($pingFails, $oldestPayload)
-    {
-        public function __construct(private bool $pingFails, private ?string $oldest) {}
-
-        public function ping(): string
-        {
-            if ($this->pingFails) {
-                throw new RuntimeException('connection refused');
-            }
-
-            return 'PONG';
-        }
-
-        public function lindex(string $key, int $index): ?string
-        {
-            return $this->oldest;
-        }
-    };
-
-    app()->instance(RedisFactory::class, new class($connection) implements RedisFactory
-    {
-        public function __construct(private object $connection) {}
-
-        public function connection($name = null): object
-        {
-            return $this->connection;
-        }
-    });
+    app()->instance(RedisFactory::class, new FakeRedisFactory(new FakeRedisConnection($pingFails, $oldestPayload)));
 }
 
 beforeEach(function () {
-    // Meilisearch в unit-режиме подменён: ответ живого сервиса.
-    Http::fake(['*/health' => Http::response(['status' => 'available'])]);
+    meilisearchAnswers(200);
+    Http::fake(fn () => Http::response(['status' => 'available'], meilisearchAnswers()));
 });
 
 it('/health отвечает 200 и status ok, когда все проверки пройдены или пропущены', function () {
@@ -89,11 +75,12 @@ it('/health не раскрывает текст ошибок и парамет�
 
     $body = $this->getJson('/health')->getContent();
 
-    expect($body)->not->toContain('nonexistent')->not->toContain('SQLSTATE');
+    expect($body)->not->toContain('nonexistent');
+    expect($body)->not->toContain('SQLSTATE');
 });
 
 it('недоступный Meilisearch — 200 и status degraded', function () {
-    Http::fake(['*/health' => Http::response('down', 500)]);
+    meilisearchAnswers(500);
 
     $this->getJson('/health')
         ->assertOk()

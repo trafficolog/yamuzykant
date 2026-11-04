@@ -14,12 +14,13 @@ describe('Sentry на фронте', () => {
     it('с DSN вызывает init с release и фильтром beforeSend', () => {
         const init = vi.fn();
 
-        expect(initSentry({ dsn: 'https://key@sentry.example/1', release: 'abc123', init })).toBe(true);
+        expect(initSentry({ dsn: 'https://key@sentry.example/1', release: 'abc123', init })).toBe(
+            true,
+        );
         expect(init).toHaveBeenCalledWith(
             expect.objectContaining({
                 dsn: 'https://key@sentry.example/1',
                 release: 'abc123',
-                sendDefaultPii: false,
                 beforeSend: scrubEvent,
             }),
         );

@@ -9,19 +9,6 @@ use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Route;
 use Tests\Support\RequestIdProbeJob;
 
-beforeEach(function () {
-    $this->logPath = sys_get_temp_dir().'/ym-rid-'.uniqid().'.log';
-    config([
-        'logging.default' => 'single',
-        'logging.channels.single.path' => $this->logPath,
-    ]);
-    Log::forgetChannel('single');
-});
-
-afterEach(function () {
-    @unlink($this->logPath);
-});
-
 it('ответ содержит X-Request-Id, а без входящего заголовка id генерируется', function () {
     $id = $this->get('/')->headers->get('X-Request-Id');
 
@@ -35,11 +22,14 @@ it('принимает корректный входящий X-Request-Id', func
 
 it('подменяет некорректный входящий X-Request-Id', function () {
     $response = $this->withHeader('X-Request-Id', 'bad id <script>')->get('/health');
+    $id = (string) $response->headers->get('X-Request-Id');
 
-    expect($response->headers->get('X-Request-Id'))->toMatch('/^[A-Za-z0-9-]{8,64}$/')->not->toContain('script');
+    expect($id)->toMatch('/^[A-Za-z0-9-]{8,64}$/');
+    expect($id)->not->toContain('script');
 });
 
 it('каждая запись журнала запроса содержит request_id', function () {
+    $path = useTempJsonLog();
     Route::get('/_test/log', function () {
         Log::info('внутри запроса');
 
@@ -47,14 +37,12 @@ it('каждая запись журнала запроса содержит req
     });
 
     $this->withHeader('X-Request-Id', 'req-log-0001')->get('/_test/log')->assertOk();
-    Log::forgetChannel('single');
 
-    $lines = file($this->logPath, FILE_IGNORE_NEW_LINES | FILE_SKIP_EMPTY_LINES);
-    $records = array_map(fn (string $l) => json_decode($l, true), $lines);
+    $records = array_map(fn (string $l): array => json_decode($l, true, 512, JSON_THROW_ON_ERROR), readLogLines($path));
     $record = collect($records)->firstWhere('message', 'внутри запроса');
 
-    expect($record)->not->toBeNull()
-        ->and(json_encode($record))->toContain('req-log-0001');
+    expect($record)->not->toBeNull();
+    expect(json_encode($record))->toContain('req-log-0001');
 });
 
 it('request_id пробрасывается в задание очереди и виден в его контексте', function () {

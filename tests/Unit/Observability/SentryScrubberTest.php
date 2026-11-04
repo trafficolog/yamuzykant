@@ -28,14 +28,16 @@ it('beforeSend убирает ПДн: e-mail, IP, куки, тело запро�
 
     $result = SentryScrubber::beforeSend($event, null);
 
-    expect($result)->not->toBeNull();
     $dump = json_encode([
         $result->getMessage(), $result->getUser()?->getEmail(), $result->getUser()?->getIpAddress(),
         $result->getRequest(), $result->getExtra(),
     ], JSON_UNESCAPED_UNICODE);
 
-    expect($dump)->not->toContain('anna@example.com')->not->toContain('123456')
-        ->not->toContain('203.0.113.5')->not->toContain('ym_session=secret')->not->toContain('Bearer abc')
-        ->and($result->getRequest()['headers']['X-Request-Id'] ?? null)->toBe('r1')
-        ->and($result->getUser()?->getId())->toBe('42');
+    expect($dump)->not->toContain('anna@example.com');
+    expect($dump)->not->toContain('123456');
+    expect($dump)->not->toContain('203.0.113.5');
+    expect($dump)->not->toContain('ym_session=secret');
+    expect($dump)->not->toContain('Bearer abc');
+    expect($result->getRequest()['headers']['X-Request-Id'] ?? null)->toBe('r1');
+    expect($result->getUser()?->getId())->toBe('42');
 });

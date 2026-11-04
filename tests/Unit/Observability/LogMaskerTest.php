@@ -23,7 +23,8 @@ function makeRecord(string $message, array $context = [], array $extra = []): Lo
 it('маскирует e-mail в тексте сообщения', function () {
     $out = (new MaskingProcessor)(makeRecord('Вход anna.petrova+test@example.com не удался'));
 
-    expect($out->message)->not->toContain('anna.petrova')->not->toContain('example.com');
+    expect($out->message)->not->toContain('anna.petrova');
+    expect($out->message)->not->toContain('example.com');
 });
 
 it('маскирует код входа в тексте и в полях контекста по имени ключа', function () {
@@ -32,10 +33,13 @@ it('маскирует код входа в тексте и в полях кон
         'login_code' => '112233',
         'nested' => ['otp' => '998877', 'safe' => 'value'],
     ]));
+    $context = json_encode($out->context);
 
-    expect($out->message)->not->toContain('482913')
-        ->and(json_encode($out->context))->not->toContain('482913')->not->toContain('112233')->not->toContain('998877')
-        ->and($out->context['nested']['safe'])->toBe('value');
+    expect($out->message)->not->toContain('482913');
+    expect($context)->not->toContain('482913');
+    expect($context)->not->toContain('112233');
+    expect($context)->not->toContain('998877');
+    expect($out->context['nested']['safe'])->toBe('value');
 });
 
 it('маскирует серийный номер и токены', function () {
@@ -44,29 +48,32 @@ it('маскирует серийный номер и токены', function ()
         'api_token' => 'tok_live_1234567890',
         'password' => 'qwerty',
     ]));
-
     $dump = $out->message.json_encode($out->context);
-    expect($dump)->not->toContain('A12345678')->not->toContain('abc.def-123')
-        ->not->toContain('99887766')->not->toContain('tok_live_1234567890')->not->toContain('qwerty');
+
+    foreach (['A12345678', 'abc.def-123', '99887766', 'tok_live_1234567890', 'qwerty'] as $secret) {
+        expect($dump)->not->toContain($secret);
+    }
 });
 
 it('маскирует e-mail в тексте исключения из контекста', function () {
     $e = new RuntimeException('Не доставлено письмо на boris@example.org');
     $out = (new MaskingProcessor)(makeRecord('Ошибка', ['exception' => $e]));
-
     $dump = json_encode($out->context, JSON_UNESCAPED_UNICODE);
-    expect($dump)->not->toContain('boris@example.org')->toContain('RuntimeException');
+
+    expect($dump)->not->toContain('boris@example.org');
+    expect($dump)->toContain('RuntimeException');
 });
 
 it('маскирует поле extra и не трогает безопасные сообщения', function () {
     $out = (new MaskingProcessor)(makeRecord('Заказ 12345 оформлен', [], ['user' => 'clara@example.net']));
 
-    expect($out->message)->toBe('Заказ 12345 оформлен')
-        ->and(json_encode($out->extra))->not->toContain('clara@example.net');
+    expect($out->message)->toBe('Заказ 12345 оформлен');
+    expect(json_encode($out->extra))->not->toContain('clara@example.net');
 });
 
 it('LogMasker маскирует произвольные структуры для Sentry и логов', function () {
-    $masked = (new LogMasker)->maskValue(['email' => 'a@b.ru', 'list' => ['x@y.com', 5, null, true]]);
+    $masked = json_encode((new LogMasker)->maskValue(['email' => 'a@b.ru', 'list' => ['x@y.com', 5, null, true]]));
 
-    expect(json_encode($masked))->not->toContain('a@b.ru')->not->toContain('x@y.com');
+    expect($masked)->not->toContain('a@b.ru');
+    expect($masked)->not->toContain('x@y.com');
 });
