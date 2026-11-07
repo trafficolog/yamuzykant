@@ -6,6 +6,8 @@ use App\Domain\Accounts\Exceptions\ConsentRequired;
 use App\Domain\Accounts\Exceptions\InvalidLoginCode;
 use App\Domain\Accounts\Exceptions\RegistrationNotPending;
 use App\Domain\Accounts\Exceptions\TooManyLoginAttempts;
+use App\Domain\Listings\Exceptions\PhotoRejected;
+use App\Domain\Listings\Exceptions\PhotoRequirementsNotMet;
 use App\Http\Controllers\HealthController;
 use App\Http\Middleware\EnsureSessionIsCurrent;
 use App\Http\Middleware\HandleInertiaRequests;
@@ -52,7 +54,20 @@ return Application::configure(basePath: dirname(__DIR__))
             InvalidLoginCode::class,
             RegistrationNotPending::class,
             ConsentRequired::class,
+            PhotoRejected::class,
+            PhotoRequirementsNotMet::class,
         ]);
+
+        // Отказы по фото (BR-03) — как ошибка валидации поля формы.
+        $exceptions->render(fn (PhotoRejected $e): JsonResponse => response()->json([
+            'message' => $e->getMessage(),
+            'errors' => [$e->field => [$e->getMessage()]],
+        ], 422));
+
+        $exceptions->render(fn (PhotoRequirementsNotMet $e): JsonResponse => response()->json([
+            'message' => $e->getMessage(),
+            'errors' => ['photos' => $e->shortfall->messages()],
+        ], 422));
 
         $exceptions->render(fn (TooManyLoginAttempts $e): JsonResponse => response()->json([
             'message' => __('login.throttled', ['minutes' => $e->minutes()]),

@@ -10,6 +10,7 @@ use Illuminate\Support\Str;
 // Живая проверка подписи PUT в MinIO из compose (`composer test:docker`): S3 сам отвергает
 // загрузку другого размера или типа, потому что content-length и content-type входят в подпись.
 
+/** @return array{S3Client, S3PresignedUploads} */
 function minioUploads(): array
 {
     $config = config('filesystems.disks.s3');

@@ -39,6 +39,21 @@ function uploadedPhoto(string $bytes): ListingPhoto
     ]);
 }
 
+/**
+ * Ширина и высота картинки из хранилища фото.
+ *
+ * @return array{int, int}
+ */
+function storedImageSize(string $path): array
+{
+    $size = getimagesizefromstring((string) photosDisk()->get($path));
+    if ($size === false) {
+        throw new RuntimeException("Не картинка: {$path}");
+    }
+
+    return [$size[0], $size[1]];
+}
+
 function runPhotoJob(ListingPhoto $photo): ListingPhoto
 {
     app()->call([new ProcessListingPhoto($photo->id), 'handle']);
@@ -46,7 +61,11 @@ function runPhotoJob(ListingPhoto $photo): ListingPhoto
     return $photo->refresh();
 }
 
-/** Чанки RIFF-контейнера WebP. @return list<string> */
+/**
+ * Чанки RIFF-контейнера WebP.
+ *
+ * @return list<string>
+ */
 function webpChunks(string $bytes): array
 {
     expect(substr($bytes, 0, 4))->toBe('RIFF')->and(substr($bytes, 8, 4))->toBe('WEBP');
@@ -54,7 +73,8 @@ function webpChunks(string $bytes): array
     $offset = 12;
     while ($offset + 8 <= strlen($bytes)) {
         $chunks[] = substr($bytes, $offset, 4);
-        $size = unpack('V', substr($bytes, $offset + 4, 4))[1];
+        $unpacked = unpack('V', substr($bytes, $offset + 4, 4));
+        $size = is_array($unpacked) ? (int) $unpacked[1] : strlen($bytes);
         $offset += 8 + $size + ($size % 2);
     }
 
@@ -78,7 +98,7 @@ it('файл с GPS в EXIF: в отдаваемых версиях EXIF нет,
         $webp = (string) photosDisk()->get("{$photo->path}/{$variant}.webp");
         $avif = (string) photosDisk()->get("{$photo->path}/{$variant}.avif");
 
-        expect(webpChunks($webp))->not->toContain('EXIF')->not->toContain('XMP ');
+        expect(array_intersect(webpChunks($webp), ['EXIF', 'XMP ']))->toBe([]);
         foreach ([$webp, $avif] as $bytes) {
             expect($bytes)->not->toContain(ImageFixtures::EXIF_MARKER)
                 ->and($bytes)->not->toContain("Exif\0\0");
@@ -90,10 +110,10 @@ it('файл с GPS в EXIF: в отдаваемых версиях EXIF нет,
 it('версии 1:1 и 4:3 в WebP и AVIF нужных размеров', function () {
     $photo = runPhotoJob(uploadedPhoto(ImageFixtures::jpeg(3000, 2000)));
 
-    $square = getimagesizefromstring((string) photosDisk()->get("{$photo->path}/square.webp"));
-    $wide = getimagesizefromstring((string) photosDisk()->get("{$photo->path}/wide.webp"));
-    expect([$square[0], $square[1]])->toBe([800, 800])
-        ->and([$wide[0], $wide[1]])->toBe([1600, 1200]);
+    $square = storedImageSize("{$photo->path}/square.webp");
+    $wide = storedImageSize("{$photo->path}/wide.webp");
+    expect($square)->toBe([800, 800])
+        ->and($wide)->toBe([1600, 1200]);
 
     expect(photosDisk()->exists("{$photo->path}/square.avif"))->toBeTrue()
         ->and(photosDisk()->exists("{$photo->path}/wide.avif"))->toBeTrue();
@@ -102,8 +122,8 @@ it('версии 1:1 и 4:3 в WebP и AVIF нужных размеров', func
 it('маленькое фото не растягивается: пропорции 1:1 и 4:3 сохраняются', function () {
     $photo = runPhotoJob(uploadedPhoto(ImageFixtures::png(400, 300)));
 
-    $square = getimagesizefromstring((string) photosDisk()->get("{$photo->path}/square.webp"));
-    $wide = getimagesizefromstring((string) photosDisk()->get("{$photo->path}/wide.webp"));
+    $square = storedImageSize("{$photo->path}/square.webp");
+    $wide = storedImageSize("{$photo->path}/wide.webp");
     expect($square[0])->toBe($square[1])->toBeLessThanOrEqual(400)
         ->and($wide[0] * 3)->toBe($wide[1] * 4)
         ->and($wide[0])->toBeLessThanOrEqual(400);

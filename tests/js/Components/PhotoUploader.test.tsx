@@ -55,6 +55,11 @@ const jpeg = (name = 'strat.jpg', size = 2_000_000) => {
 };
 
 const cells = () => screen.getAllByRole('listitem');
+const cell = (index: number): HTMLElement => {
+    const element = cells()[index];
+    if (!element) throw new Error(`Нет ячейки ${index}`);
+    return element;
+};
 const fileInput = () => screen.getByTestId('photo-input') as HTMLInputElement;
 
 beforeEach(() => {
@@ -66,7 +71,7 @@ describe('PhotoUploader: пустое состояние', () => {
         render(<PhotoUploader listingId={LISTING} api={fakeApi()} />);
 
         expect(cells()).toHaveLength(6);
-        const first = within(cells()[0]!);
+        const first = within(cell(0));
         expect(
             first.getByRole('button', { name: 'Добавить фото: Серийный номер' }),
         ).toBeInTheDocument();
@@ -82,7 +87,7 @@ describe('PhotoUploader: пустое состояние', () => {
         ];
         labels.forEach((label, index) => {
             expect(
-                within(cells()[index + 1]!).getByRole('button', {
+                within(cell(index + 1)).getByRole('button', {
                     name: `Добавить фото: ${label}`,
                 }),
             ).toBeInTheDocument();
@@ -121,7 +126,7 @@ describe('PhotoUploader: загрузка', () => {
 
         await waitFor(() => expect(api.put).toHaveBeenCalled());
         act(() => progress(40));
-        const bar = within(cells()[0]!).getByRole('progressbar');
+        const bar = within(cell(0)).getByRole('progressbar');
         expect(bar).toHaveAttribute('aria-valuenow', '40');
 
         act(() => finishPut());
@@ -130,7 +135,7 @@ describe('PhotoUploader: загрузка', () => {
 
         await waitFor(() =>
             expect(
-                within(cells()[0]!).getByRole('img', { name: 'Фото серийного номера' }),
+                within(cell(0)).getByRole('img', { name: 'Фото серийного номера' }),
             ).toBeInTheDocument(),
         );
         expect(api.list).toHaveBeenCalled();
@@ -142,7 +147,7 @@ describe('PhotoUploader: загрузка', () => {
         });
         render(<PhotoUploader listingId={LISTING} api={api} />);
 
-        fireEvent.drop(cells()[1]!, { dataTransfer: { files: [jpeg()], types: ['Files'] } });
+        fireEvent.drop(cell(1), { dataTransfer: { files: [jpeg()], types: ['Files'] } });
 
         await waitFor(() => expect(api.confirm).toHaveBeenCalledWith(LISTING, 'u-1', false));
         await waitFor(() =>
@@ -167,7 +172,7 @@ describe('PhotoUploader: загрузка', () => {
         const api = fakeApi();
         render(<PhotoUploader listingId={LISTING} api={api} />);
 
-        fireEvent.drop(cells()[2]!, {
+        fireEvent.drop(cell(2), {
             dataTransfer: { files: [jpeg('big.jpg', 15 * 1024 * 1024 + 1)], types: ['Files'] },
         });
 
@@ -185,7 +190,7 @@ describe('PhotoUploader: загрузка', () => {
         });
         render(<PhotoUploader listingId={LISTING} api={api} />);
 
-        fireEvent.drop(cells()[1]!, { dataTransfer: { files: [jpeg()], types: ['Files'] } });
+        fireEvent.drop(cell(1), { dataTransfer: { files: [jpeg()], types: ['Files'] } });
 
         expect(await screen.findByRole('alert')).toHaveTextContent(
             'Это не фото. Загрузите файл в формате JPEG, PNG или HEIC.',
@@ -196,7 +201,7 @@ describe('PhotoUploader: загрузка', () => {
         const api = fakeApi({ put: vi.fn(() => Promise.reject(new Error('network'))) });
         render(<PhotoUploader listingId={LISTING} api={api} />);
 
-        fireEvent.drop(cells()[1]!, { dataTransfer: { files: [jpeg()], types: ['Files'] } });
+        fireEvent.drop(cell(1), { dataTransfer: { files: [jpeg()], types: ['Files'] } });
 
         expect(await screen.findByRole('alert')).toHaveTextContent(ru.photos.errors.network);
     });
@@ -266,8 +271,8 @@ describe('PhotoUploader: порядок, удаление, лимиты', () => 
         const api = fakeApi();
         render(<PhotoUploader listingId={LISTING} api={api} initialPhotos={three()} />);
 
-        const from = cells()[1]!;
-        const to = cells()[2]!;
+        const from = cell(1);
+        const to = cell(2);
         const store: Record<string, string> = {};
         const dataTransfer = {
             setData: (type: string, value: string) => {
@@ -320,7 +325,9 @@ describe('PhotoUploader: порядок, удаление, лимиты', () => 
         render(<PhotoUploader listingId={LISTING} api={api} initialPhotos={ten} />);
 
         fireEvent.drop(
-            screen.getByRole('button', { name: 'Добавить фото: Ещё фото' }).closest('li')!,
+            screen
+                .getByRole('button', { name: 'Добавить фото: Ещё фото' })
+                .closest('li') as HTMLElement,
             {
                 dataTransfer: {
                     files: [jpeg('a.jpg'), jpeg('b.jpg'), jpeg('c.jpg')],

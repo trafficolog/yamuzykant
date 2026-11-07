@@ -90,6 +90,8 @@ final class ImageFixtures
 
     private static function canvas(int $width, int $height): GdImage
     {
+        $width = max(1, $width);
+        $height = max(1, $height);
         $image = imagecreatetruecolor($width, $height);
         if ($image === false) {
             throw new RuntimeException('GD не создал изображение');

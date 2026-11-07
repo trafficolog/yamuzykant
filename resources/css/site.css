@@ -635,3 +635,114 @@
 .ym-combobox__option.is-active {
     background: var(--surface-recessed);
 }
+
+/* PhotoUploader (2.1.2): плитки 1:1 из макета «Продать», первая — серийный номер. */
+.ym-photos {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-3);
+}
+.ym-photos__grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+    gap: var(--space-3);
+    margin: 0;
+    padding: 0;
+    list-style: none;
+}
+.ym-photos__cell {
+    min-width: 0;
+}
+.ym-photos__slot,
+.ym-photos__tile {
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: var(--space-2);
+    width: 100%;
+    aspect-ratio: 1 / 1;
+    padding: var(--space-3);
+    box-sizing: border-box;
+    border-radius: var(--radius-md);
+    overflow: hidden;
+    font: inherit;
+    text-align: center;
+}
+.ym-photos__slot {
+    background: var(--surface-recessed);
+    color: var(--ink-muted);
+    border: 1px dashed var(--line-control);
+    cursor: pointer;
+}
+.ym-photos__slot:hover {
+    border-color: var(--accent);
+    color: var(--ink);
+}
+.ym-photos__slot:focus-visible {
+    outline: 2px solid var(--focus-ring);
+    outline-offset: 2px;
+}
+.ym-photos__slot:active {
+    background: var(--accent-soft);
+}
+.ym-photos__label {
+    font-weight: 500;
+}
+.ym-photos__required {
+    color: var(--service-strong);
+}
+.ym-photos__tile {
+    background: var(--surface-raised);
+    color: var(--ink-muted);
+    border: 1px solid var(--line);
+}
+.ym-photos__tile--photo {
+    padding: 0;
+    border-color: var(--accent);
+    cursor: grab;
+}
+.ym-photos__tile--error {
+    background: var(--danger-soft);
+    color: var(--danger-text);
+    border-color: var(--danger);
+    padding: var(--space-3);
+}
+.ym-photos__tile--error p {
+    margin: 0;
+}
+.ym-photos__image {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+.ym-photos__actions {
+    position: absolute;
+    right: var(--space-2);
+    bottom: var(--space-2);
+    display: flex;
+    gap: var(--space-1);
+}
+.ym-photos__move--left svg {
+    transform: scaleX(-1);
+}
+.ym-photos__progress {
+    width: 80%;
+    height: var(--space-2);
+    border-radius: var(--radius-full);
+    background: var(--surface-recessed);
+    overflow: hidden;
+}
+.ym-photos__progress > span {
+    display: block;
+    height: 100%;
+    background: var(--accent);
+    transition: width 0.2s;
+}
+.ym-photos__note {
+    margin: 0;
+    color: var(--ink-muted);
+}

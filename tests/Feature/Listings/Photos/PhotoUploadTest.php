@@ -153,11 +153,12 @@ describe('S3: подпись PUT', function () {
             ->and($ticket->method)->toBe('PUT')
             ->and($ticket->headers)->toBe(['Content-Type' => 'image/png']);
 
-        $url = parse_url($ticket->url);
-        parse_str($url['query'] ?? '', $query);
-        expect($url['path'])->toBe('/ymuzykant/uploads/listing/abc')
-            ->and(explode(';', (string) $query['X-Amz-SignedHeaders']))->toContain('content-length', 'content-type', 'host')
-            ->and((int) $query['X-Amz-Expires'])->toBeGreaterThan(0)->toBeLessThanOrEqual(300)
+        parse_str((string) parse_url($ticket->url, PHP_URL_QUERY), $query);
+        $signedHeaders = $query['X-Amz-SignedHeaders'] ?? '';
+        $expires = $query['X-Amz-Expires'] ?? '';
+        expect(parse_url($ticket->url, PHP_URL_PATH))->toBe('/ymuzykant/uploads/listing/abc')
+            ->and(explode(';', is_string($signedHeaders) ? $signedHeaders : ''))->toContain('content-length', 'content-type', 'host')
+            ->and(is_string($expires) ? (int) $expires : 0)->toBeGreaterThan(0)->toBeLessThanOrEqual(300)
             ->and($query)->toHaveKey('X-Amz-Signature');
     });
 
@@ -177,7 +178,7 @@ describe('локальный приёмник (тесты и e2e без S3)', fu
         $listing = draftOf($user);
         $ticket = $this->actingAs($user)->postJson("/listings/{$listing->id}/photos/uploads", ['content_type' => 'image/jpeg', 'size' => 10])->json();
 
-        $this->call('PUT', strtok($ticket['url'], '?'), [], [], [], ['CONTENT_TYPE' => 'image/jpeg'], str_repeat('a', 10))
+        $this->call('PUT', explode('?', (string) $ticket['url'])[0], [], [], [], ['CONTENT_TYPE' => 'image/jpeg'], str_repeat('a', 10))
             ->assertForbidden();
     });
 
@@ -239,14 +240,14 @@ describe('confirm', function () {
         $listing = draftOf($user);
         $this->actingAs($user);
         $ticket = requestUpload($listing, 'image/jpeg', 1000)->json();
-        $pending = app(PendingPhotoUploads::class)->find($ticket['upload_id']);
-        Storage::disk(config('photos.disk'))->put($pending->key, ImageFixtures::oversized(15 * 1024 * 1024));
+        $key = (string) app(PendingPhotoUploads::class)->find($ticket['upload_id'])?->key;
+        Storage::disk(config('photos.disk'))->put($key, ImageFixtures::oversized(15 * 1024 * 1024));
 
         confirmUpload($listing, $ticket['upload_id'])
             ->assertUnprocessable()
             ->assertJsonValidationErrors(['upload_id' => 'Фото больше 15 МБ. Уменьшите его и загрузите снова.']);
 
-        expect(Storage::disk(config('photos.disk'))->exists($pending->key))->toBeFalse();
+        expect(Storage::disk(config('photos.disk'))->exists($key))->toBeFalse();
     });
 
     it('файл не загружен — понятная ошибка', function () {
@@ -313,7 +314,12 @@ describe('confirm', function () {
         $this->actingAs($user);
 
         requestUpload($listing)->assertForbidden();
-    })->with([ListingStatus::Pending, ListingStatus::Withdrawn, ListingStatus::Rejected, ListingStatus::Expired]);
+    })->with([
+        'pending' => [ListingStatus::Pending],
+        'withdrawn' => [ListingStatus::Withdrawn],
+        'rejected' => [ListingStatus::Rejected],
+        'expired' => [ListingStatus::Expired],
+    ]);
 
     it('новое фото у опубликованного — существенная правка через машину объявления', function () {
         Event::fake([ListingSubstantiallyEdited::class]);
@@ -375,16 +381,16 @@ describe('порядок и удаление', function () {
         $listing = draftOf($user);
         $this->actingAs($user);
         addPhotos($listing, 3);
-        $photos = $listing->photos()->get();
+        $second = $listing->photos()->where('position', 1)->firstOrFail();
         $disk = Storage::disk(config('photos.disk'));
-        $disk->put($photos[1]->path.'/square.webp', 'x');
+        $disk->put($second->path.'/square.webp', 'x');
 
-        $this->deleteJson("/listings/{$listing->id}/photos/{$photos[1]->id}")
+        $this->deleteJson("/listings/{$listing->id}/photos/{$second->id}")
             ->assertOk()
             ->assertJsonCount(2, 'data');
 
         expect($listing->photos()->pluck('position')->all())->toBe([0, 1])
-            ->and($disk->exists($photos[1]->path.'/square.webp'))->toBeFalse();
+            ->and($disk->exists($second->path.'/square.webp'))->toBeFalse();
     });
 
     it('у опубликованного: удаление — существенная правка; меньше 3 фото или без серийного — отказ', function () {
