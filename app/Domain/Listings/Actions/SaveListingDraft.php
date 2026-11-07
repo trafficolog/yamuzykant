@@ -5,6 +5,8 @@ declare(strict_types=1);
 namespace App\Domain\Listings\Actions;
 
 use App\Domain\Catalog\Actions\SuggestInstrumentModel;
+use App\Domain\Catalog\Exceptions\SuggestionLimitReached;
+use App\Domain\Catalog\Models\InstrumentModel;
 use App\Domain\Listings\Enums\ListingStatus;
 use App\Domain\Listings\Models\Listing;
 use Illuminate\Support\Facades\DB;
@@ -13,7 +15,8 @@ use LogicException;
 /**
  * Записывает содержимое формы «Продать инструмент» в черновик (UC-L1 п. 1–6). Статус не меняется:
  * публикация — отдельное событие ListingStateMachine (2.1.4). Модель без выбора из подсказки сохраняется
- * как предложенная продавцом (UC-L1 2a) и привязывается к черновику.
+ * как предложенная продавцом (UC-L1 2a) и привязывается к черновику; предложение идёт через общий суточный лимит
+ * (SuggestInstrumentModel::forUser), а повторная отправка с той же моделью лимит не расходует.
  */
 final class SaveListingDraft
 {
@@ -23,6 +26,7 @@ final class SaveListingDraft
      * @param  array{category_id: int, title: string, model_id?: int|null, year?: int|null, serial?: string|null, condition: string, description?: string|null, price: int|null, negotiable: bool, meet: bool, ship: bool}  $data
      *
      * @throws LogicException объявление не в статусе draft: опубликованное правится через ListingStateMachine::edit()
+     * @throws SuggestionLimitReached суточный лимит предложений моделей исчерпан
      */
     public function __invoke(Listing $listing, array $data, ?int $cityId): Listing
     {
@@ -32,7 +36,7 @@ final class SaveListingDraft
                 throw new LogicException('Форма записывает только черновик.');
             }
 
-            $modelId = $data['model_id'] ?? ($this->suggest)($data['title'], $data['category_id'])->id;
+            $modelId = $data['model_id'] ?? $this->suggestedModelId($fresh, $data);
             $serial = trim((string) ($data['serial'] ?? ''));
             $description = trim((string) ($data['description'] ?? ''));
 
@@ -54,5 +58,22 @@ final class SaveListingDraft
 
             return $fresh;
         });
+    }
+
+    /**
+     * Модель для названия без выбора из подсказки: уже привязанная к черновику, если это она же, иначе предложенная.
+     *
+     * @param  array{category_id: int, title: string}  $data
+     */
+    private function suggestedModelId(Listing $listing, array $data): int
+    {
+        if ($listing->model_id !== null) {
+            $current = InstrumentModel::query()->find($listing->model_id);
+            if ($current !== null && SuggestInstrumentModel::isSame($current, $data['title'])) {
+                return $current->id;
+            }
+        }
+
+        return $this->suggest->forUser($listing->user_id, $data['title'], $data['category_id'])->id;
     }
 }

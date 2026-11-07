@@ -1,7 +1,7 @@
 import { Alert, Button, Field, FilterChip, Icon, PriceGuide, Textarea } from '@ds';
 import type { Condition, IconName } from '@ds';
 import { router, usePage } from '@inertiajs/react';
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import type { FormEvent, ReactNode } from 'react';
 
 import { ModelCombobox } from '@/Components/ModelCombobox';
@@ -13,7 +13,7 @@ import { useFlag } from '@/Hooks/useFlag';
 import PublicLayout from '@/Layouts/PublicLayout';
 import { ru } from '@/lang/ru';
 import { formatPrice, parsePrice } from '@/lib/price';
-import { missingItems } from '@/lib/sellForm';
+import { SERIAL_MAX, TITLE_MAX, fieldErrors, missingItems } from '@/lib/sellForm';
 import type { PriceMode } from '@/lib/sellForm';
 
 import '../../../css/sell.css';
@@ -40,12 +40,23 @@ interface SellCreateProps {
     photos: ListingPhoto[];
     /** Содержимое формы только что записано в черновик. */
     saved: boolean;
+    /** Город шапки для «Встреча в г. Москва»: тип населённого пункта и название, без склонения. */
+    place?: { type: string; name: string } | null;
     /** Вилка цен продаж модели для PriceGuide; сервер отдаёт её с флагом sale_prices (вне MVP — не отдаёт). */
     priceGuide?: { low: number; high: number; basis: string } | null;
 }
 
 /** Поля, у которых есть своё место в форме; остальные ошибки сервера — одним сообщением над кнопкой. */
 const FIELD_ERRORS = ['title', 'year', 'serial', 'description', 'price'] as const;
+
+/** Куда уходит фокус после ошибок сервера: поля в порядке формы (id полей). */
+const FIELD_IDS: Record<(typeof FIELD_ERRORS)[number], string> = {
+    title: 'sell-title',
+    year: 'sell-year',
+    serial: 'sell-serial',
+    description: 'sell-description',
+    price: 'sell-price',
+};
 
 const STEPS_ID = {
     what: 'sell-step-1',
@@ -98,6 +109,7 @@ export default function SellCreate({
     listingId,
     photos: initialPhotos,
     saved,
+    place = null,
     priceGuide = null,
 }: SellCreateProps) {
     const { props } = usePage<SharedProps>();
@@ -122,8 +134,15 @@ export default function SellCreate({
     const [meet, setMeet] = useState(true);
     const [ship, setShip] = useState(true);
     const [sending, setSending] = useState(false);
+    // Превью рисуется только в браузере: в серверной разметке и до гидратации карточка ДС показала бы «0 ₽» (BR-11).
+    const [mounted, setMounted] = useState(false);
+    useEffect(() => setMounted(true), []);
+    const alertRef = useRef<HTMLDivElement>(null);
 
     const price = parsePrice(priceText);
+    const limits = fieldErrors({ title, year, serial, description });
+    const message = (field: (typeof FIELD_ERRORS)[number]): string | undefined =>
+        field === 'price' ? errors.price : (limits[field] ?? errors[field]);
     const missing = missingItems({ title, condition, priceMode, price, meet, ship }, photos);
     const kind = categories.find((item) => item.id === kindId);
     const grade = ru.sell.conditions.find((item) => item.key === condition);
@@ -139,7 +158,7 @@ export default function SellCreate({
     // Повторное нажатие на режим возвращает сумму.
     const toggleMode = (mode: Exclude<PriceMode, 'amount'>) =>
         setPriceMode((current) => (current === mode ? 'amount' : mode));
-    const meetLabel = ru.sell.meet(cityName === null ? null : (ru.cityLocative[cityName] ?? null));
+    const meetLabel = ru.sell.meet(place);
 
     const selectModel = (model: ModelOption) => {
         setModelId(model.id);
@@ -147,9 +166,20 @@ export default function SellCreate({
         if (root !== null) setKindId(root);
     };
 
+    // После ответа сервера с ошибками: первое проблемное поле, иначе сообщение над кнопкой (фото, передача и прочее).
+    const focusProblem = (serverErrors: Record<string, string>) => {
+        window.setTimeout(() => {
+            const field = FIELD_ERRORS.find((name) => serverErrors[name] !== undefined);
+            const target =
+                field === undefined ? alertRef.current : document.getElementById(FIELD_IDS[field]);
+            target?.focus();
+        }, 0);
+    };
+
     const submit = (event: FormEvent) => {
         event.preventDefault();
-        if (missing.length > 0 || kindId === null || condition === null || sending) return;
+        if (missing.length > 0 || Object.keys(limits).length > 0) return;
+        if (kindId === null || condition === null || sending) return;
 
         router.post(
             '/sell',
@@ -173,6 +203,7 @@ export default function SellCreate({
                 preserveState: true,
                 onStart: () => setSending(true),
                 onFinish: () => setSending(false),
+                onError: focusProblem,
             },
         );
     };
@@ -227,7 +258,8 @@ export default function SellCreate({
                         <ModelCombobox
                             id="sell-title"
                             value={title}
-                            error={errors.title}
+                            error={message('title')}
+                            maxLength={TITLE_MAX}
                             onChange={(text) => {
                                 setTitle(text);
                                 setModelId(null);
@@ -241,7 +273,7 @@ export default function SellCreate({
                                 placeholder={ru.sell.year.placeholder}
                                 inputMode="numeric"
                                 value={year}
-                                error={errors.year}
+                                error={message('year')}
                                 onChange={(event) =>
                                     setYear(event.target.value.replace(/\D/g, '').slice(0, 4))
                                 }
@@ -252,7 +284,8 @@ export default function SellCreate({
                                 placeholder={ru.sell.serial.placeholder}
                                 hint={ru.sell.serial.hint}
                                 value={serial}
-                                error={errors.serial}
+                                maxLength={SERIAL_MAX}
+                                error={message('serial')}
                                 onChange={(event) => setSerial(event.target.value)}
                             />
                         </div>
@@ -298,7 +331,7 @@ export default function SellCreate({
                             placeholder={ru.sell.description.placeholder}
                             rows={5}
                             value={description}
-                            error={errors.description}
+                            error={message('description')}
                             onChange={setDescription}
                         />
                     </Step>
@@ -314,7 +347,7 @@ export default function SellCreate({
                                     placeholder={ru.sell.price.placeholder}
                                     value={amountMode ? priceText : ''}
                                     disabled={!amountMode}
-                                    error={errors.price}
+                                    error={message('price')}
                                     onChange={(event) =>
                                         setPriceText(formatPrice(event.target.value))
                                     }
@@ -346,7 +379,7 @@ export default function SellCreate({
                                 <PriceGuide
                                     low={priceGuide.low}
                                     high={priceGuide.high}
-                                    price={price}
+                                    price={price > 0 ? price : undefined}
                                     basis={priceGuide.basis}
                                 />
                             ) : null}
@@ -368,9 +401,11 @@ export default function SellCreate({
 
                     <div className="ym-sell__footer">
                         {otherErrors.length > 0 ? (
-                            <Alert tone="danger" title={ru.sell.errorsTitle}>
-                                {otherErrors.join(' ')}
-                            </Alert>
+                            <div ref={alertRef} tabIndex={-1} className="ym-sell__alert">
+                                <Alert tone="danger" title={ru.sell.errorsTitle}>
+                                    {otherErrors.join(' ')}
+                                </Alert>
+                            </div>
                         ) : null}
                         {missing.length > 0 ? (
                             <p role="status" className="type-body-s ym-sell__missing">
@@ -382,7 +417,7 @@ export default function SellCreate({
                                 variant="primary"
                                 size="l"
                                 type="submit"
-                                disabled={missing.length > 0}
+                                disabled={missing.length > 0 || Object.keys(limits).length > 0}
                                 loading={sending}
                             >
                                 {ru.sell.publish}
@@ -393,19 +428,21 @@ export default function SellCreate({
 
                 <aside className="ym-sell__aside">
                     <h2 className="type-label ym-sell__aside-title">{ru.sell.previewTitle}</h2>
-                    <div className="ym-sell__preview">
-                        <ListingPreviewCard
-                            priceLabel={priceLabel}
-                            title={title.trim() || ru.sell.previewPlaceholder}
-                            price={priceLabel ? 0 : price}
-                            condition={condition ?? 'excellent'}
-                            image={previewPhoto?.urls?.square.webp}
-                            icon={(kind?.icon ?? undefined) as IconName | undefined}
-                            city={cityName ?? undefined}
-                            posted={ru.sell.posted}
-                            shipping={ship ? 0 : undefined}
-                            safe={safeDeal}
-                        />
+                    <div className={`ym-sell__preview${mounted ? '' : ' is-pending'}`}>
+                        {mounted ? (
+                            <ListingPreviewCard
+                                priceLabel={priceLabel}
+                                title={title.trim() || ru.sell.previewPlaceholder}
+                                price={priceLabel ? 0 : price}
+                                condition={condition ?? 'excellent'}
+                                image={previewPhoto?.urls?.square.webp}
+                                icon={(kind?.icon ?? undefined) as IconName | undefined}
+                                city={cityName ?? undefined}
+                                posted={ru.sell.posted}
+                                shipping={ship ? 0 : undefined}
+                                safe={safeDeal}
+                            />
+                        ) : null}
                     </div>
                     {showMasters ? (
                         <Alert tone="service" icon="wrench" title={ru.sell.masters.title}>

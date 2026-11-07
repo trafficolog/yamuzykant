@@ -81,5 +81,6 @@ it('общий shared prop city остаётся прежним: id и name, б�
 
     $this->actingAs(User::factory()->create())->get('/sell')
         ->assertInertia(fn (AssertableInertia $page) => $page
-            ->where('city', fn ($city) => array_keys((array) $city) === ['id', 'name']));
+            ->where('city.name', 'Москва')
+            ->missing('city.settlement_type'));
 });

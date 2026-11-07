@@ -24,6 +24,8 @@ interface ModelComboboxProps {
     onSelect: (model: ModelOption) => void;
     /** Ошибка поля (например, ответ сервера): показывается вместо подсказки. */
     error?: string;
+    /** Предел длины текста (атрибут maxlength поля). */
+    maxLength?: number;
 }
 
 type Failure = 'network' | 'limited';
@@ -37,7 +39,14 @@ const DEBOUNCE_MS = 200;
  * Поле «Бренд и модель» с подсказкой из справочника (UC-L1, п. 2). Клавиатура: стрелки, Enter, Escape.
  * Ввод без выбора не теряется: текст уходит через onChange, модель создаётся на сервере как suggested.
  */
-export function ModelCombobox({ id, value, onChange, onSelect, error }: ModelComboboxProps) {
+export function ModelCombobox({
+    id,
+    value,
+    onChange,
+    onSelect,
+    error,
+    maxLength,
+}: ModelComboboxProps) {
     const [text, setText] = useState(value);
     const [results, setResults] = useState<ModelOption[]>([]);
     const [searched, setSearched] = useState(false);
@@ -183,6 +192,7 @@ export function ModelCombobox({ id, value, onChange, onSelect, error }: ModelCom
                 placeholder={ru.models.placeholder}
                 hint={hint}
                 error={error}
+                maxLength={maxLength}
                 value={text}
                 onChange={(event) => handleChange(event.target.value)}
                 onKeyDown={handleKeyDown}

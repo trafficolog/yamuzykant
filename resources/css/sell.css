@@ -184,6 +184,13 @@
 .ym-sell__preview {
     max-width: 280px;
 }
+/* До гидратации карточки нет (в SSR она показала бы «0 ₽»): место под неё занято, страница не прыгает. */
+.ym-sell__preview.is-pending {
+    min-height: 354px;
+}
+.ym-sell__alert:focus {
+    outline: none;
+}
 
 /* Планшет и телефон: одна колонка, превью под формой без прилипания. */
 @media (max-width: 899px) {

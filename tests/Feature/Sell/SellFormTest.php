@@ -195,7 +195,7 @@ describe('StoreListingRequest', function () {
 
     it('модель из справочника привязывается по model_id', function () {
         [$owner, $kind, $draft] = sellCase();
-        $model = InstrumentModel::factory()->create(['category_id' => $kind->id]);
+        $model = InstrumentModel::factory()->create(['brand' => 'Fender', 'name' => 'American Vintage ’57 Stratocaster', 'category_id' => $kind->id]);
 
         $this->actingAs($owner)
             ->post('/sell', sellPayload($draft, $kind, ['model_id' => $model->id]))

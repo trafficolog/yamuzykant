@@ -6,6 +6,12 @@ import { ru } from '@/lang/ru';
 /** Минимум фото (BR-03); совпадает с config/photos.php и PhotoUploader. */
 const MIN_PHOTOS = 3;
 
+/** Пределы полей: правила StoreListingRequest (паритет проверяет tests/js/lib/sellLimits.test.ts). */
+export const TITLE_MAX = 120;
+export const DESCRIPTION_MAX = 5000;
+export const SERIAL_MAX = 64;
+export const YEAR_MIN = 1800;
+
 /** Как задана цена (BR-11): сумма, «Договорная» (суммы нет) или «Бесплатно». */
 export type PriceMode = 'amount' | 'negotiable' | 'free';
 
@@ -18,6 +24,31 @@ export interface SellValues {
     price: number;
     meet: boolean;
     ship: boolean;
+}
+
+export type LimitedField = 'title' | 'year' | 'serial' | 'description';
+
+/** Ошибки полей с пределами: текст для продавца; поле в пределах — без записи. */
+export type FieldErrors = Partial<Record<LimitedField, string>>;
+
+/** Проверка пределов полей на клиенте теми же правилами, что на сервере. Пустые год и серийный номер допустимы. */
+export function fieldErrors(values: Record<LimitedField, string>): FieldErrors {
+    const errors: FieldErrors = {};
+    const yearMax = new Date().getFullYear();
+
+    if (values.title.length > TITLE_MAX) errors.title = ru.sell.limits.title(TITLE_MAX);
+    if (values.year !== '') {
+        const year = Number(values.year);
+        if (values.year.length !== 4 || year < YEAR_MIN || year > yearMax) {
+            errors.year = ru.sell.limits.year(YEAR_MIN, yearMax);
+        }
+    }
+    if (values.serial.length > SERIAL_MAX) errors.serial = ru.sell.limits.serial(SERIAL_MAX);
+    if (values.description.length > DESCRIPTION_MAX) {
+        errors.description = ru.sell.limits.description(DESCRIPTION_MAX);
+    }
+
+    return errors;
 }
 
 /** Бренд и модель — два слова и больше, как в подсказке и на сервере (StoreListingRequest). */

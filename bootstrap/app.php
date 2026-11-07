@@ -70,8 +70,8 @@ return Application::configure(basePath: dirname(__DIR__))
         Integration::handles($exceptions);
 
         // Код входа не попадает в old input сессии при ошибке формы.
-        // Текст сообщения (4.1.1) тоже не сохраняется в сессии.
-        $exceptions->dontFlash(['code', 'body']);
+        // Текст сообщения (4.1.1) и серийный номер из формы «Продать» (2.1.3) тоже не сохраняются в сессии.
+        $exceptions->dontFlash(['code', 'body', 'serial']);
 
         // Ожидаемые отказы входа — не ошибки: не пишутся в лог и не уходят в Sentry.
         $exceptions->dontReport([

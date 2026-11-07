@@ -19,7 +19,8 @@ it('SuggestInstrumentModel вызывается в app/ только через 
             continue;
         }
         // Прямой вызов экземпляра как функции: `($this->suggest)(`, `$suggest(`, `app(SuggestInstrumentModel::class)(`.
-        if (preg_match('/\)\s*\(\s*\$|\$suggest\s*\(|SuggestInstrumentModel::class\)\s*\(/', $code) === 1 || ! str_contains($code, 'forUser(')) {
+        // `($this->suggest)(…)`, `$suggest(…)`, `app(SuggestInstrumentModel::class)(…)`.
+        if (preg_match('/\(\$this->\w+\)\s*\(|\$suggest\s*\(|SuggestInstrumentModel::class\)\s*\(/', $code) === 1) {
             $offenders[] = $file->getPathname();
         }
     }

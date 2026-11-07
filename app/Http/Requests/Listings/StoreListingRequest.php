@@ -4,7 +4,10 @@ declare(strict_types=1);
 
 namespace App\Http\Requests\Listings;
 
+use App\Domain\Catalog\Actions\SuggestInstrumentModel;
 use App\Domain\Catalog\Enums\InstrumentModelStatus;
+use App\Domain\Catalog\Models\Category;
+use App\Domain\Catalog\Models\InstrumentModel;
 use App\Domain\Listings\Enums\Condition;
 use App\Domain\Listings\Enums\ListingStatus;
 use App\Domain\Listings\Enums\PriceMode;
@@ -84,6 +87,8 @@ final class StoreListingRequest extends FormRequest
                 $errors->add('meet', (string) __('listings.form.messages.meet.required_one'));
             }
 
+            $this->validateModel($validator);
+
             // Фото — по черновику на сервере: клиентскому списку не верим (BR-03).
             if (! $errors->has('listing_id') && is_string($this->input('listing_id'))) {
                 $listing = Listing::query()->find($this->input('listing_id'));
@@ -95,6 +100,46 @@ final class StoreListingRequest extends FormRequest
                 }
             }
         }];
+    }
+
+    /**
+     * Выбранная модель принадлежит дереву выбранного вида и совпадает с названием: чужую активную модель под другим
+     * видом или с другим названием прислать нельзя.
+     */
+    private function validateModel(ValidatorContract $validator): void
+    {
+        $errors = $validator->errors();
+        if ($errors->hasAny(['model_id', 'category_id', 'title']) || ! $this->filled('model_id')) {
+            return;
+        }
+
+        $model = InstrumentModel::query()->find($this->integer('model_id'));
+        if ($model === null) {
+            return;
+        }
+
+        if (self::rootOf($model->category_id) !== $this->integer('category_id')) {
+            $errors->add('model_id', (string) __('listings.form.messages.model_id.category'));
+        } elseif (! SuggestInstrumentModel::isSame($model, $this->string('title')->toString())) {
+            $errors->add('title', (string) __('listings.form.messages.title.model'));
+        }
+    }
+
+    /** Корневой вид, в дереве которого лежит категория (вид → группа → пункт). */
+    private static function rootOf(int $categoryId): ?int
+    {
+        for ($depth = 0; $depth < 8; $depth++) {
+            $category = Category::query()->find($categoryId);
+            if ($category === null) {
+                return null;
+            }
+            if ($category->parent_id === null) {
+                return $category->id;
+            }
+            $categoryId = $category->parent_id;
+        }
+
+        return null;
     }
 
     /**
