@@ -8,5 +8,4 @@
 - 3.1.8 Поисковый индекс: доработки после ревью — sonnet → sonnet, risk low
 - 4.1.2 Сообщения: список и чат — sonnet → sonnet, risk medium
 - 4.1.3 Антиспам в сообщениях — sonnet → sonnet, risk medium
-- 4.1.4 Сообщения: текст не в журнал, доработки после ревью — sonnet → opus, risk medium
 - 5.1.1 Автопроверки объявлений — sonnet → sonnet, risk medium
