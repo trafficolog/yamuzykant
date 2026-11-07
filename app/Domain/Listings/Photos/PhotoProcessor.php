@@ -26,11 +26,18 @@ final class PhotoProcessor
     /**
      * @throws UnreadablePhoto файл не читается как изображение
      * @throws UnsupportedHeic HEIC без декодера
+     * @throws ImageTooLarge больше photos.max_pixels — до декодирования
      */
     public function process(string $bytes, ImageType $type): ProcessedPhoto
     {
         if ($type === ImageType::Heic) {
             $bytes = $this->heic->toJpeg($bytes);
+        }
+
+        // Размер по заголовку до декодирования: «бомба распаковки» не должна дойти до GD.
+        $dimensions = ImageDimensions::of($bytes) ?? throw new UnreadablePhoto('Нет заголовка с размерами');
+        if (ImageDimensions::tooLarge(...$dimensions)) {
+            throw new ImageTooLarge(implode('×', $dimensions));
         }
 
         $manager = new ImageManager(new GdDriver, autoOrientation: true, strip: true, decodeAnimation: false);

@@ -21,7 +21,8 @@ final class LocalPhotoUploadController extends Controller
 {
     public function __invoke(Request $request, PhotoUploads $uploads): Response
     {
-        abort_unless($uploads instanceof SignedRouteUploads, 404);
+        // Ошибка в настройке диска не должна открыть приёмник на stage и в production.
+        abort_unless(app()->environment(['local', 'testing', 'e2e']) && $uploads instanceof SignedRouteUploads, 404);
 
         $key = $request->string('key')->toString();
         $type = $request->string('type')->toString();

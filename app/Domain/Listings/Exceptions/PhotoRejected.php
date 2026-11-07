@@ -26,6 +26,11 @@ final class PhotoRejected extends RuntimeException
         return new self('upload_id', 'size');
     }
 
+    public static function tooManyPixels(): self
+    {
+        return new self('upload_id', 'dimensions');
+    }
+
     public static function missingUpload(): self
     {
         return new self('upload_id', 'missing_upload');

@@ -16,30 +16,36 @@ use Symfony\Component\HttpFoundation\StreamedResponse;
 
 /**
  * Раздача фото браузеру через приложение: MinIO на stage слушает только 127.0.0.1, бакет закрыт.
- * Отдаются только готовые версии (имя — из перечислений, исходник недоступен) с правами как у объявления:
- * фото черновика видит только владелец. Опубликованные кэшируются как неизменяемые — их можно отдавать
- * через CDN без изменений в коде.
+ * Отдаются только готовые версии (имя — из перечислений, исходник недоступен).
+ *
+ * Кто видит: фото опубликованного объявления — все; фото серийного номера и любые фото объявления
+ * не в published — только владелец и сотрудник (ListingPolicy::viewRestrictedPhotos), остальным 404.
+ * Кэш: public + immutable — только опубликованные фото без серийного номера (их можно отдавать через CDN);
+ * фото серийного номера — no-store; остальное — короткий private-кэш.
  */
 final class PhotoMediaController extends Controller
 {
-    /** Видимы гостю и могут кэшироваться публично (как ListingPolicy::view для гостя). */
-    private const PUBLIC = [ListingStatus::Published, ListingStatus::Withdrawn, ListingStatus::Expired];
-
     public function __invoke(Request $request, ListingPhoto $photo, string $variant, string $format): StreamedResponse
     {
         $variant = PhotoVariant::tryFrom($variant);
         $format = PhotoFormat::tryFrom($format);
         $listing = $photo->listing;
 
-        // 404, а не 403: чужой черновик не выдаёт даже факт существования фото.
         abort_if($variant === null || $format === null || ! $photo->isReady(), 404);
-        abort_unless(Gate::forUser($request->user())->allows('view', $listing), 404);
 
-        $public = in_array($listing->status, self::PUBLIC, true);
+        $public = $listing->status === ListingStatus::Published && ! $photo->is_serial;
+        // 404, а не 403: чужой черновик не выдаёт даже факт существования фото.
+        abort_unless($public || Gate::forUser($request->user())->allows('viewRestrictedPhotos', $listing), 404);
+
+        $cache = match (true) {
+            $public => 'public, max-age=31536000, immutable',
+            $photo->is_serial => 'private, no-store',
+            default => 'private, max-age=300',
+        };
 
         return PhotoStorage::disk()->response($photo->variantPath($variant, $format), null, [
             'Content-Type' => $format->mime(),
-            'Cache-Control' => $public ? 'public, max-age=31536000, immutable' : 'private, max-age=600',
+            'Cache-Control' => $cache,
             'X-Content-Type-Options' => 'nosniff',
         ]);
     }

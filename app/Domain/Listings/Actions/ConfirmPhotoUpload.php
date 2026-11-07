@@ -10,6 +10,7 @@ use App\Domain\Listings\Exceptions\PhotoRejected;
 use App\Domain\Listings\Jobs\ProcessListingPhoto;
 use App\Domain\Listings\Models\Listing;
 use App\Domain\Listings\Models\ListingPhoto;
+use App\Domain\Listings\Photos\ImageDimensions;
 use App\Domain\Listings\Photos\ImageType;
 use App\Domain\Listings\Photos\PendingPhotoUploads;
 use App\Domain\Listings\Photos\PhotoStorage;
@@ -20,7 +21,7 @@ use Illuminate\Support\Str;
 
 /**
  * Подтвердить загрузку (ARCHITECTURE §7): загрузка выдана этому владельцу к этому объявлению,
- * файл есть, не больше 15 МБ, по содержимому — JPEG, PNG или HEIC. Иначе файл удаляется.
+ * файл есть, не больше 15 МБ, по содержимому — JPEG, PNG или HEIC, не больше photos.max_pixels. Иначе файл удаляется.
  * Новое фото опубликованного объявления — существенная правка через ListingStateMachine::edit().
  */
 final class ConfirmPhotoUpload
@@ -48,7 +49,14 @@ final class ConfirmPhotoUpload
         }
 
         $this->rejectUnless($disk->size($upload->key) <= Config::integer('photos.max_bytes'), $upload->key, PhotoRejected::tooLarge());
-        $this->rejectUnless(ImageType::sniff(PhotoStorage::head($upload->key, ImageType::SNIFF_BYTES)) !== null, $upload->key, PhotoRejected::notImage());
+        $head = PhotoStorage::head($upload->key, ImageDimensions::HEAD_BYTES);
+        $type = ImageType::sniff(substr($head, 0, ImageType::SNIFF_BYTES));
+        $this->rejectUnless($type !== null, $upload->key, PhotoRejected::notImage());
+
+        // «Бомба распаковки»: размер в пикселях по заголовку. HEIC и JPEG с заголовком дальше HEAD_BYTES
+        // проверяет job до декодирования.
+        $dimensions = ImageDimensions::of($head);
+        $this->rejectUnless($dimensions === null || ! ImageDimensions::tooLarge(...$dimensions), $upload->key, PhotoRejected::tooManyPixels());
 
         $photo = DB::transaction(function () use ($listing, $upload, $serial): ListingPhoto {
             // Блокировка объявления: лимит, серийное фото и позиция считаются без гонки параллельных загрузок.

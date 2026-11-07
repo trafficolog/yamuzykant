@@ -27,10 +27,19 @@ final class PendingPhotoUploads
         return $this->hydrate($this->cache->get(self::PREFIX.$id));
     }
 
-    /** Забрать загрузку: повторное подтверждение той же загрузки не найдёт её. */
+    /**
+     * Забрать загрузку ровно один раз. Repository::pull() — это get() и forget() без атомарности,
+     * поэтому захват засчитывается только тому, чей forget() действительно удалил ключ (в Redis — DEL
+     * с результатом 1). Параллельный запрос с тем же upload_id получает null.
+     */
     public function pull(string $id): ?PendingUpload
     {
-        return $this->hydrate($this->cache->pull(self::PREFIX.$id));
+        $upload = $this->hydrate($this->cache->get(self::PREFIX.$id));
+        if ($upload === null || ! $this->cache->forget(self::PREFIX.$id)) {
+            return null;
+        }
+
+        return $upload;
     }
 
     private function hydrate(mixed $data): ?PendingUpload

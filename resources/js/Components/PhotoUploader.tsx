@@ -81,6 +81,9 @@ export default function PhotoUploader({
     const dragging = useRef<number | null>(null);
     const rootRef = useRef<HTMLDivElement>(null);
     const pendingFocus = useRef<{ id: number; direction: Direction } | null>(null);
+    // После удаления: фото, на чью кнопку «Удалить» перевести фокус (null — на первую кнопку добавления).
+    const focusAfterRemove = useRef<{ id: number | null } | null>(null);
+    const [actionError, setActionError] = useState<string | null>(null);
     // Текущие значения для подсчёта свободных мест между рендерами (несколько файлов подряд).
     const photosRef = useRef(photos);
     const uploadsRef = useRef(uploads);
@@ -113,6 +116,19 @@ export default function PhotoUploader({
             );
         (find(request.direction) ?? find(other))?.focus();
         pendingFocus.current = null;
+    }, [photos]);
+
+    // Удалённое фото уносит фокус с собой: переводим его на соседнее фото или на кнопку добавления.
+    useEffect(() => {
+        const request = focusAfterRemove.current;
+        if (!request) return;
+        focusAfterRemove.current = null;
+        const root = rootRef.current;
+        const target =
+            request.id === null
+                ? root?.querySelector<HTMLButtonElement>('.ym-photos__slot')
+                : root?.querySelector<HTMLButtonElement>(`[data-remove="${request.id}"]`);
+        target?.focus();
     }, [photos]);
 
     const patchUpload = (key: string, patch: Partial<Upload>) =>
@@ -166,9 +182,20 @@ export default function PhotoUploader({
     };
 
     const remove = (photo: ListingPhoto) => {
+        const index = photos.findIndex((item) => item.id === photo.id);
         api.remove(listingId, photo.id)
-            .then((list) => setPhotos(sortPhotos(list)))
-            .catch(() => undefined);
+            .then((list) => {
+                const next = sortPhotos(list);
+                const neighbour = next[index] ?? next[index - 1];
+                focusAfterRemove.current = { id: neighbour ? neighbour.id : null };
+                setActionError(null);
+                setPhotos(next);
+            })
+            .catch((error: unknown) =>
+                setActionError(
+                    error instanceof PhotoApiError ? error.message : ru.photos.errors.network,
+                ),
+            );
     };
 
     const serialPhoto = photos.find((photo) => photo.is_serial);
@@ -367,6 +394,7 @@ export default function PhotoUploader({
                         size="xs"
                         icon="x"
                         aria-label={ru.photos.remove(alt)}
+                        data-remove={photo.id}
                         onClick={() => remove(photo)}
                     />
                 </div>
@@ -412,6 +440,11 @@ export default function PhotoUploader({
             </ul>
             {used >= MAX_PHOTOS ? (
                 <p className="type-body-s ym-photos__note">{ru.photos.limitReached}</p>
+            ) : null}
+            {actionError !== null ? (
+                <p role="alert" className="type-body-s ym-photos__error">
+                    {actionError}
+                </p>
             ) : null}
             <p role="status" className="type-body-s ym-photos__note">
                 {missing.length > 0 ? ru.photos.missing(missing) : ''}
