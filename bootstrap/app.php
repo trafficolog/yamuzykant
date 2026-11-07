@@ -13,6 +13,7 @@ use App\Http\Controllers\HealthController;
 use App\Http\Middleware\AssignRequestId;
 use App\Http\Middleware\EnsureSessionIsCurrent;
 use App\Http\Middleware\HandleInertiaRequests;
+use App\Http\Middleware\ThrottleHealth;
 use Illuminate\Contracts\Auth\Middleware\AuthenticatesRequests;
 use Illuminate\Foundation\Application;
 use Illuminate\Foundation\Configuration\Exceptions;
@@ -29,7 +30,7 @@ return Application::configure(basePath: dirname(__DIR__))
         health: '/up',
         then: function (): void {
             // Вне группы `web`: без сессии, кук и CSRF — ответ не зависит от БД.
-            Route::get('/health', HealthController::class)->name('health');
+            Route::get('/health', HealthController::class)->middleware(ThrottleHealth::class)->name('health');
         },
     )
     ->withMiddleware(function (Middleware $middleware): void {

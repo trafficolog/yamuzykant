@@ -31,7 +31,8 @@ final class LogMasker
             // серийный номер: «серийный номер: A123», «S/N 998877», «serial: X1»
             '/((?:серийн\w*(?:\s+номер\w*)?|serial(?:[\s_]number)?|s\/n)\W{0,3})[\p{L}\p{N}\-]{4,}/iu' => '$1'.self::MASK,
             // токены, пароли и ключи в виде key=value / key: value
-            '/\b([\w\-]*(?:token|password|passwd|secret|api[_\-]?key)[\w\-]*)(\s*[=:]\s*)[^\s,;&"\']+/i' => '$1$2'.self::MASK,
+            // в том числе в JSON и в кавычках, в т. ч. экранированных: {"access_token":"abc"}, token='abc'
+            '/\b([\w\-]*(?:token|password|passwd|secret|api[_\-]?key)[\w\-]*)(\\\\?["\']?\s*[=:]\s*\\\\?["\']?)[^\s,;&"\'}\\\\]+/i' => '$1$2'.self::MASK,
         ];
 
         $result = preg_replace(array_keys($patterns), array_values($patterns), $text);

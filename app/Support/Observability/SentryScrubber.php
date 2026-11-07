@@ -29,6 +29,23 @@ final class SentryScrubber
 
         foreach ($event->getExceptions() as $exception) {
             $exception->setValue($masker->mask($exception->getValue()));
+
+            // Аргументы функций (vars) попадают в события при zend.exception_ignore_args=Off — чистим в любом случае.
+            foreach ($exception->getStacktrace()?->getFrames() ?? [] as $frame) {
+                /** @var array<string, mixed> $vars */
+                $vars = $masker->maskValue($frame->getVars());
+                $frame->setVars($vars);
+            }
+        }
+
+        /** @var array<string, string> $tags */
+        $tags = $masker->maskValue($event->getTags());
+        $event->setTags($tags);
+
+        foreach ($event->getContexts() as $name => $context) {
+            /** @var array<string, mixed> $maskedContext */
+            $maskedContext = $masker->maskValue($context);
+            $event->setContext((string) $name, $maskedContext);
         }
 
         $user = $event->getUser();

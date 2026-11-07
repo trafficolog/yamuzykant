@@ -13,7 +13,14 @@ export interface ScrubbableEvent {
 }
 
 const EMAIL = /[A-Za-z0-9._%+-]+@[A-Za-z0-9-]+(?:\.[A-Za-z0-9-]+)*\.[A-Za-z]{2,}/g;
-const LOGIN_CODE = /\b(code|код|otp)(\W{0,3})\d{4,8}\b/gi;
+// \b в JS ASCII-only, поэтому границы слова для кириллицы — через lookbehind/lookahead.
+const LOGIN_CODE = /(?<![\p{L}\p{N}_])(code|код|otp)(\P{L}{0,3})\d{4,8}(?![\p{L}\p{N}_])/giu;
+const BEARER = /\b(Bearer)\s+[A-Za-z0-9._~+/=-]+/gi;
+const SERIAL =
+    /((?:серийн[\p{L}]*(?:\s+номер[\p{L}]*)?|serial(?:[\s_]number)?|s\/n)\P{L}{0,3})[\p{L}\p{N}-]{4,}/giu;
+// токены, пароли, ключи в виде key=value / key: value, в том числе в JSON и в кавычках (в т. ч. экранированных)
+const TOKEN_PAIR =
+    /\b([\w-]*(?:token|password|passwd|secret|api[_-]?key)[\w-]*)(\\?["']?\s*[=:]\s*\\?["']?)[^\s,;&"'}\\]+/gi;
 const SENSITIVE_KEY =
     /(^|[_\-.])(code|otp|pin|authorization|cookie|dsn)([_\-.]|$)|serial|token|password|passwd|secret|api[_-]?key/i;
 const SAFE_HEADERS = [
@@ -28,7 +35,12 @@ const SAFE_HEADERS = [
 const MASK = '[masked]';
 
 function maskText(text: string): string {
-    return text.replace(EMAIL, '[email]').replace(LOGIN_CODE, `$1$2${MASK}`);
+    return text
+        .replace(EMAIL, '[email]')
+        .replace(BEARER, `$1 ${MASK}`)
+        .replace(LOGIN_CODE, `$1$2${MASK}`)
+        .replace(SERIAL, `$1${MASK}`)
+        .replace(TOKEN_PAIR, `$1$2${MASK}`);
 }
 
 function maskValue(value: unknown, key?: string): unknown {

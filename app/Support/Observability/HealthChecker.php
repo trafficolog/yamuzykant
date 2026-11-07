@@ -145,9 +145,24 @@ final class HealthChecker
     private function databaseQueueAge(string $connection): int
     {
         $table = Config::string("queue.connections.{$connection}.table", 'jobs');
-        $oldest = DB::table($table)->whereNull('reserved_at')->min('created_at');
+        $now = time();
+        // Отложенные (available_at в будущем) и взятые в работу не считаются; возраст — от available_at.
+        $oldest = DB::table($table)->whereNull('reserved_at')->where('available_at', '<=', $now)->min('available_at');
 
-        return $oldest === null ? 0 : max(0, time() - (int) $oldest);
+        return $oldest === null ? 0 : max(0, $now - (int) $oldest);
+    }
+
+    /**
+     * Очереди, которые слушают воркеры: очередь писем с кодом входа и очередь соединения по умолчанию.
+     *
+     * @return list<string>
+     */
+    private function queueNames(string $connection): array
+    {
+        return array_values(array_unique([
+            Config::string('login.mail_queue'),
+            Config::string("queue.connections.{$connection}.queue", 'default'),
+        ]));
     }
 
     /**
@@ -157,17 +172,20 @@ final class HealthChecker
     private function redisQueueAge(string $connection): int
     {
         $redis = $this->redisConnection(Config::get("queue.connections.{$connection}.connection"));
-        $queues = ['high', Config::string("queue.connections.{$connection}.queue", 'default')];
         $age = 0;
 
-        foreach (array_unique($queues) as $queue) {
-            $payload = $redis->lindex("queues:{$queue}", 0);
-            if (! is_string($payload)) {
-                continue;
-            }
-            $pushedAt = json_decode($payload, true)['pushed_at'] ?? null;
-            if (is_int($pushedAt)) {
-                $age = max($age, time() - $pushedAt);
+        foreach ($this->queueNames($connection) as $queue) {
+            $payloads = $redis->lrange("queues:{$queue}", 0, 19);
+
+            foreach (is_array($payloads) ? $payloads : [] as $payload) {
+                $job = is_string($payload) ? json_decode($payload, true) : null;
+                // attempts > 0 — задание вернул release(): pushed_at у него старый, а ждёт оно по другой причине.
+                if (! is_array($job) || (int) ($job['attempts'] ?? 0) > 0 || ! is_int($job['pushed_at'] ?? null)) {
+                    continue;
+                }
+                $age = max($age, time() - $job['pushed_at']);
+
+                break;
             }
         }
 
