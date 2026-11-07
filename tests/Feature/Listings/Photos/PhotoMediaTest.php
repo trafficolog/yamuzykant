@@ -153,7 +153,7 @@ it('матрица видимости: статус × тип фото × зри
         'guest' => null,
         'stranger' => User::factory()->create(),
         'owner' => $owner,
-        'staff' => $staff,
+        default => $staff,
     };
 
     $isPublic = $status === ListingStatus::Published && ! $serial;
