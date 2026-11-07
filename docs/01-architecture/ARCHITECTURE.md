@@ -87,7 +87,7 @@ flowchart LR
 
 ## 5. Поиск
 
-Индекс `listings` в Meilisearch, только `published`. Поля поиска: `title`, `model`, `brand`, `description`. Фильтры: `category_path`, `condition`, `price`, `city_id`, `ship`, `negotiable`, `_geo`. Сортировки: `published_at:desc`, `price:asc`, `price:desc`, `_geoPoint`. Синхронизация — событие смены статуса → job `SyncListingToIndex`; задержка ≤ 60 с. Ночная сверка БД и индекса (03:30, сверяет id). Синонимы — через поле документа `aliases`, а не настройку `synonyms` Meilisearch (на 1.10 не работала, решение PR #107). Документ собирается из явного белого списка полей; серийный номер, почта, `user_id`, `final_price` в индекс не попадают.
+Индекс `listings` в Meilisearch, только `published`. Поля поиска: `title`, `model`, `brand`, `description`. Фильтры: `category_path`, `condition`, `price`, `city_id`, `ship`, `negotiable`. Сортировки: `published_at:desc`, `price:asc`, `price:desc`. Сортировки «рядом» и собственных координат объявления в MVP нет — выдача внутри выбранного города (решение OWNER 07.11.2026). Синхронизация — событие смены статуса → job `SyncListingToIndex`; задержка ≤ 60 с. Ночная сверка БД и индекса (03:30, сверяет id). Синонимы — через поле документа `aliases`, а не настройку `synonyms` Meilisearch (на 1.10 не работала, решение PR #107). Документ собирается из явного белого списка полей; серийный номер, почта, `user_id`, `final_price` в индекс не попадают.
 
 ## 6. Realtime
 
