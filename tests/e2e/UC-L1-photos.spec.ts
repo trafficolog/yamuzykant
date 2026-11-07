@@ -90,7 +90,7 @@ test.describe('UC-L1: фото объявления', () => {
 
         const status = page.getByRole('status');
         await expect(status).toHaveText('Добавьте: ещё 3 фото, фото серийного номера.');
-        await expect(page.getByText('обязательно')).toBeVisible();
+        await expect(page.getByText('обязательно', { exact: true })).toBeVisible();
 
         await addPhoto(page, 'Серийный номер', 1);
         await expect(page.getByRole('img', { name: 'Фото серийного номера' })).toBeVisible({

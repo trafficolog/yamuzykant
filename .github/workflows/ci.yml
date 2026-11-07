@@ -14,8 +14,7 @@ permissions:
 
 env:
   PHP_VERSION: '8.3'
-  # gd — WebP/AVIF фото (2.1.2); imagick — HEIC → JPEG, если в ImageMagick раннера есть libheif.
-  PHP_EXTENSIONS: pdo_pgsql, pdo_sqlite, redis, intl, gd, imagick
+  PHP_EXTENSIONS: pdo_pgsql, pdo_sqlite, redis, intl, gd
   # Node 22 LTS: jsdom 30 и undici из lock-файла требуют Node ≥ 22.22 (на Node 20 Vitest падает).
   NODE_VERSION: '22'
 
