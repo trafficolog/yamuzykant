@@ -77,6 +77,15 @@ final class ListingPolicy
         return $this->staff->isStaff($user) && $listing->status === ListingStatus::Pending;
     }
 
+    /**
+     * Фото, которые видят только владелец и сотрудник: фото серийного номера всегда (UC-L1 — полный номер
+     * не публичен, AGENTS.md §4) и любые фото объявления не в published (решение OWNER 07.11.2026, SPEC §6.1).
+     */
+    public function viewRestrictedPhotos(?User $user, Listing $listing): bool
+    {
+        return $this->owns($user, $listing) || ($user !== null && $this->staff->isStaff($user));
+    }
+
     private function owns(?User $user, Listing $listing): bool
     {
         return $user !== null && $user->id === $listing->user_id;
