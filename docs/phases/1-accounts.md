@@ -14,5 +14,5 @@ gate: G1
 | Эпик | Задач | Готово |
 |---|---|---|
 | [1.1 Аккаунт](../epics/1-1-account.md) | 5 | 3 |
-| [1.2 Справочники](../epics/1-2-dictionaries.md) | 3 | 2 |
+| [1.2 Справочники](../epics/1-2-dictionaries.md) | 3 | 3 |
 <!-- docs:ops:end -->
