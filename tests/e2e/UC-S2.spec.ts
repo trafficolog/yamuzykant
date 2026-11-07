@@ -4,8 +4,9 @@ import { expect, test, type Page } from '@playwright/test';
 // UC-S2 «Найти объявление запросом или по категории» (SPEC §4, BR-01): выдача Барахолки города шапки.
 // Данные — FleaDemoSeeder (tests/e2e/global-setup.ts): 27 объявлений в Москве, 1 в Казани.
 
-// Заглушка «Фото» карточки ДС (.ym-placeholder, пока нет фото — 2.1.2) не проходит контраст: дефект ДС,
-// в PR записан вопросом к OWNER. Её исключаем, остальное проверяется полностью.
+// Заглушка «Фото» карточки ДС (.ym-placeholder, пока нет фото — 2.1.2) не проходит контраст: дефект токена ДС,
+// OWNER поправит его в репозитории ДС (решение 07.11.2026, docs/operations/gates/G1.md). До этого заглушку
+// исключаем, остальное проверяется полностью; исключение убрать после ds:sync с исправлением.
 const seriousOrCritical = async (page: Page) => {
     const result = await new AxeBuilder({ page })
         .withTags(['wcag2a', 'wcag2aa'])

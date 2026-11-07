@@ -108,6 +108,13 @@ final readonly class FleaFilters
         return $search;
     }
 
+    public function withPage(int $page): self
+    {
+        return new self(
+            $this->query, $this->conditions, $this->priceFrom, $this->priceTo, $this->negotiable, $this->ship, $this->sort, max(1, $page),
+        );
+    }
+
     public function withoutConditions(): self
     {
         return new self(

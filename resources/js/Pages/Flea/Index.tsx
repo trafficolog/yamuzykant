@@ -155,12 +155,20 @@ export default function FleaIndex({
             : []),
     ];
 
-    const sortOptions = [
-        { value: '', label: filters.q !== '' ? t.sort.relevance : t.sort.new },
-        ...sorts
-            .filter((sort) => sort !== 'new')
-            .map((sort) => ({ value: sort, label: t.sort[sort] })),
-    ];
+    // Без запроса умолчание — «Сначала свежие» (пустое значение). С запросом умолчание — релевантность,
+    // а «Сначала свежие» выбирается явно (sort=new).
+    const sortOptions =
+        filters.q !== ''
+            ? [
+                  { value: '', label: t.sort.relevance },
+                  ...sorts.map((sort) => ({ value: sort, label: t.sort[sort] })),
+              ]
+            : [
+                  { value: '', label: t.sort.new },
+                  ...sorts
+                      .filter((sort) => sort !== 'new')
+                      .map((sort) => ({ value: sort, label: t.sort[sort] })),
+              ];
 
     const filtered = hasActiveFilters(filters) || filters.q !== '';
     const title = category?.name ?? t.title;
@@ -174,15 +182,18 @@ export default function FleaIndex({
                 <p className="body-s ym-flea__lead">{t.lead}</p>
             </div>
 
-            <button
-                type="button"
-                className="ym-flea__toggle"
-                aria-expanded={filtersOpen}
-                aria-controls={FILTERS_ID}
-                onClick={() => setFiltersOpen((open) => !open)}
-            >
-                {t.filters.toggle}
-            </button>
+            <div className="ym-flea__toggle">
+                <Button
+                    variant="outline"
+                    block
+                    icon="sliders-horizontal"
+                    aria-expanded={filtersOpen}
+                    aria-controls={FILTERS_ID}
+                    onClick={() => setFiltersOpen((open) => !open)}
+                >
+                    {t.filters.toggle}
+                </Button>
+            </div>
 
             <div className="ym-flea__layout">
                 <FleaFilterPanel
@@ -231,8 +242,11 @@ export default function FleaIndex({
                                 visit({
                                     ...filters,
                                     sort:
-                                        sorts.find((sort) => sort === value && sort !== 'new') ??
-                                        null,
+                                        sorts.find(
+                                            (sort) =>
+                                                sort === value &&
+                                                (sort !== 'new' || filters.q !== ''),
+                                        ) ?? null,
                                 })
                             }
                         />
@@ -255,7 +269,8 @@ export default function FleaIndex({
                                 <ListingCard
                                     key={card.id}
                                     title={card.title}
-                                    price={card.price ?? 0}
+                                    // Цены null у опубликованного не бывает; пустую цену DS не рисует, а не показывает «0 ₽».
+                                    price={card.price as number}
                                     condition={
                                         (card.condition ?? undefined) as Condition | undefined
                                     }

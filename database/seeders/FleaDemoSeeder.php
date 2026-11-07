@@ -20,7 +20,7 @@ use RuntimeException;
 /**
  * Демо-выдача Барахолки для e2e и локальной разработки (карточка 3.1.2): объявления из прототипа
  * «Десктоп - Каталог» в Москве (27 штук, 8 из них с доставкой) и одно в Казани. Идемпотентен: прежние
- * демо-объявления (продавцы @flea-demo.test) убираются и из индекса. В production не запускается.
+ * демо-объявления (продавцы @flea-demo.test) убираются и из индекса. Работает только в local, testing и e2e.
  */
 class FleaDemoSeeder extends Seeder
 {
@@ -46,8 +46,8 @@ class FleaDemoSeeder extends Seeder
 
     public function run(): void
     {
-        if (app()->environment('production')) {
-            throw new RuntimeException('FleaDemoSeeder не запускается в production.');
+        if (! app()->environment(['local', 'testing', 'e2e'])) {
+            throw new RuntimeException('FleaDemoSeeder работает только в local, testing и e2e.');
         }
 
         // Индекс обновляется сразу, а не очередью: после сидера выдача готова.

@@ -13,6 +13,7 @@ use App\Domain\Search\FleaSort;
 use App\Domain\Search\ListingSearch;
 use App\Domain\Search\ListingSearchResult;
 use App\Http\Resources\Listings\FleaListingResource;
+use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Collection;
 use Inertia\Inertia;
@@ -24,7 +25,7 @@ use Inertia\Response;
  */
 final class FleaController extends Controller
 {
-    public function __invoke(Request $request, ?string $path = null): Response
+    public function __invoke(Request $request, ?string $path = null): Response|RedirectResponse
     {
         [$category, $crumbs] = $path === null ? [null, []] : $this->category($path);
         $filters = FleaFilters::fromQuery($request->query());
@@ -33,6 +34,12 @@ final class FleaController extends Controller
         $result = $city === null
             ? new ListingSearchResult([], [], 0, $filters->page, FleaFilters::PER_PAGE, ['condition' => [], 'category_path' => []], 0)
             : $this->search(ListingSearch::inCity($city), $category, $filters)->get($filters->page, FleaFilters::PER_PAGE);
+
+        // Страница за последней при непустой выдаче: на последнюю, фильтры сохраняются.
+        $pages = (int) ceil($result->total / $result->perPage);
+        if ($result->total > 0 && $filters->page > $pages) {
+            return redirect($request->url().'?'.http_build_query($filters->withPage($pages)->toQuery()));
+        }
 
         // Счётчики чипов состояния не зависят от выбранного состояния: иначе у остальных ступеней был бы нуль.
         $conditionCounts = $filters->conditions === [] || $city === null
@@ -46,7 +53,7 @@ final class FleaController extends Controller
                 ->matchOn('id'),
             'pagination' => [
                 'page' => $result->page,
-                'pages' => (int) ceil($result->total / $result->perPage),
+                'pages' => $pages,
                 'total' => $result->total,
                 'perPage' => $result->perPage,
             ],
