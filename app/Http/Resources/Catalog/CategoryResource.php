@@ -7,6 +7,7 @@ namespace App\Http\Resources\Catalog;
 use App\Domain\Catalog\Models\Category;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
+use LogicException;
 
 /** @mixin Category */
 final class CategoryResource extends JsonResource
@@ -18,14 +19,17 @@ final class CategoryResource extends JsonResource
      */
     public function toArray(Request $request): array
     {
+        // Без загруженных потомков ответ был бы молчаливо пустым: лучше явная ошибка при неверной выборке.
+        if (! $this->resource->relationLoaded('children')) {
+            throw new LogicException('CategoryResource: потомки не загружены. Выбирайте дерево через CategoryTree.');
+        }
+
         return [
             'id' => $this->id,
             'name' => $this->name,
             'slug' => $this->slug,
             'icon' => $this->icon,
-            'children' => $this->resource->relationLoaded('children')
-                ? self::collection($this->children)->resolve($request)
-                : [],
+            'children' => self::collection($this->children)->resolve($request),
         ];
     }
 }

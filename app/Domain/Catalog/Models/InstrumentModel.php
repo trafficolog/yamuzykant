@@ -60,11 +60,22 @@ class InstrumentModel extends Model
      */
     public function scopePublic(Builder $query): void
     {
+        // Видимость цепочки предков считается рекурсивным CTE внутри того же запроса: один SQL, без visibleIds().
         $query->where('status', InstrumentModelStatus::Active)
-            ->whereIn('category_id', (new CategoryTree)->visibleIds())
+            ->whereRaw('category_id IN ('.self::VISIBLE_CATEGORIES_SQL.')', [true, true])
             ->orderBy('brand')
             ->orderBy('name');
     }
+
+    /**
+     * Видимые категории: корень видим, и каждый потомок видим, пока видим его родитель.
+     * Двойной bind — для is_visible в якорной и рекурсивной части.
+     */
+    private const VISIBLE_CATEGORIES_SQL = 'WITH RECURSIVE visible(id) AS ('
+        .'SELECT id FROM categories WHERE parent_id IS NULL AND is_visible = ? '
+        .'UNION ALL '
+        .'SELECT c.id FROM categories c JOIN visible v ON c.parent_id = v.id WHERE c.is_visible = ?'
+        .') SELECT id FROM visible';
 
     public function fullName(): string
     {

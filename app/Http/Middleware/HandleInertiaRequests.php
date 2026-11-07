@@ -6,6 +6,7 @@ namespace App\Http\Middleware;
 
 use App\Domain\Catalog\Queries\CategoryTree;
 use App\Domain\Catalog\Queries\CurrentCity;
+use App\Domain\Catalog\Queries\PublicCategoriesCache;
 use App\Http\Controllers\Auth\YandexLoginController;
 use App\Http\Resources\Catalog\CategoryResource;
 use App\Support\Flags\FeatureFlag;
@@ -37,8 +38,10 @@ final class HandleInertiaRequests extends Middleware
                 )),
             ),
             // Справочник категорий для меню шапки: только видимые, явный список полей (CategoryResource).
-            'categories' => fn (): array => CategoryResource::collection((new CategoryTree)->public())
-                ->resolve($request),
+            // Кэш сбрасывает наблюдатель категорий: повторный ответ не трогает таблицу, пока дерево не менялось.
+            'categories' => fn (): array => PublicCategoriesCache::remember(
+                fn (): array => CategoryResource::collection((new CategoryTree)->public())->resolve($request),
+            ),
             // Город шапки (BR-01): только id и name; без cookie — Москва.
             'city' => fn (): ?array => $this->currentCity($request),
             // Итог входа через Яндекс ID для окна входа (1.1.2): status и message или name — без почты и yandex_id.

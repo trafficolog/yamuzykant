@@ -7,6 +7,7 @@ use App\Domain\Catalog\Models\City;
 use App\Domain\Catalog\Models\InstrumentModel;
 use App\Domain\Catalog\Queries\CategoryTree;
 use Database\Seeders\CatalogSeeder;
+use Tests\Support\MenuPrototype;
 
 /**
  * Дерево из макета «Шапка»: вид → группа → пункты. «Мастера и ремонт» — раздел услуг, не вид инструмента.
@@ -15,25 +16,7 @@ use Database\Seeders\CatalogSeeder;
  */
 function menuTreeFromPrototype(): array
 {
-    $html = (string) file_get_contents(base_path('design/prototypes/Шапка.dc.html'));
-    $kinds = [];
-    $kind = null;
-    foreach ((array) preg_split('/\R/u', $html) as $line) {
-        if (preg_match("/^  \{ name: '([^']+)', icon: '[^']+'/u", (string) $line, $m)) {
-            if ($kind !== null) {
-                $kinds[] = $kind;
-            }
-            $kind = ['name' => $m[1], 'groups' => []];
-        } elseif ($kind !== null && preg_match("/\{ title: '([^']+)', items: \[(.*?)\]/u", (string) $line, $m)) {
-            preg_match_all("/'([^']+)'/u", $m[2], $items);
-            $kind['groups'][] = ['title' => $m[1], 'items' => $items[1]];
-        }
-    }
-    if ($kind !== null) {
-        $kinds[] = $kind;
-    }
-
-    return array_values(array_filter($kinds, fn (array $k) => $k['name'] !== 'Мастера и ремонт'));
+    return MenuPrototype::parse((string) file_get_contents(base_path('design/prototypes/Шапка.dc.html')));
 }
 
 beforeEach(function () {
@@ -126,4 +109,21 @@ it('DatabaseSeeder запускает справочники', function () {
     $this->seed();
 
     expect(City::query()->count())->toBe(16);
+});
+
+it('годы выпуска: Gibson Les Paul Studio с 1983 по 2018, Strymon Timeline с 2012', function () {
+    $gibson = InstrumentModel::query()->where('brand', 'Gibson')->where('name', 'Les Paul Studio')->firstOrFail();
+
+    expect($gibson->year_from)->toBe(1983)
+        ->and($gibson->year_to)->toBe(2018)
+        ->and(InstrumentModel::query()->where('brand', 'Strymon')->where('name', 'Timeline')->firstOrFail()->year_from)->toBe(2012);
+});
+
+it('разбор меню устойчив к отступам, переносам строк и кавычкам', function () {
+    $html = (string) file_get_contents(base_path('design/prototypes/Шапка.dc.html'));
+    // Тот же макет: двойные кавычки, другие отступы и перенос перед items.
+    $variant = str_replace("'", '"', (string) preg_replace(['/^[ \t]+/m', '/,\s*items:/'], ['        ', ",\n      items:"], $html));
+
+    expect(MenuPrototype::parse($variant))->toBe(MenuPrototype::parse($html))
+        ->and(MenuPrototype::parse($html))->toHaveCount(9);
 });

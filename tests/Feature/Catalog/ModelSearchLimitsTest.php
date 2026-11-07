@@ -78,7 +78,12 @@ it('дневной лимит предложений на пользовател
 
     $this->actingAs($user)
         ->postJson('/api/models/suggestions', ['text' => 'Ibanez RG99 Custom', 'category_id' => $category->id])
-        ->assertStatus(429);
+        ->assertStatus(429)
+        ->assertJsonPath('message', 'Сегодня уже отправлено много предложений. Попробуйте завтра.');
+});
+
+it('текст 429 суточного лимита берётся из lang/ru', function () {
+    expect(__('catalog.suggestions_daily_limit'))->toBe('Сегодня уже отправлено много предложений. Попробуйте завтра.');
 });
 
 it('предложение в скрытую категорию отклоняется с 422', function () {
