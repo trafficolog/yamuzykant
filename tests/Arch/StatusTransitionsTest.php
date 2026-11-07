@@ -73,9 +73,12 @@ it('сканер не трогает объявление метода withStatu
         ->and(StatusWriteScanner::scan("<?php\n// \$listing->withStatusChange(fn () => 1);"))->toBe([]);
 });
 
-it('withStatusChange вне StateMachines — нарушение, внутри — нет (фикстура)', function () {
+it('withStatusChange вне Domain/Listings/StateMachines — нарушение, внутри — нет (фикстура)', function () {
     $violations = StatusWriteScanner::scanDirectory(dirname(__DIR__).'/Fixtures/StatusScanner');
+    $paths = array_keys($violations);
+    sort($paths);
 
-    expect(array_keys($violations))->toHaveCount(1)
-        ->and(array_keys($violations)[0])->toEndWith('/Fixtures/StatusScanner/OutsideCaller.php');
+    expect($paths)->toHaveCount(2)
+        ->and($paths[0])->toEndWith('/Fixtures/StatusScanner/Domain/Other/StateMachines/OtherContextCaller.php')
+        ->and($paths[1])->toEndWith('/Fixtures/StatusScanner/OutsideCaller.php');
 });

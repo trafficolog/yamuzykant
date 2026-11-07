@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace Tests\Fixtures\StatusScanner\StateMachines;
+namespace Tests\Fixtures\StatusScanner\Domain\Listings\StateMachines;
 
 use App\Domain\Listings\Models\Listing;
 
