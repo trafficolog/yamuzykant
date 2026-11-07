@@ -27,6 +27,8 @@ interface PhotoUploaderProps {
     /** Как часто спрашивать сервер, готовы ли фото в обработке, мс. */
     pollInterval?: number;
     onChange?: (photos: ListingPhoto[]) => void;
+    /** false — не выводить строку «Добавьте: …» под плитками: список недостающего ведёт форма (Sell/Create). */
+    showStatus?: boolean;
 }
 
 interface Upload {
@@ -72,6 +74,7 @@ export default function PhotoUploader({
     api = photoApi,
     pollInterval = 1500,
     onChange,
+    showStatus = true,
 }: PhotoUploaderProps) {
     const [photos, setPhotos] = useState<ListingPhoto[]>(() => sortPhotos(initialPhotos));
     const [uploads, setUploads] = useState<Upload[]>([]);
@@ -446,9 +449,11 @@ export default function PhotoUploader({
                     {actionError}
                 </p>
             ) : null}
-            <p role="status" className="type-body-s ym-photos__note">
-                {missing.length > 0 ? ru.photos.missing(missing) : ''}
-            </p>
+            {showStatus ? (
+                <p role="status" className="type-body-s ym-photos__note">
+                    {missing.length > 0 ? ru.photos.missing(missing) : ''}
+                </p>
+            ) : null}
             <input
                 ref={inputRef}
                 type="file"

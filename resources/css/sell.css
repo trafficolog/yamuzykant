@@ -1,0 +1,189 @@
+/*
+ * Экран «Продать инструмент» (2.1.3). Подключается страницей Sell/Create после токенов ДС.
+ * Только токены var(--*) и классы ym-*. Раскладка и размеры — по прототипу design/prototypes/Десктоп - Продать.dc.html.
+ */
+
+.ym-sell {
+    max-width: var(--content-max);
+    margin: 0 auto;
+    padding: var(--space-6) var(--space-10) var(--space-16);
+    box-sizing: border-box;
+}
+
+.ym-sell__crumbs {
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: var(--space-2);
+    margin-bottom: var(--space-4);
+}
+.ym-sell__crumb {
+    display: flex;
+    align-items: center;
+    min-height: 32px;
+    color: var(--ink-muted);
+    white-space: nowrap;
+}
+.ym-sell__crumb-sep {
+    display: flex;
+    color: var(--ink-faint);
+}
+.ym-sell__crumb-current {
+    color: var(--ink);
+    white-space: nowrap;
+}
+
+.ym-sell__head {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-2);
+    margin-bottom: var(--space-8);
+}
+.ym-sell__title,
+.ym-sell__lead,
+.ym-sell__step-title,
+.ym-sell__hint {
+    margin: 0;
+}
+.ym-sell__lead,
+.ym-sell__hint {
+    color: var(--ink-muted);
+}
+
+.ym-sell__saved {
+    margin-bottom: var(--space-6);
+}
+
+.ym-sell__layout {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) minmax(300px, 360px);
+    gap: var(--space-10);
+    align-items: start;
+}
+
+.ym-sell__form {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-10);
+    min-width: 0;
+}
+
+.ym-sell__step {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-5);
+    min-width: 0;
+}
+.ym-sell__step-head {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-1);
+}
+.ym-sell__step-no {
+    color: var(--ink-muted);
+}
+
+.ym-sell__chips {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--space-2);
+}
+
+.ym-sell__pair {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(min(100%, 200px), 1fr));
+    gap: var(--space-4);
+}
+
+.ym-sell__price {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(min(100%, 260px), 1fr));
+    gap: var(--space-6);
+    align-items: start;
+}
+.ym-sell__price-col {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-3);
+}
+
+.ym-sell__handover {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-3);
+    min-width: 0;
+    margin: 0;
+    padding: 0;
+    border: 0;
+}
+.ym-sell__legend {
+    padding: 0;
+    margin-bottom: var(--space-3);
+    font-weight: 600;
+}
+
+.ym-sell__footer {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-3);
+    padding-top: var(--space-6);
+    border-top: 1px solid var(--line);
+}
+.ym-sell__missing {
+    margin: 0;
+    color: var(--ink-muted);
+}
+.ym-sell__actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--space-3);
+}
+
+.ym-sell__aside {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-4);
+    position: sticky;
+    top: var(--space-4);
+}
+.ym-sell__aside-title {
+    margin: 0;
+    font-weight: 600;
+    color: var(--ink-muted);
+}
+.ym-sell__preview {
+    max-width: 280px;
+}
+
+/* Планшет и телефон: одна колонка, превью под формой без прилипания. */
+@media (max-width: 899px) {
+    .ym-sell__layout {
+        grid-template-columns: minmax(0, 1fr);
+        gap: var(--space-8);
+    }
+    .ym-sell__aside {
+        position: static;
+    }
+}
+
+/* Телефон: поля страницы как у остальных экранов, зоны нажатия не меньше 44 px (SCREENS §3). */
+@media (max-width: 639px) {
+    .ym-sell {
+        padding: var(--space-4) var(--space-4) var(--space-10);
+    }
+    .ym-sell__head {
+        margin-bottom: var(--space-6);
+    }
+    .ym-sell__form {
+        gap: var(--space-8);
+    }
+    .ym-sell .ym-chip {
+        min-height: var(--hit-min);
+    }
+    .ym-sell__actions .ym-btn {
+        width: 100%;
+    }
+    .ym-sell__preview {
+        max-width: none;
+    }
+}
