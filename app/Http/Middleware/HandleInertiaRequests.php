@@ -9,10 +9,12 @@ use App\Domain\Accounts\Staff\StaffDirectory;
 use App\Domain\Catalog\Queries\CategoryTree;
 use App\Domain\Catalog\Queries\CurrentCity;
 use App\Domain\Catalog\Queries\PublicCategoriesCache;
+use App\Domain\Messaging\Queries\UnreadMessages;
 use App\Http\Controllers\Auth\YandexLoginController;
 use App\Http\Resources\Catalog\CategoryResource;
 use App\Support\Flags\FeatureFlag;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Config;
 use Inertia\Middleware;
 use Laravel\Pennant\Feature;
 
@@ -50,6 +52,28 @@ final class HandleInertiaRequests extends Middleware
             'auth' => fn (): array => ['user' => $this->authUser($request)],
             // Итог входа через Яндекс ID для окна входа (1.1.2): status и message или name — без почты и yandex_id.
             'login' => fn (): mixed => $request->session()->get(YandexLoginController::LOGIN_WINDOW_KEY),
+            // Счётчик непрочитанных сообщений вошедшего (4.1.1); у гостя — null.
+            'messages' => fn (): ?array => $request->user() instanceof User
+                ? ['unread' => app(UnreadMessages::class)->count($request->user())]
+                : null,
+            // Куда браузер подключается к Reverb: публичный ключ, хост, порт, схема — без секрета.
+            // У гостя и без Reverb (вещатель null) — null: приватные каналы гостю не нужны.
+            'realtime' => fn (): ?array => $this->realtime($request),
+        ];
+    }
+
+    /** @return array{key: string, host: string, port: int, scheme: string}|null */
+    private function realtime(Request $request): ?array
+    {
+        if ($request->user() === null || Config::string('broadcasting.default') !== 'reverb') {
+            return null;
+        }
+
+        return [
+            'key' => (string) Config::get('broadcasting.connections.reverb.key'),
+            'host' => (string) Config::get('broadcasting.client.host'),
+            'port' => (int) Config::get('broadcasting.client.port'),
+            'scheme' => (string) Config::get('broadcasting.client.scheme'),
         ];
     }
 

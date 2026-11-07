@@ -13,7 +13,7 @@ gate: G2
 <!-- docs:ops:begin epics -->
 | Эпик | Задач | Готово |
 |---|---|---|
-| [4.1 Сообщения](../epics/4-1-messaging.md) | 3 | 0 |
+| [4.1 Сообщения](../epics/4-1-messaging.md) | 4 | 1 |
 | [4.2 Предложение цены](../epics/4-2-offers.md) | 2 | 0 |
 | [4.3 Избранное и поиски](../epics/4-3-favorites.md) | 2 | 0 |
 | [4.4 Письма и уведомления](../epics/4-4-notifications.md) | 2 | 0 |

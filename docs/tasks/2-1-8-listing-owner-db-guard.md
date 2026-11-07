@@ -3,7 +3,7 @@ id: "2.1.8"
 phase: "2"
 epic: "2.1"
 title: "Объявление: защита владельца на уровне БД и сканера"
-status: review
+status: done
 gate: G1
 risk: low
 model_impl: sonnet
@@ -14,7 +14,7 @@ uc: ["L1"]
 prototype: ""
 screens: []
 issue: 114
-sync_state: drifted
+sync_state: aligned
 escalations: []
 ---
 

@@ -152,8 +152,12 @@ class Listing extends Model
      */
     public function fill(array $attributes): static
     {
-        if ($this->exists && array_key_exists('user_id', $attributes) && (int) $attributes['user_id'] !== $this->user_id) {
-            throw new LogicException('Владельца объявления менять нельзя.');
+        if ($this->exists && array_key_exists('user_id', $attributes)) {
+            // Колонка не загружена (select подмножества): сравнивать не с чем, а чтение при
+            // preventAccessingMissingAttributes дало бы MissingAttributeException вместо LogicException.
+            if (! array_key_exists('user_id', $this->getAttributes()) || (int) $attributes['user_id'] !== $this->user_id) {
+                throw new LogicException('Владельца объявления менять нельзя.');
+            }
         }
 
         return parent::fill($attributes);
