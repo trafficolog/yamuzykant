@@ -22,6 +22,12 @@ const seriousOrCritical = async (page: Page) => {
         .map((violation) => `${violation.id}: ${violation.nodes.map((n) => n.target).join(' | ')}`);
 };
 
+/** Страница загружена и гидратирована: клик или клавиша до этого ничего не откроет. */
+const open = async (page: Page, url: string) => {
+    await page.goto(url);
+    await page.waitForLoadState('networkidle');
+};
+
 /** Окно открывается на шаге «Способ»: заголовок «Вход». Дальше имя окна меняется с шагом. */
 const openDialog = async (page: Page) => {
     await page.getByRole('banner').getByRole('button', { name: 'Войти' }).click();
@@ -56,7 +62,7 @@ test.describe('UC-A1: окно входа', () => {
     test('вход по почте: код, первый вход с согласием, возврат на ту же страницу без перезагрузки', async ({
         page,
     }) => {
-        await page.goto('/?from=listing');
+        await open(page, '/?from=listing');
         const dialog = await openDialog(page);
         await expect(dialog.getByLabel('Почта')).toBeFocused();
 
@@ -104,7 +110,7 @@ test.describe('UC-A1: окно входа', () => {
     test('повтор кода: до истечения 60 с кнопки нет, виден обратный отсчёт; «Изменить почту» возвращает на первый шаг', async ({
         page,
     }) => {
-        await page.goto('/');
+        await open(page, '/');
         await openDialog(page);
         const email = freshEmail();
         await requestCode(page, email);
@@ -120,9 +126,7 @@ test.describe('UC-A1: окно входа', () => {
     test('Esc закрывает окно, фокус возвращается на кнопку «Войти»; Tab не уходит за окно', async ({
         page,
     }) => {
-        await page.goto('/');
-        // Клавиша Enter до гидратации страницы ничего не откроет: ждём загрузки скриптов.
-        await page.waitForLoadState('networkidle');
+        await open(page, '/');
         const opener = page.getByRole('banner').getByRole('button', { name: 'Войти' });
         await opener.focus();
         await page.keyboard.press('Enter');
@@ -145,7 +149,7 @@ test.describe('UC-A1: окно входа', () => {
         page,
     }) => {
         forgetYandexTestUser();
-        await page.goto('/?from=yandex');
+        await open(page, '/?from=yandex');
         const dialog = await openDialog(page);
 
         await dialog.getByRole('link', { name: 'Войти с Яндекс ID' }).click();
@@ -173,7 +177,7 @@ test.describe('UC-A1: окно входа', () => {
                 headers: { ...response.headers(), location: target.toString() },
             });
         });
-        await page.goto('/');
+        await open(page, '/');
         const dialog = await openDialog(page);
 
         await dialog.getByRole('link', { name: 'Войти с Яндекс ID' }).click();
@@ -187,7 +191,7 @@ test.describe('UC-A1: окно входа', () => {
     test('перехват 419: окно входа открывается, после входа страница обновляется на месте', async ({
         page,
     }) => {
-        await page.goto('/?from=action');
+        await open(page, '/?from=action');
         const header = page.getByRole('banner');
         let expired = true;
         await page.route('**/city', (route) => {
@@ -224,7 +228,7 @@ test.describe('UC-A1: окно входа', () => {
 
 test.describe('UC-A1: доступность окна входа (axe)', () => {
     test('десктоп: шаги «Способ», «Код», «Первый вход»', async ({ page }) => {
-        await page.goto('/');
+        await open(page, '/');
         const dialog = await openDialog(page);
         expect(await seriousOrCritical(page)).toEqual([]);
 
@@ -237,7 +241,7 @@ test.describe('UC-A1: доступность окна входа (axe)', () => {
     });
 
     test('ошибка и блок: axe чистый', async ({ page }) => {
-        await page.goto('/');
+        await open(page, '/');
         const dialog = await openDialog(page);
         await requestCode(page, freshEmail());
         await dialog.getByLabel('Код из письма').fill('000000');
@@ -253,7 +257,7 @@ test.describe('UC-A1: окно входа на телефоне', () => {
             page,
         }) => {
             await page.setViewportSize({ width, height: 740 });
-            await page.goto('/');
+            await open(page, '/');
 
             await page
                 .getByRole('navigation', { name: 'Нижнее меню' })
