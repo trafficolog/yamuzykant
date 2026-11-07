@@ -60,7 +60,7 @@ describe('вход из каркаса страницы', () => {
     it('вкладка «Кабинет» нижней панели (< 640 px) открывает окно входа', () => {
         render(<PublicLayout />);
 
-        fireEvent.click(screen.getByRole('link', { name: 'Кабинет' }));
+        fireEvent.click(screen.getByRole('button', { name: 'Кабинет' }));
 
         expect(screen.getByRole('dialog', { name: 'Вход' })).toBeInTheDocument();
     });

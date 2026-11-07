@@ -7,7 +7,8 @@ import MobileTabBar from '@/Components/MobileTabBar';
 import { ru } from '@/lang/ru';
 
 const bar = () => screen.getByRole('navigation', { name: 'Нижнее меню' });
-const tabs = () => within(bar()).getAllByRole('link');
+/** Вкладки панели: ссылки и вкладка «Кабинет» — кнопка. */
+const tabs = () => Array.from(bar().querySelectorAll<HTMLElement>('a, button'));
 const text = (element: Element): string => (element.textContent ?? '').replace(/\s+/g, ' ').trim();
 
 describe('MobileTabBar', () => {
@@ -17,7 +18,7 @@ describe('MobileTabBar', () => {
         expect(tabs().map(text)).toEqual(['Главная', 'Поиск', 'Продать', 'Сообщения', 'Кабинет']);
     });
 
-    it('«Главная» ведёт на /, «Поиск» — в выдачу Барахолки, остальные пока на «#»', () => {
+    it('«Главная» ведёт на /, «Поиск» — в выдачу Барахолки, остальные пока на «#», «Кабинет» — кнопка без адреса', () => {
         render(<MobileTabBar />);
 
         const hrefs = Object.fromEntries(
@@ -28,7 +29,7 @@ describe('MobileTabBar', () => {
             Поиск: '/baraholka',
             Продать: '#',
             Сообщения: '#',
-            Кабинет: '#',
+            Кабинет: null,
         });
     });
 
