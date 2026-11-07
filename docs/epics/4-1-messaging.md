@@ -19,5 +19,5 @@ gate: G2
 | [4.1.1 Сообщения: домен и realtime](../tasks/4-1-1-messaging-domain.md) | done | high | opus → opus |
 | [4.1.2 Сообщения: список и чат](../tasks/4-1-2-messages-ui.md) | todo | medium | sonnet → sonnet |
 | [4.1.3 Антиспам в сообщениях](../tasks/4-1-3-antispam.md) | todo | medium | sonnet → sonnet |
-| [4.1.4 Сообщения: текст не в журнал, доработки после ревью](../tasks/4-1-4-messaging-hardening.md) | review | medium | sonnet → opus |
+| [4.1.4 Сообщения: текст не в журнал, доработки после ревью](../tasks/4-1-4-messaging-hardening.md) | done | medium | sonnet → opus |
 <!-- docs:ops:end -->
