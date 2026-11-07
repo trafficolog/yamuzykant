@@ -12,6 +12,7 @@ use Database\Seeders\CitySeeder;
 use Illuminate\Testing\Fluent\AssertableJson;
 use Illuminate\Testing\TestResponse;
 use Inertia\Testing\AssertableInertia as Assert;
+use Symfony\Component\HttpFoundation\Response;
 use Tests\Support\ListingFixtures;
 use Tests\Support\MeilisearchIndex;
 
@@ -38,11 +39,12 @@ function fleaListing(array $attributes = [], string $city = 'Москва', ?Cat
     return ListingFixtures::published($attributes, fleaCity($city), $category)->id;
 }
 
+/** @return TestResponse<Response> */
 function fleaGet(string $uri): TestResponse
 {
     MeilisearchIndex::waitForTasks();
 
-    return test()->get($uri);
+    return currentTest()->get($uri);
 }
 
 it('отдаёт страницу Flea/Index с объявлениями города шапки и только города шапки', function () {
