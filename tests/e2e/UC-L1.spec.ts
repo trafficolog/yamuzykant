@@ -113,7 +113,7 @@ test.describe('UC-L1: заполнение формы «Продать инст�
             );
             expect(overflow, `${width} px`).toBeLessThanOrEqual(0);
 
-            for (const name of ['Гитары', 'Новое', 'Встреча в Москве', 'Опубликовать']) {
+            for (const name of ['Гитары', 'Новое', 'Встреча в г. Москва', 'Опубликовать']) {
                 const box = await page
                     .getByRole(name === 'Опубликовать' ? 'button' : 'radio', { name })
                     .or(page.getByRole('button', { name }))

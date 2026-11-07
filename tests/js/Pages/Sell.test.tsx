@@ -68,7 +68,15 @@ function photo(id: number, overrides: Partial<ListingPhoto> = {}): ListingPhoto 
 const THREE = [photo(1, { is_serial: true, urls: null }), photo(2), photo(3)];
 
 function renderSell(props: Partial<React.ComponentProps<typeof SellCreate>> = {}) {
-    return render(<SellCreate listingId="9f1c-listing" photos={[]} saved={false} {...props} />);
+    return render(
+        <SellCreate
+            listingId="9f1c-listing"
+            photos={[]}
+            saved={false}
+            place={{ type: 'г.', name: 'Москва' }}
+            {...props}
+        />,
+    );
 }
 
 const missing = () => screen.queryByText(/^Чтобы опубликовать, добавьте:/);
@@ -168,7 +176,7 @@ describe('Шаги и поля', () => {
     it('способы передачи: встреча в городе шапки и доставка в защитной упаковке, оба включены; «Готов к торгу»', () => {
         renderSell();
 
-        expect(screen.getByRole('button', { name: 'Встреча в Москве' })).toHaveAttribute(
+        expect(screen.getByRole('button', { name: 'Встреча в г. Москва' })).toHaveAttribute(
             'aria-pressed',
             'true',
         );
@@ -185,6 +193,26 @@ describe('Шаги и поля', () => {
         renderSell();
 
         expect(screen.getByRole('button', { name: 'Добавить фото: Серийный номер' })).toBeVisible();
+    });
+});
+
+describe('Встреча: тип населённого пункта без склонения (решение OWNER 08.11.2026)', () => {
+    it('«Встреча в г. Москва»', () => {
+        renderSell();
+
+        expect(screen.getByRole('button', { name: 'Встреча в г. Москва' })).toBeVisible();
+    });
+
+    it('другой тип: «Встреча в пос. Заречье»', () => {
+        renderSell({ place: { type: 'пос.', name: 'Заречье' } });
+
+        expect(screen.getByRole('button', { name: 'Встреча в пос. Заречье' })).toBeVisible();
+    });
+
+    it('города нет: «Встреча в городе»', () => {
+        renderSell({ place: null });
+
+        expect(screen.getByRole('button', { name: 'Встреча в городе' })).toBeVisible();
     });
 });
 
@@ -259,7 +287,7 @@ describe('Список недостающего и кнопка', () => {
         renderSell({ photos: THREE });
         fillRequired();
 
-        fireEvent.click(screen.getByRole('button', { name: 'Встреча в Москве' }));
+        fireEvent.click(screen.getByRole('button', { name: 'Встреча в г. Москва' }));
         fireEvent.click(screen.getByRole('button', { name: 'Доставка в защитной упаковке' }));
 
         expect(missing()).toHaveTextContent('Чтобы опубликовать, добавьте: способ передачи.');
