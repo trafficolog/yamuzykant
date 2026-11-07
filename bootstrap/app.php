@@ -10,14 +10,17 @@ use App\Domain\Accounts\Exceptions\TooManyLoginAttempts;
 use App\Domain\Accounts\Exceptions\YandexLoginFailed;
 use App\Domain\Accounts\Exceptions\YandexLoginNotPending;
 use App\Http\Controllers\HealthController;
+use App\Http\Middleware\AssignRequestId;
 use App\Http\Middleware\EnsureSessionIsCurrent;
 use App\Http\Middleware\HandleInertiaRequests;
+use App\Http\Middleware\ThrottleHealth;
 use Illuminate\Contracts\Auth\Middleware\AuthenticatesRequests;
 use Illuminate\Foundation\Application;
 use Illuminate\Foundation\Configuration\Exceptions;
 use Illuminate\Foundation\Configuration\Middleware;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Support\Facades\Route;
+use Sentry\Laravel\Integration;
 
 return Application::configure(basePath: dirname(__DIR__))
     ->withRouting(
@@ -27,10 +30,13 @@ return Application::configure(basePath: dirname(__DIR__))
         health: '/up',
         then: function (): void {
             // Вне группы `web`: без сессии, кук и CSRF — ответ не зависит от БД.
-            Route::get('/health', HealthController::class)->name('health');
+            Route::get('/health', HealthController::class)->middleware(ThrottleHealth::class)->name('health');
         },
     )
     ->withMiddleware(function (Middleware $middleware): void {
+        // request_id для всех запросов, включая /health и /up: в журнале, Sentry, заданиях очереди и ответе.
+        $middleware->prepend(AssignRequestId::class);
+
         $middleware->web(append: [
             EnsureSessionIsCurrent::class,
             HandleInertiaRequests::class,
@@ -46,6 +52,9 @@ return Application::configure(basePath: dirname(__DIR__))
         $middleware->redirectGuestsTo('/');
     })
     ->withExceptions(function (Exceptions $exceptions): void {
+        // Исключения уходят в Sentry (если задан DSN); ПДн чистит SentryScrubber.
+        Integration::handles($exceptions);
+
         // Код входа не попадает в old input сессии при ошибке формы.
         $exceptions->dontFlash(['code']);
 

@@ -20,6 +20,7 @@ use Illuminate\Contracts\Foundation\Application;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Event;
 use Illuminate\Support\Facades\Gate;
+use Illuminate\Support\Facades\Queue;
 use Illuminate\Support\ServiceProvider;
 use Laravel\Pennant\Feature;
 use Laravel\Socialite\Facades\Socialite;
@@ -48,6 +49,9 @@ class AppServiceProvider extends ServiceProvider
 
         // Версия сессий в сессии при любом входе — для «выйти на всех устройствах».
         Event::listen(Login::class, RememberSessionVersion::class);
+
+        // Время постановки задания в очередь: по нему /health считает возраст старейшего задания в Redis.
+        Queue::createPayloadUsing(static fn (): array => ['pushed_at' => time()]);
 
         // Поисковый индекс объявлений: любое событие машины статусов → job SyncListingToIndex.
         Event::listen('App\Domain\Listings\Events\*', QueueListingIndexSync::class);

@@ -16,6 +16,7 @@
         "league/flysystem-aws-s3-v3": "^3.0",
         "meilisearch/meilisearch-php": "^1.17",
         "predis/predis": "^2.2",
+        "sentry/sentry-laravel": "^4.29",
         "socialiteproviders/yandex": "^4.2"
     },
     "require-dev": {
