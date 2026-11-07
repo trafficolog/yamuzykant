@@ -275,7 +275,7 @@ final class ListingStateMachine
                 } elseif ($to === ListingStatus::Pending) {
                     $fresh->published_at = null;
                 }
-                Listing::withStatusChange(fn (): bool => $fresh->save());
+                $fresh->withStatusChange(fn (): bool => $fresh->save());
 
                 if ($after !== null) {
                     $after($fresh);
