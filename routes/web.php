@@ -12,6 +12,7 @@ use App\Http\Controllers\CityController;
 use App\Http\Controllers\Dev\MessagingPlaygroundController;
 use App\Http\Controllers\Dev\PhotoUploaderPlaygroundController;
 use App\Http\Controllers\DsShowcaseController;
+use App\Http\Controllers\FleaController;
 use App\Http\Controllers\HomeController;
 use App\Http\Controllers\Listings\ListingPhotoController;
 use App\Http\Controllers\Listings\LocalPhotoUploadController;
@@ -22,6 +23,11 @@ use Illuminate\Foundation\Http\Middleware\ValidateCsrfToken;
 use Illuminate\Support\Facades\Route;
 
 Route::get('/', HomeController::class)->name('home');
+
+// Барахолка (3.1.2): выдача города шапки; категория — путь из слагов, неизвестная даёт 404 в контроллере.
+Route::get('/baraholka/{path?}', FleaController::class)
+    ->where('path', '[A-Za-z0-9\-]+(/[A-Za-z0-9\-]+)*')
+    ->name('flea');
 
 // Предложение модели — с сессией и CSRF (группа web), поэтому маршрут здесь, а не в api.php.
 Route::post('/api/models/suggestions', SuggestModelController::class)
