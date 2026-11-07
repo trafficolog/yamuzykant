@@ -72,17 +72,27 @@ it('необработанное фото — 404', function () {
     $this->get("/media/photos/{$photo->id}/square.webp")->assertNotFound();
 });
 
-it('снятое и истёкшее — без публичного и неизменяемого кэша', function (ListingStatus $status) {
-    $photo = readyPhoto(Listing::factory()->inStatus($status)->create());
+it('не опубликованное (снято, истекло, на проверке, на доработке): гостю и чужому — 404, владельцу — без публичного кэша', function (ListingStatus $status) {
+    // Решение OWNER 07.11.2026 (SPEC §6.1): не опубликованное видят только владелец и сотрудники.
+    $owner = User::factory()->create();
+    $photo = readyPhoto(Listing::factory()->for($owner)->inStatus($status)->create());
 
-    $response = $this->get("/media/photos/{$photo->id}/square.webp");
+    $this->get("/media/photos/{$photo->id}/square.webp")->assertNotFound();
+    $this->actingAs(User::factory()->create())->get("/media/photos/{$photo->id}/square.webp")->assertNotFound();
 
+    $response = $this->actingAs($owner)->get("/media/photos/{$photo->id}/square.webp");
     $response->assertOk();
     $cache = (string) $response->headers->get('Cache-Control');
     expect($cache)->toContain('private')
         ->and(str_contains($cache, 'public'))->toBeFalse()
         ->and(str_contains($cache, 'immutable'))->toBeFalse();
-})->with(['withdrawn' => [ListingStatus::Withdrawn], 'expired' => [ListingStatus::Expired]]);
+})->with([
+    'withdrawn' => [ListingStatus::Withdrawn],
+    'expired' => [ListingStatus::Expired],
+    'pending' => [ListingStatus::Pending],
+    'needs_changes' => [ListingStatus::NeedsChanges],
+    'rejected' => [ListingStatus::Rejected],
+]);
 
 it('фото серийного номера опубликованного: гостю и чужому — 404, владельцу — без кэша', function () {
     $owner = User::factory()->create();
