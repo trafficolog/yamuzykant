@@ -12,6 +12,17 @@
         @inertiaHead
     </head>
     <body>
+        {{-- Клик по «Войти» до гидратации (JS-бандл ещё грузится) запоминаем: окно откроется, когда страница оживёт (LoginDialogHost). --}}
+        <script>
+            document.addEventListener('click', function (event) {
+                var target = event.target;
+                if (document.documentElement.dataset.hydrated === 'true' || !(target instanceof Element)) return;
+                if (target.closest('[data-login-trigger]')) {
+                    event.preventDefault();
+                    window.__ymLoginPending = true;
+                }
+            });
+        </script>
         @inertia
     </body>
 </html>

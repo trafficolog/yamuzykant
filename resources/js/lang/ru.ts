@@ -150,6 +150,17 @@ export const ru = {
         messagesLabel: (count: string) => `Сообщения, ${count}`,
         account: 'Кабинет',
     },
+    account: {
+        label: 'Кабинет',
+        buy: 'Покупаю',
+        sell: 'Продаю',
+        favorites: 'Избранное',
+        listings: 'Объявления',
+        messages: 'Сообщения',
+        profile: 'Профиль',
+        logout: 'Выйти',
+        logoutFailed: 'Не удалось выйти. Попробуйте ещё раз',
+    },
     footer: {
         services: {
             catalog: 'Каталог',

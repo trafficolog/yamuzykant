@@ -1,7 +1,7 @@
 import { execFileSync } from 'node:child_process';
-import { fileURLToPath } from 'node:url';
 
-const APP_ROOT = fileURLToPath(new URL('../..', import.meta.url));
+/** Playwright и Vitest запускаются из корня проекта. */
+const APP_ROOT = process.cwd();
 
 /** Окружения, где базу можно чистить из тестов: CI (e2e) и тестовая (testing). */
 export const DISPOSABLE_ENVIRONMENTS = ['e2e', 'testing'] as const;
@@ -18,8 +18,11 @@ export function assertDisposableEnvironment(environment: string | null | undefin
 
 /** Окружение приложения глазами artisan: `The application environment is [e2e]`. */
 export function applicationEnvironment(): string {
-    const output = execFileSync('php', ['artisan', 'env'], { cwd: APP_ROOT, encoding: 'utf8' });
-    return output.match(/\[([^\]]+)\]/)?.[1] ?? '';
+    const output = execFileSync('php', ['artisan', 'env', '--no-ansi'], {
+        cwd: APP_ROOT,
+        encoding: 'utf8',
+    });
+    return output.match(/environment is \[([^\]]+)\]/)?.[1] ?? '';
 }
 
 /**

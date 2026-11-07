@@ -67,9 +67,9 @@ it('в HTML страницы нет почты и yandex_id пользовате
 
     $html = $this->get('/')->assertOk()->getContent();
 
-    expect($html)->not->toContain(AUTH_EMAIL)
-        ->not->toContain(AUTH_YANDEX_ID)
-        ->not->toContain('yandex_id');
+    expect($html)->not->toContain(AUTH_EMAIL);
+    expect($html)->not->toContain(AUTH_YANDEX_ID);
+    expect($html)->not->toContain('yandex_id');
 });
 
 it('в JSON-ответе Inertia нет почты и yandex_id пользователя', function () {
@@ -80,8 +80,8 @@ it('в JSON-ответе Inertia нет почты и yandex_id пользова
         ->assertOk()
         ->getContent();
 
-    expect($json)->toContain('"auth"')
-        ->not->toContain(AUTH_EMAIL)
-        ->not->toContain(AUTH_YANDEX_ID)
-        ->not->toContain('yandex_id');
+    expect($json)->toContain('"auth"');
+    expect($json)->not->toContain(AUTH_EMAIL);
+    expect($json)->not->toContain(AUTH_YANDEX_ID);
+    expect($json)->not->toContain('yandex_id');
 });

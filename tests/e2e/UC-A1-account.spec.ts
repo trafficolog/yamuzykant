@@ -19,6 +19,15 @@ const markNoReload = (page: Page) =>
 const stillSamePage = (page: Page) =>
     page.evaluate(() => (window as unknown as { __noReload?: boolean }).__noReload === true);
 
+/** Нажать «Выйти» и дождаться, пока страница перезагрузится и оживёт: переход на главную — полный. */
+const logOut = async (page: Page) => {
+    await Promise.all([
+        page.waitForEvent('load'),
+        page.getByRole('button', { name: 'Выйти' }).click(),
+    ]);
+    await page.locator('html[data-hydrated="true"]').waitFor({ state: 'attached' });
+};
+
 test.describe('UC-A1: шапка вошедшего', () => {
     test('после входа без перезагрузки шапка показывает меню кабинета; выход возвращает на главную', async ({
         page,
@@ -48,7 +57,7 @@ test.describe('UC-A1: шапка вошедшего', () => {
         await expect(header.getByRole('button', { name: /Анна/ })).toBeVisible();
 
         await header.getByRole('button', { name: /Анна/ }).click();
-        await page.getByRole('button', { name: 'Выйти' }).click();
+        await logOut(page);
 
         await expect(page).toHaveURL(/\/$/);
         await expect(header.getByRole('button', { name: 'Войти' })).toBeVisible();
@@ -64,8 +73,7 @@ test.describe('UC-A1: шапка вошедшего', () => {
         expect(oldToken).not.toBe('');
 
         await page.getByRole('banner').getByRole('button', { name: /Анна/ }).click();
-        await page.getByRole('button', { name: 'Выйти' }).click();
-        await expect(page).toHaveURL(/\/$/);
+        await logOut(page);
 
         const replay = await page.request.post('/auth/logout', {
             headers: { 'X-XSRF-TOKEN': oldToken, Accept: 'application/json' },
@@ -98,7 +106,9 @@ test.describe('UC-A1: шапка вошедшего', () => {
                 await route.continue();
             },
         );
-        await page.goto('/', { waitUntil: 'domcontentloaded' });
+        // Модульный скрипт откладывает DOMContentLoaded: ждём только ответ сервера (SSR-разметку).
+        await page.goto('/', { waitUntil: 'commit' });
+        await expect(page.getByRole('banner').getByRole('button', { name: 'Войти' })).toBeVisible();
 
         await page.getByRole('banner').getByRole('button', { name: 'Войти' }).click();
         await expect(page.getByRole('dialog')).toHaveCount(0);
@@ -136,10 +146,10 @@ test.describe('UC-A1: шапка вошедшего на телефоне', () =
                 () => document.documentElement.scrollWidth > document.documentElement.clientWidth,
             ),
         ).toBe(false);
+        await expect(page.locator('#nprogress')).toHaveCount(0); // полоса загрузки Inertia не мешает axe
         expect(await seriousOrCritical(page)).toEqual([]);
 
-        await menu.getByRole('button', { name: 'Выйти' }).click();
-        await expect(page).toHaveURL(/\/$/);
+        await logOut(page);
         await expect(bar.getByRole('link', { name: 'Кабинет' })).toBeVisible();
         await bar.getByRole('link', { name: 'Кабинет' }).click();
         await expect(page.getByRole('dialog', { name: 'Вход', exact: true })).toBeVisible();

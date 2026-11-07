@@ -16,7 +16,15 @@ type HostProps = {
     city?: CityOption | null;
     /** Итог входа через Яндекс ID (flash `login_window`, 1.1.5): только на странице, куда вернул Яндекс. */
     login?: unknown;
+    auth?: { user?: unknown };
 };
+
+declare global {
+    interface Window {
+        /** Клик по «Войти» до гидратации (скрипт в app.blade.php). */
+        __ymLoginPending?: boolean;
+    }
+}
 
 /** Итог Яндекса из shared prop; всё, что не похоже на известный итог, игнорируется. */
 function parseOutcome(login: unknown): LoginOutcome | null {
@@ -47,7 +55,18 @@ export default function LoginDialogHost() {
     const request = useLoginRequest();
     const [mounted, setMounted] = useState(false);
 
-    useEffect(() => setMounted(true), []);
+    // Страница ожила: признак для e2e (вместо networkidle); клик по «Войти» до этого момента (app.blade.php)
+    // сохранён в `__ymLoginPending` и открывает окно теперь, если пользователь не вошёл.
+    useEffect(() => {
+        setMounted(true);
+        document.documentElement.dataset.hydrated = 'true';
+
+        const pending = window.__ymLoginPending === true;
+        delete window.__ymLoginPending;
+        if (pending && !props.auth?.user) openLogin({ opener: null, returnTo: currentPath() });
+        // Один раз при монтировании каркаса.
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, []);
 
     // Итог Яндекса открывает окно сразу на нужном шаге; фокус вернётся на кнопку «Войти» шапки.
     useEffect(() => {

@@ -28,8 +28,9 @@ export const requestCode = async (page: Page, email: string) => {
  */
 export const signInByEmail = async (page: Page, name = 'Анна', trigger?: Locator) => {
     await (trigger ?? page.getByRole('banner').getByRole('button', { name: 'Войти' })).click();
-    const dialog = page.getByRole('dialog', { name: 'Вход', exact: true });
-    await expect(dialog).toBeVisible();
+    await expect(page.getByRole('dialog', { name: 'Вход', exact: true })).toBeVisible();
+    // Имя окна меняется с шагом: дальше ищем его без имени.
+    const dialog = page.getByRole('dialog');
     await requestCode(page, freshEmail('uc-a1-account'));
     await dialog.getByLabel('Код из письма').fill(FAKE_CODE);
     await dialog.getByLabel('Имя').fill(name);
