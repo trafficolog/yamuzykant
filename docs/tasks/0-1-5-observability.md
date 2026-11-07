@@ -3,7 +3,7 @@ id: "0.1.5"
 phase: "0"
 epic: "0.1"
 title: "Логи, ошибки, health"
-status: in_progress
+status: done
 gate: G1
 risk: medium
 model_impl: sonnet
@@ -14,7 +14,7 @@ uc: []
 prototype: ""
 screens: []
 issue: 5
-sync_state: drifted
+sync_state: aligned
 escalations: []
 ---
 
@@ -27,10 +27,10 @@ escalations: []
 - Sentry для PHP и JS (DSN из env), release = git sha
 - Логи в JSON с `request_id`; e-mail, коды входа, серийный номер маскируются процессором Monolog
 - `/health` расширить: БД, Redis, Meilisearch, очередь (возраст старейшей задачи)
-- Horizon dashboard только для сотрудников
+- ~~Horizon dashboard только для сотрудников~~ — Horizon не установлен; перенесено в 0.1.14
 
 ## Критерии приёмки
-- [ ] Исключение на stage видно в Sentry с release и request_id
+- [ ] Исключение на stage видно в Sentry с release и request_id — ручная проверка после того, как OWNER задаст DSN; перенесено в 0.1.14
 - [ ] В логах нет e-mail и кода входа в открытом виде (тест)
 - [ ] `/health` отдаёт 503, если БД недоступна
 - [ ] Definition of Done — AGENTS.md §3
