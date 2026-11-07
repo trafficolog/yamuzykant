@@ -8,6 +8,7 @@ use App\Domain\Accounts\Models\User;
 use App\Domain\Listings\Enums\ListingStatus;
 use App\Domain\Listings\Models\Listing;
 use App\Domain\Messaging\Models\Conversation;
+use Carbon\CarbonInterface;
 use Illuminate\Broadcasting\BroadcastManager;
 
 /**
@@ -15,9 +16,12 @@ use Illuminate\Broadcasting\BroadcastManager;
  */
 final class MessagingFixtures
 {
-    public static function listing(ListingStatus $status = ListingStatus::Published): Listing
+    /** $unpublishedAt — когда объявление перестало быть published (для статусов, кроме published). */
+    public static function listing(ListingStatus $status = ListingStatus::Published, ?CarbonInterface $unpublishedAt = null): Listing
     {
-        return Listing::factory()->inStatus($status)->create();
+        $attributes = $unpublishedAt === null ? [] : ['unpublished_at' => $unpublishedAt];
+
+        return Listing::factory()->inStatus($status)->create($attributes);
     }
 
     /** Беседа покупателя по объявлению; продавец — владелец объявления. */
