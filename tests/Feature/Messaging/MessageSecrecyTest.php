@@ -52,22 +52,37 @@ function traceDump(array $trace): string
 }
 
 /**
- * Событие Sentry одной строкой без кадров тестового клиента: postJson(…, ['body' => …]) сидит в стеке теста,
- * а в production стек начинается с public/index.php. Кадры приложения и ядра остаются.
+ * Событие из envelope, который отдаёт PayloadSerializer: заголовок, заголовок элемента и само событие
+ * (последняя строка). Кадры тестового клиента (postJson(…, ['body' => …]) сидит в стеке теста, в production стек
+ * начинается с public/index.php) лишаются vars и строк исходника — сами кадры остаются.
+ *
+ * @return array<string, mixed>
  */
-function withoutHarnessFrames(string $payload): string
+function sentryEventFromEnvelope(string $envelope): array
 {
-    /** @var array<string, mixed> $event */
-    $event = json_decode($payload, true);
-    $isHarness = fn (string $file): bool => preg_match('~[\\\\/](tests|Testing|pestphp|phpunit|nunomaduro)[\\\\/]~i', $file) === 1;
+    $lines = explode("\n", trim($envelope));
+    /** @var array<string, mixed>|null $event */
+    $event = json_decode((string) end($lines), true);
+    expect(json_last_error())->toBe(JSON_ERROR_NONE)
+        ->and($event)->toBeArray()
+        ->and($event['exception']['values'] ?? [])->not->toBeEmpty();
 
-    foreach ($event['exception']['values'] ?? [] as $i => $exception) {
-        $frames = $exception['stacktrace']['frames'] ?? [];
-        $event['exception']['values'][$i]['stacktrace']['frames'] = array_values(
-            array_filter($frames, fn (array $frame): bool => ! $isHarness((string) ($frame['filename'] ?? ''))),
-        );
+    $isHarness = fn (string $file): bool => preg_match('~[\\\\/](tests|Testing|pestphp|phpunit|nunomaduro)[\\\\/]~', $file) === 1;
+    foreach ($event['exception']['values'] as $i => $exception) {
+        foreach ($exception['stacktrace']['frames'] ?? [] as $j => $frame) {
+            if ($isHarness((string) ($frame['filename'] ?? ''))) {
+                unset($frame['vars'], $frame['pre_context'], $frame['context_line'], $frame['post_context']);
+                $event['exception']['values'][$i]['stacktrace']['frames'][$j] = $frame;
+            }
+        }
     }
 
+    return $event;
+}
+
+/** Событие Sentry одной строкой (JSON без \u-экранирования) — для поиска подстрок. */
+function sentryDump(array $event): string
+{
     return json_encode($event, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES) ?: '';
 }
 
@@ -108,13 +123,17 @@ it('при ошибке БД на отправке текста нет в жур
     $iniBefore = (string) ini_get('zend.exception_ignore_args');
     ini_set('zend.exception_ignore_args', '0');
 
+    // Секрет собирается во время выполнения: в исходнике теста (context_line кадров) его нет.
+    $word = 'Сок'.'ол';
+    $token = 'zq'.random_int(100000, 999999);
+
     try {
         $conversation = MessagingFixtures::conversation();
         $buyer = User::query()->findOrFail($conversation->buyer_id);
         breakMessagesTable();
 
         $this->actingAs($buyer)
-            ->postJson("/conversations/{$conversation->id}/messages", ['body' => 'Встретимся у метро Сокол zq7731'])
+            ->postJson("/conversations/{$conversation->id}/messages", ['body' => "Встретимся у метро {$word} {$token}"])
             ->assertStatus(500);
     } finally {
         ini_set('zend.exception_ignore_args', $iniBefore);
@@ -126,15 +145,26 @@ it('при ошибке БД на отправке текста нет в жур
     $log = logDump($path);
     // Ошибка зафиксирована (иначе тест ничего не доказывает), но без текста.
     expect($log)->toContain('MessageNotSaved')
-        ->and($log)->not->toContain('Сокол')
-        ->and($log)->not->toContain('zq7731')
+        ->and($log)->toContain($conversation->id)
+        ->and($log)->not->toContain($word)
+        ->and($log)->not->toContain($token)
         ->and($log)->not->toContain('insert into');
 
     expect($payloads)->not->toBeEmpty();
     foreach ($payloads as $payload) {
-        $flat = withoutHarnessFrames($payload);
-        expect($flat)->not->toContain('Сокол')
-            ->and($flat)->not->toContain('zq7731')
+        $event = sentryEventFromEnvelope($payload);
+        $flat = sentryDump($event);
+
+        // Кадр приложения с аргументами остался в событии: проверка не пустая.
+        $frames = array_merge(...array_map(
+            fn (array $exception): array => $exception['stacktrace']['frames'] ?? [],
+            $event['exception']['values'],
+        ));
+        $sendFrames = array_filter($frames, fn (array $frame): bool => ($frame['function'] ?? '') === 'App\Domain\Messaging\Actions\SendMessage::handle');
+        expect($sendFrames)->not->toBeEmpty();
+
+        expect($flat)->not->toContain($word)
+            ->and($flat)->not->toContain($token)
             ->and($flat)->not->toContain('insert into');
     }
 });
@@ -151,7 +181,8 @@ it('исключение сохранения несёт SQLSTATE, без SQL, �
         expect($e->getPrevious())->toBeNull()
             ->and($e->getMessage())->not->toContain('zq7731')
             ->and($e->getMessage())->not->toContain('insert')
-            ->and($e->sqlState)->not->toBe('');
+            ->and($e->sqlState)->not->toBe('')
+            ->and($e->context())->toBe(['sqlstate' => $e->sqlState, 'conversation_id' => $conversation->id]);
     }
 });
 
