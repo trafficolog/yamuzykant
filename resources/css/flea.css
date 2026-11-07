@@ -1,0 +1,341 @@
+/*
+ * Барахолка (задача 3.1.2): хлебные крошки, пагинация, пустое состояние, выдача и фильтры.
+ * Подключается из resources/js/app.tsx после site.css. Только токены var(--*) и классы ym-*.
+ * Раскладка и размеры — по прототипу design/prototypes/Десктоп - Каталог.dc.html; < 640 px — по чек-листу
+ * SCREENS §3 и мобильному UI-киту ДС (фильтры раскрываются кнопкой, сетка компактная).
+ */
+
+/* Хлебные крошки */
+.ym-crumbs {
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: var(--space-2);
+    margin-bottom: var(--space-4);
+}
+.ym-crumbs__link,
+.ym-crumbs__current {
+    display: flex;
+    align-items: center;
+    min-height: 32px;
+    white-space: nowrap;
+}
+.ym-crumbs__link {
+    color: var(--ink-muted);
+    text-decoration: none;
+}
+.ym-crumbs__link:hover {
+    color: var(--lad-strong);
+    text-decoration: underline;
+}
+.ym-crumbs__current {
+    color: var(--ink);
+}
+.ym-crumbs__sep {
+    display: flex;
+    color: var(--ink-faint);
+}
+
+/* Пагинация: номера — ссылки для поисковиков */
+.ym-pagination {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    align-items: center;
+    gap: var(--space-2);
+}
+.ym-pagination__item {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-width: var(--hit-min);
+    min-height: var(--hit-min);
+    padding: 0 var(--space-3);
+    border-radius: var(--radius-full);
+    color: var(--ink);
+    font: 500 var(--text-m) / 20px var(--font-text);
+    text-decoration: none;
+}
+a.ym-pagination__item:hover {
+    background: var(--surface-recessed);
+}
+.ym-pagination__item.is-current {
+    background: var(--inverse);
+    color: var(--on-inverse);
+}
+.ym-pagination__gap {
+    color: var(--ink-muted);
+}
+.ym-pagination__item:focus-visible {
+    outline: 2px solid var(--focus-ring);
+    outline-offset: 2px;
+}
+
+/* Пустое состояние: иконка 40 px в круге + одно предложение + кнопка */
+.ym-empty {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: var(--space-4);
+    padding: var(--space-12) var(--space-6);
+    text-align: center;
+}
+.ym-empty__icon {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 80px;
+    height: 80px;
+    border-radius: var(--radius-full);
+    background: var(--surface-recessed);
+    color: var(--ink-muted);
+}
+.ym-empty__text {
+    margin: 0;
+    max-width: 360px;
+    color: var(--ink);
+    text-wrap: pretty;
+}
+
+/* Страница выдачи */
+.ym-flea {
+    max-width: var(--content-max);
+    margin: 0 auto;
+    padding: var(--space-6) var(--space-10) 0;
+    box-sizing: border-box;
+}
+.ym-flea__head {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-2);
+    margin-bottom: var(--space-6);
+}
+.ym-flea__head h1 {
+    margin: 0;
+}
+.ym-flea__lead {
+    margin: 0;
+    color: var(--ink-muted);
+}
+.ym-flea__toggle {
+    display: none;
+}
+.ym-flea__layout {
+    display: grid;
+    grid-template-columns: 280px minmax(0, 1fr);
+    gap: var(--space-8);
+    align-items: start;
+}
+.ym-flea__results {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-6);
+    min-width: 0;
+    padding-bottom: var(--space-16);
+}
+.ym-flea__results[aria-busy='true'] .ym-flea__grid {
+    opacity: 0.6;
+    transition: opacity var(--ym-dur-micro) var(--ym-ease-out);
+}
+
+/* Фильтры */
+.ym-flea__filters {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-6);
+    box-sizing: border-box;
+    padding: var(--space-5);
+    border-radius: var(--radius-lg);
+    background: var(--surface-recessed);
+}
+.ym-flea__filters-head {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: var(--space-3);
+    min-height: var(--hit-min);
+}
+.ym-flea__filters-head h2 {
+    margin: 0;
+}
+.ym-flea__reset {
+    min-height: var(--hit-min);
+    margin-right: calc(-1 * var(--space-2));
+    padding: 0 var(--space-2);
+    border: 0;
+    background: none;
+    color: var(--lad);
+    cursor: pointer;
+    white-space: nowrap;
+}
+.ym-flea__reset:hover {
+    color: var(--lad-strong);
+    text-decoration: underline;
+}
+.ym-flea__reset:focus-visible,
+.ym-flea__cat:focus-visible,
+.ym-flea__toggle:focus-visible {
+    outline: 2px solid var(--focus-ring);
+    outline-offset: 2px;
+}
+.ym-flea__group {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-2);
+    margin: 0;
+    padding: 0;
+    border: 0;
+    min-width: 0;
+}
+.ym-flea__legend {
+    padding: 0;
+    margin-bottom: var(--space-1);
+    font-weight: 600;
+}
+.ym-flea__chips {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--space-2);
+}
+.ym-flea__price {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr);
+    gap: var(--space-3);
+}
+.ym-flea__filters .ym-field__hint:empty {
+    display: none;
+}
+.ym-flea__cats {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+}
+.ym-flea__cats .ym-flea__cats {
+    padding-left: var(--space-4);
+}
+.ym-flea__cat {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: var(--space-2);
+    min-height: var(--hit-min);
+    color: var(--ink);
+    font: 500 var(--text-m) / 20px var(--font-text);
+    text-decoration: none;
+}
+.ym-flea__cat:hover {
+    color: var(--lad-strong);
+    text-decoration: underline;
+}
+.ym-flea__cat[aria-current='page'] {
+    font-weight: 700;
+}
+.ym-flea__count {
+    color: var(--ink-muted);
+    font-variant-numeric: tabular-nums;
+}
+
+/* Панель над сеткой */
+.ym-flea__toolbar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: var(--space-4);
+    min-height: 40px;
+}
+.ym-flea__active {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: var(--space-2);
+    min-width: 0;
+}
+.ym-flea__found,
+.ym-flea__shown {
+    color: var(--ink-muted);
+    font-variant-numeric: tabular-nums;
+}
+.ym-flea__sort {
+    flex: none;
+    flex-direction: row;
+    align-items: center;
+    gap: var(--space-2);
+}
+.ym-flea__sort .ym-field__label {
+    color: var(--ink-muted);
+    font-weight: 400;
+}
+.ym-flea__sort .ym-field__hint {
+    display: none;
+}
+
+/* Сетка */
+.ym-flea__grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(var(--card-min), 1fr));
+    gap: var(--space-6);
+}
+.ym-flea__more {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: var(--space-2);
+}
+
+/* Планшет: фильтры над выдачей */
+@media (max-width: 1023px) {
+    .ym-flea__layout {
+        grid-template-columns: minmax(0, 1fr);
+        gap: var(--space-6);
+    }
+}
+
+/* Мобильная раскладка: кнопка «Фильтры», компактная сетка, чипы прокручиваются */
+@media (max-width: 639px) {
+    .ym-flea {
+        padding: var(--space-4) var(--space-4) 0;
+    }
+    .ym-flea__toggle {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        width: 100%;
+        min-height: var(--hit-min);
+        margin-bottom: var(--space-4);
+        border: 1px solid var(--line-control);
+        border-radius: var(--radius-full);
+        background: var(--surface-raised);
+        color: var(--ink);
+        font: 600 var(--text-m) / 20px var(--font-text);
+        cursor: pointer;
+    }
+    .ym-flea__filters {
+        display: none;
+        background: var(--surface);
+        border: 1px solid var(--line);
+    }
+    .ym-flea__filters.is-open {
+        display: flex;
+    }
+    .ym-flea__results {
+        gap: var(--space-4);
+        padding-bottom: var(--space-10);
+    }
+    .ym-flea__toolbar {
+        flex-direction: column;
+        align-items: stretch;
+    }
+    .ym-flea__active .ym-flea__chips {
+        flex-wrap: nowrap;
+        overflow-x: auto;
+        scrollbar-width: none;
+    }
+    .ym-flea__grid {
+        grid-template-columns: repeat(auto-fill, minmax(var(--card-min-compact), 1fr));
+        gap: var(--space-4);
+    }
+    .ym-empty {
+        padding: var(--space-10) var(--space-4);
+    }
+}

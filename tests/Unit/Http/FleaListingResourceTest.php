@@ -58,14 +58,14 @@ it('отдаёт ровно поля карточки', function () {
 it('серийный номер, почта, user_id, итоговая цена, описание и геоточка наружу не уходят', function () {
     $json = json_encode((new FleaListingResource(rawHit(), 'Москва'))->resolve(Request::create('/baraholka')), JSON_THROW_ON_ERROR);
 
-    expect($json)->not->toContain('V091234')
-        ->not->toContain('seller@example.com')
-        ->not->toContain('user_id')
-        ->not->toContain('final_price')
-        ->not->toContain('170000')
-        ->not->toContain('Родной кейс')
-        ->not->toContain('_geo')
-        ->not->toContain('aliases');
+    expect($json)->not()->toContain('V091234')
+        ->not()->toContain('seller@example.com')
+        ->not()->toContain('user_id')
+        ->not()->toContain('final_price')
+        ->not()->toContain('170000')
+        ->not()->toContain('Родной кейс')
+        ->not()->toContain('_geo')
+        ->not()->toContain('aliases');
 });
 
 it('неполный документ даёт пустые, а не отсутствующие поля', function () {

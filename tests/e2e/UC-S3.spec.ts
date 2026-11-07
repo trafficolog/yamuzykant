@@ -21,7 +21,7 @@ test.describe('UC-S3: фильтры и сортировка', () => {
             .getByRole('button', { name: /^Отличное/ })
             .click();
 
-        await expect(page).toHaveURL(/condition(%5B%5D|\[\])=excellent/);
+        await expect(page).toHaveURL(/condition(%5B\d*%5D|\[\d*\])=excellent/);
         await expect(total).not.toHaveText('Найдено 27 лотов');
         const filtered = await total.innerText();
 
@@ -116,7 +116,7 @@ test.describe('UC-S3: фильтры и сортировка', () => {
 
         await expect(page.getByRole('article')).toHaveCount(27);
         await expect(page.getByRole('button', { name: 'Показать ещё' })).toHaveCount(0);
-        await expect(page.getByText('Показано 27 из 27')).toBeVisible();
+        await expect(page.getByText('Найдено 27 лотов')).toBeVisible();
     });
 
     test('«Назад» возвращает к прежним фильтрам, а после ухода со страницы — к той же выдаче и позиции', async ({
@@ -133,17 +133,20 @@ test.describe('UC-S3: фильтры и сортировка', () => {
             'false',
         );
 
-        await page.getByRole('button', { name: 'Показать ещё' }).click();
-        await expect(page.getByRole('article')).toHaveCount(27);
-        await page.getByRole('contentinfo').scrollIntoViewIfNeeded();
+        // Уход со страницы по ссылке Inertia (номер страницы внизу выдачи) и возврат кнопкой «Назад».
+        await expect(page.getByRole('article')).toHaveCount(24);
+        const next = page.getByRole('link', { name: 'Страница 2' });
+        await next.scrollIntoViewIfNeeded();
         const y = await page.evaluate(() => window.scrollY);
         expect(y).toBeGreaterThan(500);
 
-        await page.getByRole('banner').getByRole('link', { name: 'ЯМузыкант' }).click();
-        await expect(page).toHaveURL(/\/$/);
+        await next.click();
+        await expect(page).toHaveURL(/page=2/);
+        await expect(page.getByRole('article')).toHaveCount(3);
+
         await page.goBack();
 
-        await expect(page.getByRole('article')).toHaveCount(27);
+        await expect(page.getByRole('article')).toHaveCount(24);
         await expect.poll(() => page.evaluate(() => window.scrollY)).toBeGreaterThan(y - 200);
     });
 });

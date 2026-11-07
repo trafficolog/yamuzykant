@@ -10,6 +10,7 @@ use App\Domain\Listings\StateMachines\ListingStateMachine;
 use App\Http\Middleware\HandleInertiaRequests;
 use Database\Seeders\CitySeeder;
 use Illuminate\Testing\Fluent\AssertableJson;
+use Illuminate\Testing\TestResponse;
 use Inertia\Testing\AssertableInertia as Assert;
 use Tests\Support\ListingFixtures;
 use Tests\Support\MeilisearchIndex;
@@ -27,13 +28,17 @@ function fleaCity(string $name): City
     return City::query()->where('name', $name)->firstOrFail();
 }
 
-/** Опубликованное объявление в Москве (по умолчанию), примеры из прототипа. */
+/**
+ * Опубликованное объявление в Москве (по умолчанию), примеры из прототипа.
+ *
+ * @param  array<string, mixed>  $attributes
+ */
 function fleaListing(array $attributes = [], string $city = 'Москва', ?Category $category = null): string
 {
     return ListingFixtures::published($attributes, fleaCity($city), $category)->id;
 }
 
-function fleaGet(string $uri): Illuminate\Testing\TestResponse
+function fleaGet(string $uri): TestResponse
 {
     MeilisearchIndex::waitForTasks();
 
@@ -84,20 +89,21 @@ it('карточка в props — белый список полей: без с�
                 ->etc()));
 
     $content = (string) fleaGet('/baraholka')->getContent();
-    expect($content)->not->toContain('V091234')
-        ->not->toContain('serial_enc')
-        ->not->toContain('user_id')
-        ->not->toContain('final_price')
-        ->not->toContain('test@example.com');
+    expect($content)->not()->toContain('V091234')
+        ->not()->toContain('serial_enc')
+        ->not()->toContain('user_id')
+        ->not()->toContain('final_price')
+        ->not()->toContain('test@example.com');
 });
 
 it('карточка содержит ровно восемь полей', function () {
     fleaListing();
 
-    fleaGet('/baraholka')->assertInertia(fn (Assert $page) => $page
-        ->where('listings.0', fn ($card) => array_keys((array) $card) === [
-            'id', 'title', 'price', 'condition', 'city', 'ship', 'negotiable', 'posted',
-        ]));
+    $card = fleaGet('/baraholka')->inertiaProps('listings.0');
+
+    expect(array_keys((array) $card))->toBe([
+        'id', 'title', 'price', 'condition', 'city', 'ship', 'negotiable', 'posted',
+    ]);
 });
 
 it('категория из адреса: вся ветка, заголовок и крошки', function () {
@@ -154,21 +160,36 @@ it('счётчики категорий приходят по пути кате�
         ->where('categoryCounts.pedali-i-usiliteli', 1));
 });
 
-describe('маппинг query → фильтры', function () {
-    beforeEach(function () {
-        $this->excellent = fleaListing(['title' => 'A excellent', 'condition' => 'excellent', 'price' => 184_500, 'negotiable' => true, 'ship' => false]);
-        $this->good = fleaListing(['title' => 'B good', 'condition' => 'good', 'price' => 90_000, 'negotiable' => false, 'ship' => true]);
-        $this->mint = fleaListing(['title' => 'C mint', 'condition' => 'mint', 'price' => 50_000, 'negotiable' => false, 'ship' => false]);
-    });
+/**
+ * Три объявления Москвы с разными состоянием, ценой, торгом и доставкой; публикуются с разницей в минуту,
+ * чтобы порядок «сначала новые» не зависел от секунды.
+ *
+ * @return array{excellent: string, good: string, mint: string}
+ */
+function fleaTrio(): array
+{
+    currentTest()->travelTo(now()->subMinutes(10));
+    $excellent = fleaListing(['title' => 'A excellent', 'condition' => 'excellent', 'price' => 184_500, 'negotiable' => true, 'ship' => false]);
+    currentTest()->travel(1)->minutes();
+    $good = fleaListing(['title' => 'B good', 'condition' => 'good', 'price' => 90_000, 'negotiable' => false, 'ship' => true]);
+    currentTest()->travel(1)->minutes();
+    $mint = fleaListing(['title' => 'C mint', 'condition' => 'mint', 'price' => 50_000, 'negotiable' => false, 'ship' => false]);
 
+    return ['excellent' => $excellent, 'good' => $good, 'mint' => $mint];
+}
+
+describe('маппинг query → фильтры', function () {
     it('condition[] — состояние (несколько значений)', function () {
+        $trio = fleaTrio();
         fleaGet('/baraholka?condition[]=excellent&condition[]=good')->assertInertia(fn (Assert $page) => $page
-            ->where('listings', fn ($cards) => collect($cards)->pluck('id')->sort()->values()->all()
-                === collect([$this->excellent, $this->good])->sort()->values()->all())
+            ->has('listings', 2)
+            ->where('listings.0.id', $trio['good'])
+            ->where('listings.1.id', $trio['excellent'])
             ->where('filters.condition', ['excellent', 'good']));
     });
 
     it('price_from и price_to — цена включительно', function () {
+        $trio = fleaTrio();
         fleaGet('/baraholka?price_from=50000&price_to=90000')->assertInertia(fn (Assert $page) => $page
             ->has('listings', 2)
             ->where('filters.priceFrom', 50_000)
@@ -176,51 +197,58 @@ describe('маппинг query → фильтры', function () {
     });
 
     it('negotiable=1 — только «Готов к торгу»', function () {
+        $trio = fleaTrio();
         fleaGet('/baraholka?negotiable=1')->assertInertia(fn (Assert $page) => $page
             ->has('listings', 1)
-            ->where('listings.0.id', $this->excellent)
+            ->where('listings.0.id', $trio['excellent'])
             ->where('filters.negotiable', true));
     });
 
     it('ship=1 — только с доставкой', function () {
+        $trio = fleaTrio();
         fleaGet('/baraholka?ship=1')->assertInertia(fn (Assert $page) => $page
             ->has('listings', 1)
-            ->where('listings.0.id', $this->good)
+            ->where('listings.0.id', $trio['good'])
             ->where('listings.0.ship', true)
             ->where('filters.ship', true));
     });
 
     it('sort=cheap и sort=expensive упорядочивают по цене', function () {
+        $trio = fleaTrio();
         fleaGet('/baraholka?sort=cheap')->assertInertia(fn (Assert $page) => $page
-            ->where('listings.0.id', $this->mint)
-            ->where('listings.2.id', $this->excellent)
+            ->where('listings.0.id', $trio['mint'])
+            ->where('listings.2.id', $trio['excellent'])
             ->where('filters.sort', 'cheap'));
 
         fleaGet('/baraholka?sort=expensive')->assertInertia(fn (Assert $page) => $page
-            ->where('listings.0.id', $this->excellent)
-            ->where('listings.2.id', $this->mint));
+            ->where('listings.0.id', $trio['excellent'])
+            ->where('listings.2.id', $trio['mint']));
     });
 
     it('без sort — сначала новые', function () {
+        $trio = fleaTrio();
         fleaGet('/baraholka')->assertInertia(fn (Assert $page) => $page
             ->where('filters.sort', null)
-            ->where('listings.0.id', $this->mint));
+            ->where('listings.0.id', $trio['mint']));
     });
 
     it('q — поиск по названию в выдаче города', function () {
+        $trio = fleaTrio();
         fleaGet('/baraholka?q=excellent')->assertInertia(fn (Assert $page) => $page
             ->has('listings', 1)
-            ->where('listings.0.id', $this->excellent)
+            ->where('listings.0.id', $trio['excellent'])
             ->where('filters.q', 'excellent'));
     });
 
     it('фильтры складываются', function () {
+        $trio = fleaTrio();
         fleaGet('/baraholka?condition[]=good&condition[]=excellent&ship=1&price_to=100000')->assertInertia(fn (Assert $page) => $page
             ->has('listings', 1)
-            ->where('listings.0.id', $this->good));
+            ->where('listings.0.id', $trio['good']));
     });
 
     it('мусор в query не роняет страницу и не фильтрует', function () {
+        $trio = fleaTrio();
         fleaGet('/baraholka?condition[]=zzz&price_from=abc&sort=nearest&page=-3&ship=maybe&q[]=1')
             ->assertOk()
             ->assertInertia(fn (Assert $page) => $page
@@ -231,12 +259,14 @@ describe('маппинг query → фильтры', function () {
     });
 
     it('сортировки «рядом» на странице нет: ни в запросе, ни в списке сортировок', function () {
+        $trio = fleaTrio();
         fleaGet('/baraholka?sort=nearest')->assertInertia(fn (Assert $page) => $page
             ->where('filters.sort', null)
             ->where('sorts', ['new', 'cheap', 'expensive']));
     });
 
     it('чипы состояний: все 8 ступеней BR-02 с числом объявлений, счётчик не зависит от выбранного состояния', function () {
+        $trio = fleaTrio();
         fleaGet('/baraholka?condition[]=excellent')->assertInertia(fn (Assert $page) => $page
             ->has('conditions', 8)
             ->where('conditions.0', ['value' => 'new', 'label' => 'Новое', 'count' => 0])

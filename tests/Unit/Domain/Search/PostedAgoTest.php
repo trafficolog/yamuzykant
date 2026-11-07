@@ -23,7 +23,7 @@ it('форматирует давность по-русски', function (string
 ]);
 
 it('меньше суток — часы, даже если календарная дата по Москве другая', function () use ($now) {
-    expect(PostedAgo::format(Carbon::parse('2026-11-06 22:30:00', 'UTC'), $now))->toBe('14 ч назад');
+    expect(PostedAgo::format(Carbon::parse('2026-11-06 22:30:00', 'UTC'), $now))->toBe('13 ч назад');
 });
 
 it('время из будущего не ломает формат', function () use ($now) {

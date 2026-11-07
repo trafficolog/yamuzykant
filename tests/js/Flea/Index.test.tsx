@@ -146,12 +146,14 @@ describe('Flea/Index: каркас', () => {
 
         const cards = screen.getAllByRole('article');
         expect(cards).toHaveLength(2);
-        expect(within(cards[0]!).getByRole('heading', { level: 3 })).toHaveTextContent('Гитара 1');
-        expect(cards[0]!.textContent).toContain('184 500');
-        expect(text(cards[0]!)).toContain('Доставка');
-        expect(text(cards[1]!)).not.toContain('Доставка');
-        expect(text(cards[0]!)).toContain('Москва');
-        expect(text(cards[0]!)).toContain('2 ч назад');
+        const first = cards[0] as HTMLElement;
+        const second = cards[1] as HTMLElement;
+        expect(within(first).getByRole('heading', { level: 3 })).toHaveTextContent('Гитара 1');
+        expect(first.textContent).toContain('184 500');
+        expect(text(first)).toContain('Доставка');
+        expect(text(second)).not.toContain('Доставка');
+        expect(text(first)).toContain('Москва');
+        expect(text(first)).toContain('2 ч назад');
     });
 
     it('флаги вне MVP (R1): нет переключателя Каталог / Барахолка, чипа и значка «Безопасная сделка»', () => {
@@ -228,7 +230,7 @@ describe('Flea/Index: фильтры', () => {
 
         fireEvent.change(to, { target: { value: '90000abc' } });
         fireEvent.blur(to);
-        expect(lastGet()[1]).toEqual({ price_to: 90_000 });
+        expect(lastGet()[1]).toEqual({ price_from: 50_000, price_to: 90_000 });
     });
 
     it('цена: пустое поле убирает границу; значение не меняется — запроса нет', () => {

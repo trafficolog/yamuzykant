@@ -1,4 +1,13 @@
 /** Тексты интерфейса на фронте (AGENTS.md §4–5). Проверяются `npm run lint:copy`. */
+/** «1 лот, 2 лота, 5 лотов». */
+const lots = (count: number): string => {
+    const mod10 = count % 10;
+    const mod100 = count % 100;
+    if (mod10 === 1 && mod100 !== 11) return 'лот';
+    if (mod10 >= 2 && mod10 <= 4 && (mod100 < 10 || mod100 >= 20)) return 'лота';
+    return 'лотов';
+};
+
 export const ru = {
     brand: 'ЯМузыкант',
     ds: {
@@ -111,5 +120,56 @@ export const ru = {
             disputes: 'Споры и возвраты',
         },
         social: ['Telegram', 'ВКонтакте', 'MAX'],
+    },
+    breadcrumbs: {
+        label: 'Хлебные крошки',
+        home: 'Главная',
+    },
+    pagination: {
+        label: 'Страницы',
+        page: (page: number) => `Страница ${page}`,
+        prev: 'Назад',
+        next: 'Вперёд',
+    },
+    flea: {
+        title: 'Барахолка',
+        lead: 'Б/у инструменты от частных продавцов вашего города.',
+        found: (count: number) => `Найдено ${count.toLocaleString('ru-RU')} ${lots(count)}`,
+        shown: (shown: number, total: number) =>
+            `Показано ${shown.toLocaleString('ru-RU')} из ${total.toLocaleString('ru-RU')}`,
+        more: 'Показать ещё',
+        shipping: 'Доставка',
+        filters: {
+            title: 'Фильтры',
+            toggle: 'Фильтры',
+            reset: 'Сбросить все',
+            active: 'Выбранные фильтры',
+            category: 'Категория',
+            allCategories: 'Все категории',
+            condition: 'Состояние',
+            price: 'Цена',
+            priceFrom: 'от',
+            priceTo: 'до',
+            priceFromPlaceholder: '0',
+            priceToPlaceholder: 'любая',
+            currency: '₽',
+            deal: 'Покупка и доставка',
+            negotiable: 'Готов к торгу',
+            ship: 'Доставка',
+            priceChipFrom: (price: string) => `от ${price}`,
+            priceChipTo: (price: string) => `до ${price}`,
+        },
+        sort: {
+            label: 'Сортировка',
+            relevance: 'По релевантности',
+            new: 'Сначала свежие',
+            cheap: 'Сначала дешевле',
+            expensive: 'Сначала дороже',
+        },
+        empty: {
+            filtered: 'По этим фильтрам лотов нет. Уберите часть фильтров.',
+            reset: 'Сбросить фильтры',
+            city: 'В вашем городе пока нет объявлений.',
+        },
     },
 } as const;

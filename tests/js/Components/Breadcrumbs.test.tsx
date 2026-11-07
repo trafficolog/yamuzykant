@@ -40,7 +40,7 @@ describe('Breadcrumbs', () => {
 
         const separators = screen
             .getByRole('navigation', { name: 'Хлебные крошки' })
-            .querySelectorAll('[aria-hidden="true"]');
+            .querySelectorAll('.ym-crumbs__sep[aria-hidden="true"]');
         expect(separators).toHaveLength(1);
     });
 
