@@ -319,7 +319,7 @@ export default function SellCreate({
                                         setPriceText(formatPrice(event.target.value))
                                     }
                                 />
-                                <div className="ym-sell__chips">
+                                <div className="ym-sell__modes">
                                     <FilterChip
                                         selected={amountMode && negotiable}
                                         disabled={!amountMode}
