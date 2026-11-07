@@ -3,7 +3,7 @@ id: "1.1.6"
 phase: "1"
 epic: "1.1"
 title: "Шапка вошедшего: данные пользователя, меню кабинета, выход"
-status: todo
+status: in_progress
 gate: G1
 risk: medium
 model_impl: sonnet
