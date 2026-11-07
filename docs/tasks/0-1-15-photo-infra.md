@@ -15,7 +15,7 @@ prototype: ""
 screens: []
 issue: 111
 sync_state: drifted
-escalations: ["Хранилище фото для stage и production: внешнее S3 (Yandex Object Storage / VK Cloud) или MinIO наружу — решение OWNER на G1"]
+escalations: ["Хранилище фото для stage и production — отдельное решение OWNER по серверу (07.11.2026); до решения пункт S3 не начинать"]
 ---
 
 # 0.1.15. Инфраструктура фото: S3 для stage, HEIC и AVIF на сервере, очистка загрузок
@@ -24,7 +24,7 @@ escalations: ["Хранилище фото для stage и production: внеш�
 Загрузка фото работает на stage так же, как в тестах: прямая загрузка в S3, HEIC с iPhone конвертируется, AVIF создаётся, брошенные загрузки удаляются (вопросы и замечания ревью PR #109).
 
 ## Что сделать
-- Хранилище: по решению OWNER — внешнее S3 или MinIO за Nginx с TLS; CORS бакета для PUT с домена stage; переменные — в `.env.example`, ARCHITECTURE §9, секреты stage (вводит OWNER)
+- Хранилище: по отдельному решению OWNER по серверу; CORS бакета для PUT с домена stage; переменные — в `.env.example`, ARCHITECTURE §9, секреты stage (вводит OWNER)
 - `deploy/provision.sh`: `php8.3-imagick` с libheif (HEIC), проверка поддержки AVIF и WebP в GD; без поддержки — понятная ошибка провижининга
 - Брошенные загрузки: lifecycle-правило бакета на префикс `uploads/` (24 ч) или задача в scheduler; тест на задачу
 - Smoke на stage: загрузка 3 фото, в том числе HEIC, через окно «Продать» или служебный сценарий; результат — в файл сессии
