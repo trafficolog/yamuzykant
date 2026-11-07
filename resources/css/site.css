@@ -845,3 +845,86 @@
     margin: 0;
     color: var(--danger-text);
 }
+
+/* Меню кабинета вошедшего (задача 1.1.6): выпадающая панель в шапке и «шторка» над нижней панелью */
+.ym-account {
+    position: relative;
+    display: flex;
+    min-width: 0;
+}
+.ym-account__label {
+    display: block;
+    max-width: 160px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+.ym-account__panel {
+    z-index: 30;
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-1);
+    padding: var(--space-4);
+    border-radius: var(--radius-lg);
+    background: var(--surface-raised);
+    box-shadow: var(--shadow-3);
+}
+.ym-account__panel--dropdown {
+    position: absolute;
+    top: calc(100% + var(--space-2));
+    right: 0;
+    width: min(280px, calc(100vw - 32px));
+}
+.ym-account__panel--sheet {
+    position: absolute;
+    bottom: 100%;
+    left: 0;
+    right: 0;
+    border-radius: var(--radius-lg) var(--radius-lg) 0 0;
+}
+.ym-account__name {
+    margin: 0 0 var(--space-2);
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    color: var(--ink);
+    font: 600 var(--text-l)/24px var(--font-text);
+}
+.ym-account__group {
+    margin: var(--space-2) 0 0;
+    color: var(--ink-muted);
+    font: 500 var(--text-s)/20px var(--font-text);
+}
+.ym-account__link {
+    display: flex;
+    align-items: center;
+    min-height: var(--hit-min);
+    padding: var(--space-1) var(--space-3);
+    border-radius: var(--radius-sm);
+    color: var(--ink);
+    font: 500 var(--text-m)/22px var(--font-text);
+    text-decoration: none;
+}
+.ym-account__link:hover {
+    background: var(--surface-recessed);
+}
+.ym-account__link:focus-visible {
+    outline: 2px solid var(--focus-ring);
+    outline-offset: 2px;
+}
+.ym-account__rule {
+    width: 100%;
+    margin: var(--space-2) 0;
+    border: 0;
+    border-top: 1px solid var(--line);
+}
+.ym-account__error {
+    margin: var(--space-2) 0 0;
+    color: var(--ink);
+}
+@media (max-width: 639px) {
+    /* На телефоне меню кабинета — вкладка нижней панели; кнопки в первой строке шапки нет */
+    .ym-site-header__actions > .ym-account {
+        display: none;
+    }
+}

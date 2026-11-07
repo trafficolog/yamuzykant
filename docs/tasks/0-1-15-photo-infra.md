@@ -25,7 +25,7 @@ escalations: ["Хранилище фото для stage и production — отд
 
 ## Что сделать
 - Хранилище: по отдельному решению OWNER по серверу; CORS бакета для PUT с домена stage; переменные — в `.env.example`, ARCHITECTURE §9, секреты stage (вводит OWNER)
-- `deploy/provision.sh`: `php8.3-imagick` с libheif (HEIC), проверка поддержки AVIF и WebP в GD; без поддержки — понятная ошибка провижининга
+- `deploy/provision.sh`: `php8.3-imagick` на ImageMagick 7 с libheif (HEIC); на ImageMagick 6 (Debian bookworm) ошибки HEIC приходят без причины — превышение лимита неотличимо от битого файла (ревью PR #120), проверка поддержки AVIF и WebP в GD; без поддержки — понятная ошибка провижининга
 - Брошенные загрузки: lifecycle-правило бакета на префикс `uploads/` (24 ч) или задача в scheduler; тест на задачу
 - Smoke на stage: загрузка 3 фото, в том числе HEIC, через окно «Продать» или служебный сценарий; результат — в файл сессии
 

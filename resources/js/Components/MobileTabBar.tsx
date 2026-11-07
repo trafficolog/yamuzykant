@@ -1,6 +1,10 @@
 import { Icon, type IconName } from '@ds';
+import { useRef } from 'react';
 
+import AccountPanel from '@/Components/AccountPanel';
 import { openLogin } from '@/Hooks/loginDialog';
+import type { AuthUser } from '@/Hooks/useAuthUser';
+import { useDisclosure } from '@/Hooks/useDisclosure';
 import { ru } from '@/lang/ru';
 
 export type MobileTab = 'home' | 'search' | 'sell' | 'messages' | 'account';
@@ -10,6 +14,8 @@ export interface MobileTabBarProps {
     active?: MobileTab | 'none';
     /** Число непрочитанных сообщений; 0 — без счётчика. */
     messages?: number;
+    /** Вошедший: «Кабинет» открывает меню кабинета, у гостя — окно входа. */
+    user?: AuthUser | null;
 }
 
 interface Tab {
@@ -33,18 +39,57 @@ const TABS: readonly Tab[] = [
 
 const MAX_COUNT = 99;
 
+const ACCOUNT_TAB_ID = 'tabbar-account';
+const ACCOUNT_PANEL_ID = 'tabbar-account-panel';
+
 /**
  * Нижняя панель сайта на экранах < 640 px (на более широких скрыта стилем `.ym-tabbar`).
  *
  * Вкладка — своя ссылка с классами `ym-iconbtn` ДС: `IconButton` не принимает `aria-current`,
- * а текущая вкладка должна быть видна и вспомогательным технологиям.
+ * а текущая вкладка должна быть видна и вспомогательным технологиям. «Кабинет» — кнопка с теми же классами.
  */
-export default function MobileTabBar({ active = 'none', messages = 0 }: MobileTabBarProps) {
+export default function MobileTabBar({
+    active = 'none',
+    messages = 0,
+    user = null,
+}: MobileTabBarProps) {
+    const rootRef = useRef<HTMLElement>(null);
+    const account = useDisclosure(rootRef, ACCOUNT_TAB_ID);
+
     return (
-        <nav aria-label={ru.tabBar.label} className="ym-tabbar">
+        <nav ref={rootRef} aria-label={ru.tabBar.label} className="ym-tabbar">
             {TABS.map((tab) => {
                 const count = tab.key === 'messages' && messages > 0 ? messages : 0;
                 const shown = count > MAX_COUNT ? `${MAX_COUNT}+` : String(count);
+
+                if (tab.key === 'account') {
+                    // Не ссылка, а кнопка: у «Кабинета» нет адреса. Вошедшему он раскрывает меню кабинета
+                    // (disclosure: aria-expanded и aria-controls), гостю открывает окно входа.
+                    return (
+                        <button
+                            key={tab.key}
+                            id={ACCOUNT_TAB_ID}
+                            type="button"
+                            data-login-trigger={user ? undefined : ''}
+                            className="ym-iconbtn ym-tabbar__item"
+                            aria-current={tab.key === active ? 'page' : undefined}
+                            aria-haspopup={user ? undefined : 'dialog'}
+                            aria-expanded={user ? account.open : undefined}
+                            aria-controls={user && account.open ? ACCOUNT_PANEL_ID : undefined}
+                            onClick={(event) => {
+                                if (user) {
+                                    account.toggle();
+                                    return;
+                                }
+                                // На < 640 px кнопки «Войти» в шапке нет: вход — через «Кабинет».
+                                openLogin({ opener: event.currentTarget });
+                            }}
+                        >
+                            <Icon name={tab.icon} size={22} />
+                            <span className="ym-tabbar__label">{tab.label}</span>
+                        </button>
+                    );
+                }
 
                 return (
                     <a
@@ -52,16 +97,6 @@ export default function MobileTabBar({ active = 'none', messages = 0 }: MobileTa
                         href={tab.href}
                         className="ym-iconbtn ym-tabbar__item"
                         aria-current={tab.key === active ? 'page' : undefined}
-                        aria-haspopup={tab.key === 'account' ? 'dialog' : undefined}
-                        onClick={
-                            tab.key === 'account'
-                                ? (event) => {
-                                      // На < 640 px кнопки «Войти» в шапке нет: вход — через «Кабинет».
-                                      event.preventDefault();
-                                      openLogin({ opener: event.currentTarget });
-                                  }
-                                : undefined
-                        }
                         aria-label={
                             tab.key === 'messages' && count > 0
                                 ? ru.tabBar.messagesLabel(shown)
@@ -78,6 +113,9 @@ export default function MobileTabBar({ active = 'none', messages = 0 }: MobileTa
                     </a>
                 );
             })}
+            {user && account.open ? (
+                <AccountPanel id={ACCOUNT_PANEL_ID} user={user} variant="sheet" />
+            ) : null}
         </nav>
     );
 }
