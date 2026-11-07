@@ -3,7 +3,7 @@ id: "4.1.1"
 phase: "4"
 epic: "4.1"
 title: "Сообщения: домен и realtime"
-status: todo
+status: in_progress
 gate: G1
 risk: high
 model_impl: opus

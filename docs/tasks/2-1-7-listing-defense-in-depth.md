@@ -3,7 +3,7 @@ id: "2.1.7"
 phase: "2"
 epic: "2.1"
 title: "Объявление: защита владельца и смены статуса в глубину"
-status: review
+status: done
 gate: G1
 risk: medium
 model_impl: sonnet
@@ -14,7 +14,7 @@ uc: ["L1", "L3"]
 prototype: ""
 screens: []
 issue: 105
-sync_state: drifted
+sync_state: aligned
 escalations: []
 ---
 

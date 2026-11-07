@@ -8,6 +8,12 @@ use App\Domain\Accounts\Listeners\RememberSessionVersion;
 use App\Domain\Accounts\Staff\NoStaff;
 use App\Domain\Accounts\Staff\StaffDirectory;
 use App\Domain\Listings\Models\Listing;
+use App\Domain\Listings\Photos\HeicConverter;
+use App\Domain\Listings\Photos\ImagickHeicConverter;
+use App\Domain\Listings\Photos\PhotoStorage;
+use App\Domain\Listings\Photos\PhotoUploads;
+use App\Domain\Listings\Photos\S3PresignedUploads;
+use App\Domain\Listings\Photos\SignedRouteUploads;
 use App\Domain\Listings\Policies\ListingPolicy;
 use App\Domain\Search\Console\BenchmarkSearchCommand;
 use App\Domain\Search\Console\ReconcileListingIndexCommand;
@@ -17,7 +23,9 @@ use App\Support\Flags\FeatureFlag;
 use App\Support\YandexId\YandexOAuth;
 use Illuminate\Auth\Events\Login;
 use Illuminate\Contracts\Foundation\Application;
+use Illuminate\Filesystem\AwsS3V3Adapter;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Config;
 use Illuminate\Support\Facades\Event;
 use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\Facades\Queue;
@@ -35,6 +43,16 @@ class AppServiceProvider extends ServiceProvider
     {
         // Сотрудники — заглушка до staff-guard (5.3.1).
         $this->app->bind(StaffDirectory::class, NoStaff::class);
+
+        // Фото: S3 — прямая загрузка по presigned PUT; другой диск (тесты, e2e) — через подписанный маршрут.
+        $this->app->bind(PhotoUploads::class, function (): PhotoUploads {
+            $disk = PhotoStorage::disk();
+
+            return $disk instanceof AwsS3V3Adapter
+                ? new S3PresignedUploads($disk->getClient(), Config::string('filesystems.disks.'.Config::string('photos.disk').'.bucket'))
+                : new SignedRouteUploads;
+        });
+        $this->app->bind(HeicConverter::class, ImagickHeicConverter::class);
     }
 
     /**
