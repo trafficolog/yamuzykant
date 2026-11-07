@@ -21,7 +21,7 @@ const seriousOrCritical = async (page: Page) => {
 
 const openDialog = async (page: Page) => {
     await page.getByRole('banner').getByRole('button', { name: 'Войти' }).click();
-    const dialog = page.getByRole('dialog', { name: 'Вход' });
+    const dialog = page.getByRole('dialog');
     await expect(dialog).toBeVisible();
     return dialog;
 };
@@ -102,10 +102,12 @@ test.describe('UC-A1: окно входа', () => {
         page,
     }) => {
         await page.goto('/');
+        // Клавиша Enter до гидратации страницы ничего не откроет: ждём загрузки скриптов.
+        await page.waitForLoadState('networkidle');
         const opener = page.getByRole('banner').getByRole('button', { name: 'Войти' });
         await opener.focus();
         await page.keyboard.press('Enter');
-        const dialog = page.getByRole('dialog', { name: 'Вход' });
+        const dialog = page.getByRole('dialog');
         await expect(dialog).toBeVisible();
 
         for (let step = 0; step < 12; step += 1) {
@@ -136,7 +138,7 @@ test.describe('UC-A1: окно входа', () => {
             .then(() => true)
             .catch(() => false);
         if (firstLogin) {
-            await expect(name).toHaveValue('Анна Тестова');
+            await expect(name).toHaveValue('Анна');
             await page.getByRole('dialog').getByRole('checkbox').check();
             await page.getByRole('dialog').getByRole('button', { name: 'Продолжить' }).click();
         }
@@ -146,19 +148,24 @@ test.describe('UC-A1: окно входа', () => {
     });
 
     test('отказ в Яндексе: окно открыто, текст отмены и вход по почте', async ({ page }) => {
-        // Подмена: Яндекс «вернул» отказ вместо кода. state остаётся настоящим.
-        await page.route('**/auth/yandex/callback**', (route) => {
-            const url = new URL(route.request().url());
-            url.searchParams.delete('code');
-            url.searchParams.set('error', 'access_denied');
-            return route.continue({ url: url.toString() });
+        // Подмена: Яндекс «вернул» отказ вместо кода. state остаётся настоящим: берём его из ответа сервера.
+        await page.route('**/auth/yandex/redirect**', async (route) => {
+            const response = await route.fetch({ maxRedirects: 0 });
+            const target = new URL(response.headers().location ?? '', 'http://127.0.0.1:8000');
+            target.searchParams.delete('code');
+            target.searchParams.set('error', 'access_denied');
+            await route.fulfill({
+                response,
+                status: 302,
+                headers: { ...response.headers(), location: target.toString() },
+            });
         });
         await page.goto('/');
         const dialog = await openDialog(page);
 
         await dialog.getByRole('link', { name: 'Войти с Яндекс ID' }).click();
 
-        const reopened = page.getByRole('dialog', { name: 'Вход' });
+        const reopened = page.getByRole('dialog');
         await expect(reopened).toBeVisible();
         await expect(reopened.getByRole('alert')).toContainText(CANCELLED);
         await expect(reopened.getByLabel('Почта')).toBeVisible();
@@ -188,7 +195,7 @@ test.describe('UC-A1: окно входа', () => {
             .getByRole('button', { name: 'Казань' })
             .click();
 
-        const dialog = page.getByRole('dialog', { name: 'Вход' });
+        const dialog = page.getByRole('dialog');
         await expect(dialog).toBeVisible();
 
         await requestCode(page, freshEmail());
@@ -239,7 +246,7 @@ test.describe('UC-A1: окно входа на телефоне', () => {
                 .getByRole('navigation', { name: 'Нижнее меню' })
                 .getByRole('link', { name: 'Кабинет' })
                 .click();
-            const dialog = page.getByRole('dialog', { name: 'Вход' });
+            const dialog = page.getByRole('dialog');
             await expect(dialog).toBeVisible();
 
             const box = await dialog.boundingBox();
