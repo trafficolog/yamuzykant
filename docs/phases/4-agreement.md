@@ -1,7 +1,7 @@
 ---
 id: "4"
 title: "Договорённость"
-status: todo
+status: in_progress
 gate: G2
 ---
 
