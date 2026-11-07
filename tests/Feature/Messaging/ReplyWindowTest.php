@@ -8,7 +8,10 @@ use App\Domain\Listings\Enums\WithdrawReason;
 use App\Domain\Listings\Models\Listing;
 use App\Domain\Listings\StateMachines\ListingStateMachine;
 use App\Domain\Messaging\Models\Message;
+use Illuminate\Testing\TestResponse;
+use Symfony\Component\HttpFoundation\Response;
 use Tests\Support\MessagingFixtures;
+use Tests\TestCase;
 
 // BR-10 (решение OWNER 07.11.2026): в начатой беседе отвечать можно 30 дней после ухода объявления из published;
 // позже — 409, беседа только для чтения. Новые беседы — только по published.
@@ -17,17 +20,21 @@ beforeEach(function () {
     config(['scout.driver' => 'null']);
 });
 
-/** Ответ участника беседы по объявлению, ушедшему из published $days дней назад. */
-function replyAfter(ListingStatus $status, int $days): Illuminate\Testing\TestResponse
+/**
+ * Ответ участника беседы по объявлению, ушедшему из published $days дней назад.
+ *
+ * @return TestResponse<Response>
+ */
+function replyAfter(TestCase $test, ListingStatus $status, int $days): TestResponse
 {
     $conversation = MessagingFixtures::conversation(MessagingFixtures::listing($status, now()->subDays($days)));
     $buyer = User::query()->findOrFail($conversation->buyer_id);
 
-    return test()->actingAs($buyer)->postJson("/conversations/{$conversation->id}/messages", ['body' => 'Ещё актуально?']);
+    return $test->actingAs($buyer)->postJson("/conversations/{$conversation->id}/messages", ['body' => 'Ещё актуально?']);
 }
 
 it('снято 29 дней назад — ответ проходит', function () {
-    replyAfter(ListingStatus::Withdrawn, 29)->assertCreated();
+    replyAfter($this, ListingStatus::Withdrawn, 29)->assertCreated();
 
     expect(Message::query()->count())->toBe(1);
 });
@@ -42,8 +49,8 @@ it('снято 31 день назад — 409, сообщение не сохр�
 });
 
 it('истекло: те же 29 и 31 день', function () {
-    replyAfter(ListingStatus::Expired, 29)->assertCreated();
-    replyAfter(ListingStatus::Expired, 31)->assertConflict();
+    replyAfter($this, ListingStatus::Expired, 29)->assertCreated();
+    replyAfter($this, ListingStatus::Expired, 31)->assertConflict();
 });
 
 it('продавец отвечает по тем же правилам, что и покупатель', function () {
@@ -60,8 +67,8 @@ it('срок берётся из messaging.reply_window_days', function () {
     expect(config('messaging.reply_window_days'))->toBe(30);
 
     config(['messaging.reply_window_days' => 5]);
-    replyAfter(ListingStatus::Withdrawn, 4)->assertCreated();
-    replyAfter(ListingStatus::Withdrawn, 6)->assertConflict();
+    replyAfter($this, ListingStatus::Withdrawn, 4)->assertCreated();
+    replyAfter($this, ListingStatus::Withdrawn, 6)->assertConflict();
 });
 
 it('опубликованное объявление: отвечать можно всегда', function () {

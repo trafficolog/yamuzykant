@@ -51,6 +51,26 @@ function traceDump(array $trace): string
     return implode("\n", $strings);
 }
 
+/**
+ * Событие Sentry одной строкой без кадров тестового клиента: postJson(…, ['body' => …]) сидит в стеке теста,
+ * а в production стек начинается с public/index.php. Кадры приложения и ядра остаются.
+ */
+function withoutHarnessFrames(string $payload): string
+{
+    /** @var array<string, mixed> $event */
+    $event = json_decode($payload, true);
+    $isHarness = fn (string $file): bool => preg_match('~[\\\\/](tests|Testing|pestphp|phpunit|nunomaduro)[\\\\/]~i', $file) === 1;
+
+    foreach ($event['exception']['values'] ?? [] as $i => $exception) {
+        $frames = $exception['stacktrace']['frames'] ?? [];
+        $event['exception']['values'][$i]['stacktrace']['frames'] = array_values(
+            array_filter($frames, fn (array $frame): bool => ! $isHarness((string) ($frame['filename'] ?? ''))),
+        );
+    }
+
+    return json_encode($event, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES) ?: '';
+}
+
 /** Всё, что попало в журнал, одной строкой: сырой JSON и раскодированный (без \u-экранирования). */
 function logDump(string $path): string
 {
@@ -71,16 +91,18 @@ it('при ошибке БД на отправке текста нет в жур
     /** @var list<string> $payloads */
     $payloads = [];
     $client = null;
-    $client = ClientBuilder::create([
+    $builder = ClientBuilder::create([
         'dsn' => null,
         'send_default_pii' => false,
-        'before_send' => function (Event $event, ?EventHint $hint) use (&$payloads, &$client): ?Event {
-            $scrubbed = SentryScrubber::beforeSend($event, $hint);
-            $payloads[] = (new PayloadSerializer($client->getOptions()))->serialize($scrubbed);
+    ]);
+    $serializer = new PayloadSerializer($builder->getOptions());
+    // Тот же хук, что в config/sentry.php, но событие не уходит, а сохраняется для проверки.
+    $builder->getOptions()->setBeforeSendCallback(function (Event $event, ?EventHint $hint) use (&$payloads, $serializer): ?Event {
+        $payloads[] = $serializer->serialize(SentryScrubber::beforeSend($event, $hint));
 
-            return null;
-        },
-    ])->getClient();
+        return null;
+    });
+    $client = $builder->getClient();
     $hub->bindClient($client);
 
     $iniBefore = (string) ini_get('zend.exception_ignore_args');
@@ -110,7 +132,7 @@ it('при ошибке БД на отправке текста нет в жур
 
     expect($payloads)->not->toBeEmpty();
     foreach ($payloads as $payload) {
-        $flat = $payload."\n".json_encode(json_decode($payload, true), JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
+        $flat = withoutHarnessFrames($payload);
         expect($flat)->not->toContain('Сокол')
             ->and($flat)->not->toContain('zq7731')
             ->and($flat)->not->toContain('insert into');
@@ -185,26 +207,26 @@ it('в задании очереди MessageSent нет текста: прове
 
     $jobs = Queue::pushed(BroadcastEvent::class, fn (BroadcastEvent $job): bool => $job->event instanceof MessageSent);
     expect($jobs)->toHaveCount(1);
-    $jobs->each(fn (BroadcastEvent $job) => expect(serialize($job))->not->toContain('zq7731')->not->toContain('Сокол'));
+    $jobs->each(fn (BroadcastEvent $job) => expect(serialize($job))->not->toContain('zq7731')->and(serialize($job))->not->toContain('Сокол'));
 });
 
 it('гонка двух «Написать»: беседа уже создана параллельным запросом — сообщение уходит в неё, дубля нет', function () {
     $listing = MessagingFixtures::listing();
     $buyer = User::factory()->create();
-    $winner = null;
+    $raced = false;
 
     // Сразу после того как поиск беседы вернул «нет», «конкурент» успевает вставить такую же (и зафиксировать её).
-    DB::listen(function (QueryExecuted $query) use (&$winner, $listing, $buyer): void {
-        if ($winner === null && str_starts_with($query->sql, 'select') && str_contains($query->sql, 'from "conversations"')) {
-            $winner = false;
-            $winner = MessagingFixtures::conversation($listing, $buyer);
+    DB::listen(function (QueryExecuted $query) use (&$raced, $listing, $buyer): void {
+        if (! $raced && str_starts_with($query->sql, 'select') && str_contains($query->sql, 'from "conversations"')) {
+            $raced = true;
+            MessagingFixtures::conversation($listing, $buyer);
         }
     });
 
     $message = app(StartConversation::class)->handle($buyer, $listing, 'Здравствуйте');
+    $existing = Conversation::query()->sole();
 
-    expect($winner)->not->toBeNull()
-        ->and(Conversation::query()->count())->toBe(1)
-        ->and($message->conversation_id)->toBe($winner->id)
+    expect($raced)->toBeTrue()
+        ->and($message->conversation_id)->toBe($existing->id)
         ->and(Message::query()->count())->toBe(1);
 });

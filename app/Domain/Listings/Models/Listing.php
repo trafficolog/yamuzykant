@@ -47,6 +47,7 @@ use LogicException;
  * @property bool $ship
  * @property int|null $city_id
  * @property Carbon|null $published_at
+ * @property Carbon|null $unpublished_at
  * @property-read User $user
  * @property-read SaleRecord|null $saleRecord
  */
@@ -141,6 +142,7 @@ class Listing extends Model
             'meet' => 'boolean',
             'ship' => 'boolean',
             'published_at' => 'datetime',
+            'unpublished_at' => 'datetime',
         ];
     }
 

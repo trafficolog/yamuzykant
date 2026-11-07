@@ -17,6 +17,7 @@ use App\Http\Controllers\Listings\ListingPhotoController;
 use App\Http\Controllers\Listings\LocalPhotoUploadController;
 use App\Http\Controllers\Listings\PhotoMediaController;
 use App\Http\Controllers\Messaging\ConversationController;
+use App\Http\Middleware\EnsureE2eEnvironment;
 use Illuminate\Foundation\Http\Middleware\ValidateCsrfToken;
 use Illuminate\Support\Facades\Route;
 
@@ -80,7 +81,7 @@ Route::middleware('auth')->group(function (): void {
 });
 
 // Служебная страница доставки сообщений для e2e до экрана сообщений (4.1.2): только local, testing, e2e.
-Route::middleware('auth')->group(function (): void {
+Route::middleware([EnsureE2eEnvironment::class, 'auth'])->group(function (): void {
     Route::get('/_e2e/messaging', [MessagingPlaygroundController::class, 'listing'])->name('e2e.messaging');
     Route::get('/_e2e/messaging/{conversation}', [MessagingPlaygroundController::class, 'conversation'])->name('e2e.messaging.conversation');
 });
@@ -97,4 +98,4 @@ Route::put('/_uploads/photos', LocalPhotoUploadController::class)
     ->name('photos.upload.local');
 
 // Служебная страница загрузчика для e2e до формы «Продать» (2.1.3): только local, testing, e2e.
-Route::get('/_e2e/photo-uploader', PhotoUploaderPlaygroundController::class)->middleware('auth')->name('e2e.photo-uploader');
+Route::get('/_e2e/photo-uploader', PhotoUploaderPlaygroundController::class)->middleware([EnsureE2eEnvironment::class, 'auth'])->name('e2e.photo-uploader');
