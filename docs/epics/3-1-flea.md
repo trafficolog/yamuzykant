@@ -17,7 +17,7 @@ gate: G1
 | Задача | Статус | Риск | Исполнитель → Ревьюер |
 |---|---|---|---|
 | [3.1.1 Поисковый индекс объявлений](../tasks/3-1-1-search-index.md) | done | medium | sonnet → sonnet |
-| [3.1.2 Барахолка: выдача и фильтры](../tasks/3-1-2-flea-page.md) | review | medium | sonnet → sonnet |
+| [3.1.2 Барахолка: выдача и фильтры](../tasks/3-1-2-flea-page.md) | done | medium | sonnet → sonnet |
 | [3.1.3 Барахолка: пусто, загрузка, ошибка](../tasks/3-1-3-flea-states.md) | todo | low | haiku → sonnet |
 | [3.1.4 Главная](../tasks/3-1-4-home.md) | todo | medium | sonnet → sonnet |
 | [3.1.5 Страница объявления](../tasks/3-1-5-lot-page.md) | in_progress | medium | sonnet → sonnet |

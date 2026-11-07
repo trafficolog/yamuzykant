@@ -3,7 +3,7 @@ id: "3.1.2"
 phase: "3"
 epic: "3.1"
 title: "Барахолка: выдача и фильтры"
-status: review
+status: done
 gate: G1
 risk: medium
 model_impl: sonnet
@@ -14,7 +14,7 @@ uc: ["S2", "S3"]
 prototype: "Десктоп - Каталог.dc.html"
 screens: ["flea"]
 issue: 27
-sync_state: drifted
+sync_state: aligned
 escalations: []
 ---
 
