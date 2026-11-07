@@ -3,7 +3,7 @@ id: "2.1.2"
 phase: "2"
 epic: "2.1"
 title: "Загрузка и обработка фото"
-status: in_progress
+status: review
 gate: G1
 risk: high
 model_impl: opus
