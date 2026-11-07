@@ -21,6 +21,12 @@ beforeEach(function () {
     config(['scout.driver' => 'null']);
 });
 
+/** Объявление из БД: после записи формы. */
+function sellReload(Listing $listing): Listing
+{
+    return Listing::query()->findOrFail($listing->id);
+}
+
 /** Вид инструмента (корень дерева категорий). */
 function sellKind(string $name = 'Гитары'): Category
 {
@@ -71,6 +77,19 @@ function sellPayload(Listing $listing, Category $kind, array $overrides = []): a
         'meet' => true,
         'ship' => true,
     ], $overrides);
+}
+
+/**
+ * Продавец, вид инструмента и его черновик с 3 фото; город по умолчанию в справочнике.
+ *
+ * @return array{0: User, 1: Category, 2: Listing}
+ */
+function sellCase(): array
+{
+    $owner = User::factory()->create();
+    City::factory()->create(['slug' => config('city.default_slug'), 'name' => 'Москва']);
+
+    return [$owner, sellKind(), sellDraft($owner)];
 }
 
 describe('страница /sell', function () {
@@ -127,24 +146,18 @@ describe('страница /sell', function () {
 });
 
 describe('StoreListingRequest', function () {
-    beforeEach(function () {
-        $this->user = User::factory()->create();
-        $this->kind = sellKind();
-        $this->listing = sellDraft($this->user);
-        City::factory()->create(['slug' => config('city.default_slug'), 'name' => 'Москва']);
-    });
-
     it('полный запрос записывает содержимое в черновик и не меняет статус', function () {
-        $this->actingAs($this->user)
-            ->post('/sell', sellPayload($this->listing, $this->kind))
+        [$owner, $kind, $draft] = sellCase();
+        $this->actingAs($owner)
+            ->post('/sell', sellPayload($draft, $kind))
             ->assertSessionHasNoErrors()
             ->assertRedirect('/sell');
 
-        $listing = $this->listing->fresh();
+        $listing = sellReload($draft);
         expect($listing->status)->toBe(ListingStatus::Draft)
             ->and($listing->published_at)->toBeNull()
             ->and($listing->title)->toBe('Fender American Vintage ’57 Stratocaster')
-            ->and($listing->category_id)->toBe($this->kind->id)
+            ->and($listing->category_id)->toBe($kind->id)
             ->and($listing->year)->toBe(2009)
             ->and($listing->serial_enc)->toBe('V091187')
             ->and($listing->condition)->toBe(Condition::Excellent)
@@ -156,70 +169,78 @@ describe('StoreListingRequest', function () {
     });
 
     it('после записи страница один раз сообщает, что данные сохранены', function () {
-        $this->actingAs($this->user)->post('/sell', sellPayload($this->listing, $this->kind));
+        [$owner, $kind, $draft] = sellCase();
+        $this->actingAs($owner)->post('/sell', sellPayload($draft, $kind));
 
         $this->get('/sell')->assertInertia(fn (AssertableInertia $page) => $page->where('saved', true));
         $this->get('/sell')->assertInertia(fn (AssertableInertia $page) => $page->where('saved', false));
     });
 
     it('серийный номер хранится зашифрованным', function () {
-        $this->actingAs($this->user)->post('/sell', sellPayload($this->listing, $this->kind));
+        [$owner, $kind, $draft] = sellCase();
+        $this->actingAs($owner)->post('/sell', sellPayload($draft, $kind));
 
-        $raw = (string) DB::table('listings')->where('id', $this->listing->id)->value('serial_enc');
+        $raw = (string) DB::table('listings')->where('id', $draft->id)->value('serial_enc');
         expect($raw)->not->toContain('V091187')->and($raw)->not->toBe('');
     });
 
     it('год и серийный номер необязательны', function () {
-        $this->actingAs($this->user)
-            ->post('/sell', sellPayload($this->listing, $this->kind, ['year' => null, 'serial' => null]))
+        [$owner, $kind, $draft] = sellCase();
+        $this->actingAs($owner)
+            ->post('/sell', sellPayload($draft, $kind, ['year' => null, 'serial' => null]))
             ->assertSessionHasNoErrors();
 
-        expect($this->listing->fresh()->year)->toBeNull();
+        expect(sellReload($draft)->year)->toBeNull();
     });
 
     it('модель из справочника привязывается по model_id', function () {
-        $model = InstrumentModel::factory()->create(['category_id' => $this->kind->id]);
+        [$owner, $kind, $draft] = sellCase();
+        $model = InstrumentModel::factory()->create(['category_id' => $kind->id]);
 
-        $this->actingAs($this->user)
-            ->post('/sell', sellPayload($this->listing, $this->kind, ['model_id' => $model->id]))
+        $this->actingAs($owner)
+            ->post('/sell', sellPayload($draft, $kind, ['model_id' => $model->id]))
             ->assertSessionHasNoErrors();
 
-        expect($this->listing->fresh()->model_id)->toBe($model->id);
+        expect(sellReload($draft)->model_id)->toBe($model->id);
     });
 
     it('модель без выбора из подсказки уходит в «Предложено продавцами» (UC-L1 2a)', function () {
-        $this->actingAs($this->user)
-            ->post('/sell', sellPayload($this->listing, $this->kind, ['title' => 'Harley Benton ST-62']))
+        [$owner, $kind, $draft] = sellCase();
+        $this->actingAs($owner)
+            ->post('/sell', sellPayload($draft, $kind, ['title' => 'Harley Benton ST-62']))
             ->assertSessionHasNoErrors();
 
         $suggested = InstrumentModel::query()->where('brand', 'Harley')->sole();
         expect($suggested->status)->toBe(InstrumentModelStatus::Suggested)
             ->and($suggested->name)->toBe('Benton ST-62')
-            ->and($this->listing->fresh()->model_id)->toBe($suggested->id);
+            ->and(sellReload($draft)->model_id)->toBe($suggested->id);
     });
 
     it('повторная отправка перезаписывает черновик, а не создаёт второй', function () {
-        $this->actingAs($this->user)->post('/sell', sellPayload($this->listing, $this->kind));
-        $this->actingAs($this->user)->post('/sell', sellPayload($this->listing, $this->kind, ['price' => 170_000]));
+        [$owner, $kind, $draft] = sellCase();
+        $this->actingAs($owner)->post('/sell', sellPayload($draft, $kind));
+        $this->actingAs($owner)->post('/sell', sellPayload($draft, $kind, ['price' => 170_000]));
 
-        expect(Listing::query()->where('user_id', $this->user->id)->count())->toBe(1)
-            ->and($this->listing->fresh()->price)->toBe(170_000);
+        expect(Listing::query()->where('user_id', $owner->id)->count())->toBe(1)
+            ->and(sellReload($draft)->price)->toBe(170_000);
     });
 
     it('гость — на главную, ничего не записано', function () {
-        $this->post('/sell', sellPayload($this->listing, $this->kind))->assertRedirect('/');
+        [$owner, $kind, $draft] = sellCase();
+        $this->post('/sell', sellPayload($draft, $kind))->assertRedirect('/');
 
-        expect($this->listing->fresh()->title)->toBeNull();
+        expect(sellReload($draft)->title)->toBeNull();
     });
 
     it('каждое правило: запрос в обход клиента отклоняется и ничего не записывает', function (string $field, mixed $value) {
-        $this->actingAs($this->user)
+        [$owner, $kind, $draft] = sellCase();
+        $this->actingAs($owner)
             ->from('/sell')
-            ->post('/sell', sellPayload($this->listing, $this->kind, [$field => $value]))
+            ->post('/sell', sellPayload($draft, $kind, [$field => $value]))
             ->assertRedirect('/sell')
             ->assertSessionHasErrors($field);
 
-        expect($this->listing->fresh()->title)->toBeNull()->and($this->listing->fresh()->price)->toBeNull();
+        expect(sellReload($draft)->title)->toBeNull()->and(sellReload($draft)->price)->toBeNull();
     })->with([
         'вид не передан' => ['category_id', null],
         'вида нет' => ['category_id', 999_999],
@@ -250,132 +271,147 @@ describe('StoreListingRequest', function () {
     ]);
 
     it('BR-11: «Договорная» — суммы нет, price = null, «Готов к торгу» принудительно выключен', function () {
-        ->actingAs(->user)
-            ->post('/sell', sellPayload(->listing, ->kind, ['price_mode' => 'negotiable', 'price' => null, 'negotiable' => true]))
+        [$owner, $kind, $draft] = sellCase();
+        $this->actingAs($owner)
+            ->post('/sell', sellPayload($draft, $kind, ['price_mode' => 'negotiable', 'price' => null, 'negotiable' => true]))
             ->assertSessionHasNoErrors();
 
-         = ->listing->fresh();
-        expect(->price)->toBeNull()->and(->negotiable)->toBeFalse();
+        $listing = sellReload($draft);
+        expect($listing->price)->toBeNull()->and($listing->negotiable)->toBeFalse();
     });
 
     it('BR-11: «Бесплатно» — price = 0, «Готов к торгу» принудительно выключен', function () {
-        ->actingAs(->user)
-            ->post('/sell', sellPayload(->listing, ->kind, ['price_mode' => 'free', 'price' => null, 'negotiable' => true]))
+        [$owner, $kind, $draft] = sellCase();
+        $this->actingAs($owner)
+            ->post('/sell', sellPayload($draft, $kind, ['price_mode' => 'free', 'price' => null, 'negotiable' => true]))
             ->assertSessionHasNoErrors();
 
-         = ->listing->fresh();
-        expect(->price)->toBe(0)->and(->negotiable)->toBeFalse();
+        $listing = sellReload($draft);
+        expect($listing->price)->toBe(0)->and($listing->negotiable)->toBeFalse();
     });
 
-    it('BR-11: с суммой «Готов к торгу» сохраняется как отправлен', function (bool ) {
-        ->actingAs(->user)
-            ->post('/sell', sellPayload(->listing, ->kind, ['negotiable' => ]))
+    it('BR-11: с суммой «Готов к торгу» сохраняется как отправлен', function (bool $negotiable) {
+        [$owner, $kind, $draft] = sellCase();
+        $this->actingAs($owner)
+            ->post('/sell', sellPayload($draft, $kind, ['negotiable' => $negotiable]))
             ->assertSessionHasNoErrors();
 
-        expect(->listing->fresh()->negotiable)->toBe();
-    })->with([true, false]);
+        expect(sellReload($draft)->negotiable)->toBe($negotiable);
+    })->with(['с торгом' => [true], 'без торга' => [false]]);
 
-    it('BR-11: при «Договорная» и «Бесплатно» сумма в запросе отклоняется', function (string ) {
-        ->actingAs(->user)->from('/sell')
-            ->post('/sell', sellPayload(->listing, ->kind, ['price_mode' => , 'price' => 5000]))
+    it('BR-11: при «Договорная» и «Бесплатно» сумма в запросе отклоняется', function (string $mode) {
+        [$owner, $kind, $draft] = sellCase();
+        $this->actingAs($owner)->from('/sell')
+            ->post('/sell', sellPayload($draft, $kind, ['price_mode' => $mode, 'price' => 5000]))
             ->assertSessionHasErrors('price');
 
-        expect(->listing->fresh()->price)->toBeNull();
-    })->with(['negotiable', 'free']);
+        expect(sellReload($draft)->price)->toBeNull();
+    })->with(['договорная' => ['negotiable'], 'бесплатно' => ['free']]);
 
-    it('BR-11: при «Бесплатно» и «Договорная» сумма 0 тоже отклоняется (ноль задаёт только «Бесплатно»)', function () {
-        ->actingAs(->user)->from('/sell')
-            ->post('/sell', sellPayload(->listing, ->kind, ['price_mode' => 'negotiable', 'price' => 0]))
+    it('BR-11: при «Договорная» сумма 0 тоже отклоняется (ноль задаёт только «Бесплатно»)', function () {
+        [$owner, $kind, $draft] = sellCase();
+        $this->actingAs($owner)->from('/sell')
+            ->post('/sell', sellPayload($draft, $kind, ['price_mode' => 'negotiable', 'price' => 0]))
             ->assertSessionHasErrors('price');
     });
 
     it('без способа передачи отправка отклоняется', function () {
-        $this->actingAs($this->user)->from('/sell')
-            ->post('/sell', sellPayload($this->listing, $this->kind, ['meet' => false, 'ship' => false]))
+        [$owner, $kind, $draft] = sellCase();
+        $this->actingAs($owner)->from('/sell')
+            ->post('/sell', sellPayload($draft, $kind, ['meet' => false, 'ship' => false]))
             ->assertSessionHasErrors('meet');
     });
 
     it('достаточно одного способа передачи', function (bool $meet, bool $ship) {
-        $this->actingAs($this->user)
-            ->post('/sell', sellPayload($this->listing, $this->kind, ['meet' => $meet, 'ship' => $ship]))
+        [$owner, $kind, $draft] = sellCase();
+        $this->actingAs($owner)
+            ->post('/sell', sellPayload($draft, $kind, ['meet' => $meet, 'ship' => $ship]))
             ->assertSessionHasNoErrors();
     })->with([[true, false], [false, true]]);
 
     it('скрытый вид и подкатегория не принимаются как вид', function (bool $hidden) {
+        [$owner, $kind, $draft] = sellCase();
         $parent = sellKind('Аксессуары и запчасти');
         $category = $hidden
             ? Category::factory()->create(['parent_id' => null, 'is_visible' => false])
             : Category::factory()->create(['parent_id' => $parent->id, 'is_visible' => true]);
 
-        $this->actingAs($this->user)->from('/sell')
-            ->post('/sell', sellPayload($this->listing, $this->kind, ['category_id' => $category->id]))
+        $this->actingAs($owner)->from('/sell')
+            ->post('/sell', sellPayload($draft, $kind, ['category_id' => $category->id]))
             ->assertSessionHasErrors('category_id');
     })->with(['скрытый вид' => [true], 'не вид, а подкатегория' => [false]]);
 
     it('скрытая и предложенная модели по model_id не принимаются', function (string $state) {
-        $model = InstrumentModel::factory()->{$state}()->create(['category_id' => $this->kind->id]);
+        [$owner, $kind, $draft] = sellCase();
+        $model = InstrumentModel::factory()->{$state}()->create(['category_id' => $kind->id]);
 
-        $this->actingAs($this->user)->from('/sell')
-            ->post('/sell', sellPayload($this->listing, $this->kind, ['model_id' => $model->id]))
+        $this->actingAs($owner)->from('/sell')
+            ->post('/sell', sellPayload($draft, $kind, ['model_id' => $model->id]))
             ->assertSessionHasErrors('model_id');
-    })->with(['hiddenStatus', 'suggested']);
+    })->with(['скрытая' => ['hiddenStatus'], 'предложенная' => ['suggested']]);
 
     it('2 фото: отказ с текстом «ещё 1 фото»', function () {
-        $listing = sellDraft($this->user, photos: 2);
+        [$owner, $kind, $draft] = sellCase();
+        $listing = sellDraft($owner, photos: 2);
 
-        $this->actingAs($this->user)->from('/sell')
-            ->post('/sell', sellPayload($listing, $this->kind))
+        $this->actingAs($owner)->from('/sell')
+            ->post('/sell', sellPayload($listing, $kind))
             ->assertSessionHasErrors(['photos' => 'ещё 1 фото']);
     });
 
     it('нет фото серийного номера: отказ', function () {
-        $listing = sellDraft($this->user, photos: 3, serial: false);
+        [$owner, $kind, $draft] = sellCase();
+        $listing = sellDraft($owner, photos: 3, serial: false);
 
-        $this->actingAs($this->user)->from('/sell')
-            ->post('/sell', sellPayload($listing, $this->kind))
+        $this->actingAs($owner)->from('/sell')
+            ->post('/sell', sellPayload($listing, $kind))
             ->assertSessionHasErrors(['photos' => 'фото серийного номера']);
     });
 
     it('больше 12 фото: отказ', function () {
-        $listing = sellDraft($this->user, photos: 13);
+        [$owner, $kind, $draft] = sellCase();
+        $listing = sellDraft($owner, photos: 13);
 
-        $this->actingAs($this->user)->from('/sell')
-            ->post('/sell', sellPayload($listing, $this->kind))
+        $this->actingAs($owner)->from('/sell')
+            ->post('/sell', sellPayload($listing, $kind))
             ->assertSessionHasErrors('photos');
     });
 
     it('чужой черновик нельзя записать', function () {
+        [$owner, $kind, $draft] = sellCase();
         $foreign = sellDraft(User::factory()->create());
 
-        $this->actingAs($this->user)->from('/sell')
-            ->post('/sell', sellPayload($foreign, $this->kind))
+        $this->actingAs($owner)->from('/sell')
+            ->post('/sell', sellPayload($foreign, $kind))
             ->assertSessionHasErrors('listing_id');
 
-        expect($foreign->fresh()->title)->toBeNull();
+        expect(sellReload($foreign)->title)->toBeNull();
     });
 
     it('опубликованное объявление через форму не меняется', function () {
-        $published = Listing::factory()->for($this->user)->inStatus(ListingStatus::Published)->create(['price' => 100_000]);
+        [$owner, $kind, $draft] = sellCase();
+        $published = Listing::factory()->for($owner)->inStatus(ListingStatus::Published)->create(['price' => 100_000]);
 
-        $this->actingAs($this->user)->from('/sell')
-            ->post('/sell', sellPayload($published, $this->kind, ['price' => 1]))
+        $this->actingAs($owner)->from('/sell')
+            ->post('/sell', sellPayload($published, $kind, ['price' => 1]))
             ->assertSessionHasErrors('listing_id');
 
-        expect($published->fresh()->price)->toBe(100_000);
+        expect(sellReload($published)->price)->toBe(100_000);
     });
 
     it('в запросе нельзя подменить владельца, статус и город', function () {
+        [$owner, $kind, $draft] = sellCase();
         $other = User::factory()->create();
         $city = City::factory()->create(['name' => 'Казань']);
 
-        $this->actingAs($this->user)->post('/sell', sellPayload($this->listing, $this->kind, [
+        $this->actingAs($owner)->post('/sell', sellPayload($draft, $kind, [
             'user_id' => $other->id,
             'status' => 'published',
             'city_id' => $city->id,
         ]))->assertSessionHasNoErrors();
 
-        $listing = $this->listing->fresh();
-        expect($listing->user_id)->toBe($this->user->id)
+        $listing = sellReload($draft);
+        expect($listing->user_id)->toBe($owner->id)
             ->and($listing->status)->toBe(ListingStatus::Draft)
             ->and($listing->city?->name)->toBe('Москва');
     });

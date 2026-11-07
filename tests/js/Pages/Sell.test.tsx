@@ -244,9 +244,7 @@ describe('Список недостающего и кнопка', () => {
         const list = missing();
         expect(list).not.toBeNull();
         expect(list).toHaveAttribute('role', 'status');
-        expect(
-            list!.compareDocumentPosition(publish()) & Node.DOCUMENT_POSITION_FOLLOWING,
-        ).toBeTruthy();
+        expect(list?.compareDocumentPosition(publish())).toBe(Node.DOCUMENT_POSITION_FOLLOWING);
     });
 
     it('всё заполнено: списка нет, кнопка активна', () => {
@@ -502,7 +500,9 @@ describe('Отправка', () => {
     it('неполную форму не отправляет', () => {
         renderSell();
 
-        fireEvent.submit(publish().closest('form')!);
+        const form = publish().closest('form');
+        if (form === null) throw new Error('Нет формы');
+        fireEvent.submit(form);
 
         expect(post).not.toHaveBeenCalled();
     });
