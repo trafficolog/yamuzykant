@@ -26,12 +26,14 @@ final class PhotoStorage
     }
 
     /**
-     * Каталог версий фото: `photos/{...}` с непустым хвостом, без пустых сегментов и `..`.
-     * Иначе deleteDirectory('') на диске с корневым префиксом пошёл бы по всему бакету.
+     * Каталог версий фото строго в формате photoDirectory(): `photos/{listingId}/{photoId}`, оба id — UUID,
+     * то есть только латиница, цифры и дефис. Белый список, а не поиск опасного: Flysystem заменяет `\` на `/`
+     * и выбрасывает сегменты `.` и `..`, так что `photos/.` или `photos/x\..\..` превратились бы в `photos`
+     * или корень, и deleteDirectory снёс бы все фото или весь бакет. `\z`, а не `$`: `$` пропускает `\n` в конце.
      */
     public static function isPhotoDirectory(string $path): bool
     {
-        return preg_match('#^photos/[^/]+(/[^/]+)*$#', $path) === 1 && ! in_array('..', explode('/', $path), true);
+        return preg_match('#\Aphotos/[A-Za-z0-9-]+/[A-Za-z0-9-]+\z#', $path) === 1;
     }
 
     /** Удалить каталог версий; небезопасный path пропускается с warning. Возвращает, удалён ли каталог. */
