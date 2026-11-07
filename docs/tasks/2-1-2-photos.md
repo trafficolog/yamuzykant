@@ -3,7 +3,7 @@ id: "2.1.2"
 phase: "2"
 epic: "2.1"
 title: "Загрузка и обработка фото"
-status: review
+status: done
 gate: G1
 risk: high
 model_impl: opus
@@ -14,7 +14,7 @@ uc: ["L1"]
 prototype: "Десктоп - Продать.dc.html"
 screens: []
 issue: 21
-sync_state: drifted
+sync_state: aligned
 escalations: []
 ---
 

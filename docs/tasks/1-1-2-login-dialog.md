@@ -3,7 +3,7 @@ id: "1.1.2"
 phase: "1"
 epic: "1.1"
 title: "Окно входа"
-status: in_progress
+status: done
 gate: G1
 risk: medium
 model_impl: sonnet
@@ -14,7 +14,7 @@ uc: ["A1"]
 prototype: "Шапка.dc.html"
 screens: ["header"]
 issue: 14
-sync_state: drifted
+sync_state: aligned
 escalations: []
 ---
 

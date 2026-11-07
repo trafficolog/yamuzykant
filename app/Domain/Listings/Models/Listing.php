@@ -86,8 +86,12 @@ class Listing extends Model
         'city_id',
     ];
 
-    /** Смена статуса разрешена только внутри withStatusChange() — её вызывает ListingStateMachine. */
-    private static bool $statusChangeAllowed = false;
+    /**
+     * Смена статуса разрешена только внутри withStatusChange() — её вызывает ListingStateMachine.
+     * Флаг у экземпляра, а не статический: общего на процесс состояния нет, поэтому в Octane
+     * (долгоживущий процесс, корутины) разрешение одного запроса не протекает в другой.
+     */
+    private bool $statusChangeAllowed = false;
 
     /** @var list<string> */
     protected $fillable = [
@@ -141,6 +145,25 @@ class Listing extends Model
     }
 
     /**
+     * `user_id` не в $fillable, и Eloquent молча отбросил бы его в update()/fill(). Для существующей
+     * записи другой владелец в массовой записи — явная ошибка, а не тихий пропуск.
+     *
+     * @param  array<string, mixed>  $attributes
+     */
+    public function fill(array $attributes): static
+    {
+        if ($this->exists && array_key_exists('user_id', $attributes)) {
+            // Колонка не загружена (select подмножества): сравнивать не с чем, а чтение при
+            // preventAccessingMissingAttributes дало бы MissingAttributeException вместо LogicException.
+            if (! array_key_exists('user_id', $this->getAttributes()) || (int) $attributes['user_id'] !== $this->user_id) {
+                throw new LogicException('Владельца объявления менять нельзя.');
+            }
+        }
+
+        return parent::fill($attributes);
+    }
+
+    /**
      * Защита в глубину к arch-тесту: смена статуса существующего объявления вне машины — исключение;
      * цена не бывает отрицательной (деньги — целые рубли ≥ 0).
      */
@@ -151,14 +174,21 @@ class Listing extends Model
                 throw new InvalidArgumentException('Цена не может быть отрицательной.');
             }
 
-            if ($listing->exists && $listing->isDirty('status') && ! self::$statusChangeAllowed) {
+            if ($listing->exists && $listing->isDirty('status') && ! $listing->statusChangeAllowed) {
                 throw new LogicException('Статус объявления меняет только ListingStateMachine.');
+            }
+
+            if ($listing->exists && $listing->isDirty('user_id')) {
+                throw new LogicException('Владельца объявления менять нельзя.');
             }
         });
     }
 
     /**
-     * Выполнить сохранение со сменой статуса. Только для ListingStateMachine.
+     * Выполнить сохранение со сменой статуса этого экземпляра. Только для ListingStateMachine
+     * (вызов вне app/Domain/Listings/StateMachines ловит StatusWriteScanner).
+     *
+     * Разрешение сбрасывается в finally, даже если колбэк бросил исключение.
      *
      * @internal
      *
@@ -167,15 +197,15 @@ class Listing extends Model
      * @param  Closure(): T  $callback
      * @return T
      */
-    public static function withStatusChange(Closure $callback): mixed
+    public function withStatusChange(Closure $callback): mixed
     {
-        $previous = self::$statusChangeAllowed;
-        self::$statusChangeAllowed = true;
+        $previous = $this->statusChangeAllowed;
+        $this->statusChangeAllowed = true;
 
         try {
             return $callback();
         } finally {
-            self::$statusChangeAllowed = $previous;
+            $this->statusChangeAllowed = $previous;
         }
     }
 

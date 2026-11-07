@@ -59,3 +59,26 @@ it('status и user_id не входят в массовое заполнение
         ->and(in_array('status', (array) $fillable, true))->toBeFalse()
         ->and(in_array('user_id', (array) $fillable, true))->toBeFalse();
 });
+
+it('сканер ловит вызов withStatusChange', function (string $code) {
+    expect(StatusWriteScanner::scan("<?php\n".$code))->not->toBeEmpty();
+})->with([
+    'статический вызов' => ['Listing::withStatusChange(fn () => $l->save());'],
+    'вызов на экземпляре' => ['$listing->withStatusChange(fn () => $listing->save());'],
+    'с пробелами' => ["\$listing\n    ->withStatusChange (fn () => true);"],
+]);
+
+it('сканер не трогает объявление метода withStatusChange и упоминание в комментарии', function () {
+    expect(StatusWriteScanner::scan("<?php\npublic function withStatusChange(Closure \$callback): mixed {}"))->toBe([])
+        ->and(StatusWriteScanner::scan("<?php\n// \$listing->withStatusChange(fn () => 1);"))->toBe([]);
+});
+
+it('withStatusChange вне Domain/Listings/StateMachines — нарушение, внутри — нет (фикстура)', function () {
+    $violations = StatusWriteScanner::scanDirectory(dirname(__DIR__).'/Fixtures/StatusScanner');
+    $paths = array_keys($violations);
+    sort($paths);
+
+    expect($paths)->toHaveCount(2)
+        ->and($paths[0])->toEndWith('/Fixtures/StatusScanner/Domain/Other/StateMachines/OtherContextCaller.php')
+        ->and($paths[1])->toEndWith('/Fixtures/StatusScanner/OutsideCaller.php');
+});

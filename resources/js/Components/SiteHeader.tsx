@@ -4,6 +4,7 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 import CategoryMenu, { CATEGORY_MENU_ID } from '@/Components/CategoryMenu';
 import CitySelect, { type CityOption } from '@/Components/CitySelect';
 import { useFlag, type FlagName } from '@/Hooks/useFlag';
+import { openLogin } from '@/Hooks/loginDialog';
 import { useNarrow } from '@/Hooks/useNarrow';
 import { CATEGORY_TREE, type CategoryNode } from '@/lang/categories';
 import { ru } from '@/lang/ru';
@@ -23,7 +24,7 @@ export interface SiteHeaderProps {
     /** Дерево категорий; до справочника 1.2.1 — константа из макета. */
     categories?: readonly CategoryNode[];
     onSearch?: (query: string) => void;
-    /** Окно входа — задача 1.1.2. */
+    /** Своё действие вместо открытия окна входа (по умолчанию «Войти» открывает его). */
     onLoginClick?: () => void;
 }
 
@@ -47,6 +48,9 @@ const SECTIONS: readonly Section[] = [
 const HREF_SOON = '#';
 
 const TOGGLE_ID = 'site-category-toggle';
+
+/** Кнопка «Войти»: на неё возвращается фокус после закрытия окна входа (LoginDialog). */
+const LOGIN_ID = 'site-login-toggle';
 
 export default function SiteHeader({
     active = 'none',
@@ -219,7 +223,17 @@ export default function SiteHeader({
                         <Button variant="primary" icon="plus" href={HREF_SOON}>
                             {ru.header.sell}
                         </Button>
-                        <Button variant="ghost" icon="user" onClick={onLoginClick}>
+                        <Button
+                            id={LOGIN_ID}
+                            variant="ghost"
+                            icon="user"
+                            aria-haspopup="dialog"
+                            onClick={(event) =>
+                                onLoginClick
+                                    ? onLoginClick()
+                                    : openLogin({ opener: event.currentTarget })
+                            }
+                        >
                             {ru.header.login}
                         </Button>
                     </div>

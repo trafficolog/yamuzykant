@@ -30,6 +30,8 @@ escalations: []
 - Тесты: экранирование категории в filter (`"` и `\`); поведенческие тесты синхронизации для `ListingApproved`, `ListingResubmitted`, `ListingRelisted`, `ListingReturned`, `ListingRejected`; тест «все события подписаны» без опоры на wildcard
 - Индекс `instrument_models` — с префиксом окружения (`SCOUT_PREFIX`), чтобы параллельные прогоны не мешали друг другу
 - Версия Meilisearch одна в CI и docker-compose
+- Нестабильный тест `ReconcileListingIndexTest`: нарушение `cities_name_region_unique` в CI (PR #113) — фабрика городов с уникальными значениями
+- Убрать `_geo` из документа и настроек индекса и сортировку `_geoPoint` (решение OWNER 07.11.2026: «рядом» в MVP нет)
 
 ## Критерии приёмки
 - [ ] После `deploy.sh` на пустом индексе опубликованные объявления находятся без ожидания сверки
@@ -41,7 +43,6 @@ escalations: []
 - Pest: экранирование filter, события синхронизации, защита seed-load, WithoutOverlapping
 
 ## Не делать
-- Координаты объявления и сортировку «рядом» — ждёт решения OWNER на G1
 - Resource для выдачи — в 3.1.2
 
 ## Ссылки

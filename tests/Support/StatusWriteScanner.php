@@ -14,14 +14,24 @@ use SplFileInfo;
  * Ловит: `->status = …`, `->status ??= …`, `['status'] = …`, `->setAttribute('status', …)`,
  * `update/fill/forceFill/updateOrCreate/upsert/…(['status' => …])` и SQL `SET status = …`.
  * Комментарии перед поиском вырезаются, строки остаются (ключ 'status' — строка).
+ *
+ * Ограничения (regex-сканер, не анализатор потока данных). Не ловит вызов withStatusChange через
+ * callable-массив `[$l, 'withStatusChange'](…)`, `call_user_func`/`call_user_func_array` и динамическое имя
+ * метода `$l->$name(…)`. Ложно срабатывает на строковый литерал вида `"->withStatusChange("`.
+ * Это приемлемо: основная защита — хук saving и флаг экземпляра в Listing, сканер её дополняет.
  */
 final class StatusWriteScanner
 {
+    /** Единственный каталог, где разрешены запись статуса и withStatusChange(), относительно корня сканирования. */
+    private const ALLOWED_DIRECTORY = 'Domain/Listings/StateMachines';
+
     private const PATTERNS = [
         'присваивание ->status' => '/->\s*status\s*(?:\?\?=|=(?![=>]))/',
         'присваивание [\'status\']' => '/\[\s*[\'"]status[\'"]\s*\]\s*(?:\?\?=|=(?![=>]))/',
         'setAttribute(\'status\')' => '/->\s*setAttribute\s*\(\s*[\'"]status[\'"]/',
         'массовая запись status' => '/(?:->|::)\s*(?:update|updateQuietly|updateOrFail|fill|forceFill|forceFillQuietly|setRawAttributes|updateOrCreate|updateOrInsert|upsert|incrementEach)\s*\([^;]*?[\'"]status[\'"]\s*=>/s',
+        // Разрешён только внутри Domain/Listings/StateMachines, которые scanDirectory() пропускает.
+        'вызов withStatusChange' => '/(?:->|::)\s*withStatusChange\s*\(/',
         'SQL SET status' => '/\bset\s+[`"]?status[`"]?\s*=/i',
     ];
 
@@ -46,18 +56,20 @@ final class StatusWriteScanner
     }
 
     /**
-     * Нарушения во всех PHP-файлах каталога, кроме каталогов StateMachines.
+     * Нарушения во всех PHP-файлах каталога, кроме `Domain/Listings/StateMachines` (путь от корня сканирования;
+     * одноимённый каталог другого контекста не исключается).
      *
      * @return array<string, list<string>> путь → нарушения
      */
     public static function scanDirectory(string $root): array
     {
         $violations = [];
+        $root = rtrim(str_replace('\\', '/', $root), '/');
         $files = new RecursiveIteratorIterator(new RecursiveDirectoryIterator($root, RecursiveDirectoryIterator::SKIP_DOTS));
         /** @var SplFileInfo $file */
         foreach ($files as $file) {
             $path = str_replace('\\', '/', $file->getPathname());
-            if ($file->getExtension() !== 'php' || str_contains($path, '/StateMachines/')) {
+            if ($file->getExtension() !== 'php' || str_starts_with($path, $root.'/'.self::ALLOWED_DIRECTORY.'/')) {
                 continue;
             }
             $found = self::scan((string) file_get_contents($path));

@@ -9,6 +9,11 @@ use App\Domain\Accounts\Exceptions\RegistrationNotPending;
 use App\Domain\Accounts\Exceptions\TooManyLoginAttempts;
 use App\Domain\Accounts\Exceptions\YandexLoginFailed;
 use App\Domain\Accounts\Exceptions\YandexLoginNotPending;
+use App\Domain\Listings\Exceptions\PhotoRejected;
+use App\Domain\Listings\Exceptions\PhotoRequirementsNotMet;
+use App\Domain\Messaging\Exceptions\CannotMessageYourself;
+use App\Domain\Messaging\Exceptions\ConversationClosed;
+use App\Domain\Messaging\Exceptions\ListingNotAvailable;
 use App\Http\Controllers\HealthController;
 use App\Http\Middleware\AssignRequestId;
 use App\Http\Middleware\EnsureSessionIsCurrent;
@@ -33,6 +38,8 @@ return Application::configure(basePath: dirname(__DIR__))
             Route::get('/health', HealthController::class)->middleware(ThrottleHealth::class)->name('health');
         },
     )
+    // Авторизация приватных каналов Reverb (4.1.1): сессия web, лимит частоты; гость и чужой — 403.
+    ->withBroadcasting(__DIR__.'/../routes/channels.php', ['middleware' => ['web', 'throttle:120,1']])
     ->withMiddleware(function (Middleware $middleware): void {
         // request_id для всех запросов, включая /health и /up: в журнале, Sentry, заданиях очереди и ответе.
         $middleware->prepend(AssignRequestId::class);
@@ -56,7 +63,8 @@ return Application::configure(basePath: dirname(__DIR__))
         Integration::handles($exceptions);
 
         // Код входа не попадает в old input сессии при ошибке формы.
-        $exceptions->dontFlash(['code']);
+        // Текст сообщения (4.1.1) тоже не сохраняется в сессии.
+        $exceptions->dontFlash(['code', 'body']);
 
         // Ожидаемые отказы входа — не ошибки: не пишутся в лог и не уходят в Sentry.
         $exceptions->dontReport([
@@ -64,10 +72,33 @@ return Application::configure(basePath: dirname(__DIR__))
             InvalidLoginCode::class,
             RegistrationNotPending::class,
             ConsentRequired::class,
+            PhotoRejected::class,
+            PhotoRequirementsNotMet::class,
             InvalidYandexState::class,
             YandexLoginFailed::class,
             YandexLoginNotPending::class,
+            CannotMessageYourself::class,
+            ListingNotAvailable::class,
+            ConversationClosed::class,
         ]);
+
+        // Сообщения (4.1.1): объявление не в published — 404, как у отсутствующего (SPEC §6.1).
+        $exceptions->render(fn (ListingNotAvailable $e): JsonResponse => response()->json(['message' => __('Not Found')], 404));
+
+        $exceptions->render(fn (CannotMessageYourself $e): JsonResponse => response()->json(['message' => $e->getMessage()], 403));
+
+        $exceptions->render(fn (ConversationClosed $e): JsonResponse => response()->json(['message' => $e->getMessage()], 409));
+
+        // Отказы по фото (BR-03) — как ошибка валидации поля формы.
+        $exceptions->render(fn (PhotoRejected $e): JsonResponse => response()->json([
+            'message' => $e->getMessage(),
+            'errors' => [$e->field => [$e->getMessage()]],
+        ], 422));
+
+        $exceptions->render(fn (PhotoRequirementsNotMet $e): JsonResponse => response()->json([
+            'message' => $e->getMessage(),
+            'errors' => ['photos' => $e->shortfall->messages()],
+        ], 422));
 
         $exceptions->render(fn (TooManyLoginAttempts $e): JsonResponse => response()->json([
             'message' => __('login.throttled', ['minutes' => $e->minutes()]),
