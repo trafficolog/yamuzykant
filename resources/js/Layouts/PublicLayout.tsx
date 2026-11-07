@@ -2,6 +2,7 @@ import { Head, usePage } from '@inertiajs/react';
 import type { ReactNode } from 'react';
 
 import type { CityOption } from '@/Components/CitySelect';
+import LoginDialogHost from '@/Components/LoginDialogHost';
 import MobileTabBar, { type MobileTabBarProps } from '@/Components/MobileTabBar';
 import SiteFooter from '@/Components/SiteFooter';
 import SiteHeader, { type SiteHeaderProps } from '@/Components/SiteHeader';
@@ -43,6 +44,7 @@ export default function PublicLayout({ title, tab, children, ...header }: Public
             </main>
             <SiteFooter />
             <MobileTabBar active={tab} messages={header.messages} />
+            <LoginDialogHost />
         </div>
     );
 }

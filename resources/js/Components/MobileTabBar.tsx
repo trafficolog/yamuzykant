@@ -1,5 +1,6 @@
 import { Icon, type IconName } from '@ds';
 
+import { openLogin } from '@/Hooks/loginDialog';
 import { ru } from '@/lang/ru';
 
 export type MobileTab = 'home' | 'search' | 'sell' | 'messages' | 'account';
@@ -51,6 +52,16 @@ export default function MobileTabBar({ active = 'none', messages = 0 }: MobileTa
                         href={tab.href}
                         className="ym-iconbtn ym-tabbar__item"
                         aria-current={tab.key === active ? 'page' : undefined}
+                        aria-haspopup={tab.key === 'account' ? 'dialog' : undefined}
+                        onClick={
+                            tab.key === 'account'
+                                ? (event) => {
+                                      // На < 640 px кнопки «Войти» в шапке нет: вход — через «Кабинет».
+                                      event.preventDefault();
+                                      openLogin({ opener: event.currentTarget });
+                                  }
+                                : undefined
+                        }
                         aria-label={
                             tab.key === 'messages' && count > 0
                                 ? ru.tabBar.messagesLabel(shown)

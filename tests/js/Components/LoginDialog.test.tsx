@@ -298,7 +298,7 @@ describe('LoginDialog: вход по почте', () => {
         const alert = await screen.findByRole('alert');
         expect(alert).toHaveTextContent(THROTTLED);
         expect(codeField()).toBeDisabled();
-        expect(screen.getByRole('button', { name: ru.login.signIn })).toBeDisabled();
+        expect(within(dialog()).getByRole('button', { name: ru.login.signIn })).toBeDisabled();
     });
 
     it('блок снимается по истечении retry_after', async () => {
@@ -448,7 +448,7 @@ describe('LoginDialog: первый вход', () => {
             errors: { name: ['Укажите имя'] },
         });
 
-        fireEvent.change(screen.getByLabelText(ru.login.nameLabel), { target: { value: ' ' } });
+        fireEvent.change(screen.getByLabelText(ru.login.nameLabel), { target: { value: 'Анна' } });
         fireEvent.click(screen.getByRole('checkbox'));
         fireEvent.click(proceed());
 

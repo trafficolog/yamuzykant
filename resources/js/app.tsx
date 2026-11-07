@@ -2,6 +2,7 @@ import { createInertiaApp } from '@inertiajs/react';
 import { resolvePageComponent } from 'laravel-vite-plugin/inertia-helpers';
 import { createRoot, hydrateRoot } from 'react-dom/client';
 
+import { installLoginInterceptor } from '@/Hooks/loginDialog';
 import { ru } from '@/lang/ru';
 import { initSentry } from '@/observability/sentry';
 
@@ -14,6 +15,9 @@ initSentry({
     release: import.meta.env.VITE_SENTRY_RELEASE as string | undefined,
     environment: import.meta.env.VITE_SENTRY_ENVIRONMENT as string | undefined,
 });
+
+// 401 и 419 в переходах Inertia открывают окно входа (1.1.2).
+installLoginInterceptor();
 
 void createInertiaApp({
     title: (title) => (title ? `${title} — ${ru.brand}` : ru.brand),
