@@ -9,6 +9,7 @@ use App\Domain\Listings\Models\Listing;
 use App\Domain\Listings\Models\ListingPhoto;
 use App\Http\Resources\Listings\ListingPhotoResource;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
 
 // Раздача фото браузеру — через приложение (MinIO наружу не открыт): только готовые версии,
@@ -19,12 +20,12 @@ beforeEach(function () {
     Storage::fake(config('photos.disk'));
 });
 
-function readyPhoto(Listing $listing, bool $serial = false): ListingPhoto
+function readyPhoto(Listing $listing, bool $serial = false, int $position = 0): ListingPhoto
 {
     $photo = ListingPhoto::query()->create([
         'listing_id' => $listing->id,
-        'path' => "photos/{$listing->id}/p1",
-        'position' => 0,
+        'path' => "photos/{$listing->id}/p{$position}",
+        'position' => $position,
         'is_serial' => $serial,
     ]);
     $photo->forceFill(['processed_at' => now(), 'phash' => '0123456789abcdef'])->save();
@@ -131,7 +132,11 @@ function photoResourceUrls(ListingPhoto $photo, ?User $viewer): mixed
     return (new ListingPhotoResource($photo))->toArray($request)['urls'];
 }
 
-it('не опубликованное: в Resource у гостя и чужого нет URL, у владельца и сотрудника есть', function (ListingStatus $status) {
+/**
+ * Матрица видимости по решениям OWNER (G1.md), ожидание задано независимо от PhotoVisibility:
+ * публично — только published и не серийное; владелец и сотрудник видят всё.
+ */
+it('матрица видимости: статус × тип фото × зритель — ответ контроллера, кэш и urls в Resource', function (ListingStatus $status, bool $serial, string $viewer) {
     $owner = User::factory()->create();
     $staff = User::factory()->create();
     app()->instance(StaffDirectory::class, new class($staff) implements StaffDirectory
@@ -143,48 +148,55 @@ it('не опубликованное: в Resource у гостя и чужого
             return $user->is($this->staff);
         }
     });
-    $photo = readyPhoto(Listing::factory()->for($owner)->inStatus($status)->create());
-
-    expect(photoResourceUrls($photo, null))->toBeNull()
-        ->and(photoResourceUrls($photo, User::factory()->create()))->toBeNull()
-        ->and(photoResourceUrls($photo, $owner))->not->toBeNull()
-        ->and(photoResourceUrls($photo, $staff))->not->toBeNull();
-})->with([
-    'withdrawn' => [ListingStatus::Withdrawn],
-    'expired' => [ListingStatus::Expired],
-    'pending' => [ListingStatus::Pending],
-    'needs_changes' => [ListingStatus::NeedsChanges],
-    'rejected' => [ListingStatus::Rejected],
-]);
-
-it('опубликованное: в Resource у гостя URL обычного фото есть, у серийного нет', function () {
-    $regular = readyPhoto(Listing::factory()->inStatus(ListingStatus::Published)->create());
-    $serial = readyPhoto(Listing::factory()->inStatus(ListingStatus::Published)->create(), serial: true);
-
-    expect(photoResourceUrls($regular, null))->not->toBeNull()
-        ->and(photoResourceUrls($serial, null))->toBeNull();
-});
-
-it('ссылка из Resource есть ровно тогда, когда PhotoMediaController отдаёт фото', function (ListingStatus $status, bool $serial, string $viewer) {
-    $owner = User::factory()->create();
     $photo = readyPhoto(Listing::factory()->for($owner)->inStatus($status)->create(), $serial);
     $user = match ($viewer) {
         'guest' => null,
         'stranger' => User::factory()->create(),
-        default => $owner,
+        'owner' => $owner,
+        'staff' => $staff,
     };
 
-    $urls = photoResourceUrls($photo, $user);
-    $test = $user === null ? $this : $this->actingAs($user);
-    $served = $test->get("/media/photos/{$photo->id}/square.webp")->getStatusCode() === 200;
+    $isPublic = $status === ListingStatus::Published && ! $serial;
+    $mayView = $isPublic || in_array($viewer, ['owner', 'staff'], true);
 
-    expect($urls !== null)->toBe($served);
+    $response = ($user === null ? $this : $this->actingAs($user))->get("/media/photos/{$photo->id}/square.webp");
+    $urls = photoResourceUrls($photo, $user);
+
+    expect($response->getStatusCode())->toBe($mayView ? 200 : 404)
+        ->and($urls !== null)->toBe($mayView);
+
+    if ($mayView) {
+        $cache = (string) $response->headers->get('Cache-Control');
+        expect(str_contains($cache, 'public'))->toBe($isPublic)
+            ->and(str_contains($cache, 'immutable'))->toBe($isPublic)
+            ->and(str_contains($cache, 'private'))->toBe(! $isPublic)
+            ->and(str_contains($cache, 'no-store'))->toBe($serial);
+    }
 })->with(function () {
-    foreach ([ListingStatus::Published, ListingStatus::Withdrawn, ListingStatus::Pending] as $status) {
+    foreach (ListingStatus::cases() as $status) {
         foreach ([false, true] as $serial) {
-            foreach (['guest', 'stranger', 'owner'] as $viewer) {
-                yield "{$status->value} serial={$serial} {$viewer}" => [$status, $serial, $viewer];
+            foreach (['guest', 'stranger', 'owner', 'staff'] as $viewer) {
+                yield sprintf('%s %s %s', $status->value, $serial ? 'serial' : 'regular', $viewer) => [$status, $serial, $viewer];
             }
         }
     }
+});
+
+it('список фото владельца: связь listing загружена заранее, запросов к listings не больше двух', function () {
+    $owner = User::factory()->create();
+    $listing = Listing::factory()->for($owner)->inStatus(ListingStatus::Published)->create();
+    foreach (range(0, 3) as $position) {
+        readyPhoto($listing, serial: $position === 0, position: $position);
+    }
+
+    $queries = 0;
+    DB::listen(function ($query) use (&$queries): void {
+        if (str_contains($query->sql, 'from "listings"')) {
+            $queries++;
+        }
+    });
+    $this->actingAs($owner)->getJson("/listings/{$listing->id}/photos")->assertOk()->assertJsonCount(4, 'data');
+
+    // Привязка маршрута — один запрос; фото грузят listing одним запросом, а не по запросу на фото.
+    expect($queries)->toBeLessThanOrEqual(2);
 });

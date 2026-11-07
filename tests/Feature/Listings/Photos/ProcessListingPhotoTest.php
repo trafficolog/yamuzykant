@@ -2,6 +2,7 @@
 
 declare(strict_types=1);
 
+use App\Domain\Listings\Actions\DeleteListingPhoto;
 use App\Domain\Listings\Jobs\ProcessListingPhoto;
 use App\Domain\Listings\Models\Listing;
 use App\Domain\Listings\Models\ListingPhoto;
@@ -309,14 +310,60 @@ it('лимит памяти вернулся — в журнал ничего н
     $log->shouldNotHaveReceived('warning');
 });
 
-it('HEIC: превышение лимита ImageMagick по ширине или высоте — ImageTooLarge, а не «сохраните как JPEG»', function (string $message) {
+it('HEIC: превышение лимита ImageMagick по ширине, высоте или памяти кэша — ImageTooLarge, а не «сохраните как JPEG»', function (string $message) {
     expect(ImagickHeicConverter::isLimitError($message))->toBeTrue();
 })->with([
     'width or height' => ["width or height exceeds limit `heic.heic' @ error/cache.c/OpenPixelCache/4119"],
-    'area' => ["pixels exceed limit `heic.heic' @ error/cache.c/OpenPixelCache/4119"],
     'cache' => ["cache resources exhausted `heic.heic' @ error/cache.c/OpenPixelCache/4119"],
 ]);
 
-it('HEIC: прочие ошибки Imagick — не превышение лимита', function () {
-    expect(ImagickHeicConverter::isLimitError("no decode delegate for this image format `HEIC'"))->toBeFalse();
-});
+it('HEIC: прочие ошибки Imagick — не превышение лимита', function (string $message) {
+    expect(ImagickHeicConverter::isLimitError($message))->toBeFalse();
+})->with([
+    'time limit' => ["time limit exceeded `heic.heic' @ fatal/resource.c/AcquireMagickResource/1127"],
+    'битый HEIC: память' => ["memory allocation failed `heic.heic' @ error/heic.c/ReadHEICImage/412"],
+    'битый заголовок' => ["insufficient image data in file `heic.heic' @ error/heic.c/ReadHEICImage/380"],
+    'нет декодера' => ["no decode delegate for this image format `HEIC'"],
+    'повреждён' => ["corrupt image `heic.heic' @ error/heic.c/ReadHEICImage/301"],
+]);
+
+dataset('unsafe photo paths', [
+    'пустой' => [''],
+    'корень photos' => ['photos'],
+    'photos со слэшем без хвоста' => ['photos/'],
+    'не photos' => ['uploads/1/abc'],
+    'выход вверх' => ['photos/../uploads'],
+    'корень' => ['/'],
+]);
+
+it('markFailed не удаляет каталог по пустому или чужому path — пропуск и warning', function (string $path) {
+    $log = Log::spy();
+    $photo = uploadedPhoto(ImageFixtures::jpeg());
+    $source = (string) $photo->upload_key;
+    $photo->forceFill(['path' => $path])->save();
+    photosDisk()->put('photos/other/uuid/square.webp', 'чужое');
+    photosDisk()->put('keep.txt', 'корень');
+
+    (new ProcessListingPhoto($photo->id))->failed(new RuntimeException('сбой'));
+
+    expect($photo->refresh()->failed_reason)->toBe('unreadable')
+        ->and(photosDisk()->exists('photos/other/uuid/square.webp'))->toBeTrue()
+        ->and(photosDisk()->exists('keep.txt'))->toBeTrue()
+        ->and(photosDisk()->exists($source))->toBeFalse();
+    $log->shouldHaveReceived('warning')->once();
+})->with('unsafe photo paths');
+
+it('удаление фото не трогает каталог по пустому или чужому path', function (string $path) {
+    $log = Log::spy();
+    $photo = uploadedPhoto(ImageFixtures::jpeg());
+    $photo->forceFill(['path' => $path])->save();
+    photosDisk()->put('photos/other/uuid/square.webp', 'чужое');
+    photosDisk()->put('keep.txt', 'корень');
+
+    app(DeleteListingPhoto::class)->handle($photo->listing, $photo);
+
+    expect(photosDisk()->exists('photos/other/uuid/square.webp'))->toBeTrue()
+        ->and(photosDisk()->exists('keep.txt'))->toBeTrue()
+        ->and(ListingPhoto::query()->whereKey($photo->id)->exists())->toBeFalse();
+    $log->shouldHaveReceived('warning')->once();
+})->with('unsafe photo paths');
