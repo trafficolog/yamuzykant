@@ -3,7 +3,7 @@ id: "1.2.3"
 phase: "1"
 epic: "1.2"
 title: "Справочники: доработки после ревью"
-status: review
+status: done
 gate: G1
 risk: low
 model_impl: haiku
@@ -14,7 +14,7 @@ uc: ["O4"]
 prototype: ""
 screens: []
 issue: 86
-sync_state: drifted
+sync_state: aligned
 escalations: []
 ---
 

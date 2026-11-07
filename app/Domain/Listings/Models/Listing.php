@@ -11,9 +11,11 @@ use App\Domain\Catalog\Models\InstrumentModel;
 use App\Domain\Listings\Enums\Condition;
 use App\Domain\Listings\Enums\ListingStatus;
 use App\Domain\Moderation\Models\ModerationDecision;
+use App\Domain\Search\ListingDocument;
 use Closure;
 use Database\Factories\Listings\ListingFactory;
 use Illuminate\Database\Eloquent\Attributes\UseFactory;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Concerns\HasUuids;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
@@ -22,6 +24,7 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\HasOne;
 use Illuminate\Support\Carbon;
 use InvalidArgumentException;
+use Laravel\Scout\Searchable;
 use LogicException;
 
 /**
@@ -54,6 +57,7 @@ class Listing extends Model
     use HasFactory;
 
     use HasUuids;
+    use Searchable;
 
     /** Видимые символы маски серийного номера. */
     private const SERIAL_VISIBLE = 3;
@@ -189,6 +193,40 @@ class Listing extends Model
         $visible = max(0, min(self::SERIAL_VISIBLE, mb_strlen($serial) - mb_strlen(self::SERIAL_HIDDEN)));
 
         return mb_substr($serial, 0, $visible).self::SERIAL_HIDDEN;
+    }
+
+    /**
+     * Документ индекса `listings` — явный список полей, без серийного номера, e-mail, user_id и итоговой цены.
+     *
+     * @return array<string, mixed>
+     */
+    public function toSearchableArray(): array
+    {
+        return ListingDocument::for($this);
+    }
+
+    /** В индексе только опубликованные. */
+    public function shouldBeSearchable(): bool
+    {
+        return $this->status === ListingStatus::Published;
+    }
+
+    /**
+     * Индекс обновляет job SyncListingToIndex по событиям машины статусов, а не сохранение модели:
+     * иначе правка черновика ходила бы в Meilisearch, а статус менялся бы мимо очереди и сверки.
+     */
+    public function searchIndexShouldBeUpdated(): bool
+    {
+        return false;
+    }
+
+    /**
+     * @param  Builder<Listing>  $query
+     * @return Builder<Listing>
+     */
+    protected function makeAllSearchableUsing(Builder $query): Builder
+    {
+        return $query->with(ListingDocument::RELATIONS);
     }
 
     /** Когда опубликованное объявление уйдёт в expired (config listings.expire_after_days). */

@@ -3,6 +3,10 @@
 declare(strict_types=1);
 
 use App\Domain\Catalog\Search\ModelAliases;
+use Tests\TestCase;
+
+// Чистая логика без БД: группа no-database отключает RefreshDatabase.
+uses()->group(TestCase::NO_DATABASE_GROUP);
 
 // Ревью 1.2.2: синоним совпадает по целым словам, а не по подстроке.
 

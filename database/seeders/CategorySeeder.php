@@ -87,11 +87,20 @@ class CategorySeeder extends Seeder
         }
     }
 
+    /**
+     * Видимость задаётся только при создании: правка из консоли не перезаписывается повторным сидом.
+     * Нейтральные поля (название, иконка, порядок) сид обновляет.
+     */
     private function node(?int $parentId, string $name, int $order, ?string $icon, bool $visible): Category
     {
-        return Category::query()->updateOrCreate(
-            ['parent_id' => $parentId, 'slug' => Str::slug($name)],
-            ['name' => $name, 'icon' => $icon, 'sort_order' => $order, 'is_visible' => $visible],
-        );
+        $category = Category::query()->firstOrNew(['parent_id' => $parentId, 'slug' => Str::slug($name)]);
+
+        if (! $category->exists) {
+            $category->is_visible = $visible;
+        }
+
+        $category->fill(['name' => $name, 'icon' => $icon, 'sort_order' => $order])->save();
+
+        return $category;
     }
 }

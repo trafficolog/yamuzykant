@@ -25,9 +25,17 @@ abstract class TestCase extends BaseTestCase
      */
     public function refreshDatabase(): void
     {
-        if (! in_array(self::NO_DATABASE_GROUP, $this->groups(), true)) {
-            $this->runRefreshDatabase();
+        if (in_array(self::NO_DATABASE_GROUP, $this->groups(), true)) {
+            return;
         }
+
+        // Переключение на :memory: до миграций. RefreshDatabase мигрирует внутри parent::setUp(), и раньше
+        // SQLite создавал файл из DB_DATABASE (.env, например `ymuzykant`) в корне проекта. Соединение
+        // сбрасывается, чтобы новое читало конфигурацию с :memory:. Вызывать после миграций нельзя: память пропадёт.
+        config(['database.connections.sqlite.database' => ':memory:']);
+        $this->app->make('db')->purge('sqlite');
+
+        $this->runRefreshDatabase();
     }
 
     protected function setUp(): void
@@ -36,12 +44,6 @@ abstract class TestCase extends BaseTestCase
 
         // Тесты PHP не должны зависеть от собранных Vite-бандлов (public/build).
         $this->withoutVite();
-
-        // SQLite-тесты идут в памяти. DB_DATABASE из .env (pgsql) сюда не должен попадать.
-        // Если окружение (например, CI) задаёт DB_CONNECTION=pgsql, тесты идут в PostgreSQL и эта строка ничего не меняет.
-        if (config('database.default') === 'sqlite') {
-            config(['database.connections.sqlite.database' => ':memory:']);
-        }
     }
 
     /**

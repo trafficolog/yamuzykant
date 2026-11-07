@@ -3,7 +3,7 @@ id: "2.1.7"
 phase: "2"
 epic: "2.1"
 title: "Объявление: защита владельца и смены статуса в глубину"
-status: todo
+status: in_progress
 gate: G1
 risk: medium
 model_impl: sonnet

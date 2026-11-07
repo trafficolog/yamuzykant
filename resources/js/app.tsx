@@ -3,9 +3,17 @@ import { resolvePageComponent } from 'laravel-vite-plugin/inertia-helpers';
 import { createRoot, hydrateRoot } from 'react-dom/client';
 
 import { ru } from '@/lang/ru';
+import { initSentry } from '@/observability/sentry';
 
 // Стили каркаса PublicLayout: после токенов ДС из resources/css/app.css.
 import '../css/site.css';
+
+// Ошибки браузера в Sentry: без VITE_SENTRY_DSN выключено (CI, локальная разработка).
+initSentry({
+    dsn: import.meta.env.VITE_SENTRY_DSN as string | undefined,
+    release: import.meta.env.VITE_SENTRY_RELEASE as string | undefined,
+    environment: import.meta.env.VITE_SENTRY_ENVIRONMENT as string | undefined,
+});
 
 void createInertiaApp({
     title: (title) => (title ? `${title} — ${ru.brand}` : ru.brand),

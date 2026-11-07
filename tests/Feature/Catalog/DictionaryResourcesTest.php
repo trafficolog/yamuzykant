@@ -5,9 +5,11 @@ declare(strict_types=1);
 use App\Domain\Catalog\Models\Category;
 use App\Domain\Catalog\Models\City;
 use App\Domain\Catalog\Models\InstrumentModel;
+use App\Http\Resources\Catalog\CategoryResource;
 use App\Http\Resources\Catalog\CityResource;
 use App\Http\Resources\Catalog\InstrumentModelResource;
 use Illuminate\Http\Request;
+use LogicException;
 
 it('модель отдаётся с явным списком полей и без статуса и служебных полей', function () {
     $category = Category::factory()->create();
@@ -25,6 +27,13 @@ it('модель отдаётся с явным списком полей и б�
         'year_to' => null,
         'category_id' => $category->id,
     ]);
+});
+
+it('категория без загруженных потомков падает явно, а не отдаёт молчаливый []', function () {
+    $category = Category::factory()->create();
+
+    expect(fn () => (new CategoryResource($category))->toArray(new Request))
+        ->toThrow(LogicException::class);
 });
 
 it('город отдаётся с явным списком полей', function () {

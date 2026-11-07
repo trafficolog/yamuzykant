@@ -21,3 +21,9 @@ Schedule::command('listings:expire')
     ->hourly()
     ->withoutOverlapping()
     ->onOneServer();
+
+// ARCHITECTURE §5: ночная сверка БД и индекса объявлений — догоняет потерянные события job-а синхронизации.
+Schedule::command('listings:reconcile-index')
+    ->dailyAt('03:30')
+    ->withoutOverlapping()
+    ->onOneServer();

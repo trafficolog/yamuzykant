@@ -32,6 +32,22 @@ return [
                 'filterableAttributes' => ['category_id'],
                 'typoTolerance' => ['enabled' => true],
             ],
+            // Объявления (ARCHITECTURE §5). `aliases` — русские написания моделей (ModelAliases), вместо synonyms.
+            'listings' => [
+                'searchableAttributes' => ['title', 'model', 'brand', 'aliases', 'description'],
+                'filterableAttributes' => ['category_path', 'condition', 'price', 'city_id', 'ship', 'negotiable', '_geo'],
+                'sortableAttributes' => ['published_at', 'price', '_geo'],
+                // `words` первым: сортировка по цене и дате действует среди совпавших по всем словам запроса,
+                // а не ставит выше случайное объявление, где совпало одно слово из трёх.
+                'rankingRules' => ['words', 'sort', 'typo', 'proximity', 'attribute', 'exactness'],
+                'stopWords' => [
+                    'и', 'в', 'во', 'на', 'с', 'со', 'к', 'у', 'о', 'об', 'по', 'от', 'из', 'за', 'до', 'для', 'при', 'без',
+                    'под', 'над', 'или', 'но', 'а', 'это',
+                ],
+                'typoTolerance' => ['enabled' => true],
+                // Точное общее число для «Найдено N»: по умолчанию Meilisearch обрезает его на 1000.
+                'pagination' => ['maxTotalHits' => 10000],
+            ],
         ],
     ],
 ];
