@@ -3,7 +3,7 @@ id: "2.1.3"
 phase: "2"
 epic: "2.1"
 title: "Форма «Продать инструмент»"
-status: todo
+status: in_progress
 gate: G1
 risk: medium
 model_impl: sonnet
