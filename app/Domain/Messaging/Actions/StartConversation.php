@@ -33,7 +33,7 @@ final class StartConversation
      * @throws ConversationClosed
      * @throws InvalidArgumentException пустой или слишком длинный текст
      */
-    public function handle(User $buyer, Listing $listing, string $text): Message
+    public function handle(User $buyer, Listing $listing, #[\SensitiveParameter] string $text): Message
     {
         if ($listing->status !== ListingStatus::Published) {
             throw new ListingNotAvailable;

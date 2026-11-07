@@ -47,6 +47,7 @@ use LogicException;
  * @property bool $ship
  * @property int|null $city_id
  * @property Carbon|null $published_at
+ * @property Carbon|null $unpublished_at
  * @property-read User $user
  * @property-read SaleRecord|null $saleRecord
  */
@@ -141,6 +142,7 @@ class Listing extends Model
             'meet' => 'boolean',
             'ship' => 'boolean',
             'published_at' => 'datetime',
+            'unpublished_at' => 'datetime',
         ];
     }
 
@@ -176,6 +178,11 @@ class Listing extends Model
 
             if ($listing->exists && $listing->isDirty('status') && ! $listing->statusChangeAllowed) {
                 throw new LogicException('Статус объявления меняет только ListingStateMachine.');
+            }
+
+            // Момент ухода из published ведёт только машина (от него считается срок ответов, BR-10).
+            if ($listing->exists && $listing->isDirty('unpublished_at') && ! $listing->statusChangeAllowed) {
+                throw new LogicException('Поле unpublished_at ведёт только ListingStateMachine.');
             }
 
             if ($listing->exists && $listing->isDirty('user_id')) {
