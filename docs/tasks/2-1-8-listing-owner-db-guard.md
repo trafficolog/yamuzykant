@@ -3,7 +3,7 @@ id: "2.1.8"
 phase: "2"
 epic: "2.1"
 title: "Объявление: защита владельца на уровне БД и сканера"
-status: todo
+status: in_progress
 gate: G1
 risk: low
 model_impl: sonnet
