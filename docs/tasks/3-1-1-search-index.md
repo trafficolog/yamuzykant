@@ -3,7 +3,7 @@ id: "3.1.1"
 phase: "3"
 epic: "3.1"
 title: "Поисковый индекс объявлений"
-status: review
+status: done
 gate: G1
 risk: medium
 model_impl: sonnet
@@ -14,7 +14,7 @@ uc: ["S2", "S3"]
 prototype: ""
 screens: []
 issue: 26
-sync_state: drifted
+sync_state: aligned
 escalations: []
 ---
 
