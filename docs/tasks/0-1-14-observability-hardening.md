@@ -30,6 +30,7 @@ escalations: []
 - `.env.example`: `HEALTH_TOKEN` — отдельным блоком, не внутри Sentry
 - Тег Sentry `request_id` в событиях из заданий очереди (из Context) и во фронтовых событиях (из заголовка ответа / meta)
 - Ручная проверка на stage после того, как OWNER задаст `SENTRY_LARAVEL_DSN` и `VITE_SENTRY_DSN`: тестовое исключение видно в Sentry с release и request_id; результат — в файл сессии
+- (из ревью PR #124) `SentryScrubber`: очистка произвольных строковых vars кадров приложения по белому списку типов, а не только через `SensitiveParameter` — оценить и сделать, если не ломает диагностику
 
 ## Критерии приёмки
 - [ ] Исключение на stage видно в Sentry с release и request_id (скриншот или ссылка на событие в файле сессии)
