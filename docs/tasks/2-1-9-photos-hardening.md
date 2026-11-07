@@ -3,7 +3,7 @@ id: "2.1.9"
 phase: "2"
 epic: "2.1"
 title: "Фото объявления: доработки после ревью"
-status: in_progress
+status: review
 gate: G1
 risk: low
 model_impl: sonnet

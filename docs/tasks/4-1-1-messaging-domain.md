@@ -3,7 +3,7 @@ id: "4.1.1"
 phase: "4"
 epic: "4.1"
 title: "Сообщения: домен и realtime"
-status: in_progress
+status: done
 gate: G1
 risk: high
 model_impl: opus
@@ -14,7 +14,7 @@ uc: ["D1"]
 prototype: ""
 screens: []
 issue: 33
-sync_state: drifted
+sync_state: aligned
 escalations: []
 ---
 
