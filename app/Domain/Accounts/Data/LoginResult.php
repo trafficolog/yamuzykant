@@ -22,6 +22,11 @@ final readonly class LoginResult
         return new self(LoginStatus::RegistrationRequired, suggestedName: $suggestedName);
     }
 
+    public static function emailRequired(): self
+    {
+        return new self(LoginStatus::EmailRequired);
+    }
+
     /**
      * Ответ клиенту — явный список полей, без ПДн и кода.
      *
@@ -32,6 +37,7 @@ final readonly class LoginResult
         return match ($this->status) {
             LoginStatus::Authenticated => ['status' => $this->status->value, 'redirect' => $this->redirect],
             LoginStatus::RegistrationRequired => ['status' => $this->status->value, 'name' => $this->suggestedName],
+            LoginStatus::EmailRequired => ['status' => $this->status->value],
         };
     }
 }

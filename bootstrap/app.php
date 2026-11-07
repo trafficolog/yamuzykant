@@ -4,8 +4,11 @@ declare(strict_types=1);
 
 use App\Domain\Accounts\Exceptions\ConsentRequired;
 use App\Domain\Accounts\Exceptions\InvalidLoginCode;
+use App\Domain\Accounts\Exceptions\InvalidYandexState;
 use App\Domain\Accounts\Exceptions\RegistrationNotPending;
 use App\Domain\Accounts\Exceptions\TooManyLoginAttempts;
+use App\Domain\Accounts\Exceptions\YandexLoginFailed;
+use App\Domain\Accounts\Exceptions\YandexLoginNotPending;
 use App\Domain\Listings\Exceptions\PhotoRejected;
 use App\Domain\Listings\Exceptions\PhotoRequirementsNotMet;
 use App\Http\Controllers\HealthController;
@@ -56,6 +59,9 @@ return Application::configure(basePath: dirname(__DIR__))
             ConsentRequired::class,
             PhotoRejected::class,
             PhotoRequirementsNotMet::class,
+            InvalidYandexState::class,
+            YandexLoginFailed::class,
+            YandexLoginNotPending::class,
         ]);
 
         // Отказы по фото (BR-03) — как ошибка валидации поля формы.
@@ -86,5 +92,9 @@ return Application::configure(basePath: dirname(__DIR__))
 
         $exceptions->render(fn (RegistrationNotPending $e): JsonResponse => response()->json([
             'message' => __('login.registration_not_pending'),
+        ], 409));
+
+        $exceptions->render(fn (YandexLoginNotPending $e): JsonResponse => response()->json([
+            'message' => __('login.yandex_cancelled'),
         ], 409));
     })->create();

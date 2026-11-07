@@ -5,6 +5,8 @@ declare(strict_types=1);
 use App\Http\Controllers\Auth\EmailLoginController;
 use App\Http\Controllers\Auth\LogoutController;
 use App\Http\Controllers\Auth\RegistrationController;
+use App\Http\Controllers\Auth\YandexEmailController;
+use App\Http\Controllers\Auth\YandexLoginController;
 use App\Http\Controllers\Catalog\SuggestModelController;
 use App\Http\Controllers\CityController;
 use App\Http\Controllers\Dev\PhotoUploaderPlaygroundController;
@@ -36,6 +38,15 @@ Route::prefix('auth')->name('auth.')->group(function (): void {
         Route::post('email/code', [EmailLoginController::class, 'sendCode'])->name('email.code');
         Route::post('email/verify', [EmailLoginController::class, 'verify'])->name('email.verify');
         Route::post('register', RegistrationController::class)->name('register');
+
+        // Вход через Яндекс ID (1.1.5). Лимиты неверных кодов на него не действуют; шаг «Введите почту» —
+        // код 1.1.1 с его лимитами. throttle — только от перебора callback (каждый — запрос к Яндексу).
+        Route::middleware('throttle:30,1')->group(function (): void {
+            Route::get('yandex/redirect', [YandexLoginController::class, 'redirect'])->name('yandex.redirect');
+            Route::get('yandex/callback', [YandexLoginController::class, 'callback'])->name('yandex.callback');
+        });
+        Route::post('yandex/email/code', [YandexEmailController::class, 'sendCode'])->name('yandex.email.code');
+        Route::post('yandex/email/verify', [YandexEmailController::class, 'verify'])->name('yandex.email.verify');
     });
 
     Route::middleware('auth')->group(function (): void {

@@ -6,6 +6,7 @@ namespace App\Domain\Accounts\Actions;
 
 use App\Domain\Accounts\Data\LoginResult;
 use App\Domain\Accounts\Data\RegistrationData;
+use App\Domain\Accounts\Data\ReturnPath;
 use App\Domain\Accounts\Data\VerifiedIdentity;
 use App\Domain\Accounts\EmailLogin\EmailAddress;
 use App\Domain\Accounts\Exceptions\ConsentRequired;
@@ -144,39 +145,7 @@ final readonly class CompleteLogin
 
         $this->session->forget(self::PENDING_KEY);
 
-        return LoginResult::authenticated($this->safeRedirect($this->session->pull('url.intended')));
-    }
-
-    /**
-     * Адрес возврата — только относительный путь внутри приложения. Абсолютный URL допускается
-     * лишь со схемой http(s) и хостом из APP_URL и сводится к пути; всё остальное — главная.
-     */
-    private function safeRedirect(mixed $url): string
-    {
-        if (! is_string($url) || $url === '' || preg_match('/[\x00-\x1F\x7F\\\\]/', $url) === 1) {
-            return '/';
-        }
-
-        $parts = parse_url($url);
-        if ($parts === false) {
-            return '/';
-        }
-
-        if (isset($parts['scheme']) || isset($parts['host'])) {
-            $appHost = parse_url(Config::string('app.url'), PHP_URL_HOST);
-            $scheme = strtolower($parts['scheme'] ?? '');
-
-            if (! in_array($scheme, ['http', 'https'], true) || ($parts['host'] ?? null) !== $appHost) {
-                return '/';
-            }
-        }
-
-        $path = $parts['path'] ?? '/';
-        if (! str_starts_with($path, '/') || str_starts_with($path, '//')) {
-            return '/';
-        }
-
-        return isset($parts['query']) ? $path.'?'.$parts['query'] : $path;
+        return LoginResult::authenticated(ReturnPath::sanitize($this->session->pull('url.intended')));
     }
 
     private function guard(): StatefulGuard

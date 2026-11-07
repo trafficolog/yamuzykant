@@ -16,13 +16,18 @@ use App\Domain\Listings\Photos\S3PresignedUploads;
 use App\Domain\Listings\Photos\SignedRouteUploads;
 use App\Domain\Listings\Policies\ListingPolicy;
 use App\Support\Flags\FeatureFlag;
+use App\Support\YandexId\YandexOAuth;
 use Illuminate\Auth\Events\Login;
+use Illuminate\Contracts\Foundation\Application;
 use Illuminate\Filesystem\AwsS3V3Adapter;
+use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Config;
 use Illuminate\Support\Facades\Event;
 use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\ServiceProvider;
 use Laravel\Pennant\Feature;
+use Laravel\Socialite\Facades\Socialite;
+use Laravel\Socialite\Two\AbstractProvider;
 
 class AppServiceProvider extends ServiceProvider
 {
@@ -60,5 +65,8 @@ class AppServiceProvider extends ServiceProvider
 
         // Политики домена лежат в app/Domain/*/Policies — регистрируем явно, а не по соглашению имён.
         Gate::policy(Listing::class, ListingPolicy::class);
+
+        // Яндекс ID: настоящий провайдер или подменный (YANDEX_OAUTH_FAKE только в testing и e2e).
+        Socialite::extend(YandexOAuth::DRIVER, fn (Application $app): AbstractProvider => YandexOAuth::makeProvider($app->make(Request::class)));
     }
 }
