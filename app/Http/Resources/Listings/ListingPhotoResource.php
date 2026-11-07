@@ -7,13 +7,14 @@ namespace App\Http\Resources\Listings;
 use App\Domain\Listings\Models\ListingPhoto;
 use App\Domain\Listings\Photos\PhotoFormat;
 use App\Domain\Listings\Photos\PhotoVariant;
+use App\Domain\Listings\Photos\PhotoVisibility;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
-use Illuminate\Support\Facades\Gate;
 
 /**
  * Фото для PhotoUploader и страниц объявления: только URL отдаваемых версий; путь в хранилище,
- * ключ исходника и pHash наружу не уходят. URL фото серийного номера — только владельцу и сотруднику.
+ * ключ исходника и pHash наружу не уходят. URL — только если фото отдаётся этому зрителю: фото серийного
+ * номера и фото не опубликованного объявления — только владельцу и сотруднику.
  *
  * @mixin ListingPhoto
  */
@@ -39,10 +40,10 @@ final class ListingPhotoResource extends JsonResource
         ];
     }
 
-    /** Фото серийного номера — только владельцу и сотруднику (UC-L1, AGENTS.md §4). */
+    /** Ссылки — только на фото, которые PhotoMediaController отдаст этому зрителю (одно правило: PhotoVisibility). */
     private function mayShow(Request $request, ListingPhoto $photo): bool
     {
-        return ! $photo->is_serial || Gate::forUser($request->user())->allows('viewRestrictedPhotos', $photo->listing);
+        return PhotoVisibility::allows($request->user(), $photo);
     }
 
     /** @return array<string, array<string, string>> */

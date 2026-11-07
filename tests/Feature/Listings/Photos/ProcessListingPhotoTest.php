@@ -292,25 +292,25 @@ it('failed() не удаляет версии готового фото', functi
 });
 
 it('лимит памяти не вернулся — warning в журнал', function () {
-    Log::spy();
+    $log = Log::spy();
 
     // Потребление памяти заведомо больше 1 КБ: ini_set вернёт false.
     (new ProcessListingPhoto(1))->restoreMemory('1K');
 
-    Log::shouldHaveReceived('warning')->once();
+    $log->shouldHaveReceived('warning')->once();
 });
 
 it('лимит памяти вернулся — в журнал ничего не пишем', function () {
-    Log::spy();
+    $log = Log::spy();
     $current = (string) ini_get('memory_limit');
 
     (new ProcessListingPhoto(1))->restoreMemory($current);
 
-    Log::shouldNotHaveReceived('warning');
+    $log->shouldNotHaveReceived('warning');
 });
 
 it('HEIC: превышение лимита ImageMagick по ширине или высоте — ImageTooLarge, а не «сохраните как JPEG»', function (string $message) {
-    expect(ImagickHeicConverter::isLimitError(new ImagickException($message)))->toBeTrue();
+    expect(ImagickHeicConverter::isLimitError($message))->toBeTrue();
 })->with([
     'width or height' => ["width or height exceeds limit `heic.heic' @ error/cache.c/OpenPixelCache/4119"],
     'area' => ["pixels exceed limit `heic.heic' @ error/cache.c/OpenPixelCache/4119"],
@@ -318,5 +318,5 @@ it('HEIC: превышение лимита ImageMagick по ширине или
 ]);
 
 it('HEIC: прочие ошибки Imagick — не превышение лимита', function () {
-    expect(ImagickHeicConverter::isLimitError(new ImagickException("no decode delegate for this image format `HEIC'")))->toBeFalse();
+    expect(ImagickHeicConverter::isLimitError("no decode delegate for this image format `HEIC'"))->toBeFalse();
 });

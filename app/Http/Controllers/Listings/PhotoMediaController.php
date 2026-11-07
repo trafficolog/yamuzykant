@@ -4,14 +4,13 @@ declare(strict_types=1);
 
 namespace App\Http\Controllers\Listings;
 
-use App\Domain\Listings\Enums\ListingStatus;
 use App\Domain\Listings\Models\ListingPhoto;
 use App\Domain\Listings\Photos\PhotoFormat;
 use App\Domain\Listings\Photos\PhotoStorage;
 use App\Domain\Listings\Photos\PhotoVariant;
+use App\Domain\Listings\Photos\PhotoVisibility;
 use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Gate;
 use Symfony\Component\HttpFoundation\StreamedResponse;
 
 /**
@@ -29,13 +28,12 @@ final class PhotoMediaController extends Controller
     {
         $variant = PhotoVariant::tryFrom($variant);
         $format = PhotoFormat::tryFrom($format);
-        $listing = $photo->listing;
 
         abort_if($variant === null || $format === null || ! $photo->isReady(), 404);
 
-        $public = $listing->status === ListingStatus::Published && ! $photo->is_serial;
+        $public = PhotoVisibility::isPublic($photo);
         // 404, а не 403: чужой черновик не выдаёт даже факт существования фото.
-        abort_unless($public || Gate::forUser($request->user())->allows('viewRestrictedPhotos', $listing), 404);
+        abort_unless(PhotoVisibility::allows($request->user(), $photo), 404);
 
         $cache = match (true) {
             $public => 'public, max-age=31536000, immutable',

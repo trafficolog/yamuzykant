@@ -53,7 +53,16 @@ final class ImagickHeicConverter implements HeicConverter
 
             return $image->getImageBlob();
         } catch (ImagickException $e) {
-            throw new UnsupportedHeic($e->getMessage(), previous: $e);
+            // Превышен лимит ширины, высоты, площади или памяти — это «слишком большое», а не «не читается».
+            throw self::isLimitError($e->getMessage())
+                ? new ImageTooLarge($e->getMessage(), previous: $e)
+                : new UnsupportedHeic($e->getMessage(), previous: $e);
         }
+    }
+
+    /** Ошибка ImageMagick из-за resource limits (`width or height exceeds limit`, `cache resources exhausted`…). */
+    public static function isLimitError(string $message): bool
+    {
+        return preg_match('/exceeds? limit|exceeded|resources? exhausted|memory allocation failed/i', $message) === 1;
     }
 }
