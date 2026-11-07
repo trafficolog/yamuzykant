@@ -2,6 +2,8 @@
 # Можно брать в работу (гейт G1)
 
 - 0.1.12 SSH-ключ деплоя и отключение входа по паролю на stage — opus → opus, risk high
+- 1.1.3 Профиль, город и уведомления — sonnet → sonnet, risk medium
+- 1.1.6 Шапка вошедшего: данные пользователя, меню кабинета, выход — sonnet → sonnet, risk medium
 - 2.1.3 Форма «Продать инструмент» — sonnet → sonnet, risk medium
 - 2.1.9 Фото объявления: доработки после ревью — sonnet → sonnet, risk low
 - 3.1.5 Страница объявления — sonnet → sonnet, risk medium
