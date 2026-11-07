@@ -196,6 +196,10 @@ export const ru = {
         },
         social: ['Telegram', 'ВКонтакте', 'MAX'],
     },
+    price: {
+        negotiable: 'Договорная',
+        free: 'Бесплатно',
+    },
     breadcrumbs: {
         label: 'Хлебные крошки',
         home: 'Главная',

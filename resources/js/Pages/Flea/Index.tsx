@@ -1,9 +1,10 @@
-import { Button, FilterChip, ListingCard, Select, type IconName } from '@ds';
+import { Button, FilterChip, Select, type IconName } from '@ds';
 import { router, usePage } from '@inertiajs/react';
 import { useEffect, useState, type ReactNode } from 'react';
 
 import Breadcrumbs, { type Crumb } from '@/Components/Breadcrumbs';
 import EmptyState from '@/Components/EmptyState';
+import FleaListingCard from '@/Components/FleaListingCard';
 import FleaFilterPanel, {
     type CategoryOption,
     type ConditionOption,
@@ -266,11 +267,10 @@ export default function FleaIndex({
                     ) : (
                         <div className="ym-flea__grid">
                             {listings.map((card) => (
-                                <ListingCard
+                                <FleaListingCard
                                     key={card.id}
                                     title={card.title}
-                                    // Цены null у опубликованного не бывает; пустую цену DS не рисует, а не показывает «0 ₽».
-                                    price={card.price as number}
+                                    price={card.price}
                                     condition={
                                         (card.condition ?? undefined) as Condition | undefined
                                     }
