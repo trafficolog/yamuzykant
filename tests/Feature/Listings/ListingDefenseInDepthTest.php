@@ -114,7 +114,8 @@ it('saveQuietly() после присваивания user_id — ошибка �
 
     $listing->user_id = $other->id;
 
-    expect(fn () => $listing->saveQuietly())->toThrow(QueryException::class);
+    // Ошибка в PostgreSQL обрывает транзакцию теста; savepoint откатывает только неудачную запись.
+    expect(fn () => DB::transaction(fn () => $listing->saveQuietly()))->toThrow(QueryException::class);
     expect((int) DB::table('listings')->where('id', $listing->id)->value('user_id'))->toBe($owner);
 });
 
@@ -123,7 +124,7 @@ it('запрос-построитель и DB::table со сменой user_id �
     $owner = $listing->user_id;
     $other = User::factory()->create();
 
-    expect(fn () => $write($listing->id, $other->id))->toThrow(QueryException::class);
+    expect(fn () => DB::transaction(fn () => $write($listing->id, $other->id)))->toThrow(QueryException::class);
     expect((int) DB::table('listings')->where('id', $listing->id)->value('user_id'))->toBe($owner);
 })->with([
     'Listing::query()->update' => [fn (string $id, int $user) => Listing::query()->whereKey($id)->update(['user_id' => $user])],
