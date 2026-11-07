@@ -127,9 +127,9 @@ test.describe('UC-A1: шапка вошедшего на телефоне', () =
         const bar = page.getByRole('navigation', { name: 'Нижнее меню' });
 
         // Шапки «Войти» на телефоне нет: окно открывает вкладка «Кабинет».
-        await signInByEmail(page, 'Анна', bar.getByRole('link', { name: 'Кабинет' }));
+        await signInByEmail(page, 'Анна', bar.getByRole('button', { name: 'Кабинет' }));
 
-        await bar.getByRole('link', { name: 'Кабинет' }).click();
+        await bar.getByRole('button', { name: 'Кабинет' }).click();
         const menu = page.getByRole('group', { name: 'Кабинет' });
         await expect(menu).toBeVisible();
         for (const control of [
@@ -150,8 +150,8 @@ test.describe('UC-A1: шапка вошедшего на телефоне', () =
         expect(await seriousOrCritical(page)).toEqual([]);
 
         await logOut(page);
-        await expect(bar.getByRole('link', { name: 'Кабинет' })).toBeVisible();
-        await bar.getByRole('link', { name: 'Кабинет' }).click();
+        await expect(bar.getByRole('button', { name: 'Кабинет' })).toBeVisible();
+        await bar.getByRole('button', { name: 'Кабинет' }).click();
         await expect(page.getByRole('dialog', { name: 'Вход', exact: true })).toBeVisible();
     });
 });

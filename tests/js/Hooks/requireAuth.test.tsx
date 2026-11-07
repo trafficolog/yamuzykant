@@ -1,6 +1,7 @@
 import { act, cleanup, render, screen } from '@testing-library/react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
+import HydrationMarker from '@/Components/HydrationMarker';
 import LoginDialogHost from '@/Components/LoginDialogHost';
 import { closeLogin, getLoginRequest } from '@/Hooks/loginDialog';
 import { useAuthUser, useRequireAuth } from '@/Hooks/useAuthUser';
@@ -78,10 +79,10 @@ describe('useRequireAuth: «Написать», «В избранное», «П�
 });
 
 describe('гидратация и «Войти» до неё', () => {
-    it('после монтирования каркаса html помечен data-hydrated="true" (признак для e2e)', () => {
+    it('корень приложения ставит html data-hydrated="true" сам, без каркаса страницы (признак для e2e)', () => {
         expect(document.documentElement.dataset.hydrated).toBeUndefined();
 
-        render(<LoginDialogHost />);
+        render(<HydrationMarker />);
 
         expect(document.documentElement.dataset.hydrated).toBe('true');
     });

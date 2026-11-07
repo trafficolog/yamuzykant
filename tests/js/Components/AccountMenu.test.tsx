@@ -192,14 +192,14 @@ describe('нижняя панель', () => {
     it('гость: «Кабинет» открывает окно входа', () => {
         render(<MobileTabBar user={null} />);
 
-        fireEvent.click(within(bar()).getByRole('link', { name: 'Кабинет' }));
+        fireEvent.click(within(bar()).getByRole('button', { name: 'Кабинет' }));
 
         expect(getLoginRequest()).not.toBeNull();
     });
 
     it('вошедший: «Кабинет» открывает то же меню кабинета, а не окно входа', () => {
         render(<MobileTabBar user={ANNA} />);
-        const tab = within(bar()).getByRole('link', { name: 'Кабинет' });
+        const tab = within(bar()).getByRole('button', { name: 'Кабинет' });
 
         fireEvent.click(tab);
 
@@ -213,7 +213,7 @@ describe('нижняя панель', () => {
     it('вошедший: «Выйти» из нижней панели выходит так же', async () => {
         postJson.mockResolvedValue({ status: 200, body: {} });
         render(<MobileTabBar user={ANNA} />);
-        fireEvent.click(within(bar()).getByRole('link', { name: 'Кабинет' }));
+        fireEvent.click(within(bar()).getByRole('button', { name: 'Кабинет' }));
 
         fireEvent.click(screen.getByRole('button', { name: 'Выйти' }));
 
@@ -223,7 +223,7 @@ describe('нижняя панель', () => {
 
     it('Esc закрывает меню и возвращает фокус на вкладку', () => {
         render(<MobileTabBar user={ANNA} />);
-        const tab = within(bar()).getByRole('link', { name: 'Кабинет' });
+        const tab = within(bar()).getByRole('button', { name: 'Кабинет' });
         fireEvent.click(tab);
 
         fireEvent.keyDown(document, { key: 'Escape' });
@@ -256,5 +256,52 @@ describe('каркас страницы: shared prop auth.user', () => {
         render(<PublicLayout />);
 
         expect(screen.getByRole('button', { name: 'Войти' })).toBeInTheDocument();
+    });
+});
+
+describe('меню кабинета — раскрывающийся список, а не popup-меню (ARIA disclosure)', () => {
+    it('кнопка в шапке: aria-expanded и aria-controls есть, aria-haspopup нет', () => {
+        render(<SiteHeader user={ANNA} />);
+        const button = accountButton();
+        expect(button).not.toHaveAttribute('aria-haspopup');
+        expect(button).not.toHaveAttribute('aria-controls');
+
+        fireEvent.click(button);
+
+        expect(button).not.toHaveAttribute('aria-haspopup');
+        expect(button).toHaveAttribute('aria-expanded', 'true');
+        const panel = screen.getByRole('group', { name: 'Кабинет' });
+        expect(button).toHaveAttribute('aria-controls', panel.id);
+    });
+
+    it('вкладка «Кабинет» вошедшего — кнопка: aria-expanded и aria-controls, без aria-haspopup', () => {
+        render(<MobileTabBar user={ANNA} />);
+        const tab = within(screen.getByRole('navigation', { name: 'Нижнее меню' })).getByRole(
+            'button',
+            { name: 'Кабинет' },
+        );
+        expect(tab.tagName).toBe('BUTTON');
+        expect(tab).toHaveAttribute('aria-expanded', 'false');
+
+        fireEvent.click(tab);
+
+        expect(tab).not.toHaveAttribute('aria-haspopup');
+        expect(tab).toHaveAttribute('aria-expanded', 'true');
+        expect(tab).toHaveAttribute(
+            'aria-controls',
+            screen.getByRole('group', { name: 'Кабинет' }).id,
+        );
+    });
+
+    it('вкладка «Кабинет» гостя — тоже кнопка; она открывает диалог входа, поэтому aria-haspopup="dialog"', () => {
+        render(<MobileTabBar user={null} />);
+        const tab = within(screen.getByRole('navigation', { name: 'Нижнее меню' })).getByRole(
+            'button',
+            { name: 'Кабинет' },
+        );
+
+        expect(tab.tagName).toBe('BUTTON');
+        expect(tab).toHaveAttribute('aria-haspopup', 'dialog');
+        expect(tab).not.toHaveAttribute('aria-expanded');
     });
 });

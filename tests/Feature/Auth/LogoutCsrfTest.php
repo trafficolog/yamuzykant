@@ -7,6 +7,15 @@ use Illuminate\Support\Facades\Auth;
 
 // 1.1.6: выход — POST с CSRF; после выхода сессия и токен сменяются, старый токен недействителен.
 
+/**
+ * Включает проверку CSRF: Laravel пропускает её только в окружении `testing`, поэтому окружение
+ * переопределяется штатным detectEnvironment приложения, а не записью в контейнер.
+ */
+function withCsrfChecks(): void
+{
+    app()->detectEnvironment(fn (): string => 'local');
+}
+
 function signedInForLogout(): User
 {
     $user = User::factory()->create();
@@ -17,8 +26,7 @@ function signedInForLogout(): User
 
 it('выход без CSRF-токена — 419, сессия остаётся', function () {
     $user = signedInForLogout();
-    // В тестах Laravel пропускает проверку CSRF только при окружении testing.
-    $this->app['env'] = 'local';
+    withCsrfChecks();
 
     $this->postJson('/auth/logout')->assertStatus(419);
 
@@ -27,7 +35,7 @@ it('выход без CSRF-токена — 419, сессия остаётся',
 
 it('выход с токеном сессии: сессия завершена, id и токен сменились, старый токен — 419', function () {
     signedInForLogout();
-    $this->app['env'] = 'local';
+    withCsrfChecks();
     $oldToken = csrf_token();
     $oldId = session()->getId();
 

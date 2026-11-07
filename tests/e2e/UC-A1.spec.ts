@@ -226,7 +226,7 @@ test.describe('UC-A1: окно входа на телефоне', () => {
 
             await page
                 .getByRole('navigation', { name: 'Нижнее меню' })
-                .getByRole('link', { name: 'Кабинет' })
+                .getByRole('button', { name: 'Кабинет' })
                 .click();
             const dialog = page.getByRole('dialog');
             await expect(dialog).toBeVisible();
