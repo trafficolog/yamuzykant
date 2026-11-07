@@ -1,19 +1,13 @@
 import AxeBuilder from '@axe-core/playwright';
 import { expect, test, type Page } from '@playwright/test';
-import { execFileSync } from 'node:child_process';
-import { fileURLToPath } from 'node:url';
+import { FAKE_CODE, freshEmail, open, requestCode } from './_auth';
+import { forgetYandexTestUser } from './_environment';
 
 // UC-A1 «Войти» (SPEC §4): окно входа в шапке — «Войти с Яндекс ID» и код из письма, первый вход
 // (имя, город, согласие), возврат к прерванному действию. Нужны LOGIN_CODE_FAKE=123456 и
 // YANDEX_OAUTH_FAKE=true (окружение e2e, CI) — настоящих писем и Яндекса в тестах нет.
 
-const APP_ROOT = fileURLToPath(new URL('../..', import.meta.url));
-const FAKE_CODE = '123456';
 const CANCELLED = 'Вход через Яндекс ID отменён. Войдите по почте или попробуйте ещё раз';
-
-let counter = 0;
-/** Новая почта на каждый тест: аккаунт создаётся при первом входе, повторный прогон не мешает. */
-const freshEmail = () => `uc-a1-${Date.now()}-${(counter += 1)}@example.com`;
 
 const seriousOrCritical = async (page: Page) => {
     const result = await new AxeBuilder({ page }).withTags(['wcag2a', 'wcag2aa']).analyze();
@@ -22,40 +16,11 @@ const seriousOrCritical = async (page: Page) => {
         .map((violation) => `${violation.id}: ${violation.nodes.map((n) => n.target).join(' | ')}`);
 };
 
-/** Страница загружена и гидратирована: клик или клавиша до этого ничего не откроет. */
-const open = async (page: Page, url: string) => {
-    await page.goto(url);
-    await page.waitForLoadState('networkidle');
-};
-
 /** Окно открывается на шаге «Способ»: заголовок «Вход». Дальше имя окна меняется с шагом. */
 const openDialog = async (page: Page) => {
     await page.getByRole('banner').getByRole('button', { name: 'Войти' }).click();
     await expect(page.getByRole('dialog', { name: 'Вход', exact: true })).toBeVisible();
     return page.getByRole('dialog');
-};
-
-/**
- * Тестовый пользователь Яндекс ID (FakeYandexProvider::USER) создаётся при первом входе и остаётся в базе.
- * Перед тестом удаляем его: сценарий «первый вход» не зависит от прошлых прогонов и повторов CI.
- */
-const forgetYandexTestUser = () => {
-    execFileSync(
-        'php',
-        [
-            'artisan',
-            'tinker',
-            "--execute=App\\Domain\\Accounts\\Models\\User::query()->where('email', 'yandex-test@example.com')->orWhere('yandex_id', '1130000000000001')->delete();",
-        ],
-        { cwd: APP_ROOT, stdio: 'ignore' },
-    );
-};
-
-const requestCode = async (page: Page, email: string) => {
-    const dialog = page.getByRole('dialog');
-    await dialog.getByLabel('Почта').fill(email);
-    await dialog.getByRole('button', { name: 'Получить код' }).click();
-    await expect(dialog.getByLabel('Код из письма')).toBeVisible();
 };
 
 test.describe('UC-A1: окно входа', () => {
