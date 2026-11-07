@@ -15,7 +15,13 @@ test.describe('@visual flea', () => {
             await page.setViewportSize({ width: 1440, height: 900 });
             await page.waitForLoadState('networkidle');
             await waitForFonts(page);
-            await page.screenshot({ path: 'test-results/flea-r1-actual.png', fullPage: true, animations: 'disabled', caret: 'hide', scale: 'css' });
+            await page.screenshot({
+                path: 'test-results/flea-r1-actual.png',
+                fullPage: true,
+                animations: 'disabled',
+                caret: 'hide',
+                scale: 'css',
+            });
             await expectMatchesReference(page, 'flea', viewport, { state: 'r1' });
         });
     }
