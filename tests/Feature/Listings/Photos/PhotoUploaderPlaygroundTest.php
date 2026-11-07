@@ -38,3 +38,9 @@ it('в production и на stage — 404', function (string $environment) {
 
     $this->actingAs(User::factory()->create())->get('/_e2e/photo-uploader')->assertNotFound();
 })->with(['production', 'stage']);
+
+it('в production и на stage гостю тоже 404, а не редирект', function (string $environment) {
+    app()->detectEnvironment(fn () => $environment);
+
+    $this->get('/_e2e/photo-uploader')->assertNotFound();
+})->with(['production', 'stage']);

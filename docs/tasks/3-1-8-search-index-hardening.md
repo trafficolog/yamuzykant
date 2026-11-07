@@ -30,7 +30,7 @@ escalations: []
 - Тесты: экранирование категории в filter (`"` и `\`); поведенческие тесты синхронизации для `ListingApproved`, `ListingResubmitted`, `ListingRelisted`, `ListingReturned`, `ListingRejected`; тест «все события подписаны» без опоры на wildcard
 - Индекс `instrument_models` — с префиксом окружения (`SCOUT_PREFIX`), чтобы параллельные прогоны не мешали друг другу
 - Версия Meilisearch одна в CI и docker-compose
-- Нестабильный тест `ReconcileListingIndexTest`: нарушение `cities_name_region_unique` в CI (PR #113) — фабрика городов с уникальными значениями
+- Нестабильный тест `ReconcileListingIndexTest`: нарушение `cities_name_region_unique` в CI (PR #113, #117, #123) — фабрика городов с уникальными значениями; тест мигает в CI у всех
 - Убрать `_geo` из документа и настроек индекса и сортировку `_geoPoint` (решение OWNER 07.11.2026: «рядом» в MVP нет)
 
 ## Критерии приёмки

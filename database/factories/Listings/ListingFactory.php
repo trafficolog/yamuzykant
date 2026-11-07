@@ -54,6 +54,10 @@ class ListingFactory extends Factory
             'published_at' => in_array($status, [ListingStatus::Published, ListingStatus::Withdrawn, ListingStatus::Expired], true)
                 ? now()->subDays(3)
                 : null,
+            // Ушло из published вчера; тесты окна ответов задают момент явно.
+            'unpublished_at' => in_array($status, [ListingStatus::Withdrawn, ListingStatus::Expired], true)
+                ? now()->subDay()
+                : null,
         ]);
     }
 }

@@ -114,7 +114,7 @@ test.describe('MobileTabBar на < 640 px', () => {
     }) => {
         await open(page, 390, 844);
 
-        await expect(tabBar(page).getByRole('link')).toHaveText([
+        await expect(tabBar(page).locator('a, button')).toHaveText([
             'Главная',
             'Поиск',
             'Продать',
@@ -142,7 +142,7 @@ test.describe('MobileTabBar на < 640 px', () => {
         await open(page, 390);
 
         const widths = await tabBar(page)
-            .getByRole('link')
+            .locator('a, button')
             .evaluateAll((links) =>
                 links.map((link) => Math.round(link.getBoundingClientRect().width)),
             );
@@ -153,7 +153,7 @@ test.describe('MobileTabBar на < 640 px', () => {
         await open(page, 320);
 
         const clipped = await tabBar(page)
-            .getByRole('link')
+            .locator('a, button')
             .evaluateAll((links) =>
                 links
                     .filter((link) =>
@@ -334,7 +334,7 @@ test.describe('Мобильная оболочка: узкие экраны (ч�
     test('focus-visible: у вкладок панели при Tab есть видимое кольцо фокуса', async ({ page }) => {
         await open(page, 390);
 
-        const links = tabBar(page).getByRole('link');
+        const links = tabBar(page).locator('a, button');
         const missing: string[] = [];
         for (let index = 0; index < 5; index++) {
             await links.nth(index).focus();

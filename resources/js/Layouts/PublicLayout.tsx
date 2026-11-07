@@ -6,6 +6,7 @@ import LoginDialogHost from '@/Components/LoginDialogHost';
 import MobileTabBar, { type MobileTabBarProps } from '@/Components/MobileTabBar';
 import SiteFooter from '@/Components/SiteFooter';
 import SiteHeader, { type SiteHeaderProps } from '@/Components/SiteHeader';
+import { useAuthUser } from '@/Hooks/useAuthUser';
 import { ru } from '@/lang/ru';
 
 export const MAIN_ID = 'main-content';
@@ -31,6 +32,7 @@ export interface PublicLayoutProps extends Pick<
  */
 export default function PublicLayout({ title, tab, children, ...header }: PublicLayoutProps) {
     const { props } = usePage<CityProps>();
+    const user = useAuthUser();
 
     return (
         <div className="ym-root ym-site">
@@ -38,12 +40,12 @@ export default function PublicLayout({ title, tab, children, ...header }: Public
             <a className="ym-site__skip" href={`#${MAIN_ID}`}>
                 {ru.layout.skipLink}
             </a>
-            <SiteHeader {...header} city={props.city ?? null} />
+            <SiteHeader {...header} user={user} city={props.city ?? null} />
             <main id={MAIN_ID} tabIndex={-1} className="ym-site__main">
                 {children}
             </main>
             <SiteFooter />
-            <MobileTabBar active={tab} messages={header.messages} />
+            <MobileTabBar active={tab} messages={header.messages} user={user} />
             <LoginDialogHost />
         </div>
     );

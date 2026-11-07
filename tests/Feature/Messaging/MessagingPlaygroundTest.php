@@ -6,6 +6,7 @@ use App\Domain\Accounts\Models\User;
 use App\Domain\Listings\Enums\ListingStatus;
 use App\Domain\Listings\Models\Listing;
 use App\Domain\Messaging\Actions\SendMessage;
+use Illuminate\Support\Str;
 use Inertia\Testing\AssertableInertia;
 use Tests\Support\MessagingFixtures;
 
@@ -61,4 +62,11 @@ it('в production и на stage — 404', function (string $environment) {
     app()->detectEnvironment(fn () => $environment);
 
     $this->actingAs(User::factory()->create())->get('/_e2e/messaging')->assertNotFound();
+})->with(['production', 'stage']);
+
+it('в production и на stage гостю тоже 404, а не редирект', function (string $environment) {
+    app()->detectEnvironment(fn () => $environment);
+
+    $this->get('/_e2e/messaging')->assertNotFound();
+    $this->get('/_e2e/messaging/'.Str::uuid()->toString())->assertNotFound();
 })->with(['production', 'stage']);

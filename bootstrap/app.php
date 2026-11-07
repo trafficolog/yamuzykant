@@ -16,6 +16,7 @@ use App\Domain\Messaging\Exceptions\ConversationClosed;
 use App\Domain\Messaging\Exceptions\ListingNotAvailable;
 use App\Http\Controllers\HealthController;
 use App\Http\Middleware\AssignRequestId;
+use App\Http\Middleware\EnsureE2eEnvironment;
 use App\Http\Middleware\EnsureSessionIsCurrent;
 use App\Http\Middleware\HandleInertiaRequests;
 use App\Http\Middleware\ThrottleHealth;
@@ -53,6 +54,12 @@ return Application::configure(basePath: dirname(__DIR__))
         $middleware->prependToPriorityList(
             before: AuthenticatesRequests::class,
             prepend: EnsureSessionIsCurrent::class,
+        );
+
+        // Служебные страницы /_e2e/*: окружение проверяется раньше входа, чтобы гость на stage и production видел 404.
+        $middleware->prependToPriorityList(
+            before: AuthenticatesRequests::class,
+            prepend: EnsureE2eEnvironment::class,
         );
 
         // Отдельной страницы входа нет: вход — окно в шапке (1.1.2).

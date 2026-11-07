@@ -12,16 +12,23 @@ use App\Http\Controllers\CityController;
 use App\Http\Controllers\Dev\MessagingPlaygroundController;
 use App\Http\Controllers\Dev\PhotoUploaderPlaygroundController;
 use App\Http\Controllers\DsShowcaseController;
+use App\Http\Controllers\FleaController;
 use App\Http\Controllers\HomeController;
 use App\Http\Controllers\Listings\ListingPhotoController;
 use App\Http\Controllers\Listings\LocalPhotoUploadController;
 use App\Http\Controllers\Listings\LotController;
 use App\Http\Controllers\Listings\PhotoMediaController;
 use App\Http\Controllers\Messaging\ConversationController;
+use App\Http\Middleware\EnsureE2eEnvironment;
 use Illuminate\Foundation\Http\Middleware\ValidateCsrfToken;
 use Illuminate\Support\Facades\Route;
 
 Route::get('/', HomeController::class)->name('home');
+
+// Барахолка (3.1.2): выдача города шапки; категория — путь из слагов, неизвестная даёт 404 в контроллере.
+Route::get('/baraholka/{path?}', FleaController::class)
+    ->where('path', '[A-Za-z0-9\-]+(/[A-Za-z0-9\-]+)*')
+    ->name('flea');
 
 // Предложение модели — с сессией и CSRF (группа web), поэтому маршрут здесь, а не в api.php.
 Route::post('/api/models/suggestions', SuggestModelController::class)
@@ -84,7 +91,7 @@ Route::middleware('auth')->group(function (): void {
 });
 
 // Служебная страница доставки сообщений для e2e до экрана сообщений (4.1.2): только local, testing, e2e.
-Route::middleware('auth')->group(function (): void {
+Route::middleware([EnsureE2eEnvironment::class, 'auth'])->group(function (): void {
     Route::get('/_e2e/messaging', [MessagingPlaygroundController::class, 'listing'])->name('e2e.messaging');
     Route::get('/_e2e/messaging/{conversation}', [MessagingPlaygroundController::class, 'conversation'])->name('e2e.messaging.conversation');
 });
@@ -101,4 +108,4 @@ Route::put('/_uploads/photos', LocalPhotoUploadController::class)
     ->name('photos.upload.local');
 
 // Служебная страница загрузчика для e2e до формы «Продать» (2.1.3): только local, testing, e2e.
-Route::get('/_e2e/photo-uploader', PhotoUploaderPlaygroundController::class)->middleware('auth')->name('e2e.photo-uploader');
+Route::get('/_e2e/photo-uploader', PhotoUploaderPlaygroundController::class)->middleware([EnsureE2eEnvironment::class, 'auth'])->name('e2e.photo-uploader');

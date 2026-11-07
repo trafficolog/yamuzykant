@@ -2,12 +2,14 @@ import { createInertiaApp } from '@inertiajs/react';
 import { resolvePageComponent } from 'laravel-vite-plugin/inertia-helpers';
 import { createRoot, hydrateRoot } from 'react-dom/client';
 
+import HydrationMarker from '@/Components/HydrationMarker';
 import { installLoginInterceptor } from '@/Hooks/loginDialog';
 import { ru } from '@/lang/ru';
 import { initSentry } from '@/observability/sentry';
 
 // Стили каркаса PublicLayout: после токенов ДС из resources/css/app.css.
 import '../css/site.css';
+import '../css/flea.css';
 import '../css/lot.css';
 
 // Ошибки браузера в Sentry: без VITE_SENTRY_DSN выключено (CI, локальная разработка).
@@ -27,9 +29,20 @@ void createInertiaApp({
     setup({ el, App, props }) {
         // Если сервер отдал SSR-разметку, гидрируем её, иначе рендерим с нуля.
         if (el.hasChildNodes()) {
-            hydrateRoot(el, <App {...props} />);
+            hydrateRoot(
+                el,
+                <>
+                    <App {...props} />
+                    <HydrationMarker />
+                </>,
+            );
             return;
         }
-        createRoot(el).render(<App {...props} />);
+        createRoot(el).render(
+            <>
+                <App {...props} />
+                <HydrationMarker />
+            </>,
+        );
     },
 });
