@@ -53,7 +53,30 @@ final class ImagickHeicConverter implements HeicConverter
 
             return $image->getImageBlob();
         } catch (ImagickException $e) {
-            throw new UnsupportedHeic($e->getMessage(), previous: $e);
+            // Превышен лимит ширины, высоты, площади или памяти — это «слишком большое», а не «не читается».
+            throw self::isLimitError($e->getMessage())
+                ? new ImageTooLarge($e->getMessage(), previous: $e)
+                : new UnsupportedHeic($e->getMessage(), previous: $e);
         }
+    }
+
+    /**
+     * Ошибка из-за лимитов размера или ресурсов — ImageMagick (`width or height exceeds limit`,
+     * `cache resources exhausted`, лимиты по пикселям) или libheif (`Security limit exceeded`,
+     * `exceeds the maximum image size`). Строки сняты с реального HEIC выше лимита, остальные — по исходникам.
+     * Не сюда: «time limit exceeded», «memory allocation failed» без security limit, битый файл, нет декодера.
+     */
+    public static function isLimitError(string $message): bool
+    {
+        return preg_match(
+            '/width or height exceeds limit'
+            .'|cache resources exhausted'
+            .'|security limit exceeded'
+            .'|maximum image size'
+            .'|\bpixels? exceeds? (the )?limit'
+            .'|\b(pixel|area|width|height) limit exceeded'
+            .'|exceeds? the (maximum )?(pixel|area) limit/i',
+            $message,
+        ) === 1;
     }
 }

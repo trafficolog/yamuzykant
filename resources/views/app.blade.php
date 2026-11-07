@@ -12,6 +12,8 @@
         @inertiaHead
     </head>
     <body>
+        {{-- Клик по «Войти» до гидратации запоминаем: окно откроется, когда страница оживёт (LoginDialogHost). Статический файл — CSP script-src 'self'. --}}
+        <script src="/js/pending-login.js"></script>
         @inertia
     </body>
 </html>

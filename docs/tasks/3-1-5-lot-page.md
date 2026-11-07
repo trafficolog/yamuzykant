@@ -3,7 +3,7 @@ id: "3.1.5"
 phase: "3"
 epic: "3.1"
 title: "Страница объявления"
-status: todo
+status: in_progress
 gate: G1
 risk: medium
 model_impl: sonnet

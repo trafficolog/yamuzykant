@@ -13,6 +13,7 @@ use App\Domain\Listings\Photos\UnreadablePhoto;
 use App\Domain\Listings\Photos\UnsupportedHeic;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Queue\Queueable;
+use Illuminate\Support\Facades\Log;
 use Throwable;
 
 /**
@@ -72,7 +73,7 @@ final class ProcessListingPhoto implements ShouldQueue
         } finally {
             unset($source);
             if ($previousLimit !== null) {
-                @ini_set('memory_limit', $previousLimit);
+                $this->restoreMemory($previousLimit);
             }
         }
 
@@ -100,11 +101,14 @@ final class ProcessListingPhoto implements ShouldQueue
         $this->markFailed($photo, 'unreadable');
     }
 
+    /** Удаляет исходник и каталог версий: при сбое посередине записи там остаются частичные файлы. */
     private function markFailed(ListingPhoto $photo, string $reason): void
     {
+        $disk = PhotoStorage::disk();
         if ($photo->upload_key !== null) {
-            PhotoStorage::disk()->delete($photo->upload_key);
+            $disk->delete($photo->upload_key);
         }
+        PhotoStorage::deleteVersions($photo->path);
         $photo->forceFill(['upload_key' => null, 'failed_reason' => $reason])->save();
     }
 
@@ -118,6 +122,24 @@ final class ProcessListingPhoto implements ShouldQueue
         ini_set('memory_limit', $limit);
 
         return $current;
+    }
+
+    /**
+     * Вернуть прежний лимит. ini_set не срабатывает, если потребление уже выше прежнего лимита:
+     * воркер остаётся на повышенном — пишем warning, чтобы это было видно.
+     *
+     * @internal public только ради теста
+     */
+    public function restoreMemory(string $limit): void
+    {
+        if (@ini_set('memory_limit', $limit) === false) {
+            Log::warning('Не удалось вернуть memory_limit после обработки фото', [
+                'photo_id' => $this->photoId,
+                'limit' => $limit,
+                'current' => ini_get('memory_limit'),
+                'usage' => memory_get_usage(true),
+            ]);
+        }
     }
 
     private function bytes(string $value): int

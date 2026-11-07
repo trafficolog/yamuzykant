@@ -24,5 +24,5 @@ gate: G1
 | [2.1.6 Лимит активных объявлений](../tasks/2-1-6-listing-limit.md) | todo | low | haiku → sonnet |
 | [2.1.7 Объявление: защита владельца и смены статуса в глубину](../tasks/2-1-7-listing-defense-in-depth.md) | done | medium | sonnet → opus |
 | [2.1.8 Объявление: защита владельца на уровне БД и сканера](../tasks/2-1-8-listing-owner-db-guard.md) | done | low | sonnet → sonnet |
-| [2.1.9 Фото объявления: доработки после ревью](../tasks/2-1-9-photos-hardening.md) | review | low | sonnet → sonnet |
+| [2.1.9 Фото объявления: доработки после ревью](../tasks/2-1-9-photos-hardening.md) | done | low | sonnet → sonnet |
 <!-- docs:ops:end -->

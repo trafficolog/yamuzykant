@@ -3,7 +3,7 @@ id: "1.1.6"
 phase: "1"
 epic: "1.1"
 title: "Шапка вошедшего: данные пользователя, меню кабинета, выход"
-status: review
+status: done
 gate: G1
 risk: medium
 model_impl: sonnet
@@ -14,7 +14,7 @@ uc: ["A1"]
 prototype: "Шапка.dc.html"
 screens: ["header"]
 issue: 115
-sync_state: drifted
+sync_state: aligned
 escalations: []
 ---
 

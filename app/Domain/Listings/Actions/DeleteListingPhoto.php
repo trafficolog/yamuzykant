@@ -40,10 +40,9 @@ final class DeleteListingPhoto
             ReorderListingPhotos::renumber($listing, ListingPhoto::query()->where('listing_id', $listing->id)->orderBy('position')->pluck('id')->all());
         });
 
-        $disk = PhotoStorage::disk();
-        $disk->deleteDirectory($photo->path);
+        PhotoStorage::deleteVersions($photo->path);
         if ($photo->upload_key !== null) {
-            $disk->delete($photo->upload_key);
+            PhotoStorage::disk()->delete($photo->upload_key);
         }
 
         if ($listing->status === ListingStatus::Published) {

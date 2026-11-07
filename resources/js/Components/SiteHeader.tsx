@@ -1,13 +1,17 @@
 import { Button, IconButton, SearchBar, Wordmark } from '@ds';
+import { router } from '@inertiajs/react';
 import { useCallback, useEffect, useRef, useState } from 'react';
 
+import AccountMenu from '@/Components/AccountMenu';
 import CategoryMenu, { CATEGORY_MENU_ID } from '@/Components/CategoryMenu';
 import CitySelect, { type CityOption } from '@/Components/CitySelect';
-import { useFlag, type FlagName } from '@/Hooks/useFlag';
 import { openLogin } from '@/Hooks/loginDialog';
+import type { AuthUser } from '@/Hooks/useAuthUser';
+import { useFlag, type FlagName } from '@/Hooks/useFlag';
 import { useNarrow } from '@/Hooks/useNarrow';
 import { CATEGORY_TREE, type CategoryNode } from '@/lang/categories';
 import { ru } from '@/lang/ru';
+import { HREF_SOON } from '@/lib/paths';
 
 /** Разделы строки над шапкой; `none` — страница не относится ни к одному разделу. */
 export type HeaderSection = 'catalog' | 'flea' | 'parts' | 'masters' | 'guide';
@@ -17,6 +21,8 @@ export interface SiteHeaderProps {
     active?: HeaderSection | 'none';
     /** Показать строку поиска. */
     search?: boolean;
+    /** Вошедший из shared prop `auth.user`; без него (гость) вместо меню кабинета — «Войти». */
+    user?: AuthUser | null;
     /** Город из shared prop `city`; без него кнопка показывает «Москву». */
     city?: CityOption | null;
     /** Число непрочитанных сообщений; 0 — без счётчика. */
@@ -44,8 +50,8 @@ const SECTIONS: readonly Section[] = [
     { key: 'guide', label: ru.header.sections.guide, href: '#', flag: 'sale_prices' },
 ];
 
-/** Страницы кабинета и формы продажи — задачи 2.1.3, 4.1.2, 4.3.1, 4.4.2. */
-const HREF_SOON = '#';
+/** Форма продажи — задача 2.1.3; до неё гость после входа остаётся на странице. */
+const SELL_HREF = HREF_SOON;
 
 const TOGGLE_ID = 'site-category-toggle';
 
@@ -55,6 +61,7 @@ const LOGIN_ID = 'site-login-toggle';
 export default function SiteHeader({
     active = 'none',
     search = true,
+    user = null,
     city = null,
     messages = 0,
     categories = CATEGORY_TREE,
@@ -220,22 +227,42 @@ export default function SiteHeader({
 
                     <div className="ym-site-header__actions">
                         <CitySelect city={city} />
-                        <Button variant="primary" icon="plus" href={HREF_SOON}>
+                        <Button
+                            variant="primary"
+                            icon="plus"
+                            href={SELL_HREF}
+                            onClick={(event) => {
+                                if (user) return;
+                                // Гость: сначала вход, затем само действие.
+                                event.preventDefault();
+                                openLogin({
+                                    opener: event.currentTarget,
+                                    onAuthenticated: () => {
+                                        if (SELL_HREF !== HREF_SOON) router.visit(SELL_HREF);
+                                    },
+                                });
+                            }}
+                        >
                             {ru.header.sell}
                         </Button>
-                        <Button
-                            id={LOGIN_ID}
-                            variant="ghost"
-                            icon="user"
-                            aria-haspopup="dialog"
-                            onClick={(event) =>
-                                onLoginClick
-                                    ? onLoginClick()
-                                    : openLogin({ opener: event.currentTarget })
-                            }
-                        >
-                            {ru.header.login}
-                        </Button>
+                        {user ? (
+                            <AccountMenu user={user} />
+                        ) : (
+                            <Button
+                                id={LOGIN_ID}
+                                variant="ghost"
+                                icon="user"
+                                aria-haspopup="dialog"
+                                data-login-trigger=""
+                                onClick={(event) =>
+                                    onLoginClick
+                                        ? onLoginClick()
+                                        : openLogin({ opener: event.currentTarget })
+                                }
+                            >
+                                {ru.header.login}
+                            </Button>
+                        )}
                     </div>
                 </div>
             </div>
