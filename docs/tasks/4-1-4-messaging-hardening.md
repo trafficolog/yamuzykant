@@ -3,7 +3,7 @@ id: "4.1.4"
 phase: "4"
 epic: "4.1"
 title: "Сообщения: текст не в журнал, доработки после ревью"
-status: in_progress
+status: review
 gate: G1
 risk: medium
 model_impl: sonnet
