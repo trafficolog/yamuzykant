@@ -103,14 +103,14 @@ it('сообщения отдаются страницами от новых к 
         ->and($older->json('meta.has_more'))->toBeFalse();
 });
 
-it('после снятия объявления с продажи писать нельзя: 409 с понятным текстом', function (ListingStatus $status) {
-    $conversation = MessagingFixtures::conversation(MessagingFixtures::listing($status));
+it('через 30 дней после ухода из published писать нельзя: 409 с понятным текстом (BR-10)', function (ListingStatus $status) {
+    $conversation = MessagingFixtures::conversation(MessagingFixtures::listing($status, now()->subDays(31)));
     $buyer = User::query()->findOrFail($conversation->buyer_id);
 
     $this->actingAs($buyer)
         ->postJson("/conversations/{$conversation->id}/messages", ['body' => 'Ещё актуально?'])
         ->assertConflict()
-        ->assertJsonPath('message', 'Объявление не опубликовано — новые сообщения по нему недоступны.');
+        ->assertJsonPath('message', 'Объявление не опубликовано больше 30 дней — беседа доступна только для чтения.');
 
     // Переписка остаётся доступной для чтения.
     $this->getJson("/conversations/{$conversation->id}/messages")->assertOk();
@@ -222,10 +222,10 @@ it('текст сообщения не попадает в журнал и в з
 
     expect(implode("\n", readLogLines($path)))->not->toContain('Сокол');
 
-    Queue::assertPushed(BroadcastEvent::class);
-    Queue::assertPushed(BroadcastEvent::class, function (BroadcastEvent $job) use ($secret): bool {
-        return ! str_contains(serialize($job), $secret);
-    });
+    // Именно задания MessageSent: задание счётчика текста не содержит и не должно маскировать утечку.
+    $jobs = Queue::pushed(BroadcastEvent::class, fn (BroadcastEvent $job): bool => $job->event instanceof MessageSent);
+    expect($jobs)->toHaveCount(1);
+    $jobs->each(fn (BroadcastEvent $job) => expect(serialize($job))->not->toContain($secret));
 });
 
 it('чужая беседа с пустым текстом — тоже 404, а не 422: валидация не раскрывает беседу', function () {

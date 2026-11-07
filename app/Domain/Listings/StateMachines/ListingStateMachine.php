@@ -270,8 +270,14 @@ final class ListingStateMachine
                 $to = self::target($from, $event, $premoderation);
 
                 $fresh->status = $to;
+                // unpublished_at — момент ухода из published (срок ответов в беседах, BR-10);
+                // переходы между не-published статусами его не сдвигают.
+                if ($from === ListingStatus::Published && $to !== ListingStatus::Published) {
+                    $fresh->unpublished_at = now();
+                }
                 if ($to === ListingStatus::Published && $from !== ListingStatus::Published) {
                     $fresh->published_at = now();
+                    $fresh->unpublished_at = null;
                 } elseif ($to === ListingStatus::Pending) {
                     $fresh->published_at = null;
                 }

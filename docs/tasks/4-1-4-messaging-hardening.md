@@ -3,7 +3,7 @@ id: "4.1.4"
 phase: "4"
 epic: "4.1"
 title: "Сообщения: текст не в журнал, доработки после ревью"
-status: review
+status: done
 gate: G1
 risk: medium
 model_impl: sonnet
@@ -14,7 +14,7 @@ uc: []
 prototype: ""
 screens: []
 issue: 122
-sync_state: drifted
+sync_state: aligned
 escalations: []
 ---
 
