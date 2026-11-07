@@ -3,6 +3,7 @@
 declare(strict_types=1);
 
 use App\Domain\Accounts\Models\User;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Support\Str;
 use Illuminate\Testing\TestResponse;
 use Tests\Support\MessagingFixtures;
@@ -14,6 +15,7 @@ beforeEach(function () {
     MessagingFixtures::useReverbBroadcaster();
 });
 
+/** @return TestResponse<JsonResponse> */
 function authorizeChannel(string $channel): TestResponse
 {
     return currentTest()->postJson('/broadcasting/auth', [

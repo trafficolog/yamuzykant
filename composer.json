@@ -12,6 +12,7 @@
         "jenssegers/imagehash": "^0.11",
         "laravel/framework": "^12.0",
         "laravel/pennant": "^1.26",
+        "laravel/reverb": "^1.12",
         "laravel/scout": "^11.9",
         "laravel/socialite": "^5.31",
         "laravel/tinker": "^2.10.1",

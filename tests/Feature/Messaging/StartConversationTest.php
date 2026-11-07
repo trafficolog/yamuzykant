@@ -75,12 +75,12 @@ it('по объявлению не в published написать нельзя: 4
 
     expect(Conversation::query()->count())->toBe(0);
 })->with([
-    ListingStatus::Draft,
-    ListingStatus::Pending,
-    ListingStatus::NeedsChanges,
-    ListingStatus::Rejected,
-    ListingStatus::Withdrawn,
-    ListingStatus::Expired,
+    [ListingStatus::Draft],
+    [ListingStatus::Pending],
+    [ListingStatus::NeedsChanges],
+    [ListingStatus::Rejected],
+    [ListingStatus::Withdrawn],
+    [ListingStatus::Expired],
 ]);
 
 it('несуществующее объявление — 404', function () {

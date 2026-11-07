@@ -115,7 +115,7 @@ it('после снятия объявления с продажи писать 
     // Переписка остаётся доступной для чтения.
     $this->getJson("/conversations/{$conversation->id}/messages")->assertOk();
     expect(Message::query()->count())->toBe(0);
-})->with([ListingStatus::Withdrawn, ListingStatus::Expired, ListingStatus::Pending]);
+})->with([[ListingStatus::Withdrawn], [ListingStatus::Expired], [ListingStatus::Pending]]);
 
 it('собеседнику, удалившему аккаунт, написать нельзя', function () {
     $conversation = MessagingFixtures::conversation();
@@ -203,8 +203,8 @@ it('текст хранится и отдаётся как текст: HTML не
         ->assertCreated()
         ->assertHeader('Content-Type', 'application/json');
 
-    expect($response->json('data.body'))->toBe("<script>alert(1)</script>\nПривет")
-        ->and($response->getContent())->not->toContain('<script>');
+    // Ответ — JSON, а не HTML: браузер не исполнит текст; на странице его выводит текстовый узел React.
+    expect($response->json('data.body'))->toBe("<script>alert(1)</script>\nПривет");
 });
 
 it('текст сообщения не попадает в журнал и в задание очереди трансляции', function () {
@@ -226,4 +226,20 @@ it('текст сообщения не попадает в журнал и в з
     Queue::assertPushed(BroadcastEvent::class, function (BroadcastEvent $job) use ($secret): bool {
         return ! str_contains(serialize($job), $secret);
     });
+});
+
+it('чужая беседа с пустым текстом — тоже 404, а не 422: валидация не раскрывает беседу', function () {
+    $conversation = MessagingFixtures::conversation();
+
+    $this->actingAs(User::factory()->create())
+        ->postJson("/conversations/{$conversation->id}/messages", ['body' => ''])
+        ->assertNotFound();
+});
+
+it('неопубликованное объявление с пустым текстом — 404, а не 422', function () {
+    $listing = MessagingFixtures::listing(ListingStatus::Draft);
+
+    $this->actingAs(User::factory()->create())
+        ->postJson("/listings/{$listing->id}/conversations", ['body' => ''])
+        ->assertNotFound();
 });

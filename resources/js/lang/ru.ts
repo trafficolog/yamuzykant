@@ -144,4 +144,14 @@ export const ru = {
         },
         social: ['Telegram', 'ВКонтакте', 'MAX'],
     },
+    messages: {
+        title: 'Сообщения',
+        listing: 'Объявление',
+        field: 'Сообщение',
+        send: 'Отправить',
+        connecting: 'Подключение…',
+        connected: 'Подключено',
+        offline: 'Нет соединения с сервером сообщений',
+        sendError: 'Не отправлено. Попробуйте ещё раз.',
+    },
 } as const;

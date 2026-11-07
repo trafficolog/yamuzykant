@@ -3,13 +3,31 @@
 declare(strict_types=1);
 
 use App\Domain\Accounts\Models\User;
+use App\Domain\Messaging\Actions\SendMessage;
+use Illuminate\Broadcasting\BroadcastManager;
+use Illuminate\Support\Facades\Log;
 use Inertia\Testing\AssertableInertia;
+use Tests\Support\MessagingFixtures;
 
 // 4.1.1: Reverb. Вещателя `log` нет — он писал бы текст сообщений в журнал. Клиентские события выключены:
 // участник не может слать в канал ничего мимо сервера.
 
-it('вещатели — только reverb и null', function () {
-    expect(array_keys(config('broadcasting.connections')))->toEqualCanonicalizing(['reverb', 'null']);
+it('вещатель log ничего не пишет в журнал: переопределён на драйвер null', function () {
+    expect(config('broadcasting.connections.log.driver'))->toBe('null')
+        ->and(config('broadcasting.connections.reverb.driver'))->toBe('reverb');
+});
+
+it('BROADCAST_CONNECTION=log не выводит текст сообщения в журнал', function () {
+    config(['scout.driver' => 'null', 'broadcasting.default' => 'log']);
+    app(BroadcastManager::class)->forgetDrivers();
+    $path = useTempJsonLog();
+
+    $conversation = MessagingFixtures::conversation();
+    $buyer = User::query()->findOrFail($conversation->buyer_id);
+    app(SendMessage::class)->handle($buyer, $conversation, 'Секретная встреча у Сокола');
+    Log::info('после отправки');
+
+    expect(implode("\n", readLogLines($path)))->not->toContain('Сокола');
 });
 
 it('Reverb: клиентские события (whisper) выключены, источники соединений — из настройки', function () {
