@@ -8,10 +8,12 @@ use App\Domain\Listings\Models\Listing;
 use App\Domain\Listings\Models\ListingPhoto;
 use App\Domain\Listings\Photos\HeicConverter;
 use App\Domain\Listings\Photos\ImagickHeicConverter;
+use App\Domain\Listings\Photos\PhotoStorage;
 use Illuminate\Contracts\Filesystem\Filesystem;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Str;
 use Tests\Support\ImageFixtures;
 
 // BR-03: перекодирование 1:1 и 4:3 в WebP и AVIF, без EXIF, pHash; исходник не отдаётся и удаляется.
@@ -310,31 +312,97 @@ it('лимит памяти вернулся — в журнал ничего н
     $log->shouldNotHaveReceived('warning');
 });
 
-it('HEIC: превышение лимита ImageMagick по ширине, высоте или памяти кэша — ImageTooLarge, а не «сохраните как JPEG»', function (string $message) {
+// Строки с пометкой «снято» получены на реальном HEIC выше лимита: PHP 8.4 + Imagick (ImageMagick 7.1.1-43,
+// Debian trixie) и CLI ImageMagick 7.1.2-12 с libheif; остальные — по исходникам ImageMagick и libheif.
+it('HEIC: превышение лимита размера или ресурсов (ImageMagick, libheif) — ImageTooLarge, а не «сохраните как JPEG»', function (string $message) {
     expect(ImagickHeicConverter::isLimitError($message))->toBeTrue();
 })->with([
-    'width or height' => ["width or height exceeds limit `heic.heic' @ error/cache.c/OpenPixelCache/4119"],
-    'cache' => ["cache resources exhausted `heic.heic' @ error/cache.c/OpenPixelCache/4119"],
+    'ширина или высота (снято, Imagick)' => ["width or height exceeds limit `/tmp/magick-mPPMZ7YGJ2TsxvKf6k6KNgV0ol2CTbjw' @ error/cache.c/OpenPixelCache/3714"],
+    'ширина или высота (снято, CLI)' => ["width or height exceeds limit `wide.heic' (20000x64) > (16384x16384) @ error/cache.c/OpenPixelCache/3757"],
+    'ресурсы кэша (снято)' => ["cache resources exhausted `/tmp/magick-2Xs-gXZeCv2ZXx_GbSQzUNItQRNXIUem' @ error/cache.c/OpenPixelCache/3941"],
+    'libheif: security limit (снято)' => ["Memory allocation error: Security limit exceeded: Image size 100000x100000 exceeds the maximum image size 1073741824 (6.1000) `huge.heic' @ error/heic.c/IsHEIFSuccess/202"],
+    'libheif: security limit, другой лимит' => ["Memory allocation error: Security limit exceeded: Number of tiles 70000 exceeds the maximum 65536 (6.1000) `x' @ error/heic.c/IsHEIFSuccess/141"],
+    'libheif: maximum image size' => ['Image size 40000 x 40000 exceeds the maximum image size 32768 x 32768'],
+    'maximum image size exceeded' => ["Maximum image size exceeded `heic.heic' @ error/heic.c/ReadHEICImage/412"],
+    'пиксели' => ["pixels exceed limit `heic.heic' @ error/cache.c/OpenPixelCache/4119"],
+    'лимит площади в пикселях' => ["pixel area limit exceeded `heic.heic'"],
+    'лимит по пикселям' => ['image exceeds the pixel limit'],
 ]);
 
 it('HEIC: прочие ошибки Imagick — не превышение лимита', function (string $message) {
     expect(ImagickHeicConverter::isLimitError($message))->toBeFalse();
 })->with([
-    'time limit' => ["time limit exceeded `heic.heic' @ fatal/resource.c/AcquireMagickResource/1127"],
+    'time limit (снято)' => ["time limit exceeded `big.heic' @ error/cache.c/GetImagePixelCache/1743"],
+    'time limit, resource.c' => ["time limit exceeded `heic.heic' @ fatal/resource.c/AcquireMagickResource/1127"],
     'битый HEIC: память' => ["memory allocation failed `heic.heic' @ error/heic.c/ReadHEICImage/412"],
-    'битый заголовок' => ["insufficient image data in file `heic.heic' @ error/heic.c/ReadHEICImage/380"],
+    'libheif: память без security limit' => ['Memory allocation error: Cannot allocate memory (6.0)'],
+    'битый заголовок (снято)' => ["Invalid input: No 'meta' box: Cannot read full meta box (2.104) `/tmp/magick-t5Vk' @ error/heic.c/IsHEIFSuccess/141"],
+    'нехватка данных' => ["insufficient image data in file `heic.heic' @ error/heic.c/ReadHEICImage/380"],
     'нет декодера' => ["no decode delegate for this image format `HEIC'"],
     'повреждён' => ["corrupt image `heic.heic' @ error/heic.c/ReadHEICImage/301"],
+    'ImageMagick 6 без подробностей (снято)' => ['Unable to read image blob'],
 ]);
 
-dataset('unsafe photo paths', [
-    'пустой' => [''],
-    'корень photos' => ['photos'],
-    'photos со слэшем без хвоста' => ['photos/'],
-    'не photos' => ['uploads/1/abc'],
-    'выход вверх' => ['photos/../uploads'],
-    'корень' => ['/'],
-]);
+/**
+ * Пути, которые Flysystem нормализует до photos/ или корня (`.`, `\`, `..`), или которые он отвергает целиком.
+ * NUL-байт хранить в PostgreSQL нельзя, поэтому для тестов через БД — набор без него.
+ *
+ * @return array<string, array{string}>
+ */
+function unsafePhotoPaths(bool $withNul): array
+{
+    $paths = [
+        'пустой' => [''],
+        'корень photos' => ['photos'],
+        'photos со слэшем без хвоста' => ['photos/'],
+        'не photos' => ['uploads/1/abc'],
+        'выход вверх' => ['photos/../uploads'],
+        'корень' => ['/'],
+        'точка' => ['photos/.'],
+        'точки в хвосте' => ['photos/a/./.'],
+        'обратные слэши и выход вверх' => ['photos/x\\..\\..'],
+        'обратный слэш' => ['photos\\a\\b'],
+        'перевод строки в конце' => ["photos/a\n"],
+        'перевод строки в конце полного пути' => ["photos/a/b\n"],
+        'пустой сегмент' => ['photos//a'],
+        'лишний сегмент' => ['photos/a/b/c'],
+        'выход вверх в конце' => ['photos/a/..'],
+        'пробел' => ['photos/a/ '],
+    ];
+
+    return $withNul ? $paths + [
+        'NUL в хвосте' => ["photos/a/b\0"],
+        'NUL посередине' => ["photos/a\0/b"],
+        'NUL перед выходом вверх' => ["photos/\0/../.."],
+    ] : $paths;
+}
+
+dataset('unsafe photo paths', unsafePhotoPaths(withNul: true));
+dataset('unsafe stored photo paths', unsafePhotoPaths(withNul: false));
+
+it('удаление версий: небезопасный path (в том числе с NUL-байтом) не трогает файлы — пропуск и warning', function (string $path) {
+    $log = Log::spy();
+    photosDisk()->put('photos/other/uuid/square.webp', 'чужое');
+    photosDisk()->put('keep.txt', 'корень');
+
+    expect(PhotoStorage::isPhotoDirectory($path))->toBeFalse()
+        ->and(PhotoStorage::deleteVersions($path))->toBeFalse()
+        ->and(photosDisk()->exists('photos/other/uuid/square.webp'))->toBeTrue()
+        ->and(photosDisk()->exists('keep.txt'))->toBeTrue();
+    $log->shouldHaveReceived('warning')->once();
+})->with('unsafe photo paths');
+
+it('удаление версий: path из ConfirmPhotoUpload проходит guard и удаляет только свой каталог', function () {
+    $listingId = (string) Str::uuid();
+    $path = PhotoStorage::photoDirectory($listingId, (string) Str::uuid());
+    photosDisk()->put("{$path}/square.webp", 'своё');
+    photosDisk()->put("photos/{$listingId}/other/square.webp", 'соседнее');
+
+    expect(PhotoStorage::isPhotoDirectory($path))->toBeTrue()
+        ->and(PhotoStorage::deleteVersions($path))->toBeTrue()
+        ->and(photosDisk()->exists("{$path}/square.webp"))->toBeFalse()
+        ->and(photosDisk()->exists("photos/{$listingId}/other/square.webp"))->toBeTrue();
+});
 
 it('markFailed не удаляет каталог по пустому или чужому path — пропуск и warning', function (string $path) {
     $log = Log::spy();
@@ -351,7 +419,7 @@ it('markFailed не удаляет каталог по пустому или ч�
         ->and(photosDisk()->exists('keep.txt'))->toBeTrue()
         ->and(photosDisk()->exists($source))->toBeFalse();
     $log->shouldHaveReceived('warning')->once();
-})->with('unsafe photo paths');
+})->with('unsafe stored photo paths');
 
 it('удаление фото не трогает каталог по пустому или чужому path', function (string $path) {
     $log = Log::spy();
@@ -366,4 +434,4 @@ it('удаление фото не трогает каталог по пусто
         ->and(photosDisk()->exists('keep.txt'))->toBeTrue()
         ->and(ListingPhoto::query()->whereKey($photo->id)->exists())->toBeFalse();
     $log->shouldHaveReceived('warning')->once();
-})->with('unsafe photo paths');
+})->with('unsafe stored photo paths');
