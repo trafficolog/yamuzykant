@@ -6,8 +6,10 @@ use App\Domain\Listings\Jobs\ProcessListingPhoto;
 use App\Domain\Listings\Models\Listing;
 use App\Domain\Listings\Models\ListingPhoto;
 use App\Domain\Listings\Photos\HeicConverter;
+use App\Domain\Listings\Photos\ImagickHeicConverter;
 use Illuminate\Contracts\Filesystem\Filesystem;
 use Illuminate\Contracts\Queue\ShouldQueue;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Storage;
 use Tests\Support\ImageFixtures;
 
@@ -263,4 +265,58 @@ it('job идёт в очереди с ограничением времени и
     expect($job)->toBeInstanceOf(ShouldQueue::class)
         ->and($job->timeout)->toBeGreaterThan(10)
         ->and($job->tries)->toBeGreaterThanOrEqual(1);
+});
+
+it('failed() после исчерпания попыток удаляет и исходник, и частично записанные версии', function () {
+    $photo = uploadedPhoto(ImageFixtures::jpeg());
+    // Сбой хранилища посередине записи версий: часть файлов уже в каталоге фото.
+    photosDisk()->put("{$photo->path}/square.webp", 'частично');
+    photosDisk()->put("{$photo->path}/square.avif", 'частично');
+
+    (new ProcessListingPhoto($photo->id))->failed(new RuntimeException('сбой S3'));
+
+    $photo->refresh();
+    expect($photo->failed_reason)->toBe('unreadable')
+        ->and($photo->upload_key)->toBeNull()
+        ->and(photosDisk()->allFiles())->toBe([]);
+});
+
+it('failed() не удаляет версии готового фото', function () {
+    $photo = runPhotoJob(uploadedPhoto(ImageFixtures::jpeg()));
+    $files = photosDisk()->allFiles();
+
+    (new ProcessListingPhoto($photo->id))->failed(new RuntimeException('поздний сбой'));
+
+    expect($files)->not->toBe([])
+        ->and(photosDisk()->allFiles())->toBe($files);
+});
+
+it('лимит памяти не вернулся — warning в журнал', function () {
+    Log::spy();
+
+    // Потребление памяти заведомо больше 1 КБ: ini_set вернёт false.
+    (new ProcessListingPhoto(1))->restoreMemory('1K');
+
+    Log::shouldHaveReceived('warning')->once();
+});
+
+it('лимит памяти вернулся — в журнал ничего не пишем', function () {
+    Log::spy();
+    $current = (string) ini_get('memory_limit');
+
+    (new ProcessListingPhoto(1))->restoreMemory($current);
+
+    Log::shouldNotHaveReceived('warning');
+});
+
+it('HEIC: превышение лимита ImageMagick по ширине или высоте — ImageTooLarge, а не «сохраните как JPEG»', function (string $message) {
+    expect(ImagickHeicConverter::isLimitError(new ImagickException($message)))->toBeTrue();
+})->with([
+    'width or height' => ["width or height exceeds limit `heic.heic' @ error/cache.c/OpenPixelCache/4119"],
+    'area' => ["pixels exceed limit `heic.heic' @ error/cache.c/OpenPixelCache/4119"],
+    'cache' => ["cache resources exhausted `heic.heic' @ error/cache.c/OpenPixelCache/4119"],
+]);
+
+it('HEIC: прочие ошибки Imagick — не превышение лимита', function () {
+    expect(ImagickHeicConverter::isLimitError(new ImagickException("no decode delegate for this image format `HEIC'")))->toBeFalse();
 });
