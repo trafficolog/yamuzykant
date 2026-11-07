@@ -196,6 +196,17 @@ describe('LoginDialog: вход по почте', () => {
         expect(codeField()).toHaveFocus();
     });
 
+    it('Esc во время отправки не закрывает окно', async () => {
+        fetchMock.mockImplementationOnce(() => new Promise(() => {}));
+        openFromButton();
+
+        fireEvent.change(emailField(), { target: { value: 'anna@example.com' } });
+        fireEvent.click(screen.getByRole('button', { name: ru.login.getCode }));
+        fireEvent.keyDown(document, { key: 'Escape' });
+
+        expect(dialog()).toBeInTheDocument();
+    });
+
     it('«Изменить почту» возвращает на шаг «Способ» с введённым адресом', async () => {
         reply('/auth/email/code', 202, { status: 'code_sent', expires_in: 600 });
         openFromButton();
@@ -454,6 +465,37 @@ describe('LoginDialog: первый вход', () => {
 
         expect(await screen.findByText('Укажите имя')).toBeInTheDocument();
         expect(screen.getByLabelText(ru.login.nameLabel)).toHaveAttribute('aria-invalid', 'true');
+    });
+
+    it('ошибка города: role="alert" и связь с кнопкой города через aria-describedby', async () => {
+        await toFirstLogin('Анна');
+        reply('/auth/register', 422, {
+            message: 'x',
+            errors: { city_id: ['Выберите город из списка'] },
+        });
+
+        fireEvent.click(screen.getByRole('checkbox'));
+        fireEvent.click(proceed());
+
+        const alert = await screen.findByRole('alert');
+        expect(alert).toHaveTextContent('Выберите город из списка');
+        expect(screen.getByRole('button', { name: /Москва/ })).toHaveAttribute(
+            'aria-describedby',
+            alert.id,
+        );
+    });
+
+    it('шаг «Готово»: фокус на заголовке шага, окно не закрывается Esc до конца перехода', async () => {
+        await toFirstLogin('Анна');
+        reply('/auth/register', 200, { status: 'authenticated', redirect: '/' });
+
+        fireEvent.click(screen.getByRole('checkbox'));
+        fireEvent.click(proceed());
+
+        const title = await screen.findByRole('heading', { name: ru.login.titleDone });
+        await waitFor(() => expect(title).toHaveFocus());
+        fireEvent.keyDown(document, { key: 'Escape' });
+        expect(dialog()).toBeInTheDocument();
     });
 
     it('сессия регистрации потеряна (409): возврат на «Способ» с текстом сервера', async () => {

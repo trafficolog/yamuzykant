@@ -29,6 +29,10 @@ describe('safeReturnPath: возврат к действию — только о
     });
 
     it.each([
+        `${window.location.origin}//evil.example`,
+        `${window.location.origin}//evil.example/x`,
+        `${window.location.origin}/\\evil`,
+        '%2F%2Fevil',
         'https://evil.example/steal',
         '//evil.example',
         '/\\evil.example',

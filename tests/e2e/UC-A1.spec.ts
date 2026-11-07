@@ -1,10 +1,13 @@
 import AxeBuilder from '@axe-core/playwright';
 import { expect, test, type Page } from '@playwright/test';
+import { execFileSync } from 'node:child_process';
+import { fileURLToPath } from 'node:url';
 
 // UC-A1 «Войти» (SPEC §4): окно входа в шапке — «Войти с Яндекс ID» и код из письма, первый вход
 // (имя, город, согласие), возврат к прерванному действию. Нужны LOGIN_CODE_FAKE=123456 и
 // YANDEX_OAUTH_FAKE=true (окружение e2e, CI) — настоящих писем и Яндекса в тестах нет.
 
+const APP_ROOT = fileURLToPath(new URL('../..', import.meta.url));
 const FAKE_CODE = '123456';
 const CANCELLED = 'Вход через Яндекс ID отменён. Войдите по почте или попробуйте ещё раз';
 
@@ -19,11 +22,27 @@ const seriousOrCritical = async (page: Page) => {
         .map((violation) => `${violation.id}: ${violation.nodes.map((n) => n.target).join(' | ')}`);
 };
 
+/** Окно открывается на шаге «Способ»: заголовок «Вход». Дальше имя окна меняется с шагом. */
 const openDialog = async (page: Page) => {
     await page.getByRole('banner').getByRole('button', { name: 'Войти' }).click();
-    const dialog = page.getByRole('dialog');
-    await expect(dialog).toBeVisible();
-    return dialog;
+    await expect(page.getByRole('dialog', { name: 'Вход', exact: true })).toBeVisible();
+    return page.getByRole('dialog');
+};
+
+/**
+ * Тестовый пользователь Яндекс ID (FakeYandexProvider::USER) создаётся при первом входе и остаётся в базе.
+ * Перед тестом удаляем его: сценарий «первый вход» не зависит от прошлых прогонов и повторов CI.
+ */
+const forgetYandexTestUser = () => {
+    execFileSync(
+        'php',
+        [
+            'artisan',
+            'tinker',
+            "--execute=App\\Domain\\Accounts\\Models\\User::query()->where('email', 'yandex-test@example.com')->orWhere('yandex_id', '1130000000000001')->delete();",
+        ],
+        { cwd: APP_ROOT, stdio: 'ignore' },
+    );
 };
 
 const requestCode = async (page: Page, email: string) => {
@@ -125,23 +144,17 @@ test.describe('UC-A1: окно входа', () => {
     test('вход через Яндекс ID (YANDEX_OAUTH_FAKE): возврат на страницу, где начат вход', async ({
         page,
     }) => {
+        forgetYandexTestUser();
         await page.goto('/?from=yandex');
         const dialog = await openDialog(page);
 
         await dialog.getByRole('link', { name: 'Войти с Яндекс ID' }).click();
 
-        // Первый вход под тестовым пользователем — шаг с именем из Яндекс ID; при повторном прогоне
-        // на постоянной базе аккаунт уже есть, и вход завершается сразу.
-        const name = page.getByRole('dialog').getByLabel('Имя');
-        const firstLogin = await name
-            .waitFor({ state: 'visible', timeout: 5_000 })
-            .then(() => true)
-            .catch(() => false);
-        if (firstLogin) {
-            await expect(name).toHaveValue('Анна');
-            await page.getByRole('dialog').getByRole('checkbox').check();
-            await page.getByRole('dialog').getByRole('button', { name: 'Продолжить' }).click();
-        }
+        // Аккаунта нет: шаг «Первый вход» с именем из Яндекс ID (first_name тестового пользователя).
+        const first = page.getByRole('dialog');
+        await expect(first.getByLabel('Имя')).toHaveValue('Анна');
+        await first.getByRole('checkbox').check();
+        await first.getByRole('button', { name: 'Продолжить' }).click();
 
         await expect(page.getByRole('dialog')).toBeHidden();
         await expect(page).toHaveURL(/\/\?from=yandex$/);

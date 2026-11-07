@@ -241,3 +241,21 @@ describe('CitySelect: словарь', () => {
         expect(document.body.textContent).not.toMatch(/гир|сетап|Фермата/i);
     });
 });
+
+describe('CitySelect: справочник', () => {
+    it('грузится один раз за страницу: повторное открытие панели берёт готовый список', async () => {
+        render(<CitySelect city={moscow} />);
+        await open();
+        const loads = () =>
+            fetchMock.mock.calls.filter(([url]) => String(url).split('?')[0] === '/cities').length;
+        expect(loads()).toBe(1);
+
+        fireEvent.click(within(panelOrFail()).getByRole('button', { name: ru.city.close }));
+        fireEvent.click(trigger());
+
+        await waitFor(() =>
+            expect(panelOrFail().querySelectorAll('.ym-city__item').length).toBeGreaterThan(0),
+        );
+        expect(loads()).toBe(1);
+    });
+});
