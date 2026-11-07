@@ -279,6 +279,39 @@ describe('маппинг query → фильтры', function () {
     });
 });
 
+describe('цена по BR-11', function () {
+    it('«Договорная» (null) и «Бесплатно» (0) доходят до карточки как есть; фильтр цены берёт только суммы, 0 — как 0', function () {
+        $sum = fleaListing(['title' => 'Сумма', 'price' => 50_000]);
+        $negotiable = fleaListing(['title' => 'Договорная', 'price' => null, 'negotiable' => false]);
+        $free = fleaListing(['title' => 'Бесплатно', 'price' => 0, 'negotiable' => false]);
+
+        fleaGet('/baraholka?sort=cheap')->assertInertia(fn (Assert $page) => $page
+            ->where('listings.0.id', $free)
+            ->where('listings.0.price', 0)
+            ->where('listings.1.id', $sum)
+            ->where('listings.2.id', $negotiable)
+            ->where('listings.2.price', null));
+
+        fleaGet('/baraholka?price_from=1')->assertInertia(fn (Assert $page) => $page
+            ->has('listings', 1)
+            ->where('listings.0.id', $sum));
+
+        fleaGet('/baraholka?price_to=60000')->assertInertia(fn (Assert $page) => $page
+            ->has('listings', 2));
+    });
+
+    it('сортировка «дороже» ставит «Договорную» в конец, «Бесплатно» считается как 0', function () {
+        $sum = fleaListing(['title' => 'Сумма', 'price' => 50_000]);
+        $negotiable = fleaListing(['title' => 'Договорная', 'price' => null, 'negotiable' => false]);
+        $free = fleaListing(['title' => 'Бесплатно', 'price' => 0, 'negotiable' => false]);
+
+        fleaGet('/baraholka?sort=expensive')->assertInertia(fn (Assert $page) => $page
+            ->where('listings.0.id', $sum)
+            ->where('listings.1.id', $free)
+            ->where('listings.2.id', $negotiable));
+    });
+});
+
 describe('страницы', function () {
     beforeEach(function () {
         for ($i = 1; $i <= 30; $i++) {

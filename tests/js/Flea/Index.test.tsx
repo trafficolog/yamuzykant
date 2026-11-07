@@ -374,10 +374,26 @@ describe('Flea/Index: сортировка', () => {
         expect(lastGet()[1]).toEqual({ q: 'страт', sort: 'new' });
     });
 
-    it('цена null не рисуется как «0 ₽»', () => {
-        render(<FleaIndex {...props({ listings: [card(1, { price: null })] })} />);
+    it('цена по BR-11: сумма, null — «Договорная», 0 — «Бесплатно»; «0 ₽» нигде нет', () => {
+        render(
+            <FleaIndex
+                {...props({
+                    listings: [
+                        card(1, { price: 184_500 }),
+                        card(2, { price: null }),
+                        card(3, { price: 0 }),
+                    ],
+                })}
+            />,
+        );
 
-        expect(screen.getByRole('article').textContent).not.toMatch(/0\s₽/);
+        const [sum, negotiable, free] = screen.getAllByRole('article') as HTMLElement[];
+        expect(sum?.textContent).toContain('184 500');
+        expect(negotiable?.querySelector('.ym-price__now')?.textContent).toBe('Договорная');
+        expect(free?.querySelector('.ym-price__now')?.textContent).toBe('Бесплатно');
+        for (const article of screen.getAllByRole('article')) {
+            expect(article.textContent).not.toMatch(/(^|[^\d])0\s₽/);
+        }
     });
 });
 
