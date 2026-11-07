@@ -19,6 +19,14 @@ type CityResult = { key: string; items: CityListItem[] } | { key: string; failed
 /** Справочник для окна выбора (GET, JSON). */
 const SEARCH_URL = '/cities';
 
+/** Ответы справочника по запросу на время жизни страницы: повторное открытие панели не грузит их заново. */
+const cache = new Map<string, CityListItem[]>();
+
+/** Сбросить кэш справочника (тесты). */
+export function resetCityCache(): void {
+    cache.clear();
+}
+
 export interface CityPickerProps {
     /** id поля поиска; от него строятся id списка (`{searchId}-list`). */
     searchId: string;
@@ -41,9 +49,16 @@ export default function CityPicker({ searchId, selectedId, onChoose, notice }: C
 
     const listId = `${searchId}-list`;
     const key = query.trim();
-    const current = result?.key === key ? result : null;
+    const cached = cache.get(key);
+    const current: CityResult | null = cached
+        ? { key, items: cached }
+        : result?.key === key
+          ? result
+          : null;
 
     useEffect(() => {
+        if (cache.has(key)) return;
+
         const controller = new AbortController();
         const url = key === '' ? SEARCH_URL : `${SEARCH_URL}?${new URLSearchParams({ q: key })}`;
 
@@ -55,7 +70,10 @@ export default function CityPicker({ searchId, selectedId, onChoose, notice }: C
                 if (!response.ok) throw new Error(`HTTP ${response.status}`);
                 return response.json() as Promise<{ data: CityListItem[] }>;
             })
-            .then((body) => setResult({ key, items: body.data }))
+            .then((body) => {
+                cache.set(key, body.data);
+                setResult({ key, items: body.data });
+            })
             .catch(() => {
                 if (!controller.signal.aborted) setResult({ key, failed: true });
             });

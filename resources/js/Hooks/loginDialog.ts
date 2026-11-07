@@ -42,17 +42,19 @@ function hasUnsafeChars(url: string): boolean {
 export function safeReturnPath(url: string | null | undefined): string {
     if (typeof url !== 'string' || url === '' || hasUnsafeChars(url)) return '/';
 
+    let path = url;
     if (/^https?:\/\//i.test(url)) {
         try {
             const parsed = new URL(url);
             if (parsed.origin !== window.location.origin) return '/';
-            return `${parsed.pathname}${parsed.search}${parsed.hash}`;
+            path = `${parsed.pathname}${parsed.search}${parsed.hash}`;
         } catch {
             return '/';
         }
     }
 
-    return url.startsWith('/') && !url.startsWith('//') ? url : '/';
+    // Та же проверка для относительного адреса и для пути из абсолютного: `//host` — чужой хост.
+    return path.startsWith('/') && !path.startsWith('//') ? path : '/';
 }
 
 let current: LoginRequest | null = null;

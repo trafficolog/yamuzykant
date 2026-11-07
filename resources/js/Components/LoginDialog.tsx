@@ -48,6 +48,7 @@ const IDS = {
     code: 'login-code',
     name: 'login-name',
     city: 'login-city',
+    cityError: 'login-city-error',
     citySearch: 'login-city-search',
     consent: 'login-consent',
     missing: 'login-missing',
@@ -134,6 +135,9 @@ export default function LoginDialog({
     useEffect(() => {
         const onKeyDown = (event: KeyboardEvent) => {
             if (event.key === 'Escape') {
+                // Идёт отправка или переход после входа: закрытие потеряло бы результат.
+                if (busy || step === 'done') return;
+
                 if (cityView) {
                     focusAfter.current = IDS.city;
                     setCityView(false);
@@ -161,7 +165,7 @@ export default function LoginDialog({
         };
         document.addEventListener('keydown', onKeyDown);
         return () => document.removeEventListener('keydown', onKeyDown);
-    }, [cityView, close]);
+    }, [cityView, close, busy, step]);
 
     // Окно модальное: страница под ним недоступна и не прокручивается; фокус вернётся при закрытии.
     useEffect(() => {
@@ -214,7 +218,7 @@ export default function LoginDialog({
                     ? IDS.code
                     : step === 'first'
                       ? IDS.name
-                      : null);
+                      : IDS.title);
         const target = id ? document.getElementById(id) : null;
         (target ?? panelRef.current)?.focus();
     }, [step, cityView]);
@@ -402,7 +406,7 @@ export default function LoginDialog({
                 className="ym-login__panel"
             >
                 <div className="ym-login__head">
-                    <h2 id={IDS.title} className="ym-login__title type-h3">
+                    <h2 id={IDS.title} tabIndex={-1} className="ym-login__title type-h3">
                         {title}
                     </h2>
                     <Button variant="ghost" icon="x" aria-label={ru.login.close} onClick={close} />
@@ -564,6 +568,7 @@ export default function LoginDialog({
                                 block
                                 icon="map-pin"
                                 iconRight="chevron-right"
+                                aria-describedby={errors.city ? IDS.cityError : undefined}
                                 aria-label={ru.login.cityButton(
                                     chosenCity?.name ?? ru.header.defaultCity,
                                 )}
@@ -572,7 +577,13 @@ export default function LoginDialog({
                                 {chosenCity?.name ?? ru.header.defaultCity}
                             </Button>
                             {errors.city ? (
-                                <p className="ym-login__error type-body-s">{errors.city}</p>
+                                <p
+                                    id={IDS.cityError}
+                                    role="alert"
+                                    className="ym-login__error type-body-s"
+                                >
+                                    {errors.city}
+                                </p>
                             ) : null}
                         </div>
                         <Checkbox
