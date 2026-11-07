@@ -9,10 +9,13 @@ use Illuminate\Redis\Connections\Connection;
 use RuntimeException;
 
 /**
- * Подмена соединения Redis для проверок /health: ping() и lindex() без сервера.
+ * Подмена соединения Redis для проверок /health: ping() и lrange() без сервера.
  */
 final class FakeRedisConnection extends Connection
 {
+    /** @var list<string> ключи списков, которые запрашивались через lrange */
+    public static array $listKeys = [];
+
     public function __construct(private readonly bool $pingFails = false, private readonly ?string $oldestPayload = null) {}
 
     /**
@@ -21,9 +24,14 @@ final class FakeRedisConnection extends Connection
      */
     public function command($method, array $parameters = []): mixed
     {
+        if (strtolower($method) === 'lrange') {
+            self::$listKeys[] = (string) $parameters[0];
+
+            return $this->oldestPayload === null ? [] : [$this->oldestPayload];
+        }
+
         return match (strtolower($method)) {
             'ping' => $this->pingFails ? throw new RuntimeException('connection refused') : 'PONG',
-            'lindex' => $this->oldestPayload,
             default => null,
         };
     }
