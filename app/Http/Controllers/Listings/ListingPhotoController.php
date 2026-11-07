@@ -80,6 +80,7 @@ final class ListingPhotoController extends Controller
     private function photos(Listing $listing): AnonymousResourceCollection
     {
         $photos = ListingPhoto::query()
+            ->with('listing') // PhotoVisibility читает статус объявления: без этого запрос на каждое фото
             ->where('listing_id', $listing->id)
             ->orderByDesc('is_serial')
             ->orderBy('position')

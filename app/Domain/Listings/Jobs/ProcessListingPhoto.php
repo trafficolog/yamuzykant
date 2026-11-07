@@ -108,7 +108,7 @@ final class ProcessListingPhoto implements ShouldQueue
         if ($photo->upload_key !== null) {
             $disk->delete($photo->upload_key);
         }
-        $disk->deleteDirectory($photo->path);
+        PhotoStorage::deleteVersions($photo->path);
         $photo->forceFill(['upload_key' => null, 'failed_reason' => $reason])->save();
     }
 
@@ -127,6 +127,8 @@ final class ProcessListingPhoto implements ShouldQueue
     /**
      * Вернуть прежний лимит. ini_set не срабатывает, если потребление уже выше прежнего лимита:
      * воркер остаётся на повышенном — пишем warning, чтобы это было видно.
+     *
+     * @internal public только ради теста
      */
     public function restoreMemory(string $limit): void
     {

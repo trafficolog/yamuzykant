@@ -63,6 +63,7 @@ final class ImagickHeicConverter implements HeicConverter
     /** Ошибка ImageMagick из-за resource limits (`width or height exceeds limit`, `cache resources exhausted`…). */
     public static function isLimitError(string $message): bool
     {
-        return preg_match('/exceeds? limit|exceeded|resources? exhausted|memory allocation failed/i', $message) === 1;
+        // Узко: «time limit exceeded», «memory allocation failed» и ошибки битого файла сюда не относятся.
+        return preg_match('/width or height exceeds limit|cache resources exhausted/i', $message) === 1;
     }
 }
