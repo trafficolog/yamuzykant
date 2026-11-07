@@ -3,7 +3,7 @@ id: "2.1.9"
 phase: "2"
 epic: "2.1"
 title: "Фото объявления: доработки после ревью"
-status: in_progress
+status: review
 gate: G1
 risk: low
 model_impl: sonnet
@@ -15,7 +15,7 @@ prototype: ""
 screens: []
 issue: 116
 sync_state: drifted
-escalations: []
+escalations: ["07.11.2026: 2 круга ревью PR #120 (sonnet) — правки круга 3 исполняет opus (обход guard пути, признаки лимита HEIC)"]
 ---
 
 # 2.1.9. Фото объявления: доработки после ревью
