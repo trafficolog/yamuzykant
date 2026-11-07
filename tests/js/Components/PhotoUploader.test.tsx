@@ -339,3 +339,80 @@ describe('PhotoUploader: порядок, удаление, лимиты', () => 
         await waitFor(() => expect(api.confirm).toHaveBeenCalledTimes(2));
     });
 });
+
+describe('PhotoUploader: ошибки обработки и удаления, фокус', () => {
+    const three = () => [photo(1, { is_serial: true }), photo(2), photo(3)];
+
+    it('ошибка обработки после опроса: показывается, опрос прекращается', async () => {
+        const failed = photo(5, {
+            state: 'failed',
+            urls: null,
+            error: 'Фото слишком большое: не больше 50 Мп. Уменьшите его и загрузите снова.',
+        });
+        const api = fakeApi({ list: vi.fn(() => Promise.resolve([failed])) });
+        render(
+            <PhotoUploader
+                listingId={LISTING}
+                api={api}
+                pollInterval={5}
+                initialPhotos={[photo(5, { state: 'processing', urls: null })]}
+            />,
+        );
+
+        expect(await screen.findByRole('alert')).toHaveTextContent('не больше 50 Мп');
+        await new Promise((resolve) => setTimeout(resolve, 40));
+        expect(api.list).toHaveBeenCalledTimes(1);
+    });
+
+    it('отказ сервера при удалении показывается, фото остаётся', async () => {
+        const api = fakeApi({
+            remove: vi.fn(() =>
+                Promise.reject(
+                    new PhotoApiError(
+                        'У опубликованного объявления должно быть фото серийного номера и не меньше 3 фото.',
+                    ),
+                ),
+            ),
+        });
+        render(<PhotoUploader listingId={LISTING} api={api} initialPhotos={three()} />);
+
+        fireEvent.click(screen.getByRole('button', { name: 'Удалить фото 2' }));
+
+        expect(await screen.findByRole('alert')).toHaveTextContent('не меньше 3 фото');
+        expect(screen.getByRole('img', { name: 'Фото 2' })).toBeInTheDocument();
+    });
+
+    it('после удаления фокус переходит на соседнее фото', async () => {
+        const api = fakeApi({
+            remove: vi.fn(() =>
+                Promise.resolve([photo(1, { is_serial: true }), photo(3, { position: 1 })]),
+            ),
+        });
+        render(<PhotoUploader listingId={LISTING} api={api} initialPhotos={three()} />);
+
+        fireEvent.click(screen.getByRole('button', { name: 'Удалить фото 2' }));
+
+        await waitFor(() =>
+            expect(screen.getByRole('button', { name: 'Удалить фото 2' })).toHaveFocus(),
+        );
+    });
+
+    it('после удаления последнего фото фокус — на кнопке добавления', async () => {
+        const api = fakeApi({ remove: vi.fn(() => Promise.resolve([])) });
+        render(
+            <PhotoUploader
+                listingId={LISTING}
+                api={api}
+                initialPhotos={[photo(1, { is_serial: true })]}
+            />,
+        );
+
+        fireEvent.click(screen.getByRole('button', { name: 'Удалить фото серийного номера' }));
+
+        await waitFor(() =>
+            expect(
+                screen.getByRole('button', { name: 'Добавить фото: Серийный номер' }),
+            ).toHaveFocus(),
+        );
+    });
+});

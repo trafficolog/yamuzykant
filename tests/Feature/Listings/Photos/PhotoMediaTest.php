@@ -6,6 +6,8 @@ use App\Domain\Accounts\Models\User;
 use App\Domain\Listings\Enums\ListingStatus;
 use App\Domain\Listings\Models\Listing;
 use App\Domain\Listings\Models\ListingPhoto;
+use App\Http\Resources\Listings\ListingPhotoResource;
+use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
 
 // Раздача фото браузеру — через приложение (MinIO наружу не открыт): только готовые версии,
@@ -16,13 +18,13 @@ beforeEach(function () {
     Storage::fake(config('photos.disk'));
 });
 
-function readyPhoto(Listing $listing): ListingPhoto
+function readyPhoto(Listing $listing, bool $serial = false): ListingPhoto
 {
     $photo = ListingPhoto::query()->create([
         'listing_id' => $listing->id,
         'path' => "photos/{$listing->id}/p1",
         'position' => 0,
-        'is_serial' => true,
+        'is_serial' => $serial,
     ]);
     $photo->forceFill(['processed_at' => now(), 'phash' => '0123456789abcdef'])->save();
     foreach (['square', 'wide'] as $variant) {
@@ -68,4 +70,43 @@ it('необработанное фото — 404', function () {
     $photo = ListingPhoto::query()->create(['listing_id' => $listing->id, 'path' => 'photos/x/y', 'position' => 0]);
 
     $this->get("/media/photos/{$photo->id}/square.webp")->assertNotFound();
+});
+
+it('снятое и истёкшее — без публичного и неизменяемого кэша', function (ListingStatus $status) {
+    $photo = readyPhoto(Listing::factory()->inStatus($status)->create());
+
+    $response = $this->get("/media/photos/{$photo->id}/square.webp");
+
+    $response->assertOk();
+    $cache = (string) $response->headers->get('Cache-Control');
+    expect($cache)->toContain('private')
+        ->and(str_contains($cache, 'public'))->toBeFalse()
+        ->and(str_contains($cache, 'immutable'))->toBeFalse();
+})->with(['withdrawn' => [ListingStatus::Withdrawn], 'expired' => [ListingStatus::Expired]]);
+
+it('фото серийного номера опубликованного: гостю и чужому — 404, владельцу — без кэша', function () {
+    $owner = User::factory()->create();
+    $photo = readyPhoto(Listing::factory()->for($owner)->inStatus(ListingStatus::Published)->create(), serial: true);
+
+    $this->get("/media/photos/{$photo->id}/square.webp")->assertNotFound();
+    $this->actingAs(User::factory()->create())->get("/media/photos/{$photo->id}/wide.avif")->assertNotFound();
+
+    $response = $this->actingAs($owner)->get("/media/photos/{$photo->id}/square.webp");
+    $response->assertOk();
+    expect((string) $response->headers->get('Cache-Control'))->toContain('private')->toContain('no-store');
+});
+
+it('в Resource для не-владельца у фото серийного номера нет URL', function () {
+    $owner = User::factory()->create();
+    $serial = readyPhoto(Listing::factory()->for($owner)->inStatus(ListingStatus::Published)->create(), serial: true);
+
+    $guest = Request::create('/');
+    $stranger = Request::create('/');
+    $stranger->setUserResolver(fn () => User::factory()->create());
+    $ownerRequest = Request::create('/');
+    $ownerRequest->setUserResolver(fn () => $owner);
+
+    expect((new ListingPhotoResource($serial))->toArray($guest)['urls'])->toBeNull()
+        ->and((new ListingPhotoResource($serial))->toArray($stranger)['urls'])->toBeNull()
+        ->and((new ListingPhotoResource($serial))->toArray($ownerRequest)['urls'])->not->toBeNull();
 });

@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 use App\Domain\Accounts\Models\User;
 use App\Domain\Listings\Enums\ListingStatus;
+use App\Domain\Listings\Events\ListingMinorEdited;
 use App\Domain\Listings\Events\ListingSubstantiallyEdited;
 use App\Domain\Listings\Jobs\ProcessListingPhoto;
 use App\Domain\Listings\Models\Listing;
@@ -12,7 +13,10 @@ use App\Domain\Listings\Photos\PendingPhotoUploads;
 use App\Domain\Listings\Photos\S3PresignedUploads;
 use App\Domain\Listings\Photos\UploadTicket;
 use Aws\S3\S3Client;
+use Illuminate\Cache\ArrayStore;
+use Illuminate\Cache\Repository;
 use Illuminate\Http\JsonResponse;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Event;
 use Illuminate\Support\Facades\Queue;
 use Illuminate\Support\Facades\Storage;
@@ -194,6 +198,18 @@ describe('локальный приёмник (тесты и e2e без S3)', fu
     });
 });
 
+describe('локальный приёмник: окружение', function () {
+    it('на stage и в production — 404 даже с подписью', function (string $environment) {
+        $user = photoOwner();
+        $listing = draftOf($user);
+        $ticket = $this->actingAs($user)->postJson("/listings/{$listing->id}/photos/uploads", ['content_type' => 'image/jpeg', 'size' => 10])->json();
+        app()->detectEnvironment(fn () => $environment);
+
+        $this->call('PUT', $ticket['url'], [], [], [], ['CONTENT_TYPE' => 'image/jpeg'], str_repeat('a', 10))->assertNotFound();
+        expect(Storage::disk(config('photos.disk'))->allFiles())->toBe([]);
+    })->with(['production', 'stage']);
+});
+
 describe('confirm', function () {
     it('создаёт фото в обработке и ставит job перекодирования', function () {
         $user = photoOwner();
@@ -248,6 +264,53 @@ describe('confirm', function () {
             ->assertJsonValidationErrors(['upload_id' => 'Фото больше 15 МБ. Уменьшите его и загрузите снова.']);
 
         expect(Storage::disk(config('photos.disk'))->exists($key))->toBeFalse();
+    });
+
+    it('PNG 20000 × 20000 меньше 15 МБ отклоняется по размеру в пикселях, файл удаляется', function () {
+        $user = photoOwner();
+        $listing = draftOf($user);
+        $this->actingAs($user);
+        $bomb = ImageFixtures::pngBomb(20000, 20000);
+        expect(strlen($bomb))->toBeLessThan(15 * 1024 * 1024);
+        $uploadId = uploadBytes($listing, $bomb, 'image/png');
+
+        confirmUpload($listing, $uploadId)
+            ->assertUnprocessable()
+            ->assertJsonValidationErrors(['upload_id' => 'Фото слишком большое: не больше 50 Мп. Уменьшите его и загрузите снова.']);
+
+        expect(ListingPhoto::query()->count())->toBe(0)
+            ->and(Storage::disk(config('photos.disk'))->allFiles())->toBe([]);
+        Queue::assertNothingPushed();
+    });
+
+    it('параллельный confirm: загрузку уже забрал другой запрос — отказ, строки нет, файл на месте', function () {
+        $user = photoOwner();
+        $listing = draftOf($user);
+        $this->actingAs($user);
+        $uploadId = uploadBytes($listing, ImageFixtures::jpeg());
+        $key = (string) app(PendingPhotoUploads::class)->find($uploadId)?->key;
+
+        // Кэш, где get() ещё видит загрузку, а forget() уже ничего не удаляет: её удалил параллельный запрос.
+        $store = new class extends ArrayStore
+        {
+            public function forget($key)
+            {
+                parent::forget($key);
+
+                return false;
+            }
+        };
+        $cache = new Repository($store);
+        $cache->put('listing-photo-upload:'.$uploadId, Cache::get('listing-photo-upload:'.$uploadId), 600);
+        app()->instance(PendingPhotoUploads::class, new PendingPhotoUploads($cache));
+
+        confirmUpload($listing, $uploadId, serial: true)
+            ->assertUnprocessable()
+            ->assertJsonValidationErrors(['upload_id' => 'Фото не загрузилось. Попробуйте ещё раз.']);
+
+        expect(ListingPhoto::query()->count())->toBe(0)
+            ->and(Storage::disk(config('photos.disk'))->exists($key))->toBeTrue();
+        Queue::assertNothingPushed();
     });
 
     it('файл не загружен — понятная ошибка', function () {
@@ -362,6 +425,23 @@ describe('порядок и удаление', function () {
             ->assertJsonPath('data.1.id', $c)
             ->assertJsonPath('data.2.id', $b);
         expect($listing->photos()->pluck('id')->all())->toBe([$a, $c, $b]);
+    });
+
+    it('перестановка у опубликованного — minor_edit, статус остаётся published', function () {
+        $user = photoOwner();
+        $listing = Listing::factory()->for($user)->inStatus(ListingStatus::Published)->create();
+        $this->actingAs($user);
+        foreach ([true, false, false] as $position => $serial) {
+            ListingPhoto::query()->create(['listing_id' => $listing->id, 'path' => "p/{$position}", 'position' => $position, 'is_serial' => $serial]);
+        }
+        [$a, $b, $c] = $listing->photos()->pluck('id')->all();
+        Event::fake([ListingMinorEdited::class, ListingSubstantiallyEdited::class]);
+
+        $this->putJson("/listings/{$listing->id}/photos/order", ['photos' => [$a, $c, $b]])->assertOk();
+
+        Event::assertDispatched(ListingMinorEdited::class, fn ($e) => $e->listing->is($listing));
+        Event::assertNotDispatched(ListingSubstantiallyEdited::class);
+        expect($listing->refresh()->status)->toBe(ListingStatus::Published);
     });
 
     it('порядок — перестановка всех фото объявления, иначе отказ', function () {

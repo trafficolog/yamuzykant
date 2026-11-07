@@ -200,6 +200,54 @@ it('битый файл — фото помечено ошибкой, исход
         ->and(photosDisk()->allFiles())->toBe([]);
 });
 
+it('бомба распаковки (PNG 20000 × 20000) — ошибка без декодирования, исходник удалён', function () {
+    // Декодирование 20000 × 20000 в GD — больше 1,6 ГБ: если размер не проверить по заголовку, процесс упадёт.
+    $photo = runPhotoJob(uploadedPhoto(ImageFixtures::pngBomb(20000, 20000)));
+
+    expect($photo->failed_reason)->toBe('dimensions')
+        ->and($photo->processed_at)->toBeNull()
+        ->and($photo->upload_key)->toBeNull()
+        ->and(photosDisk()->allFiles())->toBe([]);
+});
+
+it('неожиданное исключение в job — фото с ошибкой, исходник удалён (failed)', function () {
+    app()->instance(HeicConverter::class, new class implements HeicConverter
+    {
+        public function toJpeg(string $heic): string
+        {
+            throw new RuntimeException('сбой декодера');
+        }
+    });
+    $photo = uploadedPhoto(ImageFixtures::heicHeader());
+
+    // Очередь sync: исключение уходит наружу, а Laravel вызывает failed() у job.
+    expect(fn () => ProcessListingPhoto::dispatch($photo->id))->toThrow(RuntimeException::class);
+
+    $photo->refresh();
+    expect($photo->failed_reason)->toBe('unreadable')
+        ->and($photo->upload_key)->toBeNull()
+        ->and(photosDisk()->allFiles())->toBe([]);
+});
+
+it('failed() не трогает уже готовое фото', function () {
+    $photo = runPhotoJob(uploadedPhoto(ImageFixtures::jpeg()));
+
+    (new ProcessListingPhoto($photo->id))->failed(new RuntimeException('поздний сбой'));
+
+    expect($photo->refresh()->failed_reason)->toBeNull()
+        ->and($photo->processed_at)->not->toBeNull();
+});
+
+it('лимит памяти поднимается только на время job', function () {
+    $before = (string) ini_get('memory_limit');
+    ini_set('memory_limit', '256M');
+
+    runPhotoJob(uploadedPhoto(ImageFixtures::jpeg()));
+
+    expect(ini_get('memory_limit'))->toBe('256M');
+    ini_set('memory_limit', $before);
+});
+
 it('удалённое до обработки фото job пропускает', function () {
     $photo = uploadedPhoto(ImageFixtures::jpeg());
     $photo->delete();

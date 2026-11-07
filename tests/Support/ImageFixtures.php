@@ -80,6 +80,19 @@ final class ImageFixtures
         return $blob === '' ? null : $blob;
     }
 
+    /**
+     * «Бомба распаковки»: PNG, у которого в заголовке IHDR $width × $height, а данных — пара килобайт.
+     * Размер файла крошечный, а декодирование заняло бы гигабайты памяти.
+     */
+    public static function pngBomb(int $width = 20000, int $height = 20000): string
+    {
+        $chunk = static fn (string $type, string $data): string => pack('N', strlen($data)).$type.$data.pack('N', crc32($type.$data));
+        $ihdr = pack('NNCCCCC', $width, $height, 8, 2, 0, 0, 0);
+        $idat = (string) gzcompress(str_repeat("\0", 2048));
+
+        return "\x89PNG\r\n\x1a\n".$chunk('IHDR', $ihdr).$chunk('IDAT', $idat).$chunk('IEND', '');
+    }
+
     /** Байты JPEG длиной больше $bytes: валидная сигнатура и хвост из нулей. */
     public static function oversized(int $bytes): string
     {
