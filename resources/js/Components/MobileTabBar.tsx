@@ -46,7 +46,7 @@ const ACCOUNT_PANEL_ID = 'tabbar-account-panel';
  * Нижняя панель сайта на экранах < 640 px (на более широких скрыта стилем `.ym-tabbar`).
  *
  * Вкладка — своя ссылка с классами `ym-iconbtn` ДС: `IconButton` не принимает `aria-current`,
- * а текущая вкладка должна быть видна и вспомогательным технологиям.
+ * а текущая вкладка должна быть видна и вспомогательным технологиям. «Кабинет» — кнопка с теми же классами.
  */
 export default function MobileTabBar({
     active = 'none',
@@ -62,36 +62,41 @@ export default function MobileTabBar({
                 const count = tab.key === 'messages' && messages > 0 ? messages : 0;
                 const shown = count > MAX_COUNT ? `${MAX_COUNT}+` : String(count);
 
+                if (tab.key === 'account') {
+                    // Не ссылка, а кнопка: у «Кабинета» нет адреса. Вошедшему он раскрывает меню кабинета
+                    // (disclosure: aria-expanded и aria-controls), гостю открывает окно входа.
+                    return (
+                        <button
+                            key={tab.key}
+                            id={ACCOUNT_TAB_ID}
+                            type="button"
+                            data-login-trigger={user ? undefined : ''}
+                            className="ym-iconbtn ym-tabbar__item"
+                            aria-current={tab.key === active ? 'page' : undefined}
+                            aria-haspopup={user ? undefined : 'dialog'}
+                            aria-expanded={user ? account.open : undefined}
+                            aria-controls={user && account.open ? ACCOUNT_PANEL_ID : undefined}
+                            onClick={(event) => {
+                                if (user) {
+                                    account.toggle();
+                                    return;
+                                }
+                                // На < 640 px кнопки «Войти» в шапке нет: вход — через «Кабинет».
+                                openLogin({ opener: event.currentTarget });
+                            }}
+                        >
+                            <Icon name={tab.icon} size={22} />
+                            <span className="ym-tabbar__label">{tab.label}</span>
+                        </button>
+                    );
+                }
+
                 return (
                     <a
                         key={tab.key}
-                        id={tab.key === 'account' ? ACCOUNT_TAB_ID : undefined}
-                        data-login-trigger={tab.key === 'account' && !user ? '' : undefined}
                         href={tab.href}
                         className="ym-iconbtn ym-tabbar__item"
                         aria-current={tab.key === active ? 'page' : undefined}
-                        aria-haspopup={
-                            tab.key === 'account' ? (user ? 'true' : 'dialog') : undefined
-                        }
-                        aria-expanded={tab.key === 'account' && user ? account.open : undefined}
-                        aria-controls={
-                            tab.key === 'account' && user && account.open
-                                ? ACCOUNT_PANEL_ID
-                                : undefined
-                        }
-                        onClick={
-                            tab.key === 'account'
-                                ? (event) => {
-                                      event.preventDefault();
-                                      if (user) {
-                                          account.toggle();
-                                          return;
-                                      }
-                                      // На < 640 px кнопки «Войти» в шапке нет: вход — через «Кабинет».
-                                      openLogin({ opener: event.currentTarget });
-                                  }
-                                : undefined
-                        }
                         aria-label={
                             tab.key === 'messages' && count > 0
                                 ? ru.tabBar.messagesLabel(shown)

@@ -152,6 +152,8 @@ export const ru = {
     },
     account: {
         label: 'Кабинет',
+        /** Имя кнопки меню кабинета в шапке: «Кабинет, Анна». */
+        menuLabel: (name: string) => `Кабинет, ${name}`,
         buy: 'Покупаю',
         sell: 'Продаю',
         favorites: 'Избранное',

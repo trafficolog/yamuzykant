@@ -50,6 +50,7 @@ test.describe('UC-A1: шапка вошедшего', () => {
         for (const link of ['Избранное', 'Объявления', 'Сообщения', 'Профиль']) {
             await expect(menu.getByRole('link', { name: link })).toBeVisible();
         }
+        await expect(page.locator('#nprogress')).toHaveCount(0); // полоса загрузки Inertia не мешает axe
         expect(await seriousOrCritical(page)).toEqual([]);
 
         // Обновление страницы: вошедший виден и в серверной разметке.

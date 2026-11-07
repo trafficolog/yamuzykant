@@ -20,10 +20,9 @@ export default function AccountMenu({ user }: { user: AuthUser }) {
                 id={TOGGLE_ID}
                 variant="ghost"
                 icon="user"
-                aria-haspopup="true"
                 aria-expanded={open}
                 aria-controls={open ? PANEL_ID : undefined}
-                aria-label={`${ru.account.label}, ${user.name}`}
+                aria-label={ru.account.menuLabel(user.name)}
                 onClick={toggle}
             >
                 <span className="ym-account__label">{user.name}</span>

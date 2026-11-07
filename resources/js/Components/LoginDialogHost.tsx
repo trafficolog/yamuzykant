@@ -55,11 +55,10 @@ export default function LoginDialogHost() {
     const request = useLoginRequest();
     const [mounted, setMounted] = useState(false);
 
-    // Страница ожила: признак для e2e (вместо networkidle); клик по «Войти» до этого момента (app.blade.php)
-    // сохранён в `__ymLoginPending` и открывает окно теперь, если пользователь не вошёл.
+    // Клик по «Войти» до гидратации (public/js/pending-login.js) сохранён в `__ymLoginPending`:
+    // окно открывается теперь, если пользователь не вошёл. Признак гидратации ставит HydrationMarker.
     useEffect(() => {
         setMounted(true);
-        document.documentElement.dataset.hydrated = 'true';
 
         const pending = window.__ymLoginPending === true;
         delete window.__ymLoginPending;
