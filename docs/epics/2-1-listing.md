@@ -22,5 +22,5 @@ gate: G1
 | [2.1.4 Черновик, публикация, экран «Опубликовано»](../tasks/2-1-4-sell-publish.md) | todo | medium | sonnet → sonnet |
 | [2.1.5 Мои объявления: изменить, снизить цену, снять](../tasks/2-1-5-my-listings.md) | todo | medium | sonnet → sonnet |
 | [2.1.6 Лимит активных объявлений](../tasks/2-1-6-listing-limit.md) | todo | low | haiku → sonnet |
-| [2.1.7 Объявление: защита владельца и смены статуса в глубину](../tasks/2-1-7-listing-defense-in-depth.md) | todo | medium | sonnet → opus |
+| [2.1.7 Объявление: защита владельца и смены статуса в глубину](../tasks/2-1-7-listing-defense-in-depth.md) | in_progress | medium | sonnet → opus |
 <!-- docs:ops:end -->
