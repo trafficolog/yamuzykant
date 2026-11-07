@@ -3,7 +3,7 @@ id: "1.1.2"
 phase: "1"
 epic: "1.1"
 title: "Окно входа"
-status: in_progress
+status: review
 gate: G1
 risk: medium
 model_impl: sonnet
