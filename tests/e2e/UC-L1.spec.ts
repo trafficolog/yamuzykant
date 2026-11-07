@@ -63,7 +63,7 @@ test.describe('UC-L1: заполнение формы «Продать инст�
         await expect(publish).toBeEnabled();
 
         // В превью — обычное фото, а не серийный номер.
-        await expect(preview.getByRole('img', { name: TITLE })).toHaveAttribute(
+        await expect(preview.locator('img')).toHaveAttribute(
             'src',
             /\/media\/photos\/\d+\/square\.webp/,
         );

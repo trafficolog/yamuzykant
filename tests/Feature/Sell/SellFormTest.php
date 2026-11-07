@@ -65,6 +65,7 @@ function sellPayload(Listing $listing, Category $kind, array $overrides = []): a
         'serial' => 'V091187',
         'condition' => 'excellent',
         'description' => 'Родной кейс, оригинальные звукосниматели.',
+        'price_mode' => 'amount',
         'price' => 184_500,
         'negotiable' => true,
         'meet' => true,
@@ -241,10 +242,52 @@ describe('StoreListingRequest', function () {
         'цена ноль' => ['price', 0],
         'цена отрицательная' => ['price', -1],
         'цена больше предела' => ['price', 100_000_000],
+        'способ цены не передан' => ['price_mode', null],
+        'способа цены нет' => ['price_mode', 'barter'],
         'торг не булево' => ['negotiable', 'возможно'],
         'листинг не передан' => ['listing_id', null],
         'листинг не uuid' => ['listing_id', 'не-uuid'],
     ]);
+
+    it('BR-11: «Договорная» — суммы нет, price = null, «Готов к торгу» принудительно выключен', function () {
+        ->actingAs(->user)
+            ->post('/sell', sellPayload(->listing, ->kind, ['price_mode' => 'negotiable', 'price' => null, 'negotiable' => true]))
+            ->assertSessionHasNoErrors();
+
+         = ->listing->fresh();
+        expect(->price)->toBeNull()->and(->negotiable)->toBeFalse();
+    });
+
+    it('BR-11: «Бесплатно» — price = 0, «Готов к торгу» принудительно выключен', function () {
+        ->actingAs(->user)
+            ->post('/sell', sellPayload(->listing, ->kind, ['price_mode' => 'free', 'price' => null, 'negotiable' => true]))
+            ->assertSessionHasNoErrors();
+
+         = ->listing->fresh();
+        expect(->price)->toBe(0)->and(->negotiable)->toBeFalse();
+    });
+
+    it('BR-11: с суммой «Готов к торгу» сохраняется как отправлен', function (bool ) {
+        ->actingAs(->user)
+            ->post('/sell', sellPayload(->listing, ->kind, ['negotiable' => ]))
+            ->assertSessionHasNoErrors();
+
+        expect(->listing->fresh()->negotiable)->toBe();
+    })->with([true, false]);
+
+    it('BR-11: при «Договорная» и «Бесплатно» сумма в запросе отклоняется', function (string ) {
+        ->actingAs(->user)->from('/sell')
+            ->post('/sell', sellPayload(->listing, ->kind, ['price_mode' => , 'price' => 5000]))
+            ->assertSessionHasErrors('price');
+
+        expect(->listing->fresh()->price)->toBeNull();
+    })->with(['negotiable', 'free']);
+
+    it('BR-11: при «Бесплатно» и «Договорная» сумма 0 тоже отклоняется (ноль задаёт только «Бесплатно»)', function () {
+        ->actingAs(->user)->from('/sell')
+            ->post('/sell', sellPayload(->listing, ->kind, ['price_mode' => 'negotiable', 'price' => 0]))
+            ->assertSessionHasErrors('price');
+    });
 
     it('без способа передачи отправка отклоняется', function () {
         $this->actingAs($this->user)->from('/sell')

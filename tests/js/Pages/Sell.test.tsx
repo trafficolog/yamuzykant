@@ -119,7 +119,7 @@ describe('Шаги и поля', () => {
         const kinds = within(
             screen.getByRole('radiogroup', { name: 'Вид инструмента' }),
         ).getAllByRole('radio');
-        expect(kinds.map((kind) => kind.textContent)).toEqual(KINDS);
+        expect(kinds.map((kind) => kind.textContent?.trim())).toEqual(KINDS);
         expect(kinds[0]).toHaveAttribute('aria-checked', 'true');
 
         fireEvent.click(screen.getByRole('radio', { name: 'Ударные' }));
@@ -270,13 +270,14 @@ describe('Список недостающего и кнопка', () => {
 });
 
 describe('Превью ListingCard', () => {
-    it('до ввода: «Бренд и модель» и 0 ₽, как в макете', () => {
+    it('до ввода: «Бренд и модель» и «Укажите цену», без «0 ₽» (BR-11)', () => {
         renderSell();
         const preview = screen.getByRole('complementary');
 
         expect(within(preview).getByText('Так лот увидят покупатели')).toBeVisible();
         expect(within(preview).getByText('Бренд и модель')).toBeVisible();
-        expect(within(preview).getByText(/^0\s₽$/)).toBeVisible();
+        expect(within(preview).getByText('Укажите цену')).toBeVisible();
+        expect(within(preview).queryByText(/0\s₽/)).toBeNull();
         expect(within(preview).getByText('Москва')).toBeVisible();
         expect(within(preview).getByText('только что')).toBeVisible();
     });
@@ -304,8 +305,94 @@ describe('Превью ListingCard', () => {
         renderSell({ photos: THREE });
         const preview = screen.getByRole('complementary');
 
-        const image = within(preview).getByRole('img', { name: 'Бренд и модель' });
+        const image = within(preview).getByAltText('Бренд и модель');
         expect(image).toHaveAttribute('src', '/media/photos/2/square.webp');
+    });
+});
+
+describe('BR-11: цена — сумма, «Договорная» или «Бесплатно»', () => {
+    const chip = (name: string) => screen.getByRole('button', { name });
+
+    it('два режима рядом с суммой; по умолчанию сумма', () => {
+        renderSell();
+
+        expect(chip('Договорная')).toHaveAttribute('aria-pressed', 'false');
+        expect(chip('Бесплатно')).toHaveAttribute('aria-pressed', 'false');
+        expect(screen.getByRole('textbox', { name: 'Цена' })).toBeEnabled();
+    });
+
+    it('«Договорная»: превью без «0 ₽», сумма и «Готов к торгу» недоступны, цену не просят', () => {
+        renderSell({ photos: THREE });
+        fillRequired();
+        fireEvent.click(chip('Договорная'));
+        const preview = screen.getByRole('complementary');
+
+        expect(within(preview).getByText('Договорная')).toBeVisible();
+        expect(within(preview).queryByText(/0\s₽/)).toBeNull();
+        expect(screen.getByRole('textbox', { name: 'Цена' })).toBeDisabled();
+        expect(chip('Готов к торгу')).toBeDisabled();
+        expect(chip('Готов к торгу')).toHaveAttribute('aria-pressed', 'false');
+        expect(missing()).toBeNull();
+        expect(publish()).toBeEnabled();
+    });
+
+    it('«Бесплатно»: превью «Бесплатно», отправка с price_mode free и без суммы', () => {
+        renderSell({ photos: THREE });
+        fillRequired();
+        fireEvent.click(chip('Бесплатно'));
+
+        expect(within(screen.getByRole('complementary')).getByText('Бесплатно')).toBeVisible();
+        expect(within(screen.getByRole('complementary')).queryByText(/0\s₽/)).toBeNull();
+
+        fireEvent.click(publish());
+        expect(post).toHaveBeenCalledWith(
+            '/sell',
+            expect.objectContaining({ price_mode: 'free', price: null, negotiable: false }),
+            expect.anything(),
+        );
+    });
+
+    it('«Договорная» отправляется как price_mode negotiable, price null', () => {
+        renderSell({ photos: THREE });
+        fillRequired();
+        fireEvent.click(chip('Договорная'));
+
+        fireEvent.click(publish());
+        expect(post).toHaveBeenCalledWith(
+            '/sell',
+            expect.objectContaining({ price_mode: 'negotiable', price: null, negotiable: false }),
+            expect.anything(),
+        );
+    });
+
+    it('повторное нажатие возвращает сумму; введённая сумма и «Готов к торгу» на месте', () => {
+        renderSell({ photos: THREE });
+        fillRequired();
+        fireEvent.click(chip('Договорная'));
+        fireEvent.click(chip('Договорная'));
+
+        expect(screen.getByRole('textbox', { name: 'Цена' })).toBeEnabled();
+        expect(screen.getByRole('textbox', { name: 'Цена' })).toHaveValue('184\u00a0500');
+        expect(chip('Готов к торгу')).toBeEnabled();
+        expect(chip('Готов к торгу')).toHaveAttribute('aria-pressed', 'true');
+    });
+
+    it('режимы взаимоисключающие', () => {
+        renderSell();
+        fireEvent.click(chip('Договорная'));
+        fireEvent.click(chip('Бесплатно'));
+
+        expect(chip('Договорная')).toHaveAttribute('aria-pressed', 'false');
+        expect(chip('Бесплатно')).toHaveAttribute('aria-pressed', 'true');
+    });
+
+    it('без суммы в режиме «сумма» кнопка неактивна: в списке «цену»', () => {
+        renderSell({ photos: THREE });
+        fireEvent.change(modelField(), { target: { value: 'Fender Stratocaster' } });
+        fireEvent.click(screen.getByRole('radio', { name: 'Отличное' }));
+
+        expect(missing()).toHaveTextContent('Чтобы опубликовать, добавьте: цену.');
+        expect(publish()).toBeDisabled();
     });
 });
 
@@ -402,6 +489,7 @@ describe('Отправка', () => {
                 serial: 'V091187',
                 condition: 'excellent',
                 description: 'Родной кейс.',
+                price_mode: 'amount',
                 price: 184_500,
                 negotiable: true,
                 meet: true,

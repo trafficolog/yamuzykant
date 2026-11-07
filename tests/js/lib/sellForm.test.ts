@@ -20,6 +20,7 @@ function photo(id: number, overrides: Partial<ListingPhoto> = {}): ListingPhoto 
 const filled: SellValues = {
     title: 'Fender American Vintage ’57 Stratocaster',
     condition: 'excellent',
+    priceMode: 'amount',
     price: 184_500,
     meet: true,
     ship: false,
@@ -36,6 +37,7 @@ describe('missingItems', () => {
         const empty: SellValues = {
             title: '',
             condition: null,
+            priceMode: 'amount',
             price: 0,
             meet: false,
             ship: false,
@@ -82,6 +84,11 @@ describe('missingItems', () => {
     it('одно слово или пробелы вместо названия — нет модели (нужны бренд и модель)', () => {
         expect(missingItems({ ...filled, title: '   ' }, three)).toEqual(['модель']);
         expect(missingItems({ ...filled, title: 'Fender' }, three)).toEqual(['модель']);
+    });
+
+    it('BR-11: «Договорная» и «Бесплатно» — суммы не нужно', () => {
+        expect(missingItems({ ...filled, priceMode: 'negotiable', price: 0 }, three)).toEqual([]);
+        expect(missingItems({ ...filled, priceMode: 'free', price: 0 }, three)).toEqual([]);
     });
 
     it('достаточно одного способа передачи', () => {
