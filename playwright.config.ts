@@ -13,6 +13,8 @@ const referenceSpecs = /visual\/(?!ds\.visual)[^/]+\.spec\.ts$/;
 
 export default defineConfig({
     testDir: 'tests/e2e',
+    // Данные для e2e: один раз на прогон, до воркеров (сидер на экран, список — чтобы экраны не спорили за строку).
+    globalSetup: ['./tests/e2e/global-setup.lot.ts'],
     fullyParallel: true,
     forbidOnly: !!process.env.CI,
     retries: process.env.CI ? 1 : 0,

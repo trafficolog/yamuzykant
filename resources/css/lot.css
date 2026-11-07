@@ -1,0 +1,408 @@
+/*
+ * Страница объявления (задача 3.1.5). Подключается из resources/js/app.tsx после site.css.
+ * Только токены var(--*) и классы ym-*. Раскладка и размеры — по прототипу design/prototypes/Десктоп - Лот.dc.html;
+ * < 640 px — по чек-листу SCREENS §3 и мобильному UI-киту ДС: одна колонка, превью в прокручиваемой строке.
+ */
+
+.ym-lot {
+    max-width: var(--content-max);
+    margin: 0 auto;
+    padding: var(--space-6) var(--space-10) var(--space-16);
+    box-sizing: border-box;
+}
+
+/* Хлебные крошки (тот же вид, что в Барахолке 3.1.2; общий файл появится после её слияния) */
+.ym-crumbs {
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: var(--space-2);
+    margin-bottom: var(--space-4);
+}
+.ym-crumbs__link,
+.ym-crumbs__current {
+    display: flex;
+    align-items: center;
+    min-height: 32px;
+}
+.ym-crumbs__link {
+    color: var(--ink-muted);
+    text-decoration: none;
+    white-space: nowrap;
+}
+.ym-crumbs__link:hover {
+    color: var(--lad-strong);
+    text-decoration: underline;
+}
+.ym-crumbs__current {
+    color: var(--ink);
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+.ym-crumbs__sep {
+    display: flex;
+    color: var(--ink-faint);
+}
+
+/* Верх: галерея слева, покупка справа */
+.ym-lot__top,
+.ym-lot__body {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) minmax(360px, 440px);
+    gap: var(--space-10);
+    align-items: start;
+}
+.ym-lot__body {
+    margin-top: var(--space-12);
+}
+
+/* Галерея */
+.ym-lot__gallery {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-3);
+    min-width: 0;
+}
+.ym-lot__stage {
+    position: relative;
+    aspect-ratio: 4 / 3;
+    border-radius: var(--radius-lg);
+    background: var(--surface-recessed);
+    overflow: hidden;
+}
+.ym-lot__stage--empty {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: var(--space-3);
+    color: var(--ink-faint);
+}
+.ym-lot__open {
+    display: block;
+    width: 100%;
+    height: 100%;
+    padding: 0;
+    border: 0;
+    background: transparent;
+    cursor: zoom-in;
+}
+.ym-lot__open:focus-visible,
+.ym-lot__thumb:focus-visible,
+.ym-lot__viewer button:focus-visible {
+    outline: 2px solid var(--focus-ring);
+    outline-offset: 2px;
+}
+.ym-lot__photo {
+    display: block;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+.ym-lot__count {
+    position: absolute;
+    left: var(--space-4);
+    bottom: var(--space-4);
+    padding: var(--space-1) var(--space-3);
+    border-radius: var(--radius-full);
+    background: var(--surface-raised);
+    color: var(--ink);
+    font-variant-numeric: tabular-nums;
+    pointer-events: none;
+}
+.ym-lot__thumbs {
+    display: grid;
+    grid-template-columns: repeat(6, minmax(0, 1fr));
+    gap: var(--space-3);
+}
+.ym-lot__thumb {
+    aspect-ratio: 1 / 1;
+    min-height: var(--hit-min);
+    padding: 0;
+    overflow: hidden;
+    border: 2px solid transparent;
+    border-radius: var(--radius-md);
+    background: var(--surface-recessed);
+    cursor: pointer;
+    box-sizing: border-box;
+}
+.ym-lot__thumb[aria-pressed='true'] {
+    border-color: var(--lad);
+}
+.ym-lot__thumb img {
+    display: block;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+.ym-lot__note {
+    margin: 0;
+    color: var(--ink-muted);
+}
+
+/* Просмотр на весь экран */
+.ym-lot__viewer {
+    position: fixed;
+    inset: 0;
+    z-index: 100;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: var(--space-3);
+    padding: var(--space-4);
+    box-sizing: border-box;
+    background: color-mix(in srgb, var(--ink) 92%, transparent);
+    color: var(--on-inverse);
+}
+.ym-lot__viewer-close {
+    position: absolute;
+    top: var(--space-4);
+    right: var(--space-4);
+    color: var(--on-inverse);
+}
+.ym-lot__viewer-stage {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: var(--space-4);
+    width: 100%;
+    min-height: 0;
+    flex: 1;
+}
+.ym-lot__viewer-stage picture {
+    display: flex;
+    min-width: 0;
+    max-height: 100%;
+}
+.ym-lot__viewer-photo {
+    display: block;
+    max-width: 100%;
+    max-height: calc(100vh - var(--space-16) * 2);
+    object-fit: contain;
+    border-radius: var(--radius-md);
+}
+.ym-lot__viewer-nav {
+    flex: none;
+    color: var(--on-inverse);
+}
+.ym-lot__viewer-nav--prev svg {
+    transform: scaleX(-1);
+}
+.ym-lot__viewer-count {
+    margin: 0;
+    font-variant-numeric: tabular-nums;
+}
+
+/* Покупка */
+.ym-lot__buy {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-5);
+    min-width: 0;
+}
+.ym-lot__head {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-3);
+}
+.ym-lot__title {
+    margin: 0;
+    text-wrap: balance;
+}
+.ym-lot__badges {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--space-2);
+}
+.ym-lot__compose,
+.ym-lot__owner {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-3);
+}
+.ym-lot__owner-note {
+    margin: 0;
+    font-weight: 500;
+}
+.ym-lot__error {
+    margin: 0;
+    color: var(--danger);
+}
+.ym-lot__ways {
+    margin: 0;
+    padding: var(--space-4) 0;
+    list-style: none;
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-3);
+    border-top: 1px solid var(--line);
+    border-bottom: 1px solid var(--line);
+}
+.ym-lot__way {
+    display: flex;
+    gap: var(--space-3);
+    align-items: flex-start;
+}
+.ym-lot__way-icon {
+    display: flex;
+    flex: none;
+    color: var(--ink-muted);
+}
+.ym-lot__way-icon.is-accent {
+    color: var(--lad);
+}
+.ym-lot__way-text {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+}
+.ym-lot__way-title {
+    font-weight: 500;
+}
+.ym-lot__way-hint,
+.ym-lot__meta {
+    color: var(--ink-muted);
+}
+.ym-lot__meta {
+    margin: 0;
+    font-variant-numeric: tabular-nums;
+}
+
+/* Описание и характеристики */
+.ym-lot__main {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-12);
+    min-width: 0;
+}
+.ym-lot__section {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-4);
+}
+.ym-lot__section h2 {
+    margin: 0;
+}
+.ym-lot__description {
+    margin: 0;
+    max-width: 720px;
+    white-space: pre-line;
+    overflow-wrap: anywhere;
+    text-wrap: pretty;
+}
+.ym-lot__specs {
+    margin: 0;
+    max-width: 720px;
+    border-top: 1px solid var(--line);
+}
+.ym-lot__spec {
+    display: grid;
+    grid-template-columns: minmax(160px, 240px) minmax(0, 1fr);
+    border-bottom: 1px solid var(--line);
+}
+.ym-lot__spec dt {
+    margin: 0;
+    padding: var(--space-3) var(--space-4) var(--space-3) 0;
+    color: var(--ink-muted);
+}
+.ym-lot__spec dd {
+    margin: 0;
+    padding: var(--space-3) 0;
+    color: var(--ink);
+    overflow-wrap: anywhere;
+}
+
+/* Продавец */
+.ym-lot__aside {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-4);
+    position: sticky;
+    top: var(--space-4);
+}
+.ym-lot__seller-text {
+    min-width: 0;
+}
+
+/* Похожие */
+.ym-lot__similar {
+    margin-top: var(--space-16);
+}
+.ym-lot__similar-head {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: var(--space-4);
+    margin-bottom: var(--space-6);
+}
+.ym-lot__similar-head h2 {
+    margin: 0;
+}
+.ym-lot__similar-all {
+    color: var(--lad);
+    white-space: nowrap;
+}
+.ym-lot__grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(var(--card-min), 1fr));
+    gap: var(--space-6);
+}
+
+@media (max-width: 1023px) {
+    .ym-lot__top,
+    .ym-lot__body {
+        grid-template-columns: minmax(0, 1fr);
+        gap: var(--space-6);
+    }
+    .ym-lot__aside {
+        position: static;
+    }
+}
+
+@media (max-width: 639px) {
+    .ym-lot {
+        padding: var(--space-4) var(--space-4) var(--space-10);
+    }
+    .ym-lot__body {
+        margin-top: var(--space-8);
+    }
+    .ym-lot__main {
+        gap: var(--space-8);
+    }
+    .ym-lot__stage {
+        border-radius: var(--radius-md);
+    }
+    .ym-lot__thumbs {
+        display: flex;
+        gap: var(--space-2);
+        overflow-x: auto;
+        padding-bottom: var(--space-1);
+    }
+    .ym-lot__thumb {
+        flex: none;
+        width: 64px;
+    }
+    .ym-lot__spec {
+        grid-template-columns: minmax(110px, 40%) minmax(0, 1fr);
+    }
+    .ym-lot__similar {
+        margin-top: var(--space-10);
+    }
+    .ym-lot__grid {
+        grid-template-columns: repeat(auto-fill, minmax(var(--card-min-compact), 1fr));
+        gap: var(--space-4);
+    }
+    .ym-lot__viewer-nav {
+        position: absolute;
+        bottom: var(--space-4);
+    }
+    .ym-lot__viewer-nav--prev {
+        left: var(--space-4);
+    }
+    .ym-lot__viewer-nav--next {
+        right: var(--space-4);
+    }
+}

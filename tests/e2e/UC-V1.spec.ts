@@ -1,22 +1,12 @@
 import AxeBuilder from '@axe-core/playwright';
 import { expect, test, type Page } from '@playwright/test';
-import { execFileSync } from 'node:child_process';
-import { fileURLToPath } from 'node:url';
 
-// UC-V1 «Посмотреть лот» и вход UC-D1 «Написать продавцу» (3.1.5). Данные — LotDemoSeeder: лот из прототипа
-// (Fender American Vintage ’57 Stratocaster, 184 500 ₽), пять похожих, одно снятое.
+// UC-V1 «Посмотреть лот» и вход UC-D1 «Написать продавцу» (3.1.5). Данные — LotDemoSeeder (global-setup.lot.ts,
+// один раз на прогон): лот из прототипа (Fender American Vintage ’57 Stratocaster, 184 500 ₽), пять похожих, одно снятое.
 
 const LOT = '3a1f0c00-0000-4000-8000-000000000001';
 const WITHDRAWN = '3a1f0c00-0000-4000-8000-000000000009';
 const SELLER_EMAIL = 'lot-demo-seller@example.test';
-const APP_ROOT = fileURLToPath(new URL('../..', import.meta.url));
-
-test.beforeAll(() => {
-    execFileSync('php', ['artisan', 'db:seed', '--class=LotDemoSeeder', '--force'], {
-        cwd: APP_ROOT,
-        stdio: 'pipe',
-    });
-});
 
 async function signInAsSeller(page: Page): Promise<void> {
     await page.goto('/');
@@ -95,7 +85,11 @@ test.describe('UC-V1: страница объявления', () => {
         await expect(page.getByRole('dialog', { name: 'Вход' })).toBeVisible();
     });
 
-    test('снятое: гостю 404, владельцу 200 с плашкой, без «Написать»', async ({ page, browser }) => {
+    // Один вход на тест: код на почту ограничен (5 в час на адрес).
+    test('снятое: гостю 404; владельцу 200 с плашкой, без «Написать», и фото серийного номера у главного лота', async ({
+        page,
+        browser,
+    }) => {
         const guest = await (await browser.newContext()).newPage();
         const hidden = await guest.goto(`/listings/${WITHDRAWN}`);
         expect(hidden?.status()).toBe(404);
@@ -106,16 +100,14 @@ test.describe('UC-V1: страница объявления', () => {
         await expect(page.getByTestId('lot-status')).toContainText('Снято с продажи');
         await expect(page.getByText('Это ваше объявление')).toBeVisible();
         await expect(page.getByRole('button', { name: 'Написать продавцу' })).toHaveCount(0);
-    });
 
-    test('владелец видит и фото серийного номера', async ({ page }) => {
-        await signInAsSeller(page);
         await page.goto(`/listings/${LOT}`);
-
         await expect(page.getByRole('region', { name: 'Фотографии' })).toContainText('1 / 3');
     });
 
-    test('axe без serious и critical, 1440 и 390 px; горизонтальной прокрутки нет', async ({ page }) => {
+    test('axe без serious и critical, 1440 и 390 px; горизонтальной прокрутки нет', async ({
+        page,
+    }) => {
         for (const width of [1440, 390]) {
             await page.setViewportSize({ width, height: 900 });
             await page.goto(`/listings/${LOT}`);
@@ -125,7 +117,12 @@ test.describe('UC-V1: страница объявления', () => {
             const serious = results.violations.filter((v) =>
                 ['serious', 'critical'].includes(v.impact ?? ''),
             );
-            expect(serious.map((v) => `${v.id}: ${v.help}`), `${width}px`).toEqual([]);
+            expect(
+                serious.map(
+                    (v) => `${v.id}: ${v.nodes.map((n) => n.target.join(' ')).join(' | ')}`,
+                ),
+                `${width}px`,
+            ).toEqual([]);
 
             const overflow = await page.evaluate(
                 () => document.documentElement.scrollWidth - document.documentElement.clientWidth,

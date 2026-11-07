@@ -8,6 +8,7 @@ import { initSentry } from '@/observability/sentry';
 
 // Стили каркаса PublicLayout: после токенов ДС из resources/css/app.css.
 import '../css/site.css';
+import '../css/lot.css';
 
 // Ошибки браузера в Sentry: без VITE_SENTRY_DSN выключено (CI, локальная разработка).
 initSentry({

@@ -16,12 +16,14 @@ use App\Domain\Listings\Photos\ImageType;
 use App\Domain\Listings\Photos\PhotoProcessor;
 use App\Domain\Listings\Photos\PhotoStorage;
 use App\Domain\Listings\StateMachines\ListingStateMachine;
+use App\Domain\Search\ListingIndex;
 use Illuminate\Database\Seeder;
+use Meilisearch\Contracts\TasksQuery;
 use RuntimeException;
 
 /**
  * Данные для e2e и визуальной сверки страницы объявления (3.1.5): лот из прототипа — Fender American Vintage ’57
- * Stratocaster за 184 500 ₽, Москва, три фото (первое — серийный номер), пять похожих и одно снятое.
+ * Stratocaster за 184 500 ₽, Санкт-Петербург, три фото (первое — серийный номер), пять похожих и одно снятое.
  * Идемпотентен: адреса фиксированы, повторный запуск ничего не меняет. Только для e2e и локальной разработки.
  */
 final class LotDemoSeeder extends Seeder
@@ -41,9 +43,21 @@ final class LotDemoSeeder extends Seeder
         ['3a1f0c00-0000-4000-8000-000000000006', 'Fender Vintera ’50s Stratocaster', 0, 'excellent'],
     ];
 
+    /** Цвета трёх фото. */
+    private const COLORS = [[42, 52, 66], [196, 122, 52], [88, 120, 96]];
+
     public function run(ListingStateMachine $machine, PhotoProcessor $processor): void
     {
-        $city = City::query()->where('name', 'Москва')->firstOrFail();
+        if (! app()->environment(['local', 'testing', 'e2e'])) {
+            throw new RuntimeException('LotDemoSeeder работает только в local, testing и e2e.');
+        }
+
+        // Индекс обновляется сразу, а не очередью: после сидера блок «Похожие» готов.
+        config(['queue.default' => 'sync']);
+        ListingIndex::default()->prepare();
+
+        // Свой город: выдачу Барахолки в Москве (FleaDemoSeeder, 3.1.2) демо-лоты не меняют.
+        $city = City::query()->where('slug', 'saint-petersburg')->firstOrFail();
         $category = Category::query()->where('slug', 'elektrogitary')->firstOrFail();
         $model = InstrumentModel::query()->firstOrCreate(
             ['brand' => 'Fender', 'name' => 'American Vintage ’57 Stratocaster'],
@@ -59,7 +73,7 @@ final class LotDemoSeeder extends Seeder
             'year' => 2009,
             'serial_enc' => 'V091187',
             'condition' => 'excellent',
-            'description' => 'Гриф шлифовали один раз, лады в отличном состоянии. Оригинальные звукосниматели, родной твидовый кейс. Отправлю доставкой в защитной упаковке или встречусь в Москве.',
+            'description' => 'Гриф шлифовали один раз, лады в отличном состоянии. Оригинальные звукосниматели, родной твидовый кейс. Отправлю доставкой в защитной упаковке или встречусь лично.',
             'price' => 184_500,
             'negotiable' => true,
             'meet' => true,
@@ -68,7 +82,7 @@ final class LotDemoSeeder extends Seeder
         $this->photos($lot, $processor);
 
         foreach (self::SIMILAR as [$id, $title, $price, $condition]) {
-            $this->listing($machine, $id, $seller, $city, $category, $model, [
+            $similar = $this->listing($machine, $id, $seller, $city, $category, $model, [
                 'title' => $title,
                 'price' => $price,
                 'condition' => $condition,
@@ -79,6 +93,7 @@ final class LotDemoSeeder extends Seeder
                 'meet' => true,
                 'ship' => false,
             ]);
+            $this->photos($similar, $processor, 1, false);
         }
 
         $withdrawn = $this->listing($machine, self::WITHDRAWN, $seller, $city, $category, $model, [
@@ -93,8 +108,26 @@ final class LotDemoSeeder extends Seeder
             'ship' => false,
         ], publish: true);
         if ($withdrawn->saleRecord === null && $withdrawn->status->value === 'published') {
-            $machine->withdraw($withdrawn, WithdrawReason::SoldElsewhere);
+            $machine->withdraw($withdrawn, WithdrawReason::ChangedMind);
         }
+
+        $this->waitForIndex();
+    }
+
+    private function waitForIndex(): void
+    {
+        $client = ListingIndex::default()->client();
+        $deadline = microtime(true) + 30;
+
+        do {
+            $pending = $client->getTasks((new TasksQuery)->setStatuses(['enqueued', 'processing']))->getResults();
+            if ($pending === []) {
+                return;
+            }
+            usleep(100_000);
+        } while (microtime(true) < $deadline);
+
+        throw new RuntimeException('Meilisearch не доработал задачи за 30 с.');
     }
 
     /** @param  array<string, mixed>  $attributes */
@@ -130,20 +163,20 @@ final class LotDemoSeeder extends Seeder
         return $published;
     }
 
-    /** Три готовых фото без очереди: плоские цветные кадры 1200×900, первое — серийный номер. */
-    private function photos(Listing $listing, PhotoProcessor $processor): void
+    /** Готовые фото без очереди: плоские цветные кадры 1200×900; у главного лота первое — серийный номер. */
+    private function photos(Listing $listing, PhotoProcessor $processor, int $count = 3, bool $serialFirst = true): void
     {
         if (ListingPhoto::query()->where('listing_id', $listing->id)->exists()) {
             return;
         }
 
-        $colors = [[42, 52, 66], [196, 122, 52], [88, 120, 96]];
-        foreach ($colors as $position => [$r, $g, $b]) {
+        for ($position = 0; $position < $count; $position++) {
+            [$r, $g, $b] = self::COLORS[$position % count(self::COLORS)];
             $photo = new ListingPhoto;
             $photo->listing_id = $listing->id;
             $photo->path = PhotoStorage::photoDirectory($listing->id, "demo{$position}");
             $photo->position = $position;
-            $photo->is_serial = $position === 0;
+            $photo->is_serial = $serialFirst && $position === 0;
             $photo->save();
 
             $result = $processor->process($this->jpeg($r, $g, $b), ImageType::Jpeg);
@@ -154,6 +187,11 @@ final class LotDemoSeeder extends Seeder
         }
     }
 
+    /**
+     * @param  int<0, 255>  $r
+     * @param  int<0, 255>  $g
+     * @param  int<0, 255>  $b
+     */
     private function jpeg(int $r, int $g, int $b): string
     {
         $image = imagecreatetruecolor(1200, 900);

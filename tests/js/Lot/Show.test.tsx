@@ -18,7 +18,7 @@ vi.mock('@inertiajs/react', () => ({
 }));
 
 const openLogin = vi.fn();
-vi.mock('@/hooks/loginDialog', () => ({ openLogin: (input: unknown) => openLogin(input) }));
+vi.mock('@/Hooks/loginDialog', () => ({ openLogin: (input: unknown) => openLogin(input) }));
 
 const postJson = vi.fn();
 vi.mock('@/lib/postJson', () => ({
@@ -100,7 +100,9 @@ describe('Lot/Show: заголовок и цена (BR-11)', () => {
     it('заголовок h1, состояние и сумма с ₽', () => {
         render(<LotShow {...base} />);
 
-        expect(screen.getByRole('heading', { level: 1 }).textContent).toContain('Stratocaster 2009');
+        expect(screen.getByRole('heading', { level: 1 }).textContent).toContain(
+            'Stratocaster 2009',
+        );
         expect(screen.getAllByText(/Отличное/).length).toBeGreaterThan(0);
         expect(document.querySelector('.ym-price--pdp')?.textContent).toMatch(/184\s500\s₽/);
     });
@@ -149,7 +151,12 @@ describe('Lot/Show: кнопки действий', () => {
 
     it('вошедший: появляется поле сообщения, отправка — POST по объявлению', async () => {
         postJson.mockResolvedValue({ status: 201, body: { conversation: { id: 7 } } });
-        render(<LotShow {...base} viewer={{ authenticated: true, is_owner: false, is_staff: false }} />);
+        render(
+            <LotShow
+                {...base}
+                viewer={{ authenticated: true, is_owner: false, is_staff: false }}
+            />,
+        );
 
         fireEvent.click(screen.getByRole('button', { name: 'Написать продавцу' }));
         expect(openLogin).not.toHaveBeenCalled();
@@ -167,7 +174,12 @@ describe('Lot/Show: кнопки действий', () => {
     });
 
     it('пустое сообщение не отправляется', () => {
-        render(<LotShow {...base} viewer={{ authenticated: true, is_owner: false, is_staff: false }} />);
+        render(
+            <LotShow
+                {...base}
+                viewer={{ authenticated: true, is_owner: false, is_staff: false }}
+            />,
+        );
 
         fireEvent.click(screen.getByRole('button', { name: 'Написать продавцу' }));
 
@@ -176,10 +188,17 @@ describe('Lot/Show: кнопки действий', () => {
 
     it('ошибка сервера показывается и не теряет текст', async () => {
         postJson.mockResolvedValue({ status: 429, body: {} });
-        render(<LotShow {...base} viewer={{ authenticated: true, is_owner: false, is_staff: false }} />);
+        render(
+            <LotShow
+                {...base}
+                viewer={{ authenticated: true, is_owner: false, is_staff: false }}
+            />,
+        );
 
         fireEvent.click(screen.getByRole('button', { name: 'Написать продавцу' }));
-        fireEvent.change(screen.getByRole('textbox', { name: /Сообщение/ }), { target: { value: 'Привет' } });
+        fireEvent.change(screen.getByRole('textbox', { name: /Сообщение/ }), {
+            target: { value: 'Привет' },
+        });
         fireEvent.click(screen.getByRole('button', { name: 'Отправить' }));
 
         expect(await screen.findByRole('alert')).toBeInTheDocument();
@@ -187,7 +206,9 @@ describe('Lot/Show: кнопки действий', () => {
     });
 
     it('своё объявление: вместо «Написать» — пометка владельца', () => {
-        render(<LotShow {...base} viewer={{ authenticated: true, is_owner: true, is_staff: false }} />);
+        render(
+            <LotShow {...base} viewer={{ authenticated: true, is_owner: true, is_staff: false }} />,
+        );
 
         expect(screen.queryByRole('button', { name: 'Написать продавцу' })).toBeNull();
         expect(screen.getByText('Это ваше объявление')).toBeInTheDocument();
@@ -236,7 +257,8 @@ describe('Lot/Show: характеристики, продавец, получе
     it('характеристики: бренд, модель, год, маска серийного номера', () => {
         render(<LotShow {...base} />);
 
-        const specs = screen.getByRole('heading', { name: 'Характеристики' }).parentElement as HTMLElement;
+        const specs = screen.getByRole('heading', { name: 'Характеристики' })
+            .parentElement as HTMLElement;
         expect(within(specs).getByText('Fender')).toBeInTheDocument();
         expect(within(specs).getByText('2009')).toBeInTheDocument();
         expect(within(specs).getByText('V09****')).toBeInTheDocument();
@@ -258,19 +280,25 @@ describe('Lot/Show: характеристики, продавец, получе
         expect(seller.textContent).not.toMatch(/@/);
     });
 
-    it('способы передачи: доставка и встреча в городе; расстояния нет', () => {
+    it('способы передачи: доставка и встреча с городом; расстояния нет', () => {
         render(<LotShow {...base} />);
 
         const list = screen.getByRole('list', { name: 'Доставка и получение' });
         expect(list.textContent).toContain('Доставка');
-        expect(list.textContent).toContain('Встреча в Москве');
+        expect(list.textContent).toContain('Встреча: Москва');
         expect(document.body.textContent).not.toMatch(/\d\s?км/);
     });
 
     it('блоков вне MVP нет: Проверено мастером, Цены на б/у, Паспорт, Аксессуары', () => {
         render(<LotShow {...base} />);
 
-        for (const text of ['Проверено мастером', 'Цены на б/у', 'Паспорт инструмента', 'Аксессуары', 'Заказать проверку']) {
+        for (const text of [
+            'Проверено мастером',
+            'Цены на б/у',
+            'Паспорт инструмента',
+            'Аксессуары',
+            'Заказать проверку',
+        ]) {
             expect(screen.queryByText(new RegExp(text))).toBeNull();
         }
     });
@@ -279,8 +307,15 @@ describe('Lot/Show: характеристики, продавец, получе
         render(<LotShow {...base} />);
 
         const nav = screen.getByRole('navigation', { name: 'Хлебные крошки' });
-        const hrefs = within(nav).getAllByRole('link').map((a) => a.getAttribute('href'));
-        expect(hrefs).toEqual(['/', '/baraholka', '/baraholka/gitary', '/baraholka/gitary/elektrogitary']);
+        const hrefs = within(nav)
+            .getAllByRole('link')
+            .map((a) => a.getAttribute('href'));
+        expect(hrefs).toEqual([
+            '/',
+            '/baraholka',
+            '/baraholka/gitary',
+            '/baraholka/gitary/elektrogitary',
+        ]);
         expect(nav.querySelector('[aria-current="page"]')?.textContent).toContain('Stratocaster');
     });
 });
@@ -293,7 +328,10 @@ describe('Lot/Show: галерея', () => {
         expect(gallery.textContent).toContain('1 / 3');
         fireEvent.click(within(gallery).getByRole('button', { name: 'Фото 2' }));
         expect(gallery.textContent).toContain('2 / 3');
-        expect(within(gallery).getByRole('button', { name: 'Фото 2' })).toHaveAttribute('aria-pressed', 'true');
+        expect(within(gallery).getByRole('button', { name: 'Фото 2' })).toHaveAttribute(
+            'aria-pressed',
+            'true',
+        );
     });
 
     it('главное фото 4:3 — picture с avif и webp, у фото есть alt', () => {
@@ -301,7 +339,10 @@ describe('Lot/Show: галерея', () => {
 
         const picture = screen.getByRole('region', { name: 'Фотографии' }).querySelector('picture');
         expect(picture?.querySelector('source[type="image/avif"]')).not.toBeNull();
-        expect(picture?.querySelector('img')).toHaveAttribute('alt', expect.stringMatching(/Фото 1/));
+        expect(picture?.querySelector('img')).toHaveAttribute(
+            'alt',
+            expect.stringMatching(/Фото 1/),
+        );
     });
 
     it('полноэкранный просмотр: открывается диалогом, Escape закрывает, фокус возвращается', () => {
@@ -342,7 +383,9 @@ describe('Lot/Show: похожие', () => {
 
         const section = screen.getByRole('heading', { name: 'Похожие лоты рядом' }).parentElement
             ?.parentElement as HTMLElement;
-        const hrefs = within(section).getAllByRole('link').map((a) => a.getAttribute('href'));
+        const hrefs = within(section)
+            .getAllByRole('link')
+            .map((a) => a.getAttribute('href'));
         expect(hrefs).toContain('/listings/s1');
         expect(hrefs).toContain('/baraholka/gitary/elektrogitary');
     });
@@ -351,5 +394,17 @@ describe('Lot/Show: похожие', () => {
         render(<LotShow {...base} similar={[]} />);
 
         expect(screen.queryByRole('heading', { name: 'Похожие лоты рядом' })).toBeNull();
+    });
+});
+
+describe('Lot/Show: SSR', () => {
+    it('рендерится в строку: цена, заголовок и маска серийного номера в разметке', async () => {
+        const { renderToString } = await import('react-dom/server');
+
+        const html = renderToString(<LotShow {...base} />);
+
+        expect(html).toContain('Stratocaster 2009');
+        expect(html).toMatch(/184\s500\s₽/);
+        expect(html).toContain('V09****');
     });
 });
