@@ -14,6 +14,11 @@ final class ConversationClosed extends DomainException
         return new self((string) __('messaging.errors.listing_closed', ['days' => (int) config('messaging.reply_window_days')]));
     }
 
+    public static function removedByModeration(): self
+    {
+        return new self((string) __('messaging.errors.listing_moderated'));
+    }
+
     public static function counterpartDeleted(): self
     {
         return new self((string) __('messaging.errors.counterpart_deleted'));

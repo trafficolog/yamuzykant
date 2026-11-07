@@ -11,7 +11,8 @@ use Illuminate\Support\Facades\Schema;
  * Момент, когда объявление перестало быть published (снято, истекло, ушло на проверку после правки).
  * От него считается срок ответов в беседах (SPEC BR-10, messaging.reply_window_days). Ведёт ListingStateMachine:
  * ставит при уходе из published, сбрасывает при возврате в published; переход между не-published статусами
- * (например expired → withdrawn) момент не сдвигает. Существующим строкам — updated_at как лучшее приближение.
+ * (например expired → withdrawn) момент не сдвигает. Существующим не-published строкам, которые реально были
+ * опубликованы (published_at не пуст), — updated_at как лучшее приближение; остальным null.
  */
 return new class extends Migration
 {
@@ -21,8 +22,10 @@ return new class extends Migration
             $table->timestamp('unpublished_at')->nullable()->after('published_at');
         });
 
+        // Только то, что реально было опубликовано (published_at не пуст); остальным null — окно закрыто.
         DB::table('listings')
-            ->whereIn('status', ['pending', 'needs_changes', 'rejected', 'withdrawn', 'expired'])
+            ->whereIn('status', ['withdrawn', 'expired', 'needs_changes', 'rejected'])
+            ->whereNotNull('published_at')
             ->update(['unpublished_at' => DB::raw('updated_at')]);
     }
 

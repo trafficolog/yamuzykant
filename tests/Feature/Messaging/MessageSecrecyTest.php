@@ -61,11 +61,11 @@ function traceDump(array $trace): string
 function sentryEventFromEnvelope(string $envelope): array
 {
     $lines = explode("\n", trim($envelope));
-    /** @var array<string, mixed>|null $event */
-    $event = json_decode((string) end($lines), true);
-    expect(json_last_error())->toBe(JSON_ERROR_NONE)
-        ->and($event)->toBeArray()
-        ->and($event['exception']['values'] ?? [])->not->toBeEmpty();
+    $decoded = json_decode((string) end($lines), true);
+    expect(json_last_error())->toBe(JSON_ERROR_NONE)->and($decoded)->toBeArray();
+    /** @var array<string, mixed> $event */
+    $event = $decoded;
+    expect($event['exception']['values'] ?? [])->not->toBeEmpty();
 
     $isHarness = fn (string $file): bool => preg_match('~[\\\\/](tests|Testing|pestphp|phpunit|nunomaduro)[\\\\/]~', $file) === 1;
     foreach ($event['exception']['values'] as $i => $exception) {
@@ -80,7 +80,11 @@ function sentryEventFromEnvelope(string $envelope): array
     return $event;
 }
 
-/** Событие Sentry одной строкой (JSON без \u-экранирования) — для поиска подстрок. */
+/**
+ * Событие Sentry одной строкой (JSON без \u-экранирования) — для поиска подстрок.
+ *
+ * @param  array<string, mixed>  $event
+ */
 function sentryDump(array $event): string
 {
     return json_encode($event, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES) ?: '';

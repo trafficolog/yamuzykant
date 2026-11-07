@@ -6,6 +6,7 @@ namespace App\Domain\Messaging\Actions;
 
 use App\Domain\Accounts\Models\User;
 use App\Domain\Listings\Enums\ListingStatus;
+use App\Domain\Listings\Enums\WithdrawReason;
 use App\Domain\Listings\Models\Listing;
 use App\Domain\Messaging\Enums\MessageKind;
 use App\Domain\Messaging\Events\MessageSent;
@@ -42,8 +43,13 @@ final class SendMessage
 
         return DB::transaction(function () use ($sender, $conversation, $body): Message {
             $listing = Listing::query()->whereKey($conversation->listing_id)->sharedLock()->firstOrFail();
-            if ($listing->status !== ListingStatus::Published && ! $this->withinReplyWindow($listing)) {
-                throw ConversationClosed::listingNotPublished();
+            if ($listing->status !== ListingStatus::Published) {
+                if ($this->removedByModeration($listing)) {
+                    throw ConversationClosed::removedByModeration();
+                }
+                if (! $this->withinReplyWindow($listing)) {
+                    throw ConversationClosed::listingNotPublished();
+                }
             }
 
             $recipientId = $conversation->counterpartId($sender);
@@ -61,7 +67,7 @@ final class SendMessage
                 $message->save();
             } catch (QueryException $e) {
                 // Исключение БД несёт SQL с текстом сообщения: наружу — только SQLSTATE, без previous.
-                throw new MessageNotSaved((string) $e->getCode());
+                throw new MessageNotSaved((string) $e->getCode(), (string) $conversation->id);
             }
 
             $conversation->last_message_at = $message->created_at;
@@ -76,12 +82,19 @@ final class SendMessage
 
     /**
      * BR-10: после ухода из published отвечать можно ещё messaging.reply_window_days дней. Момент — unpublished_at
-     * (ведёт ListingStateMachine); у строк без него (не должно быть) — updated_at.
+     * (ведёт ListingStateMachine). Без него окно закрыто: updated_at меняется любой записью и открывал бы беседу заново.
+     * Окно — ровно N×24 часа: в момент unpublished_at + N дней отвечать уже нельзя.
      */
     private function withinReplyWindow(Listing $listing): bool
     {
-        $since = $listing->unpublished_at ?? $listing->updated_at;
+        return $listing->unpublished_at !== null
+            && $listing->unpublished_at->copy()->addDays((int) config('messaging.reply_window_days'))->isFuture();
+    }
 
-        return $since !== null && $since->copy()->addDays((int) config('messaging.reply_window_days'))->isFuture();
+    /** Решение оркестратора по BR-10: отклонено модератором или снято с причиной «модерация» — без окна. */
+    private function removedByModeration(Listing $listing): bool
+    {
+        return $listing->status === ListingStatus::Rejected
+            || $listing->saleRecord?->reason === WithdrawReason::Moderation;
     }
 }

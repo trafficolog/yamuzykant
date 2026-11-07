@@ -180,6 +180,11 @@ class Listing extends Model
                 throw new LogicException('Статус объявления меняет только ListingStateMachine.');
             }
 
+            // Момент ухода из published ведёт только машина (от него считается срок ответов, BR-10).
+            if ($listing->exists && $listing->isDirty('unpublished_at') && ! $listing->statusChangeAllowed) {
+                throw new LogicException('Поле unpublished_at ведёт только ListingStateMachine.');
+            }
+
             if ($listing->exists && $listing->isDirty('user_id')) {
                 throw new LogicException('Владельца объявления менять нельзя.');
             }
