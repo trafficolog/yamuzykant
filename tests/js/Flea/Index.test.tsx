@@ -359,12 +359,25 @@ describe('Flea/Index: сортировка', () => {
         expect(lastGet()[1]).toEqual({});
     });
 
-    it('при поисковом запросе первая позиция — «По релевантности»', () => {
+    it('при поисковом запросе первая позиция — «По релевантности», а «Сначала свежие» остаётся выбором', () => {
         render(<FleaIndex {...props({ filters: { ...EMPTY_FILTERS, q: 'страт' } })} />);
 
-        expect(
-            within(screen.getByLabelText('Сортировка')).getAllByRole('option').map(text)[0],
-        ).toBe('По релевантности');
+        const select = screen.getByLabelText('Сортировка');
+        expect(within(select).getAllByRole('option').map(text)).toEqual([
+            'По релевантности',
+            'Сначала свежие',
+            'Сначала дешевле',
+            'Сначала дороже',
+        ]);
+
+        fireEvent.change(select, { target: { value: 'new' } });
+        expect(lastGet()[1]).toEqual({ q: 'страт', sort: 'new' });
+    });
+
+    it('цена null не рисуется как «0 ₽»', () => {
+        render(<FleaIndex {...props({ listings: [card(1, { price: null })] })} />);
+
+        expect(screen.getByRole('article').textContent).not.toMatch(/0\s₽/);
     });
 });
 

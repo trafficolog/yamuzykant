@@ -299,10 +299,18 @@ describe('страницы', function () {
             ->where('pagination.page', 2));
     });
 
-    it('страница за пределами выдачи — пустой список, а не ошибка', function () {
-        fleaGet('/baraholka?page=99')->assertOk()->assertInertia(fn (Assert $page) => $page
+    it('страница за пределами выдачи при непустой выдаче — редирект на последнюю страницу с теми же фильтрами', function () {
+        fleaGet('/baraholka?page=99&sort=cheap')->assertRedirect('/baraholka?sort=cheap&page=2');
+    });
+
+    it('в категории редирект остаётся в категории', function () {
+        fleaGet('/baraholka/gitary?page=99')->assertRedirect('/baraholka/gitary?page=2');
+    });
+
+    it('пустая выдача и page больше единицы — без редиректа: нечего показывать на любой странице', function () {
+        fleaGet('/baraholka?price_from=9000000&page=5')->assertOk()->assertInertia(fn (Assert $page) => $page
             ->has('listings', 0)
-            ->where('pagination.total', 30));
+            ->where('pagination.total', 0));
     });
 
     it('«Показать ещё» — частичный запрос: listings дописываются к уже загруженным, pagination заменяется', function () {

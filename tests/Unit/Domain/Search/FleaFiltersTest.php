@@ -108,3 +108,10 @@ it('withoutConditions сбрасывает только состояние (дл
         ->and($filters->ship)->toBeTrue()
         ->and($filters->page)->toBe(2);
 });
+
+it('withPage меняет только страницу', function () {
+    $filters = FleaFilters::fromQuery(['ship' => '1', 'sort' => 'cheap', 'page' => '9'])->withPage(2);
+
+    expect($filters->page)->toBe(2)
+        ->and($filters->toQuery())->toBe(['ship' => 1, 'sort' => 'cheap', 'page' => 2]);
+});
