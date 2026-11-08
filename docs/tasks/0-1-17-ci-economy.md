@@ -11,6 +11,7 @@ model_review: sonnet
 roles: ["DEVOPS"]
 depends_on: []
 uc: []
+issue: 142
 sync_state: aligned
 escalations: []
 ---

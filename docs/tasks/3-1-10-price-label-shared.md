@@ -13,6 +13,7 @@ depends_on: ["3.1.9"]
 uc: ["S2", "S3"]
 prototype: "Десктоп - Каталог.dc.html"
 screens: ["flea", "lot"]
+issue: 141
 sync_state: aligned
 escalations: []
 ---

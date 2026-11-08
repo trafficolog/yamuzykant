@@ -21,7 +21,7 @@
 | 0.1.14 Наблюдаемость: доработки после ревью и проверка на stage | G1 | todo | low | sonnet → sonnet | #110 |
 | 0.1.15 Инфраструктура фото: S3 для stage, HEIC и AVIF на сервере, очистка загрузок | G1 | todo | medium | sonnet → opus | #111 |
 | 0.1.16 Reverb на stage и production: процесс, wss-прокси, переменные | G1 | todo | medium | sonnet → opus | #121 |
-| 0.1.17 Экономия минут CI: docs-only без тяжёлых джобов, e2e по метке ready | G1 | in_progress | medium | sonnet → sonnet | — |
+| 0.1.17 Экономия минут CI: docs-only без тяжёлых джобов, e2e по метке ready | G1 | in_progress | medium | sonnet → sonnet | #142 |
 | 0.2.1 Подключение дизайн-системы: ds:sync и @ds | G0 | done | medium | sonnet → sonnet | #7 |
 | 0.2.2 Проверка текстов: lint:copy и copy.spec | G0 | done | low | haiku → sonnet | #8 |
 | 0.2.3 Эталоны макетов и визуальные тесты | G0 | done | medium | sonnet → sonnet | #9 |
@@ -59,7 +59,7 @@
 | 3.1.7 SEO: SSR, разметка, sitemap | G2 | todo | low | haiku → sonnet | #32 |
 | 3.1.8 Поисковый индекс: доработки после ревью | G1 | done | low | sonnet → sonnet | #108 |
 | 3.1.9 Барахолка: подпись цены без JS, e2e цены, позиция прокрутки | G1 | review | low | sonnet → sonnet | #125 |
-| 3.1.10 Общая подпись цены «Договорная»/«Бесплатно» для карточек Барахолки и лота | G1 | todo | low | sonnet → sonnet | — |
+| 3.1.10 Общая подпись цены «Договорная»/«Бесплатно» для карточек Барахолки и лота | G1 | todo | low | sonnet → sonnet | #141 |
 | 4.1.1 Сообщения: домен и realtime | G1 | done | high | opus → opus | #33 |
 | 4.1.2 Сообщения: список и чат | G1 | done | medium | sonnet → sonnet | #34 |
 | 4.1.3 Антиспам в сообщениях | G1 | done | medium | sonnet → sonnet | #35 |
