@@ -70,6 +70,25 @@ final class TextFolding
         return strtr($text, self::CYRILLIC_TO_LATIN);
     }
 
+    /**
+     * Шаблон слова, в котором каждая буква может быть и своей, и похожей из другого алфавита:
+     * «собака» совпадёт и с «сoбaкa» (латинские o, a).
+     */
+    public static function tolerant(string $word): string
+    {
+        $parts = [];
+        foreach (mb_str_split($word) as $char) {
+            $set = array_unique([
+                $char,
+                self::LATIN_TO_CYRILLIC[$char] ?? $char,
+                self::CYRILLIC_TO_LATIN[$char] ?? $char,
+            ]);
+            $parts[] = '['.implode('', array_map(static fn (string $c): string => preg_quote($c, '/'), $set)).']';
+        }
+
+        return implode('', $parts);
+    }
+
     public static function hasCyrillic(string $text): bool
     {
         return preg_match('/\p{Cyrillic}/u', $text) === 1;

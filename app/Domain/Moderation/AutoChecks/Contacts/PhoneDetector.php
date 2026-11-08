@@ -31,7 +31,12 @@ final class PhoneDetector
      */
     public function find(string $folded): ?string
     {
-        $text = (string) preg_replace('/(?<=\d)[oо](?=\d)/u', '0', NumberWords::toDigits($folded));
+        // Буквы вместо цифр внутри числа: «89l6l234567», «9O0».
+        $text = (string) preg_replace(
+            ['/(?<=\d)[oо](?=\d)/u', '/(?<=\d)[liі](?=\d)/u'],
+            ['0', '1'],
+            NumberWords::toDigits($folded),
+        );
 
         if (preg_match_all('/\d+/', $text, $found, PREG_OFFSET_CAPTURE) === 0) {
             return null;
@@ -127,6 +132,13 @@ final class PhoneDetector
 
         if (self::priceAndYear($groups)) {
             return false;
+        }
+
+        // Международный префикс «00 7…», «00 375…» равносилен «+».
+        if ($length >= 12 && preg_match('/^00(7|3\d\d)/', $digits) === 1) {
+            $digits = substr($digits, 2);
+            $length -= 2;
+            $plus = true;
         }
 
         return match (true) {

@@ -161,7 +161,9 @@ describe('assess: признаки риска', function () {
 
         $signal = autoChecks()->assess($listing)->signals()[0];
 
-        expect(json_encode($signal->toArray(), JSON_UNESCAPED_UNICODE))->not->toContain('1234567')->not->toContain('ivan.petrov')
+        $stored = (string) json_encode($signal->toArray(), JSON_UNESCAPED_UNICODE);
+
+        expect($stored)->not->toContain('1234567')->not->toContain('ivan.petrov')
             ->and($signal->details['excerpt'])->toBe('i***@mail.ru');
     });
 

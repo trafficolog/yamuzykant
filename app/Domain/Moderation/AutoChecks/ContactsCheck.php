@@ -9,7 +9,7 @@ use App\Domain\Moderation\AutoChecks\Contacts\ContactDetector;
 
 /**
  * Контакты в названии и описании (BR-04): телефон, e-mail, ссылка, мессенджер, @-ник.
- * Блокирует отправку формы и публикацию; найденное остаётся и сигналом риска.
+ * Блокирует отправку формы и публикацию; найденное остаётся и сигналом риска. Подсказка называет вид контакта, в пояснении и деталях — только маска.
  */
 final class ContactsCheck implements AutoCheck
 {
@@ -48,10 +48,10 @@ final class ContactsCheck implements AutoCheck
                 message: (string) __('moderation.contacts.signal', [
                     'field' => (string) __("moderation.fields.{$field}"),
                     'kind' => (string) __("moderation.contacts.kinds.{$contact->kind->value}"),
-                    'excerpt' => $contact->excerpt,
+                    'excerpt' => $contact->masked(),
                 ]),
-                details: ['kind' => $contact->kind->value, 'excerpt' => $contact->excerpt],
-                hint: (string) __("moderation.contacts.hint.{$field}"),
+                details: ['kind' => $contact->kind->value, 'excerpt' => $contact->masked()],
+                hint: (string) __("moderation.contacts.hint.{$field}.{$contact->kind->value}"),
             );
         }
 
