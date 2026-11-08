@@ -15,3 +15,6 @@ export const fleaPath = (categoryPath?: string | null): string =>
  * разделы»). Подставят задачи 2.1.3 (продажа), 2.1.5 (объявления), 4.1.2 (сообщения), 4.3.1 (избранное).
  */
 export const HREF_SOON = '#';
+
+/** Форма «Продать инструмент» (2.1.3). Гостю после входа открывается она же. */
+export const SELL_PATH = '/sell';

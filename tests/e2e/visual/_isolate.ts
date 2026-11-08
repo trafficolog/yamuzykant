@@ -53,9 +53,9 @@ const unescapeAttr = (value: string): string =>
  * с разделами вне MVP (прототипы «Шапка», «Подвал»), а реализация в R1 их скрывает флагами и поэтому
  * отличается размером. Состояние R1 (флаги выключены) проверяют остальные тесты.
  */
-export async function enableAllFlags(page: Page): Promise<void> {
+export async function enableAllFlags(page: Page, path = '/'): Promise<void> {
     await page.route(
-        (url) => url.pathname === '/',
+        (url) => url.pathname === path,
         async (route) => {
             if (route.request().resourceType() !== 'document') return route.continue();
 

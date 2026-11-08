@@ -18,6 +18,7 @@ use App\Http\Controllers\Listings\ListingPhotoController;
 use App\Http\Controllers\Listings\LocalPhotoUploadController;
 use App\Http\Controllers\Listings\LotController;
 use App\Http\Controllers\Listings\PhotoMediaController;
+use App\Http\Controllers\Listings\SellController;
 use App\Http\Controllers\Messaging\ConversationController;
 use App\Http\Middleware\EnsureE2eEnvironment;
 use Illuminate\Foundation\Http\Middleware\ValidateCsrfToken;
@@ -67,6 +68,12 @@ Route::prefix('auth')->name('auth.')->group(function (): void {
 
 // Страница объявления (3.1.5, UC-V1): открыта всем; не опубликованное — только владельцу и сотрудникам, остальным 404.
 Route::get('/listings/{listing}', LotController::class)->whereUuid('listing')->name('lot.show');
+
+// Форма «Продать инструмент» (2.1.3): страница с черновиком и проверка содержимого. Гость — на главную, вход — окно.
+Route::middleware('auth')->group(function (): void {
+    Route::get('/sell', [SellController::class, 'create'])->name('sell');
+    Route::post('/sell', [SellController::class, 'store'])->middleware('throttle:60,1')->name('sell.store');
+});
 
 // Фото объявления (2.1.2): URL загрузки, подтверждение, порядок, удаление — для владельца (ListingPolicy::update).
 Route::middleware('auth')->prefix('listings/{listing}/photos')->name('listings.photos.')->scopeBindings()->group(function (): void {

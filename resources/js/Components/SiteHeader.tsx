@@ -11,7 +11,7 @@ import { useFlag, type FlagName } from '@/Hooks/useFlag';
 import { useNarrow } from '@/Hooks/useNarrow';
 import { CATEGORY_TREE, type CategoryNode } from '@/lang/categories';
 import { ru } from '@/lang/ru';
-import { HREF_SOON } from '@/lib/paths';
+import { HREF_SOON, SELL_PATH } from '@/lib/paths';
 
 /** Разделы строки над шапкой; `none` — страница не относится ни к одному разделу. */
 export type HeaderSection = 'catalog' | 'flea' | 'parts' | 'masters' | 'guide';
@@ -50,8 +50,8 @@ const SECTIONS: readonly Section[] = [
     { key: 'guide', label: ru.header.sections.guide, href: '#', flag: 'sale_prices' },
 ];
 
-/** Форма продажи — задача 2.1.3; до неё гость после входа остаётся на странице. */
-const SELL_HREF = HREF_SOON;
+/** Форма продажи (2.1.3): гость сначала входит, затем попадает на неё. */
+const SELL_HREF = SELL_PATH;
 
 const TOGGLE_ID = 'site-category-toggle';
 
@@ -238,7 +238,7 @@ export default function SiteHeader({
                                 openLogin({
                                     opener: event.currentTarget,
                                     onAuthenticated: () => {
-                                        if (SELL_HREF !== HREF_SOON) router.visit(SELL_HREF);
+                                        router.visit(SELL_HREF);
                                     },
                                 });
                             }}
