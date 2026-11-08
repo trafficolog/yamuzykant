@@ -164,6 +164,21 @@ it('число запросов к БД не растёт с числом кар
         ->and(implode(' ', $many))->not->toContain('"listings"');
 });
 
+it('индекс недоступен или не создан: главная открывается с пустыми рельсами, ошибка не кэшируется', function () {
+    homeListing();
+    MeilisearchIndex::waitForTasks();
+    $host = config('scout.meilisearch.host');
+
+    config(['scout.meilisearch.host' => 'http://127.0.0.1:1']);
+    $this->withCookie('ym_city', (string) homeCity('Москва')->id)
+        ->get('/')
+        ->assertOk()
+        ->assertInertia(fn (Assert $page) => $page->has('rails.fresh', 0)->has('rails.negotiable', 0));
+
+    config(['scout.meilisearch.host' => $host]);
+    homeGet()->assertInertia(fn (Assert $page) => $page->has('rails.fresh', 1));
+});
+
 it('у карточки есть давность публикации', function () {
     homeListing();
 

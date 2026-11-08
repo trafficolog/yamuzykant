@@ -6,6 +6,7 @@ namespace App\Domain\Search;
 
 use App\Domain\Catalog\Models\City;
 use Illuminate\Support\Facades\Cache;
+use Meilisearch\Exceptions\ExceptionInterface;
 
 /**
  * Рельсы главной (UC-S2, BR-01): «Новые в городе» и «Готовы к торгу». Каждый — один запрос к индексу
@@ -31,11 +32,18 @@ final class HomeRails
             return ['fresh' => [], 'negotiable' => []];
         }
 
-        /** @var array{fresh: list<array<string, mixed>>, negotiable: list<array<string, mixed>>} */
-        return Cache::remember(self::key($city), self::TTL, fn (): array => [
-            'fresh' => ListingSearch::inCity($city)->get(1, self::LIMIT)->hits,
-            'negotiable' => ListingSearch::inCity($city)->negotiable()->get(1, self::LIMIT)->hits,
-        ]);
+        try {
+            /** @var array{fresh: list<array<string, mixed>>, negotiable: list<array<string, mixed>>} */
+            return Cache::remember(self::key($city), self::TTL, fn (): array => [
+                'fresh' => ListingSearch::inCity($city)->get(1, self::LIMIT)->hits,
+                'negotiable' => ListingSearch::inCity($city)->negotiable()->get(1, self::LIMIT)->hits,
+            ]);
+        } catch (ExceptionInterface $e) {
+            // Поиск недоступен или индекс не создан: главная должна открыться. Сбой уходит в Sentry, в кэш не пишется.
+            report($e);
+
+            return ['fresh' => [], 'negotiable' => []];
+        }
     }
 
     public static function key(City $city): string
