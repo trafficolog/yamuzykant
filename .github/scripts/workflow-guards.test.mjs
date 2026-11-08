@@ -863,7 +863,7 @@ test('ci.yml: метки на CI не влияют, concurrency — ci-<ref>, о
     assert.doesNotMatch(text(wf), /labeled|\bready\b|\blabels\b/);
     const pr = ciEvent('pull_request', 'refs/pull/7/merge');
     const push = ciEvent('push', 'refs/heads/main');
-    assert.equal(evaluate(wf.concurrency.group, pr), 'ci-refs/pull/7/merge');
+    assert.equal(wf.concurrency.group, 'ci-${{ github.ref }}');
     assert.equal(evaluate(wf.concurrency['cancel-in-progress'], pr), true);
     assert.equal(evaluate(wf.concurrency['cancel-in-progress'], push), false);
     assert.equal(
