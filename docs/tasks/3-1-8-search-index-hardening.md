@@ -3,7 +3,7 @@ id: "3.1.8"
 phase: "3"
 epic: "3.1"
 title: "Поисковый индекс: доработки после ревью"
-status: in_progress
+status: review
 gate: G1
 risk: low
 model_impl: sonnet
