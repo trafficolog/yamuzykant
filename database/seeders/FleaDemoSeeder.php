@@ -74,13 +74,15 @@ class FleaDemoSeeder extends Seeder
             $lots[] = [sprintf('Гитара демо %02d', $i), 10_000 + $i * 1_000, self::FILLER_CONDITIONS[$i % 5], false];
         }
 
-        // Разные секунды публикации: порядок «сначала свежие» определён, и выдача с главной не зависит от гонки (3.1.4).
-        $start = now()->subMinutes(10);
+        // Публикации разнесены по секундам, первая строка списка — самая свежая: порядок «сначала свежие» определён,
+        // выдача и главная не зависят от гонки (3.1.4). Давность 2,5 ч держит подпись карточек «2 ч назад» стабильной.
+        $start = now()->subMinutes(150);
+        $count = count($lots);
         foreach ($lots as $index => [$title, $price, $condition, $ship]) {
-            Carbon::setTestNow($start->copy()->addSeconds($index));
+            Carbon::setTestNow($start->copy()->addSeconds($count - $index));
             $this->publish($category, $model, $moscow, $title, $price, $condition, $ship, $index);
         }
-        Carbon::setTestNow($start->copy()->addSeconds(count($lots)));
+        Carbon::setTestNow($start);
         $this->publish($category, $model, $kazan, 'Gibson Les Paul Казань', 120_000, 'good', true, 99);
         Carbon::setTestNow();
 
