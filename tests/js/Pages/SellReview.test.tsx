@@ -38,7 +38,7 @@ const photo = (id: number, overrides: Partial<ListingPhoto> = {}): ListingPhoto 
 });
 const THREE = [photo(1, { is_serial: true, urls: null }), photo(2), photo(3)];
 
-const renderSell = () => render(<SellCreate listingId="draft-1" photos={THREE} saved={false} />);
+const renderSell = () => render(<SellCreate listingId="draft-1" photos={THREE} />);
 const modelField = () => screen.getByRole('combobox', { name: 'Бренд и модель' });
 const publish = () => screen.getByRole('button', { name: 'Опубликовать' });
 
@@ -150,7 +150,7 @@ describe('фокус после ответа сервера с ошибками'
 describe('превью до гидратации', () => {
     it('в серверной разметке карточки с «0 ₽» нет: превью рисуется только в браузере', () => {
         const html = renderToString(
-            <SellCreate listingId="draft-1" photos={THREE} saved={false} />,
+            <SellCreate listingId="draft-1" photos={THREE} />,
         );
 
         expect(html).not.toMatch(/0\s₽/);

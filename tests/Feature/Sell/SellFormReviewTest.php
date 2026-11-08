@@ -19,12 +19,14 @@ beforeEach(function () {
 });
 
 describe('суточный лимит предложений моделей (1.2.2) действует и на POST /sell', function () {
-    it('после исчерпания лимита новая модель через /sell отклоняется ошибкой у названия, черновик не меняется', function () {
+    it('после исчерпания лимита новая модель через /sell отклоняется ошибкой у названия, черновик не публикуется', function () {
         config(['catalog.suggestions_per_day' => 2]);
         [$owner, $kind, $draft] = sellCase();
 
+        // Каждая публикация освобождает слот черновика: следующая попытка идёт с новым черновиком.
         foreach (['Harley Benton ST-62', 'Harley Benton ST-63'] as $title) {
             $this->actingAs($owner)->post('/sell', sellPayload($draft, $kind, ['title' => $title]))->assertSessionHasNoErrors();
+            $draft = sellDraft($owner);
         }
 
         $this->actingAs($owner)->from('/sell')
@@ -33,8 +35,8 @@ describe('суточный лимит предложений моделей (1.2
             ->assertSessionHasErrors(['title' => 'Сегодня уже отправлено много предложений. Попробуйте завтра.']);
 
         expect(InstrumentModel::query()->where('name', 'Benton ST-64')->exists())->toBeFalse()
-            ->and(sellReload($draft)->price)->toBe(184_500)
-            ->and(sellReload($draft)->title)->toBe('Harley Benton ST-63');
+            ->and(sellReload($draft)->status)->toBe(ListingStatus::Draft)
+            ->and(sellReload($draft)->price)->toBeNull();
     });
 
     it('счётчик общий с POST /api/models/suggestions', function () {
@@ -70,9 +72,11 @@ describe('суточный лимит предложений моделей (1.2
             $this->actingAs($owner)
                 ->post('/sell', sellPayload($draft, $kind, ['title' => 'Harley Benton ST-62', 'price' => $price]))
                 ->assertSessionHasNoErrors();
+            $last = $draft;
+            $draft = sellDraft($owner);
         }
 
-        expect(sellReload($draft)->price)->toBe(165_000);
+        expect(sellReload($last)->price)->toBe(165_000);
     });
 
     it('модель из справочника по model_id лимит не расходует', function () {
@@ -84,6 +88,7 @@ describe('суточный лимит предложений моделей (1.2
             $this->actingAs($owner)
                 ->post('/sell', sellPayload($draft, $kind, ['title' => 'Fender Player Stratocaster', 'model_id' => $model->id]))
                 ->assertSessionHasNoErrors();
+            $draft = sellDraft($owner);
         }
 
         expect(RateLimiter::attempts('model-suggest:'.$owner->id))->toBe(0);
