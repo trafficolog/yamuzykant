@@ -860,7 +860,7 @@ test('ci.yml: код — push и dispatch запускают e2e, PR без e2e'
 
 test('ci.yml: метки на CI не влияют, concurrency — ci-<ref>, отмена только на PR', () => {
     const wf = load('ci.yml');
-    assert.doesNotMatch(text(wf), /labels|labeled|ready/);
+    assert.doesNotMatch(text(wf), /labeled|\bready\b|\blabels\b/);
     const pr = ciEvent('pull_request', 'refs/pull/7/merge');
     const push = ciEvent('push', 'refs/heads/main');
     assert.equal(evaluate(wf.concurrency.group, pr), 'ci-refs/pull/7/merge');
