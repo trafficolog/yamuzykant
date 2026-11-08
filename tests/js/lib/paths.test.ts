@@ -4,6 +4,7 @@ import {
     HREF_SOON,
     MESSAGES_PATH,
     conversationPath,
+    lotPath,
     openWriteToSeller,
     writeToSellerPath,
 } from '@/lib/paths';
@@ -31,6 +32,10 @@ describe('адреса сообщений', () => {
         openWriteToSeller('9b1e');
 
         expect(visit).toHaveBeenCalledWith('/messages?listing=9b1e');
+    });
+
+    it('lotPath — адрес страницы лота из 3.1.5, один на весь проект', () => {
+        expect(lotPath('9b1e')).toBe('/listings/9b1e');
     });
 
     it('заглушка «#» осталась для ещё не сделанных разделов', () => {

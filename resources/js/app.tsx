@@ -11,6 +11,7 @@ import { initSentry } from '@/observability/sentry';
 import '../css/site.css';
 import '../css/flea.css';
 import '../css/messages.css';
+import '../css/lot.css';
 
 // Ошибки браузера в Sentry: без VITE_SENTRY_DSN выключено (CI, локальная разработка).
 initSentry({

@@ -104,6 +104,18 @@ describe('Flea/Index: каркас', () => {
         expect(screen.getByText(/^Найдено/)).toHaveTextContent('Найдено 21 лот');
     });
 
+    it('карточки ведут на страницу объявления /listings/{id} (3.1.5)', () => {
+        render(<FleaIndex {...props()} />);
+
+        const hrefs = screen
+            .getAllByRole('link')
+            .map((a) => a.getAttribute('href'))
+            .filter((href) => href?.startsWith('/listings/'));
+        expect(new Set(hrefs)).toEqual(
+            new Set(['/listings/id-1', '/listings/id-2', '/listings/id-3']),
+        );
+    });
+
     it('в категории h1 — название категории, крошки ведут вверх по дереву и текущая без ссылки', () => {
         render(
             <FleaIndex

@@ -72,6 +72,13 @@ describe('ChatThread: содержимое', () => {
         expect(onBack).toHaveBeenCalledTimes(1);
     });
 
+    it('карточка объявления — ссылка на страницу лота', () => {
+        view();
+
+        const card = screen.getByRole('region', { name: 'Объявление' });
+        expect(within(card).getByRole('link')).toHaveAttribute('href', '/listings/l1');
+    });
+
     it('цена «Договорная» и «Бесплатно» по BR-11, «0 ₽» не показывается', () => {
         const { rerender } = view({
             conversation: conversation({

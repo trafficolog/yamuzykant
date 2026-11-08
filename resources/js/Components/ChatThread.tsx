@@ -32,7 +32,7 @@ import {
     startConversation,
     type SendOutcome,
 } from '@/lib/messagesApi';
-import { HREF_SOON, lotPath } from '@/lib/paths';
+import { lotPath } from '@/lib/paths';
 import { getEcho, type RealtimeConfig } from '@/realtime/echo';
 
 export interface ChatThreadProps {
@@ -435,7 +435,7 @@ export default function ChatThread({
 
     const showQuick = !closed && draft === '' && buying;
     const error = tooLong ? t.tooLong(groupDigits(MAX_LENGTH)) : fieldError;
-    const lotHref = listingId === null ? HREF_SOON : lotPath(listingId);
+    const lotHref = listingId === null ? null : lotPath(listingId);
 
     const listingBody = (
         <>
@@ -479,7 +479,7 @@ export default function ChatThread({
             </header>
 
             <section aria-label={t.listing} className="ym-chat__listing">
-                {lotHref === HREF_SOON ? (
+                {lotHref === null ? (
                     <div className="ym-chat__listing-in">{listingBody}</div>
                 ) : (
                     <a className="ym-chat__listing-in" href={lotHref}>

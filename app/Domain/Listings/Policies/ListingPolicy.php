@@ -20,18 +20,15 @@ final class ListingPolicy
     /** Статусы, в которых владелец меняет содержание объявления. */
     private const EDITABLE = [ListingStatus::Draft, ListingStatus::NeedsChanges, ListingStatus::Published];
 
-    /** Статусы, которые видны гостю по прямой ссылке. */
-    private const PUBLIC = [ListingStatus::Published, ListingStatus::Withdrawn, ListingStatus::Expired];
-
     public function __construct(private readonly StaffDirectory $staff) {}
 
     /**
-     * Опубликованное, снятое и истёкшее видно всем (плашка «Снято с продажи» на лоте — 3.1.5);
-     * черновик, проверка, доработка и отклонённое — только владельцу и сотруднику.
+     * Опубликованное видно всем. Любое другое (черновик, проверка, доработка, отклонённое, снятое, истёкшее) —
+     * только владельцу и сотруднику; остальным контроллеры отвечают 404 (решение OWNER 07.11.2026, SPEC §6.1).
      */
     public function view(?User $user, Listing $listing): bool
     {
-        return in_array($listing->status, self::PUBLIC, true)
+        return $listing->status === ListingStatus::Published
             || $this->owns($user, $listing)
             || ($user !== null && $this->staff->isStaff($user));
     }

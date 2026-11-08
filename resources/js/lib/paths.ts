@@ -1,6 +1,18 @@
 import { router } from '@inertiajs/react';
 
 /**
+ * Адреса страниц, на которые ссылаются другие страницы. Одно место, чтобы Барахолка (3.1.2), лот (3.1.5)
+ * и будущие разделы не расходились в написании.
+ */
+
+/** Страница объявления (3.1.5). */
+export const lotPath = (id: string): string => `/listings/${id}`;
+
+/** Выдача Барахолки (3.1.2); `categoryPath` — путь из слагов (`gitary/elektrogitary`). */
+export const fleaPath = (categoryPath?: string | null): string =>
+    categoryPath ? `/baraholka/${categoryPath}` : '/baraholka';
+
+/**
  * Адреса разделов кабинета, которых ещё нет: заглушка `#` (DEVIATIONS: «ссылки на ещё не сделанные
  * разделы»). Подставят задачи 2.1.3 (продажа), 2.1.5 (объявления), 4.3.1 (избранное).
  */
@@ -19,15 +31,6 @@ export const conversationPath = (conversationId: string): string =>
  */
 export const writeToSellerPath = (listingId: string): string =>
     `${MESSAGES_PATH}?listing=${encodeURIComponent(listingId)}`;
-
-/**
- * Страница лота (3.1.5): адреса ещё нет, поэтому карточка объявления в чате — не ссылка. Когда лот появится,
- * задача 3.1.5 подставит сюда его адрес, и карточка станет ссылкой.
- */
-export const lotPath = (listingId: string): string => {
-    void listingId;
-    return HREF_SOON;
-};
 
 /**
  * Кнопка «Написать продавцу» (3.1.5): переход на экран сообщений. Гостю сначала окно входа:
