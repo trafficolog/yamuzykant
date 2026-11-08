@@ -59,7 +59,7 @@ test.describe('UC-D1: экран сообщений', () => {
         await field(seller).press('Shift+Enter');
         await field(seller).pressSequentially('Можно в субботу');
         await field(seller).press('Enter');
-        await expect(buyer.getByText('Можно в субботу')).toBeVisible({ timeout: 2_000 });
+        await expect(thread(buyer).getByText('Можно в субботу')).toBeVisible({ timeout: 2_000 });
         await expect(thread(seller).getByText('Можно в субботу')).toBeVisible();
 
         // Покупатель видит счётчик в шапке, пока чат закрыт: закрыл чат (на список) и получил новое.
@@ -71,7 +71,7 @@ test.describe('UC-D1: экран сообщений', () => {
         const buyerRow = buyer
             .getByRole('list', { name: 'Чаты' })
             .getByRole('link', { name: /Олег/ });
-        await expect(buyerRow).toContainText('И захватите документы');
+        await expect(buyerRow).toContainText('И захватите документы', { timeout: 5_000 });
         expect(await seriousOrCritical(buyer)).toEqual([]);
     });
 
