@@ -3,7 +3,7 @@ id: "5.1.1"
 phase: "5"
 epic: "5.1"
 title: "Автопроверки объявлений"
-status: review
+status: done
 gate: G1
 risk: medium
 model_impl: sonnet
@@ -14,7 +14,7 @@ uc: ["O1"]
 prototype: ""
 screens: []
 issue: 42
-sync_state: drifted
+sync_state: aligned
 escalations: []
 ---
 
