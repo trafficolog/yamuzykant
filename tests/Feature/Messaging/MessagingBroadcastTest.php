@@ -41,7 +41,7 @@ it('MessageSent: приватный канал беседы, имя message.sent
         ->and($event->broadcastAs())->toBe('message.sent');
 
     $payload = $event->broadcastWith();
-    expect(array_keys($payload))->toBe(['id', 'conversation_id', 'kind', 'body', 'sender_id', 'created_at'])
+    expect(array_keys($payload))->toBe(['id', 'conversation_id', 'kind', 'body', 'sender_id', 'created_at', 'client_id', 'caution'])
         ->and($payload['body'])->toBe('Здравствуйте')
         ->and($payload['sender_id'])->toBe($buyer->id)
         ->and(json_encode($payload))->not->toContain('hidden-buyer');

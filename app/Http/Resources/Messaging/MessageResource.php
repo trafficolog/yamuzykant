@@ -22,9 +22,13 @@ final class MessageResource extends JsonResource
         /** @var Message $message */
         $message = $this->resource;
 
+        $mine = $message->sender_id !== null && $message->sender_id === $request->user()?->getAuthIdentifier();
+
         return [
             ...$message->broadcastPayload(),
-            'mine' => $message->sender_id !== null && $message->sender_id === $request->user()?->getAuthIdentifier(),
+            // Плашка «Будьте осторожны» — для получателя; автору своё сообщение подозрительным не показывается.
+            'caution' => ! $mine && $message->suspicious,
+            'mine' => $mine,
             'read_at' => $message->read_at?->toIso8601ZuluString(),
         ];
     }
