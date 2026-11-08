@@ -2,6 +2,8 @@
 
 declare(strict_types=1);
 
+use App\Domain\Listings\Enums\ListingEvent;
+use App\Domain\Listings\Enums\ListingStatus;
 use App\Domain\Listings\Enums\WithdrawReason;
 use App\Domain\Listings\Events\ListingTransitioned;
 use App\Domain\Listings\Models\Listing;
@@ -9,6 +11,8 @@ use App\Domain\Listings\StateMachines\ListingStateMachine;
 use App\Domain\Search\Jobs\SyncListingToIndex;
 use App\Domain\Search\ListingIndex;
 use App\Support\Flags\FeatureFlag;
+use Illuminate\Queue\Middleware\WithoutOverlapping;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Event;
 use Illuminate\Support\Facades\Queue;
 use Laravel\Pennant\Feature;
@@ -159,13 +163,122 @@ it('удаление строки объявления убирает докум
     expect(indexedIds())->toBe([]);
 });
 
-it('все события машины статусов подписаны на синхронизацию индекса', function () {
-    $events = collect(glob(base_path('app/Domain/Listings/Events/Listing*.php')) ?: [])
+/** @return list<class-string<ListingTransitioned>> */
+function transitionEventClasses(): array
+{
+    return collect(glob(base_path('app/Domain/Listings/Events/Listing*.php')) ?: [])
         ->map(fn (string $file): string => 'App\\Domain\\Listings\\Events\\'.basename($file, '.php'))
-        ->filter(fn (string $class): bool => is_subclass_of($class, ListingTransitioned::class));
+        ->filter(fn (string $class): bool => is_subclass_of($class, ListingTransitioned::class))
+        ->values()
+        ->all();
+}
 
-    expect($events)->not->toBeEmpty();
-    foreach ($events as $event) {
-        expect(Event::hasListeners($event))->toBeTrue("нет слушателя у {$event}");
+it('каждое событие машины статусов ставит job синхронизации (без опоры на wildcard-подписку)', function () {
+    $listing = ListingFixtures::published();
+    $events = transitionEventClasses();
+    expect($events)->toHaveCount(12);
+
+    foreach ($events as $class) {
+        Queue::fake();
+
+        // from = to = published: переход касается индекса при любом событии.
+        Event::dispatch(new $class($listing, ListingStatus::Published, ListingStatus::Published, ListingEvent::MinorEdit));
+
+        Queue::assertPushed(
+            SyncListingToIndex::class,
+            fn (SyncListingToIndex $job): bool => $job->listingId === $listing->id,
+        );
     }
+});
+
+it('одобрение модератором (ListingApproved) кладёт объявление в индекс', function () {
+    Feature::for(null)->activate(FeatureFlag::Premoderation->value);
+    $listing = ListingFixtures::draft();
+    $machine = app(ListingStateMachine::class);
+    $machine->publish($listing);
+    expect(indexedIds())->toBe([]);
+
+    $machine->approve($listing);
+
+    expect(indexedIds())->toBe([$listing->id]);
+});
+
+it('повторная отправка после доработки (ListingResubmitted) кладёт объявление в индекс', function () {
+    Feature::for(null)->activate(FeatureFlag::Premoderation->value);
+    $listing = ListingFixtures::draft();
+    $machine = app(ListingStateMachine::class);
+    $machine->publish($listing);
+    $machine->returnForChanges($listing, 'Добавьте фото серийного номера');
+    expect(indexedIds())->toBe([]);
+
+    Feature::for(null)->deactivate(FeatureFlag::Premoderation->value);
+    $machine->resubmit($listing);
+
+    expect($listing->fresh()?->status->value)->toBe('published')
+        ->and(indexedIds())->toBe([$listing->id]);
+});
+
+it('возврат в продажу после снятия (ListingRelisted) снова кладёт объявление в индекс', function () {
+    $listing = ListingFixtures::published();
+    $machine = app(ListingStateMachine::class);
+    $machine->withdraw($listing, WithdrawReason::ChangedMind);
+    expect(indexedIds())->toBe([]);
+
+    $machine->relist($listing);
+
+    expect(indexedIds())->toBe([$listing->id]);
+});
+
+it('возврат на доработку (ListingReturned) и отклонение (ListingRejected) не пускают объявление в индекс', function () {
+    Feature::for(null)->activate(FeatureFlag::Premoderation->value);
+    $machine = app(ListingStateMachine::class);
+    $returned = ListingFixtures::draft();
+    $rejected = ListingFixtures::draft();
+    $machine->publish($returned);
+    $machine->publish($rejected);
+
+    Queue::fake();
+    $machine->returnForChanges($returned, 'Уточните состояние');
+    $machine->reject($rejected, 'Запрещённый товар');
+
+    Queue::assertNotPushed(SyncListingToIndex::class);
+    expect(indexedIds())->toBe([]);
+});
+
+it('job синхронизации не выполняется параллельно для одного объявления (WithoutOverlapping по id)', function () {
+    $middleware = (new SyncListingToIndex('listing-id'))->middleware();
+
+    expect($middleware)->toHaveCount(1)
+        ->and($middleware[0])->toBeInstanceOf(WithoutOverlapping::class)
+        ->and($middleware[0]->key)->toBe('listing-id')
+        ->and($middleware[0]->releaseAfter)->toBe(2)
+        // Замок не вечный: упавший воркер не блокирует объявление навсегда.
+        ->and($middleware[0]->expiresAfter)->toBeGreaterThan(0);
+});
+
+it('пока замок объявления занят, job не пишет в индекс; свободный замок — пишет', function () {
+    $listing = ListingFixtures::published();
+    Listing::query()->whereKey($listing->id)->toBase()->update(['status' => 'withdrawn']);
+    $lock = Cache::lock('laravel-queue-overlap:'.SyncListingToIndex::class.':'.$listing->id, 30);
+    expect($lock->get())->toBeTrue();
+
+    SyncListingToIndex::dispatchSync($listing->id);
+    expect(indexedIds())->toBe([$listing->id]);
+
+    $lock->release();
+    SyncListingToIndex::dispatchSync($listing->id);
+    expect(indexedIds())->toBe([]);
+});
+
+it('замок одного объявления не мешает другому', function () {
+    $busy = ListingFixtures::published();
+    $other = ListingFixtures::published();
+    Listing::query()->whereKey($other->id)->toBase()->update(['status' => 'withdrawn']);
+    $lock = Cache::lock('laravel-queue-overlap:'.SyncListingToIndex::class.':'.$busy->id, 30);
+    expect($lock->get())->toBeTrue();
+
+    SyncListingToIndex::dispatchSync($other->id);
+
+    expect(indexedIds())->toBe([$busy->id]);
+    $lock->release();
 });
