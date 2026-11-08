@@ -79,6 +79,8 @@ final class AutosaveListingDraft
             if (array_key_exists('negotiable', $data) && $data['negotiable'] !== null) {
                 $listing->negotiable = (bool) $data['negotiable'];
             }
+            // BR-11: «Готов к торгу» — только с суммой (в том числе при смене цены без смены флага).
+            $listing->negotiable = $listing->negotiable && $listing->price !== null && $listing->price > 0;
 
             return;
         }

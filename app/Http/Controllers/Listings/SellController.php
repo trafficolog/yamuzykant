@@ -11,6 +11,7 @@ use App\Domain\Listings\Actions\AutosaveListingDraft;
 use App\Domain\Listings\Actions\FindOrCreateDraft;
 use App\Domain\Listings\Actions\PublishListing;
 use App\Domain\Listings\Enums\ListingStatus;
+use App\Domain\Listings\Enums\PriceMode;
 use App\Domain\Listings\Exceptions\ListingLimitReached;
 use App\Domain\Listings\Exceptions\PhotoRequirementsNotMet;
 use App\Domain\Listings\Models\Listing;
@@ -90,13 +91,9 @@ final class SellController extends Controller
     }
 
     /** Экран «Объявление опубликовано» / «Отправлено на проверку» — только владельцу и только после публикации. */
-    public function done(Request $request, Listing $listing): Response
+    public function done(Listing $listing): Response
     {
-        abort_unless(
-            $listing->user_id === $request->user()?->id
-                && in_array($listing->status, [ListingStatus::Published, ListingStatus::Pending], true),
-            404,
-        );
+        Gate::authorize('viewResult', $listing);
 
         return Inertia::render('Sell/Published', [
             'status' => $listing->status === ListingStatus::Published ? 'published' : 'pending',
@@ -117,7 +114,14 @@ final class SellController extends Controller
      */
     private function draftProps(Listing $draft): ?array
     {
-        if ($draft->draft_price_mode === null) {
+        // Черновики 2.1.3 заполнены без draft_price_mode: режим выводится из price (BR-11), как при записи формы.
+        $priceMode = $draft->draft_price_mode ?? match (true) {
+            $draft->title === null => null,
+            $draft->price === null => PriceMode::Negotiable->value,
+            $draft->price === 0 => PriceMode::Free->value,
+            default => PriceMode::Amount->value,
+        };
+        if ($priceMode === null) {
             return null;
         }
 
@@ -129,7 +133,7 @@ final class SellController extends Controller
             'serial_masked' => $draft->serialMasked(),
             'condition' => $draft->condition?->value,
             'description' => $draft->description,
-            'price_mode' => $draft->draft_price_mode,
+            'price_mode' => $priceMode,
             'price' => $draft->price,
             'negotiable' => $draft->negotiable,
             'meet' => $draft->meet,

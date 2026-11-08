@@ -65,6 +65,23 @@ describe('PUT /sell/draft', function () {
         expect(sellReload($draft)->price)->toBeNull()->and(sellReload($draft)->draft_price_mode)->toBe('negotiable');
     });
 
+    it('без режима цены «Готов к торгу» тоже только с суммой (BR-11, ревью PR #136)', function () {
+        [$owner, , $draft] = sellCase();
+        $url = '/sell/draft';
+
+        $this->actingAs($owner)->putJson($url, ['listing_id' => $draft->id, 'negotiable' => true])->assertOk();
+        expect(sellReload($draft)->negotiable)->toBeFalse();
+
+        $this->actingAs($owner)->putJson($url, ['listing_id' => $draft->id, 'price' => 0, 'negotiable' => true])->assertOk();
+        expect(sellReload($draft)->negotiable)->toBeFalse();
+
+        $this->actingAs($owner)->putJson($url, ['listing_id' => $draft->id, 'price' => 5000, 'negotiable' => true])->assertOk();
+        expect(sellReload($draft)->negotiable)->toBeTrue();
+
+        $this->actingAs($owner)->putJson($url, ['listing_id' => $draft->id, 'price' => null])->assertOk();
+        expect(sellReload($draft)->negotiable)->toBeFalse();
+    });
+
     it('передаются только присланные поля: остальное не затирается', function () {
         [$owner, $kind, $draft] = sellCase();
         $this->actingAs($owner)->putJson('/sell/draft', ['listing_id' => $draft->id, 'title' => 'Fender Strat', 'year' => 2009, 'serial' => 'V091187']);
@@ -205,6 +222,14 @@ describe('восстановление формы после перезагру�
 
         $this->get('/sell')->assertInertia(fn (AssertableInertia $page) => $page->where('draft.price_mode', $mode));
     })->with(['negotiable', 'free']);
+
+    it('черновик 2.1.3 без draft_price_mode: режим выводится из price (ревью PR #136)', function (?int $price, string $mode) {
+        [$owner, $kind, $draft] = sellCase();
+        $draft->forceFill(['title' => 'Fender Strat', 'category_id' => $kind->id, 'price' => $price, 'draft_price_mode' => null])->save();
+
+        $this->actingAs($owner)->get('/sell')->assertInertia(fn (AssertableInertia $page) => $page
+            ->where('draft.price_mode', $mode)->where('draft.price', $price)->where('draft.title', 'Fender Strat'));
+    })->with([[184_500, 'amount'], [0, 'free'], [null, 'negotiable']]);
 
     it('полный серийный номер на фронт не уходит и после автосохранения', function () {
         [$owner, , $draft] = sellCase();

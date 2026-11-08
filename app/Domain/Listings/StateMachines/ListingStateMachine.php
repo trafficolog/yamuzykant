@@ -91,6 +91,8 @@ final class ListingStateMachine
         'relist' => ListingRelisted::class,
     ];
 
+    public function __construct(private readonly ListingAutoChecks $checks) {}
+
     /**
      * Статус после события.
      *
@@ -211,7 +213,7 @@ final class ListingStateMachine
             return;
         }
 
-        $errors = app(ListingAutoChecks::class)->validate($listing)->errors();
+        $errors = $this->checks->validate($listing)->errors();
         if ($errors !== []) {
             throw ValidationException::withMessages($errors);
         }

@@ -218,13 +218,29 @@ function sellRaceAutosave(Listing $draft, array $other): void
     });
 }
 
+/**
+ * Ошибки полей, с которыми действие публикации отказало (пусто — публикация прошла).
+ *
+ * @param  array{category_id: int, title: string, model_id?: int|null, year?: int|null, serial?: string|null, condition: string, description?: string|null, price: int|null, negotiable: bool, meet: bool, ship: bool}  $content
+ * @return array<string, list<string>>
+ */
+function sellPublishErrors(Listing $draft, array $content): array
+{
+    try {
+        app(PublishListing::class)($draft, $content, null);
+    } catch (ValidationException $e) {
+        return $e->errors();
+    }
+
+    return [];
+}
+
 describe('гонка со второй вкладкой: публикуется то, что проверено (ревью PR #136)', function () {
     it('контакт, записанный второй вкладкой после проверки: публикации нет, 422 у описания', function () {
         [$owner, $kind, $draft] = sellCase();
         sellRaceAutosave($draft, ['description' => 'Звоните +7 916 123-45-67']);
 
-        expect(fn () => app(PublishListing::class)($draft, publishContent($kind->id), null))
-            ->toThrow(fn (ValidationException $e) => expect($e->errors())->toHaveKey('description'));
+        expect(sellPublishErrors($draft, publishContent($kind->id)))->toHaveKey('description');
         expect(sellReload($draft)->status)->toBe(ListingStatus::Draft)->and(sellReload($draft)->published_at)->toBeNull();
     });
 
@@ -232,8 +248,7 @@ describe('гонка со второй вкладкой: публикуется 
         [$owner, $kind, $draft] = sellCase();
         sellRaceAutosave($draft, ['title' => '', 'condition' => null]);
 
-        expect(fn () => app(PublishListing::class)($draft, publishContent($kind->id), null))
-            ->toThrow(fn (ValidationException $e) => expect($e->errors())->toHaveKeys(['title', 'condition']));
+        expect(sellPublishErrors($draft, publishContent($kind->id)))->toHaveKeys(['title', 'condition']);
         expect(sellReload($draft)->status)->toBe(ListingStatus::Draft);
     });
 });
