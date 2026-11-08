@@ -1,18 +1,28 @@
 import { vi } from 'vitest';
 
-import type { ChatConversation, ChatMessage, ConversationListItem } from '@/lib/messages';
+import type { ChatConversation, ChatListing, ChatMessage, ConversationListItem } from '@/lib/messages';
 
 // Данные и подмены для тестов экрана сообщений (4.1.2).
 
 export const VIEWER = 1;
 
+/** Объявление в беседе: по умолчанию опубликовано, без обложки (4.1.5). */
+export const listing = (extra: Partial<ChatListing> = {}): ChatListing => ({
+    id: 'l1',
+    title: 'Fender ’57 Stratocaster',
+    price: 184_500,
+    available: true,
+    status: 'published',
+    cover: null,
+    ...extra,
+});
+
 export const conversation = (extra: Partial<ChatConversation> = {}): ChatConversation => ({
     id: 'c1',
     role: 'buying',
-    listing: { id: 'l1', title: 'Fender ’57 Stratocaster', price: 184_500, available: true },
+    listing: listing(),
     counterpart: { name: 'Андрей К.', deleted: false },
     last_message_at: '2026-09-09T06:28:00Z',
-    closed_reason: null,
     ...extra,
 });
 
@@ -47,7 +57,6 @@ export const listItem = (
         created_at: '2026-09-09T06:28:00Z',
     },
     unread: 0,
-    closed: false,
     ...extra,
 });
 

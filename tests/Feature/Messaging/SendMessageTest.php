@@ -103,19 +103,26 @@ it('сообщения отдаются страницами от новых к 
         ->and($older->json('meta.has_more'))->toBeFalse();
 });
 
-it('через 30 дней после ухода из published писать нельзя: 409 с понятным текстом (BR-10)', function (ListingStatus $status) {
+it('объявление ушло из published давно: писать можно, беседа открыта всегда (BR-10)', function (ListingStatus $status) {
     $conversation = MessagingFixtures::conversation(MessagingFixtures::listing($status, now()->subDays(31)));
     $buyer = User::query()->findOrFail($conversation->buyer_id);
 
     $this->actingAs($buyer)
         ->postJson("/conversations/{$conversation->id}/messages", ['body' => 'Ещё актуально?'])
-        ->assertConflict()
-        ->assertJsonPath('message', 'Объявление не опубликовано больше 30 дней — беседа доступна только для чтения.');
+        ->assertCreated();
 
-    // Переписка остаётся доступной для чтения.
     $this->getJson("/conversations/{$conversation->id}/messages")->assertOk();
-    expect(Message::query()->count())->toBe(0);
-})->with([[ListingStatus::Withdrawn], [ListingStatus::Expired], [ListingStatus::Pending]]);
+    expect(Message::query()->count())->toBe(1);
+})->with([[ListingStatus::Withdrawn], [ListingStatus::Expired], [ListingStatus::Pending], [ListingStatus::Rejected]]);
+
+it('сообщение до 2000 символов проходит, 2001 — 422', function () {
+    $conversation = MessagingFixtures::conversation();
+    $buyer = User::query()->findOrFail($conversation->buyer_id);
+    $this->actingAs($buyer);
+
+    $this->postJson("/conversations/{$conversation->id}/messages", ['body' => str_repeat('а', 2000)])->assertCreated();
+    $this->postJson("/conversations/{$conversation->id}/messages", ['body' => str_repeat('а', 2001)])->assertUnprocessable();
+});
 
 it('собеседнику, удалившему аккаунт, написать нельзя', function () {
     $conversation = MessagingFixtures::conversation();
