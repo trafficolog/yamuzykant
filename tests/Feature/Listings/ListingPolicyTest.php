@@ -32,7 +32,7 @@ it('по умолчанию сотрудников нет: заглушка до
         ->and(app(StaffDirectory::class)->isStaff(User::factory()->create()))->toBeFalse();
 });
 
-it('гость и любой пользователь видят опубликованные, снятые и истёкшие (плашка в 3.1.5)', function (ListingStatus $status, bool $visible) {
+it('гость и чужой пользователь видят только опубликованное (решение OWNER 07.11.2026, SPEC §6.1)', function (ListingStatus $status, bool $visible) {
     $listing = Listing::factory()->inStatus($status)->create();
     $stranger = User::factory()->create();
 
@@ -44,8 +44,8 @@ it('гость и любой пользователь видят опублик�
     [ListingStatus::Published, true],
     [ListingStatus::NeedsChanges, false],
     [ListingStatus::Rejected, false],
-    [ListingStatus::Withdrawn, true],
-    [ListingStatus::Expired, true],
+    [ListingStatus::Withdrawn, false],
+    [ListingStatus::Expired, false],
 ]);
 
 it('владелец и сотрудник видят объявление в любом статусе', function (ListingStatus $status) {

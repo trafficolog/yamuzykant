@@ -16,9 +16,11 @@ use App\Http\Controllers\FleaController;
 use App\Http\Controllers\HomeController;
 use App\Http\Controllers\Listings\ListingPhotoController;
 use App\Http\Controllers\Listings\LocalPhotoUploadController;
+use App\Http\Controllers\Listings\LotController;
 use App\Http\Controllers\Listings\PhotoMediaController;
 use App\Http\Controllers\Listings\SellController;
 use App\Http\Controllers\Messaging\ConversationController;
+use App\Http\Controllers\Messaging\MessagesPageController;
 use App\Http\Middleware\EnsureE2eEnvironment;
 use Illuminate\Foundation\Http\Middleware\ValidateCsrfToken;
 use Illuminate\Support\Facades\Route;
@@ -65,6 +67,9 @@ Route::prefix('auth')->name('auth.')->group(function (): void {
     });
 });
 
+// Страница объявления (3.1.5, UC-V1): открыта всем; не опубликованное — только владельцу и сотрудникам, остальным 404.
+Route::get('/listings/{listing}', LotController::class)->whereUuid('listing')->name('lot.show');
+
 // Форма «Продать инструмент» (2.1.3, 2.1.4): страница с черновиком, публикация, автосохранение черновика (раз в 5 с,
 // поэтому лимит выше), экран «Объявление опубликовано». Гость — на главную, вход — окно.
 Route::middleware('auth')->group(function (): void {
@@ -94,6 +99,10 @@ Route::middleware('auth')->group(function (): void {
         Route::post('messages', [ConversationController::class, 'send'])->middleware('throttle:messages')->name('send');
         Route::post('read', [ConversationController::class, 'read'])->middleware('throttle:120,1')->name('read');
     });
+
+    // Экран сообщений (4.1.2): список бесед, открытая беседа и черновик «Написать продавцу» (?listing=).
+    Route::get('messages', [MessagesPageController::class, 'index'])->name('messages.index');
+    Route::get('messages/{conversation}', [MessagesPageController::class, 'show'])->name('messages.show');
 });
 
 // Служебная страница доставки сообщений для e2e до экрана сообщений (4.1.2): только local, testing, e2e.

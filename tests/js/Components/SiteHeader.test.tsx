@@ -164,6 +164,15 @@ describe('SiteHeader: состав шапки', () => {
         expect(screen.getByRole('link', { name: 'Уведомления' })).toBeInTheDocument();
     });
 
+    it('иконка сообщений ведёт на экран сообщений (4.1.2)', () => {
+        render(<SiteHeader messages={3} />);
+
+        expect(screen.getByRole('link', { name: 'Сообщения, 3' })).toHaveAttribute(
+            'href',
+            '/messages',
+        );
+    });
+
     it('без непрочитанных сообщений счётчика нет', () => {
         render(<SiteHeader messages={0} />);
 

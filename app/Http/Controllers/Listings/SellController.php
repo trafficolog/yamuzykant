@@ -103,7 +103,7 @@ final class SellController extends Controller
             'listing' => [
                 'id' => $listing->id,
                 'title' => $listing->title,
-                'url' => "/listings/{$listing->id}",
+                'url' => route('lot.show', ['listing' => $listing->id], absolute: false),
             ],
             'days' => (int) config('listings.expire_after_days'),
         ]);

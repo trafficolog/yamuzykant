@@ -7,6 +7,7 @@ import MobileTabBar, { type MobileTabBarProps } from '@/Components/MobileTabBar'
 import SiteFooter from '@/Components/SiteFooter';
 import SiteHeader, { type SiteHeaderProps } from '@/Components/SiteHeader';
 import { useAuthUser } from '@/Hooks/useAuthUser';
+import { useUnreadCount } from '@/Hooks/useUnreadCount';
 import { ru } from '@/lang/ru';
 
 export const MAIN_ID = 'main-content';
@@ -30,9 +31,18 @@ export interface PublicLayoutProps extends Pick<
  * (видна на экранах < 640 px).
  * Страницы подключают его постоянной раскладкой: `Page.layout = (page) => <PublicLayout>{page}</PublicLayout>`.
  */
-export default function PublicLayout({ title, tab, children, ...header }: PublicLayoutProps) {
+export default function PublicLayout({
+    title,
+    tab,
+    children,
+    messages,
+    ...header
+}: PublicLayoutProps) {
     const { props } = usePage<CityProps>();
     const user = useAuthUser();
+    // Счётчик непрочитанных: shared prop `messages.unread` и событие канала; явный `messages` (витрины, тесты) сильнее.
+    const unread = useUnreadCount();
+    const count = messages ?? unread;
 
     return (
         <div className="ym-root ym-site">
@@ -40,12 +50,12 @@ export default function PublicLayout({ title, tab, children, ...header }: Public
             <a className="ym-site__skip" href={`#${MAIN_ID}`}>
                 {ru.layout.skipLink}
             </a>
-            <SiteHeader {...header} user={user} city={props.city ?? null} />
+            <SiteHeader {...header} user={user} city={props.city ?? null} messages={count} />
             <main id={MAIN_ID} tabIndex={-1} className="ym-site__main">
                 {children}
             </main>
             <SiteFooter />
-            <MobileTabBar active={tab} messages={header.messages} user={user} />
+            <MobileTabBar active={tab} messages={count} user={user} />
             <LoginDialogHost />
         </div>
     );
