@@ -959,9 +959,9 @@ describe('ChatThread: плашка «Будьте осторожны» (4.1.3)',
             }),
         );
 
-        expect(screen.getByText('Пишите в телеграм @fast_deal').closest('li')).not.toHaveTextContent(
-            'Будьте осторожны',
-        );
+        expect(
+            screen.getByText('Пишите в телеграм @fast_deal').closest('li'),
+        ).not.toHaveTextContent('Будьте осторожны');
     });
 
     it('подписывается на канал пользователя; событие .message.cautioned ставит плашку получателю', () => {

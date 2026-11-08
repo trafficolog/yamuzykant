@@ -11,6 +11,7 @@ use App\Http\Resources\Listings\ListingPhotoResource;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
+use Tests\Support\MessagingFixtures;
 
 // Раздача фото браузеру — через приложение (MinIO наружу не открыт): только готовые версии,
 // права как у объявления, исходник по URL недоступен.
@@ -206,7 +207,7 @@ it('список фото владельца: связь listing загруже�
 it('участник беседы видит обложку не опубликованного объявления; кэш private; остальным 404', function (ListingStatus $status) {
     $listing = Listing::factory()->inStatus($status)->create();
     $cover = readyPhoto($listing, position: 0);
-    $conversation = Tests\Support\MessagingFixtures::conversation($listing);
+    $conversation = MessagingFixtures::conversation($listing);
     $buyer = User::query()->findOrFail($conversation->buyer_id);
 
     $response = $this->actingAs($buyer)->get("/media/photos/{$cover->id}/square.webp");
@@ -229,7 +230,7 @@ it('участник беседы видит обложку не опублик�
 it('продавец-участник беседы видит обложку, как и раньше', function () {
     $listing = Listing::factory()->inStatus(ListingStatus::Withdrawn)->create();
     $cover = readyPhoto($listing);
-    $conversation = Tests\Support\MessagingFixtures::conversation($listing);
+    $conversation = MessagingFixtures::conversation($listing);
 
     $this->actingAs(User::query()->findOrFail($conversation->seller_id))->get("/media/photos/{$cover->id}/square.webp")->assertOk();
 });
@@ -239,7 +240,7 @@ it('участнику беседы не отдаются фото серийн�
     $serial = readyPhoto($listing, serial: true, position: 0);
     $cover = readyPhoto($listing, position: 1);
     $second = readyPhoto($listing, position: 2);
-    $conversation = Tests\Support\MessagingFixtures::conversation($listing);
+    $conversation = MessagingFixtures::conversation($listing);
     $buyer = User::query()->findOrFail($conversation->buyer_id);
 
     $this->actingAs($buyer);
@@ -251,7 +252,7 @@ it('участнику беседы не отдаются фото серийн�
 it('беседа по другому объявлению прав на обложку не даёт', function () {
     $listing = Listing::factory()->inStatus(ListingStatus::Withdrawn)->create();
     $cover = readyPhoto($listing);
-    $other = Tests\Support\MessagingFixtures::conversation(Listing::factory()->inStatus(ListingStatus::Published)->create());
+    $other = MessagingFixtures::conversation(Listing::factory()->inStatus(ListingStatus::Published)->create());
 
     $this->actingAs(User::query()->findOrFail($other->buyer_id))->get("/media/photos/{$cover->id}/square.webp")->assertNotFound();
 });
@@ -260,7 +261,7 @@ it('участник беседы получает URL обложки в Listing
     $listing = Listing::factory()->inStatus(ListingStatus::Withdrawn)->create();
     $serial = readyPhoto($listing, serial: true, position: 0);
     $cover = readyPhoto($listing, position: 1);
-    $conversation = Tests\Support\MessagingFixtures::conversation($listing);
+    $conversation = MessagingFixtures::conversation($listing);
     $request = Request::create('/');
     $request->setUserResolver(fn () => User::query()->findOrFail($conversation->buyer_id));
 

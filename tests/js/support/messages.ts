@@ -1,6 +1,11 @@
 import { vi } from 'vitest';
 
-import type { ChatConversation, ChatListing, ChatMessage, ConversationListItem } from '@/lib/messages';
+import type {
+    ChatConversation,
+    ChatListing,
+    ChatMessage,
+    ConversationListItem,
+} from '@/lib/messages';
 
 // Данные и подмены для тестов экрана сообщений (4.1.2).
 

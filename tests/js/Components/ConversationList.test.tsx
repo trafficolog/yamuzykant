@@ -3,7 +3,7 @@ import type { ComponentProps } from 'react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import ConversationList from '@/Components/ConversationList';
-import { listItem } from '../support/messages';
+import { listItem, listing } from '../support/messages';
 
 // 4.1.2: ConversationList — поиск, фильтр «Все / Покупаю / Продаю», архив, непрочитанные, пустые состояния.
 
@@ -190,7 +190,7 @@ describe('ConversationList', () => {
         expect(rows()[0]).toHaveTextContent('Андрей К.');
 
         fireEvent.change(search, { target: { value: '' } });
-        expect(rows()).toHaveLength(2);
+        expect(rows()).toHaveLength(3);
     });
 
     it('поиск ничего не нашёл — сказано об этом; поиск идёт по всем чатам, включая архив', () => {
@@ -214,7 +214,7 @@ describe('ConversationList', () => {
         fireEvent.keyDown(search, { key: 'Escape' });
 
         expect(screen.queryByRole('searchbox')).toBeNull();
-        expect(rows()).toHaveLength(2);
+        expect(rows()).toHaveLength(3);
         expect(document.activeElement).toBe(screen.getByRole('button', { name: 'Поиск по чатам' }));
     });
 
