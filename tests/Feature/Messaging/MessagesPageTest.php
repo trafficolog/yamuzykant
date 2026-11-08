@@ -47,14 +47,11 @@ it('без бесед отдаёт пустой список и ничего н�
 });
 
 it('список: только беседы пользователя, свежие сверху, роль, собеседник, объявление, последнее сообщение, непрочитанные', function () {
-    $older = MessagingFixtures::conversation();
-    $newer = MessagingFixtures::conversation();
+    $me = User::factory()->create(['name' => 'Я']);
+    // Пользователь покупает по старой беседе и продаёт по новой.
+    $older = MessagingFixtures::conversation(null, $me);
+    $newer = MessagingFixtures::conversation(Listing::factory()->inStatus(ListingStatus::Published)->create(['user_id' => $me->id]));
     MessagingFixtures::conversation(); // чужая беседа
-
-    $me = participant($older, 'buyer');
-    // Пользователь покупает по первой беседе и продаёт по второй.
-    $newer->forceFill(['seller_id' => $me->id])->save();
-    $newer->listing->forceFill(['user_id' => $me->id])->save();
 
     say($older, participant($older, 'seller'), 'Первое от продавца');
     say($older, participant($older, 'seller'), 'Второе от продавца');
@@ -112,12 +109,16 @@ it('беседа по объявлению, ушедшему из published бо
     $me = participant($closed, 'buyer');
     $open->forceFill(['buyer_id' => $me->id])->save();
 
+    $closed->forceFill(['last_message_at' => now()->subDay()])->save();
+    $open->forceFill(['last_message_at' => now()])->save();
+
     $this->actingAs($me)->get('/messages')
         ->assertInertia(fn (AssertableInertia $page) => $page
-            ->where('conversations', fn ($items) => collect($items)->pluck('closed', 'id')->all() === [
-                $closed->id => true,
-                $open->id => false,
-            ]));
+            ->where('conversations.0.id', $open->id)
+            ->where('conversations.0.closed', false)
+            ->where('conversations.1.id', $closed->id)
+            ->where('conversations.1.closed', true)
+            ->where('conversations.1.closed_reason', 'Объявление не опубликовано больше 30 дней — беседа доступна только для чтения.'));
 });
 
 it('открытая беседа: данные беседы, сообщения от старых к новым, признак «моё», есть ли более ранние', function () {

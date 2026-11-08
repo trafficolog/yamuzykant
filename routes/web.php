@@ -18,6 +18,7 @@ use App\Http\Controllers\Listings\ListingPhotoController;
 use App\Http\Controllers\Listings\LocalPhotoUploadController;
 use App\Http\Controllers\Listings\PhotoMediaController;
 use App\Http\Controllers\Messaging\ConversationController;
+use App\Http\Controllers\Messaging\MessagesPageController;
 use App\Http\Middleware\EnsureE2eEnvironment;
 use Illuminate\Foundation\Http\Middleware\ValidateCsrfToken;
 use Illuminate\Support\Facades\Route;
@@ -84,6 +85,10 @@ Route::middleware('auth')->group(function (): void {
         Route::post('messages', [ConversationController::class, 'send'])->middleware('throttle:messages')->name('send');
         Route::post('read', [ConversationController::class, 'read'])->middleware('throttle:120,1')->name('read');
     });
+
+    // Экран сообщений (4.1.2): список бесед, открытая беседа и черновик «Написать продавцу» (?listing=).
+    Route::get('messages', [MessagesPageController::class, 'index'])->name('messages.index');
+    Route::get('messages/{conversation}', [MessagesPageController::class, 'show'])->name('messages.show');
 });
 
 // Служебная страница доставки сообщений для e2e до экрана сообщений (4.1.2): только local, testing, e2e.

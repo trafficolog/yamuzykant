@@ -4,7 +4,7 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 import type { AuthUser } from '@/Hooks/useAuthUser';
 import { ru } from '@/lang/ru';
 import { hardNavigate } from '@/lib/navigate';
-import { HREF_SOON } from '@/lib/paths';
+import { HREF_SOON, MESSAGES_PATH } from '@/lib/paths';
 import { postJson } from '@/lib/postJson';
 
 /** Выход: POST с CSRF (cookie XSRF-TOKEN); сервер завершает сессию и меняет токен. */
@@ -22,7 +22,7 @@ export interface AccountPanelProps {
 
 /**
  * Меню кабинета (DEVIATIONS «account»): «Покупаю», «Продаю», общие «Сообщения» и «Профиль», «Выйти».
- * Страниц разделов пока нет: ссылки ведут на заглушку (lib/paths).
+ * «Сообщения» — экран сообщений (4.1.2); остальных разделов пока нет: ссылки ведут на заглушку (lib/paths).
  */
 export default function AccountPanel({ id, user, variant }: AccountPanelProps) {
     const [busy, setBusy] = useState(false);
@@ -78,7 +78,7 @@ export default function AccountPanel({ id, user, variant }: AccountPanelProps) {
             </a>
 
             <hr className="ym-account__rule" />
-            <a className="ym-account__link" href={HREF_SOON}>
+            <a className="ym-account__link" href={MESSAGES_PATH}>
                 {ru.account.messages}
             </a>
             <a className="ym-account__link" href={HREF_SOON}>

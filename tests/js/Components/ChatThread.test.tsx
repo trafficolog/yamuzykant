@@ -1,3 +1,4 @@
+import { readFileSync } from 'node:fs';
 import { act, fireEvent, render, screen, waitFor, within } from '@testing-library/react';
 import type { ComponentProps } from 'react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
@@ -9,7 +10,7 @@ import { VIEWER, conversation, fakeEcho, json, message } from '../support/messag
 // «Не отправлено · Повторить», только чтение по 409, экранирование текста, aria-live, realtime.
 
 const fake = fakeEcho();
-vi.mock('@/realtime/echo', () => ({ getEcho: () => fake.echo }));
+vi.mock('@/realtime/echo', () => ({ getEcho: (config: unknown) => (config ? fake.echo : null) }));
 
 const fetchMock = vi.fn();
 const onBack = vi.fn();
@@ -66,7 +67,7 @@ describe('ChatThread: содержимое', () => {
         expect(screen.getByRole('heading', { name: 'Андрей К.' })).toBeInTheDocument();
         const card = screen.getByRole('region', { name: 'Объявление' });
         expect(within(card).getByText('Fender ’57 Stratocaster')).toBeInTheDocument();
-        expect(card).toHaveTextContent('184 500 ₽');
+        expect(card).toHaveTextContent('184 500 ₽');
         fireEvent.click(screen.getByRole('button', { name: 'Закрыть чат' }));
         expect(onBack).toHaveBeenCalledTimes(1);
     });
@@ -168,7 +169,11 @@ describe('ChatThread: экранирование текста', () => {
         const paragraph = screen.getByText(/Раз/);
         expect(paragraph.textContent).toBe('Раз\n<b>два</b>');
         expect(paragraph.querySelector('b')).toBeNull();
-        expect(getComputedStyle(paragraph).whiteSpace).toBe('pre-line');
+        // Переводы строк сохраняет CSS класса текста: white-space: pre-line (проверено ниже по исходнику стилей).
+        expect(paragraph).toHaveClass('ym-chat__text');
+        expect(readFileSync('resources/css/messages.css', 'utf8')).toMatch(
+            /\.ym-chat__text\s*\{[^}]*white-space:\s*pre-line/,
+        );
     });
 });
 
@@ -242,13 +247,13 @@ describe('ChatThread: поле ввода и клавиатура', () => {
         view();
 
         fireEvent.change(field(), { target: { value: 'а'.repeat(1_850) } });
-        expect(screen.getByText('1 850 / 2 000')).toBeInTheDocument();
+        expect(screen.getByText('1 850 / 2 000')).toBeInTheDocument();
         expect(sendButton()).toBeEnabled();
 
         fireEvent.change(field(), { target: { value: 'а'.repeat(2_001) } });
         expect(sendButton()).toBeDisabled();
         expect(
-            screen.getByText('Сообщение длиннее 2 000 символов — сократите его.'),
+            screen.getByText('Сообщение длиннее 2 000 символов — сократите его.'),
         ).toBeInTheDocument();
     });
 

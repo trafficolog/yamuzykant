@@ -8,7 +8,7 @@ import { fakeEcho } from '../support/messages';
 // и обновляется по событию канала без перезагрузки страницы.
 
 const fake = fakeEcho();
-vi.mock('@/realtime/echo', () => ({ getEcho: () => fake.echo }));
+vi.mock('@/realtime/echo', () => ({ getEcho: (config: unknown) => (config ? fake.echo : null) }));
 
 let props: Record<string, unknown> = {};
 vi.mock('@inertiajs/react', () => ({

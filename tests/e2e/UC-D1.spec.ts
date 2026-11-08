@@ -7,6 +7,8 @@ import { hydrated, post, sellerListingId, signedInPage, startConversation } from
 // вкладки ≤ 2 с (Reverb), «прочитано» возвращается отправителю. Нужны Reverb и queue:work (ci.yml).
 
 const seriousOrCritical = async (page: Page) => {
+    // Индикатор переходов Inertia (NProgress, role="bar") — не часть экрана: ждём, пока он исчезнет.
+    await expect(page.locator('#nprogress')).toHaveCount(0);
     const result = await new AxeBuilder({ page }).withTags(['wcag2a', 'wcag2aa']).analyze();
     return result.violations
         .filter((violation) => violation.impact === 'serious' || violation.impact === 'critical')

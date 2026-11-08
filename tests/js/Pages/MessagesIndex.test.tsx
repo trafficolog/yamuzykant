@@ -8,7 +8,7 @@ import { VIEWER, conversation, fakeEcho, json, listItem, message } from '../supp
 // 4.1.2: страница «Сообщения» — список слева, переписка справа; на < 640 px по одной панели.
 
 const fake = fakeEcho();
-vi.mock('@/realtime/echo', () => ({ getEcho: () => fake.echo }));
+vi.mock('@/realtime/echo', () => ({ getEcho: (config: unknown) => (config ? fake.echo : null) }));
 
 const { visit, reload } = vi.hoisted(() => ({ visit: vi.fn(), reload: vi.fn() }));
 let pageProps: Record<string, unknown> = {};

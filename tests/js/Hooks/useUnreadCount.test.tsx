@@ -8,7 +8,7 @@ import { fakeEcho } from '../support/messages';
 // канала private-user.{id}. Подписка одна на вкладку, сколько бы компонентов ни читали счётчик.
 
 const fake = fakeEcho();
-vi.mock('@/realtime/echo', () => ({ getEcho: () => fake.echo }));
+vi.mock('@/realtime/echo', () => ({ getEcho: (config: unknown) => (config ? fake.echo : null) }));
 
 let props: Record<string, unknown> = {};
 vi.mock('@inertiajs/react', () => ({ usePage: () => ({ props }) }));

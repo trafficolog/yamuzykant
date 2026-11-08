@@ -1,0 +1,622 @@
+/*
+ * Сообщения (задача 4.1.2): список чатов слева, переписка справа; на < 640 px — по одной панели.
+ * Подключается из resources/js/app.tsx после flea.css. Только токены var(--*) и классы ym-*.
+ * Раскладка и размеры — по прототипу design/prototypes/Десктоп - Сообщения.dc.html; < 640 px — по
+ * эталону design/screens/messages@390.png (список чатов на всю ширину).
+ */
+
+/* Каркас: высота — остаток экрана под шапкой (страница выставляет --ym-messages-h по факту, ниже — запасное значение) */
+.ym-messages {
+    box-sizing: border-box;
+    width: 100%;
+    max-width: var(--content-max);
+    margin: 0 auto;
+    padding: var(--space-6) var(--space-10);
+    height: var(--ym-messages-h, calc(100vh - 117px));
+    min-height: 603px;
+    display: grid;
+    grid-template-columns: minmax(320px, 400px) minmax(0, 1fr);
+    grid-template-rows: minmax(0, 1fr);
+    gap: var(--space-4);
+}
+
+.ym-messages__list,
+.ym-messages__thread {
+    display: flex;
+    flex-direction: column;
+    min-height: 0;
+    min-width: 0;
+    background: var(--surface-raised);
+    border: 1px solid var(--line);
+    border-radius: var(--radius-lg);
+    overflow: hidden;
+}
+
+/* Круглые кнопки 44 px: поиск, «Закрыть чат» */
+.ym-messages__round {
+    flex: none;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: var(--hit-min);
+    height: var(--hit-min);
+    padding: 0;
+    border: 0;
+    border-radius: var(--radius-full);
+    background: none;
+    color: var(--ink);
+    cursor: pointer;
+}
+@media (hover: hover) {
+    .ym-messages__round:hover {
+        background: var(--surface-recessed);
+    }
+}
+.ym-messages__round:focus-visible,
+.ym-messages__row:focus-visible,
+.ym-chat__quick-item:focus-visible,
+.ym-chat__retry:focus-visible,
+.ym-chat__send:focus-visible,
+.ym-chat__log:focus-visible,
+.ym-chat__listing-in:focus-visible {
+    outline: 2px solid var(--focus-ring);
+    outline-offset: -2px;
+}
+
+/* Список чатов */
+.ym-messages__list-head {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: var(--space-3);
+    padding: var(--space-4) var(--space-3) var(--space-3) var(--space-5);
+}
+.ym-messages__list-title {
+    margin: 0;
+}
+.ym-messages__search {
+    padding: 0 var(--space-5) var(--space-3);
+}
+.ym-messages__search-input {
+    box-sizing: border-box;
+    width: 100%;
+    min-height: var(--hit-min);
+    padding: 0 var(--space-4);
+    border: 1px solid var(--line-control);
+    border-radius: var(--radius-full);
+    background: var(--surface-raised);
+    color: var(--ink);
+    font: 400 var(--text-m) / 22px var(--font-text);
+}
+.ym-messages__search-input:focus-visible {
+    outline: 2px solid var(--focus-ring);
+    outline-offset: 1px;
+}
+.ym-messages__filters {
+    display: flex;
+    gap: var(--space-2);
+    padding: 0 var(--space-5) var(--space-3);
+    overflow-x: auto;
+    scrollbar-width: none;
+}
+.ym-messages__filters::-webkit-scrollbar {
+    display: none;
+}
+.ym-messages__rows {
+    flex: 1;
+    min-height: 0;
+    margin: 0;
+    padding: 0;
+    list-style: none;
+    overflow-y: auto;
+    scrollbar-width: thin;
+    scrollbar-color: var(--line-control) transparent;
+    border-top: 1px solid var(--line);
+}
+.ym-messages__item {
+    display: flex;
+    align-items: stretch;
+}
+.ym-messages__row {
+    flex: 1;
+    min-width: 0;
+    display: flex;
+    align-items: flex-start;
+    gap: var(--space-3);
+    padding: var(--space-3) var(--space-5) 0;
+    color: inherit;
+    text-decoration: none;
+    text-align: left;
+    background: transparent;
+}
+.ym-messages__row[aria-current='true'] {
+    background: var(--surface-recessed);
+}
+@media (hover: hover) {
+    .ym-messages__row:hover {
+        background: var(--surface-recessed);
+    }
+}
+.ym-messages__thumb {
+    position: relative;
+    flex: none;
+    width: 64px;
+    height: 64px;
+    border-radius: var(--radius-md);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: var(--surface-recessed);
+    color: var(--ink-faint);
+}
+.ym-messages__role {
+    position: absolute;
+    right: -4px;
+    bottom: -4px;
+    box-sizing: border-box;
+    width: 24px;
+    height: 24px;
+    border: 2px solid var(--surface-raised);
+    border-radius: var(--radius-sm);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: var(--surface-recessed);
+    color: var(--ink-muted);
+}
+.ym-messages__body {
+    flex: 1;
+    min-width: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    padding: var(--space-1) 0 var(--space-3);
+    border-bottom: 1px solid var(--line);
+}
+.ym-messages__line {
+    display: flex;
+    align-items: baseline;
+    gap: var(--space-2);
+}
+.ym-messages__line:last-child {
+    align-items: center;
+}
+.ym-messages__name {
+    flex: 1;
+    min-width: 0;
+    font-weight: 600;
+    color: var(--ink);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+.ym-messages__date {
+    flex: none;
+    color: var(--ink-muted);
+    font-variant-numeric: tabular-nums;
+}
+.ym-messages__subject {
+    color: var(--ink);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+.ym-messages__preview {
+    flex: 1;
+    min-width: 0;
+    color: var(--ink-muted);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+.ym-messages__readonly {
+    flex: none;
+    color: var(--ink-muted);
+}
+.ym-messages__badge {
+    flex: none;
+    box-sizing: border-box;
+    min-width: 20px;
+    height: 20px;
+    padding: 0 6px;
+    border-radius: var(--radius-full);
+    background: var(--accent-text);
+    color: var(--surface-raised);
+    font: 600 var(--text-xs) / 20px var(--font-text);
+    text-align: center;
+    font-variant-numeric: tabular-nums;
+}
+.ym-messages__empty {
+    flex: 1;
+    padding: var(--space-8) var(--space-5);
+    border-top: 1px solid var(--line);
+    text-align: center;
+    color: var(--ink-muted);
+}
+.ym-messages__empty-text,
+.ym-messages__empty-hint {
+    margin: 0;
+}
+.ym-messages__empty-hint {
+    margin-top: var(--space-2);
+}
+
+/* Справа: подсказка, когда чат не выбран */
+.ym-messages__pick {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: var(--space-4);
+    padding: var(--space-8);
+    text-align: center;
+}
+.ym-messages__pick-icon {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 80px;
+    height: 80px;
+    border-radius: var(--radius-full);
+    background: var(--surface-recessed);
+    color: var(--ink-muted);
+}
+.ym-messages__pick-text {
+    margin: 0;
+    max-width: 320px;
+    text-wrap: pretty;
+}
+
+/* Переписка */
+.ym-chat {
+    flex: 1;
+    min-height: 0;
+    display: flex;
+    flex-direction: column;
+}
+.ym-chat__head {
+    display: flex;
+    align-items: center;
+    gap: var(--space-3);
+    padding: var(--space-3) var(--space-3) var(--space-3) var(--space-2);
+    border-bottom: 1px solid var(--line);
+}
+.ym-chat__back {
+    display: flex;
+    transform: rotate(180deg);
+}
+.ym-chat__avatar {
+    flex: none;
+    width: 40px;
+    height: 40px;
+    border-radius: var(--radius-full);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: var(--surface-recessed);
+    color: var(--ink-muted);
+    font: 600 var(--text-s) / 1 var(--font-text);
+}
+.ym-chat__who {
+    flex: 1;
+    min-width: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+}
+.ym-chat__name {
+    margin: 0;
+    font-weight: 600;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+.ym-chat__role {
+    margin: 0;
+    color: var(--ink-muted);
+}
+.ym-chat__listing {
+    border-bottom: 1px solid var(--line);
+}
+.ym-chat__listing-in {
+    display: flex;
+    align-items: center;
+    gap: var(--space-3);
+    padding: var(--space-3) var(--space-5);
+    color: var(--ink);
+    text-decoration: none;
+}
+a.ym-chat__listing-in:hover {
+    background: var(--surface-recessed);
+}
+.ym-chat__listing-thumb {
+    flex: none;
+    width: 48px;
+    height: 48px;
+    border-radius: var(--radius-sm);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: var(--surface-recessed);
+    color: var(--ink-faint);
+}
+.ym-chat__listing-text {
+    flex: 1;
+    min-width: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+}
+.ym-chat__listing-title {
+    font-weight: 500;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+.ym-chat__listing-price {
+    font-weight: 600;
+    font-variant-numeric: tabular-nums;
+}
+.ym-chat__offline {
+    margin: 0;
+    padding: var(--space-2) var(--space-5);
+    background: var(--warning-soft);
+    color: var(--ink);
+}
+.ym-chat__log {
+    flex: 1;
+    min-height: 0;
+    overflow-y: auto;
+    scrollbar-width: thin;
+    scrollbar-color: var(--line-control) transparent;
+    padding: var(--space-5);
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-3);
+    background: var(--surface);
+}
+.ym-chat__earlier {
+    align-self: center;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: var(--space-2);
+}
+.ym-chat__earlier-error {
+    margin: 0;
+    color: var(--danger-text);
+}
+.ym-chat__system {
+    align-self: flex-start;
+    max-width: min(560px, 85%);
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-1);
+    padding: var(--space-4);
+    border-radius: var(--radius-md);
+    background: var(--accent-soft);
+    color: var(--ink);
+}
+.ym-chat__system p {
+    margin: 0;
+    text-wrap: pretty;
+}
+.ym-chat__system-title {
+    font-weight: 600;
+}
+.ym-chat__hint {
+    margin: 0;
+    color: var(--ink-muted);
+}
+.ym-chat__list {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-3);
+    margin: 0;
+    padding: 0;
+    list-style: none;
+}
+.ym-chat__day {
+    align-self: center;
+    padding: var(--space-2) 0;
+    color: var(--ink-muted);
+    text-align: center;
+}
+.ym-chat__row {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-1);
+}
+.ym-chat__row--out {
+    align-items: flex-end;
+}
+.ym-chat__row--in {
+    align-items: flex-start;
+}
+.ym-chat__bubble {
+    max-width: min(560px, 75%);
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-1);
+    padding: var(--space-2) var(--space-3);
+}
+.ym-chat__bubble--in {
+    border: 1px solid var(--line);
+    border-radius: var(--radius-md) var(--radius-md) var(--radius-md) var(--radius-xs);
+    background: var(--surface-raised);
+}
+.ym-chat__bubble--out {
+    border-radius: var(--radius-md) var(--radius-md) var(--radius-xs) var(--radius-md);
+    background: var(--inverse);
+    color: var(--on-inverse);
+}
+.ym-chat__bubble--pending {
+    opacity: 0.7;
+}
+/* Текст сообщения — только текст: переводы строк сохраняются, разметка не разбирается */
+.ym-chat__text {
+    margin: 0;
+    white-space: pre-line;
+    overflow-wrap: anywhere;
+}
+.ym-chat__meta {
+    align-self: flex-end;
+    display: flex;
+    align-items: center;
+    gap: var(--space-1);
+    color: var(--ink-muted);
+    font-variant-numeric: tabular-nums;
+}
+.ym-chat__tick {
+    display: flex;
+    color: var(--ink-muted);
+}
+.ym-chat__tick.is-read {
+    color: var(--accent);
+}
+.ym-chat__failed {
+    margin: 0;
+    color: var(--danger-text);
+}
+.ym-chat__sending {
+    color: var(--ink-muted);
+}
+.ym-chat__retry {
+    padding: 0;
+    border: 0;
+    background: none;
+    color: var(--accent-text);
+    font: inherit;
+    font-weight: 600;
+    text-decoration: underline;
+    cursor: pointer;
+}
+.ym-chat__foot {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-2);
+    padding: var(--space-3);
+    border-top: 1px solid var(--line);
+}
+.ym-chat__quick {
+    display: flex;
+    gap: var(--space-2);
+    overflow-x: auto;
+    scrollbar-width: none;
+}
+.ym-chat__quick::-webkit-scrollbar {
+    display: none;
+}
+.ym-chat__quick-item {
+    flex: none;
+    min-height: 36px;
+    padding: 0 var(--space-3);
+    border: 1px solid var(--line-control);
+    border-radius: var(--radius-full);
+    background: var(--surface-raised);
+    color: var(--ink);
+    font-weight: 500;
+    white-space: nowrap;
+    cursor: pointer;
+}
+@media (hover: hover) {
+    .ym-chat__quick-item:hover {
+        border-color: var(--accent-text);
+        color: var(--accent-text);
+    }
+}
+.ym-chat__readonly {
+    margin: 0;
+    color: var(--ink-muted);
+}
+.ym-chat__error {
+    margin: 0;
+    color: var(--danger-text);
+}
+.ym-chat__form {
+    display: flex;
+    align-items: flex-end;
+    gap: var(--space-2);
+}
+.ym-chat__field {
+    flex: 1;
+    min-width: 0;
+    box-sizing: border-box;
+    min-height: var(--hit-min);
+    max-height: 160px;
+    padding: 11px var(--space-4);
+    border: 1px solid var(--line-control);
+    border-radius: var(--radius-lg);
+    background: var(--surface-raised);
+    color: var(--ink);
+    font: 400 var(--text-m) / 22px var(--font-text);
+    resize: none;
+}
+.ym-chat__field::placeholder {
+    color: var(--ink-faint);
+}
+.ym-chat__field:focus-visible {
+    outline: 2px solid var(--focus-ring);
+    outline-offset: 1px;
+}
+.ym-chat__field[disabled] {
+    background: var(--surface-recessed);
+    color: var(--ink-muted);
+    cursor: not-allowed;
+}
+.ym-chat__field[aria-invalid='true'] {
+    border-color: var(--danger-text);
+}
+.ym-chat__send {
+    flex: none;
+    width: var(--hit-min);
+    height: var(--hit-min);
+    padding: 0;
+    border: 0;
+    border-radius: var(--radius-full);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: var(--accent-text);
+    color: var(--surface-raised);
+    cursor: pointer;
+}
+.ym-chat__send[disabled] {
+    background: var(--surface-recessed);
+    color: var(--ink-faint);
+    cursor: default;
+}
+.ym-chat__count {
+    align-self: flex-end;
+    color: var(--ink-muted);
+    font-variant-numeric: tabular-nums;
+}
+
+/* < 640 px: одна панель — список или чат на всю ширину (эталон messages@390) */
+@media (max-width: 639px) {
+    .ym-messages {
+        grid-template-columns: minmax(0, 1fr);
+        padding: var(--space-6) var(--space-4);
+        min-height: 480px;
+    }
+    .ym-messages[data-view='list'] .ym-messages__thread,
+    .ym-messages[data-view='thread'] .ym-messages__list {
+        display: none;
+    }
+    .ym-chat__log {
+        padding: var(--space-4);
+    }
+    .ym-chat__listing-in {
+        padding-inline: var(--space-4);
+    }
+    .ym-chat__bubble {
+        max-width: 85%;
+    }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .ym-chat__log {
+        scroll-behavior: auto;
+    }
+}
