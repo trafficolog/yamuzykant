@@ -27,7 +27,7 @@ describe('FleaListingCard: подпись цены без JS', () => {
     it('SSR: сумма — цена в блоке, --price-label не задан', () => {
         const html = renderToString(<FleaListingCard {...base} price={184_500} />);
 
-        expect(html).toContain('184 500');
+        expect(html).toMatch(/184\s500/);
         expect(html).not.toContain('--price-label');
     });
 
