@@ -12,6 +12,7 @@ import FleaFilterPanel, {
 import Pagination from '@/Components/Pagination';
 import PublicLayout from '@/Layouts/PublicLayout';
 import { ru } from '@/lang/ru';
+import { lotPath } from '@/lib/paths';
 import {
     EMPTY_FILTERS,
     FLEA_PATH,
@@ -270,6 +271,7 @@ export default function FleaIndex({
                                 <FleaListingCard
                                     key={card.id}
                                     title={card.title}
+                                    href={lotPath(card.id)}
                                     price={card.price}
                                     condition={
                                         (card.condition ?? undefined) as Condition | undefined

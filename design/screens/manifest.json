@@ -152,6 +152,14 @@
       "mvp": true,
       "compare": "visual",
       "threshold": "data",
+      "stateReferences": [
+        {
+          "state": "r1",
+          "viewports": [
+            "1440"
+          ]
+        }
+      ],
       "mask": [
         "[data-dynamic]"
       ],
@@ -212,6 +220,15 @@
       "mvp": true,
       "compare": "visual",
       "threshold": "data",
+      "stateReferences": [
+        {
+          "state": "r1",
+          "viewports": [
+            "1440",
+            "390"
+          ]
+        }
+      ],
       "mask": [
         "[data-dynamic]"
       ],

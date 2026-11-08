@@ -3,7 +3,7 @@ id: "3.1.5"
 phase: "3"
 epic: "3.1"
 title: "Страница объявления"
-status: review
+status: done
 gate: G1
 risk: medium
 model_impl: sonnet
@@ -14,7 +14,7 @@ uc: ["V1", "D1"]
 prototype: "Десктоп - Лот.dc.html"
 screens: ["lot"]
 issue: 30
-sync_state: drifted
+sync_state: aligned
 escalations: []
 ---
 

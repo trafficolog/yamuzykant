@@ -3,7 +3,7 @@ id: "4.1.2"
 phase: "4"
 epic: "4.1"
 title: "Сообщения: список и чат"
-status: in_progress
+status: done
 gate: G1
 risk: medium
 model_impl: sonnet
@@ -14,7 +14,7 @@ uc: ["D1"]
 prototype: "Десктоп - Сообщения.dc.html"
 screens: ["messages"]
 issue: 34
-sync_state: drifted
+sync_state: aligned
 escalations: []
 ---
 

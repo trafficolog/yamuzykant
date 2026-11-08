@@ -5,9 +5,8 @@ declare(strict_types=1);
 namespace App\Domain\Messaging\Actions;
 
 use App\Domain\Accounts\Models\User;
-use App\Domain\Listings\Enums\ListingStatus;
-use App\Domain\Listings\Enums\WithdrawReason;
 use App\Domain\Listings\Models\Listing;
+use App\Domain\Messaging\ConversationAvailability;
 use App\Domain\Messaging\Enums\MessageKind;
 use App\Domain\Messaging\Events\MessageSent;
 use App\Domain\Messaging\Events\UnreadCountChanged;
@@ -22,9 +21,9 @@ use Illuminate\Support\Facades\DB;
 use InvalidArgumentException;
 
 /**
- * Отправить текстовое сообщение в беседу. Писать можно, только пока объявление опубликовано и собеседник
- * не удалил аккаунт. События (сообщение в канал беседы, счётчик получателю) уходят после commit.
- * Текст сообщения не пишется в журнал.
+ * Отправить текстовое сообщение в беседу. Писать можно, пока объявление опубликовано (или идёт окно ответов
+ * BR-10) и собеседник не удалил аккаунт — правило в ConversationAvailability. События (сообщение в канал беседы,
+ * счётчик получателю) уходят после commit. Текст сообщения не пишется в журнал.
  */
 final class SendMessage
 {
@@ -43,19 +42,13 @@ final class SendMessage
 
         return DB::transaction(function () use ($sender, $conversation, $body): Message {
             $listing = Listing::query()->whereKey($conversation->listing_id)->sharedLock()->firstOrFail();
-            if ($listing->status !== ListingStatus::Published) {
-                if ($this->removedByModeration($listing)) {
-                    throw ConversationClosed::removedByModeration();
-                }
-                if (! $this->withinReplyWindow($listing)) {
-                    throw ConversationClosed::listingNotPublished();
-                }
+            $closure = ConversationAvailability::closure($conversation, $listing, $sender);
+            if ($closure !== null) {
+                throw $closure;
             }
 
-            $recipientId = $conversation->counterpartId($sender);
-            if ($recipientId === null) {
-                throw ConversationClosed::counterpartDeleted();
-            }
+            // Собеседник уже проверен в closure(); здесь — только сужение типа для получателя события.
+            $recipientId = $conversation->counterpartId($sender) ?? throw ConversationClosed::counterpartDeleted();
 
             $message = new Message;
             $message->conversation_id = $conversation->id;
@@ -78,23 +71,5 @@ final class SendMessage
 
             return $message;
         });
-    }
-
-    /**
-     * BR-10: после ухода из published отвечать можно ещё messaging.reply_window_days дней. Момент — unpublished_at
-     * (ведёт ListingStateMachine). Без него окно закрыто: updated_at меняется любой записью и открывал бы беседу заново.
-     * Окно — ровно N×24 часа: в момент unpublished_at + N дней отвечать уже нельзя.
-     */
-    private function withinReplyWindow(Listing $listing): bool
-    {
-        return $listing->unpublished_at !== null
-            && $listing->unpublished_at->copy()->addDays((int) config('messaging.reply_window_days'))->isFuture();
-    }
-
-    /** Решение оркестратора по BR-10: отклонено модератором или снято с причиной «модерация» — без окна. */
-    private function removedByModeration(Listing $listing): bool
-    {
-        return $listing->status === ListingStatus::Rejected
-            || $listing->saleRecord?->reason === WithdrawReason::Moderation;
     }
 }

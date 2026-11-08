@@ -106,7 +106,7 @@ test.describe('UC-S2: главная', () => {
         const html = await (await request.get('/')).text();
 
         expect(html).toContain('Новые в г. Москва');
-        expect(html).toContain('Fender American Vintage');
+        expect(html).toContain('Гитара демо');
         expect(html).toContain('href="/baraholka/gitary"');
     });
 
