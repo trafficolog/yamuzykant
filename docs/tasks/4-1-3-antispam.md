@@ -3,7 +3,7 @@ id: "4.1.3"
 phase: "4"
 epic: "4.1"
 title: "Антиспам в сообщениях"
-status: in_progress
+status: review
 gate: G1
 risk: medium
 model_impl: sonnet
