@@ -73,7 +73,7 @@ describe('просьба перейти в мессенджер', function () {
         expect(detect(accountAged(500), $text))->toBe([SpamSignal::MessengerRequest]);
     })->with([
         'ник' => 'Напишите в телеграм @fast_deal_77',
-        'номер' => 'Мой ватсап 8 916 123 45 67',
+        'номер' => 'Мой ватсап 89161234567',
         'идентификатор' => 'Телеграм: fast_deal_77',
     ]);
 
@@ -99,6 +99,7 @@ describe('одинаковый текст в ≥ 5 чатах', function () {
     }
 
     it('короткий текст («Ещё продаётся?») рассылкой не считается, как бы часто он ни повторялся', function () {
+        config(['messaging.spam.same_text_min_length' => 30]);
         $sender = accountAged(500);
         sendSame($sender, 'Ещё продаётся?', 6);
 
@@ -119,10 +120,6 @@ describe('одинаковый текст в ≥ 5 чатах', function () {
 
         config(['messaging.spam.same_text_min_length' => 14]);
         expect(app(SpamDetector::class)->detect($sender, $fifth, 'Продаю дёшево'))->toBe([]);
-    });
-
-    it('порог длины по умолчанию — 30 знаков', function () {
-        expect(config('messaging.spam.same_text_min_length'))->toBe(30);
     });
 
     it('в пятом чате — признак, в четвёртом ещё нет', function () {
@@ -186,6 +183,10 @@ it('несколько признаков возвращаются вместе'
     expect(detect(accountAged(1), 'Пишите в телеграм @fast_deal: https://t.me/fast_deal'))
         ->toContain(SpamSignal::NewAccountLink)
         ->toContain(SpamSignal::MessengerRequest);
+});
+
+it('порог длины текста для признака дубля по умолчанию — 30 знаков', function () {
+    expect(config('messaging.spam.same_text_min_length'))->toBe(30);
 });
 
 describe('хеш текста', function () {
