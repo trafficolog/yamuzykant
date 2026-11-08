@@ -78,20 +78,36 @@ describe('ConversationList', () => {
         expect(rows()[1]).toHaveTextContent('Вы: Беру');
     });
 
-    it('непрочитанные: значок с числом и доступным названием, у прочитанных значка нет', () => {
+    it('непрочитанные: число видно, а имя «N непрочитанных» — скрытым текстом в ссылке; aria-label на значке нет', () => {
         view();
 
-        expect(
-            within(rows()[0] as HTMLElement).getByLabelText('2 непрочитанных'),
-        ).toHaveTextContent('2');
-        expect(within(rows()[1] as HTMLElement).queryByLabelText(/непрочитанн/)).toBeNull();
+        const first = rows()[0] as HTMLElement;
+        const badge = first.querySelector('.ym-messages__badge') as HTMLElement;
+        expect(badge).toHaveTextContent('2');
+        expect(badge).not.toHaveAttribute('aria-label');
+        expect(badge).toHaveAttribute('aria-hidden', 'true');
+        const hidden = within(first).getByText('2 непрочитанных');
+        expect(hidden).toHaveClass('ym-sr');
+        expect(within(first).getByRole('link')).toHaveAccessibleName(/2 непрочитанных/);
+        expect(rows()[1]?.querySelector('.ym-messages__badge')).toBeNull();
+        expect(within(rows()[1] as HTMLElement).queryByText(/непрочитанн/)).toBeNull();
     });
 
     it('склонение: 1 непрочитанное, 5 непрочитанных', () => {
         view({ conversations: [listItem('a', { unread: 1 }), listItem('b', { unread: 5 })] });
 
-        expect(screen.getByLabelText('1 непрочитанное')).toBeInTheDocument();
-        expect(screen.getByLabelText('5 непрочитанных')).toBeInTheDocument();
+        expect(screen.getByText('1 непрочитанное')).toBeInTheDocument();
+        expect(screen.getByText('5 непрочитанных')).toBeInTheDocument();
+    });
+
+    it('кнопка поиска и поле — компоненты ДС (Button, SearchBar), а не сырые элементы', () => {
+        view();
+
+        const toggle = screen.getByRole('button', { name: 'Поиск по чатам' });
+        expect(toggle).toHaveClass('ym-btn');
+        fireEvent.click(toggle);
+        expect(screen.getByRole('search')).toHaveClass('ym-search');
+        expect(screen.getByRole('searchbox')).toBeInTheDocument();
     });
 
     it('строка — ссылка на беседу; текущая помечена aria-current', () => {
@@ -151,7 +167,7 @@ describe('ConversationList', () => {
         view();
 
         fireEvent.click(screen.getByRole('button', { name: 'Поиск по чатам' }));
-        const search = screen.getByRole('searchbox', { name: 'Поиск по чатам' });
+        const search = screen.getByRole('searchbox', { name: 'Поиск' });
 
         fireEvent.change(search, { target: { value: 'ирина' } });
         expect(rows()).toHaveLength(1);
@@ -170,7 +186,7 @@ describe('ConversationList', () => {
     it('поиск ничего не нашёл — сказано об этом; поиск идёт по всем чатам, включая архив', () => {
         view();
         fireEvent.click(screen.getByRole('button', { name: 'Поиск по чатам' }));
-        const search = screen.getByRole('searchbox', { name: 'Поиск по чатам' });
+        const search = screen.getByRole('searchbox', { name: 'Поиск' });
 
         fireEvent.change(search, { target: { value: 'telecaster' } });
         expect(rows()).toHaveLength(1);
@@ -182,7 +198,7 @@ describe('ConversationList', () => {
     it('Escape в поиске закрывает его и возвращает фокус на кнопку', () => {
         view();
         fireEvent.click(screen.getByRole('button', { name: 'Поиск по чатам' }));
-        const search = screen.getByRole('searchbox', { name: 'Поиск по чатам' });
+        const search = screen.getByRole('searchbox', { name: 'Поиск' });
         fireEvent.change(search, { target: { value: 'ирина' } });
 
         fireEvent.keyDown(search, { key: 'Escape' });

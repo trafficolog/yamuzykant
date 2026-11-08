@@ -9,9 +9,14 @@ import { expectMatchesReference } from './_helpers';
 // шапкой и подвалом со всеми флагами. В R1 этого нет, поэтому вид сверяется с эталоном состояния
 // messages--r1@{1440,390}.png, снятым с реализации в CI (Linux, как flea--r1) и принятым OWNER на G1;
 // отличия — в design/DEVIATIONS.md. Динамика (даты, время, счётчики) закрыта маской [data-dynamic].
+// Эталон R1 снят с самой реализации, поэтому порог строгий (0,5 %), а не 5 % сверки с прототипом;
+// общая правка порога всех R1 — карточка 0.2.9.
 //
 // Данные: покупатель «Анна» и три продавца с одним объявлением каждый; беседа с «Андрей К.» открыта на 1440,
 // на 390 — список чатов, как на эталоне.
+
+/** Строгий порог для эталонов, снятых с реализации. */
+const R1_RATIO = 0.005;
 
 async function seeded(browser: Browser, viewport: { width: number; height: number }) {
     const buyer = await signedInPage(browser, 'Анна', viewport);
@@ -45,12 +50,12 @@ test.describe('@visual messages', () => {
         const { buyer, first } = await seeded(browser, { width: 1440, height: 900 });
         await hydrated(buyer, `/messages/${first}`);
         await buyer.getByRole('log').waitFor();
-        await expectMatchesReference(buyer, 'messages', '1440', { state: 'r1' });
+        await expectMatchesReference(buyer, 'messages', '1440', { state: 'r1', maxDiffPixelRatio: R1_RATIO });
     });
 
     test('messages@390, R1: список чатов', async ({ browser }) => {
         const { buyer } = await seeded(browser, { width: 390, height: 844 });
         await hydrated(buyer, '/messages');
-        await expectMatchesReference(buyer, 'messages', '390', { state: 'r1' });
+        await expectMatchesReference(buyer, 'messages', '390', { state: 'r1', maxDiffPixelRatio: R1_RATIO });
     });
 });

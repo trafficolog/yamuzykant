@@ -124,6 +124,39 @@ describe('Messages/Index', () => {
         );
     });
 
+    it('после «Закрыть чат» фокус возвращается на строку закрытой беседы', () => {
+        const active = {
+            conversation: conversation({ id: 'c1' }),
+            messages: [],
+            has_more: false,
+        };
+        const { rerender } = view({ active });
+
+        fireEvent.click(screen.getByRole('button', { name: 'Закрыть чат' }));
+        const next: Props = { conversations: LIST, active: null, compose: null };
+        pageProps = { ...pageProps, ...next };
+        rerender(<MessagesIndex {...next} />);
+
+        const row = within(screen.getByRole('list', { name: 'Чаты' })).getAllByRole('link')[0];
+        expect(document.activeElement).toBe(row);
+    });
+
+    it('если беседа закрылась не кнопкой «Закрыть чат», фокус не уводится на список', () => {
+        const active = {
+            conversation: conversation({ id: 'c1' }),
+            messages: [],
+            has_more: false,
+        };
+        const { rerender } = view({ active });
+        const before = document.activeElement;
+
+        const next: Props = { conversations: LIST, active: null, compose: null };
+        pageProps = { ...pageProps, ...next };
+        rerender(<MessagesIndex {...next} />);
+
+        expect(document.activeElement).toBe(before);
+    });
+
     it('черновик «Написать продавцу»: справа продавец и поле ввода; первое сообщение ведёт в созданную беседу', async () => {
         fetchMock.mockImplementation(async () =>
             json(

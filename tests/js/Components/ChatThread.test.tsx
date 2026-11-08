@@ -445,6 +445,9 @@ describe('ChatThread: доступность и realtime', () => {
                 created_at: '2026-09-10T08:00:00Z',
             });
         });
+        // Пока ответ POST не пришёл, рядом не стоят «отправляется» и настоящее сообщение.
+        expect(within(log()).getAllByText('Раньше')).toHaveLength(1);
+        expect(screen.queryByText('Отправляется')).toBeNull();
         await act(async () => {
             resolve(created(11, 'Раньше'));
         });
@@ -539,6 +542,48 @@ describe('ChatThread: история', () => {
             ),
         ).toBe(true);
         expect(screen.queryByRole('button', { name: 'Показать ранее' })).toBeNull();
+    });
+
+    it('пока страница вставляется в начало, журнал помечен aria-busy: диктор не читает её заново', async () => {
+        let resolve: (response: Response) => void = () => undefined;
+        fetchMock.mockImplementation((url: string) =>
+            String(url).includes('before=')
+                ? new Promise<Response>((r) => {
+                      resolve = r;
+                  })
+                : Promise.resolve(json({ unread: 0 })),
+        );
+        view({ messages: [message(2, 'Позже', false)], hasMore: true });
+        expect(log()).not.toHaveAttribute('aria-busy', 'true');
+
+        fireEvent.click(screen.getByRole('button', { name: 'Показать ранее' }));
+        expect(log()).toHaveAttribute('aria-busy', 'true');
+
+        await act(async () => {
+            resolve(
+                json({
+                    conversation: conversation(),
+                    data: [message(1, 'Самое первое', false)],
+                    meta: { has_more: false },
+                }),
+            );
+        });
+
+        await screen.findByText('Самое первое');
+        await waitFor(() => expect(log()).not.toHaveAttribute('aria-busy', 'true'));
+        expect(log()).toHaveAttribute('aria-live', 'polite');
+    });
+
+    it('страница не загрузилась: aria-busy снимается', async () => {
+        fetchMock.mockImplementation(async (url: string) =>
+            String(url).includes('before=') ? json({}, 500) : json({ unread: 0 }),
+        );
+        view({ messages: [message(2, 'Позже', false)], hasMore: true });
+
+        fireEvent.click(screen.getByRole('button', { name: 'Показать ранее' }));
+
+        await screen.findByText(/Не удалось/);
+        expect(log()).not.toHaveAttribute('aria-busy', 'true');
     });
 
     it('без более ранних сообщений кнопки нет', () => {

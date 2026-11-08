@@ -10,6 +10,8 @@ use App\Domain\Messaging\Actions\MarkConversationRead;
 use App\Domain\Messaging\Actions\SendMessage;
 use App\Domain\Messaging\Models\Conversation;
 use App\Domain\Messaging\Models\Message;
+use App\Domain\Messaging\Queries\UserConversations;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
 use Inertia\Testing\AssertableInertia;
 use Tests\Support\MessagingFixtures;
@@ -255,4 +257,54 @@ it('список ограничен messaging.list_limit беседами (по 
     config(['messaging.list_limit' => 2]);
 
     $this->actingAs($me)->get('/messages')->assertInertia(fn (AssertableInertia $page) => $page->has('conversations', 2));
+});
+
+/** Сколько запросов к БД выполнил колбэк (журнал запросов включается только на время вызова). */
+function queryCount(Closure $callback): int
+{
+    DB::flushQueryLog();
+    DB::enableQueryLog();
+    $callback();
+    $count = count(DB::getQueryLog());
+    DB::disableQueryLog();
+
+    return $count;
+}
+
+/** Беседы пользователя с сообщениями в обе стороны. */
+function conversationsFor(User $me, int $count): void
+{
+    foreach (range(1, $count) as $i) {
+        $conversation = MessagingFixtures::conversation(null, $me);
+        say($conversation, participant($conversation, 'seller'), "Сообщение продавца {$i}");
+        say($conversation, $me, "Ответ {$i}");
+        say($conversation, participant($conversation, 'seller'), "Ещё одно {$i}");
+    }
+}
+
+it('UserConversations: число запросов не зависит от числа бесед (нет N+1)', function () {
+    $me = User::factory()->create();
+    conversationsFor($me, 3);
+    $query = app(UserConversations::class);
+    $query->for($me); // прогрев
+    $few = queryCount(fn () => $query->for($me));
+
+    conversationsFor($me, 27);
+    $many = queryCount(fn () => $query->for($me));
+
+    expect($query->for($me))->toHaveCount(30)
+        ->and($few)->toBeLessThanOrEqual(5)
+        ->and($many)->toBe($few);
+});
+
+it('страница /messages: число запросов одинаково для 3 и 30 бесед (список и Resource без N+1)', function () {
+    $me = User::factory()->create();
+    conversationsFor($me, 3);
+    $this->actingAs($me)->get('/messages')->assertOk(); // прогрев
+    $few = queryCount(fn () => $this->actingAs($me)->get('/messages')->assertOk());
+
+    conversationsFor($me, 27);
+    $many = queryCount(fn () => $this->actingAs($me)->get('/messages')->assertOk());
+
+    expect($many)->toBe($few);
 });
