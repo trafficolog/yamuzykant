@@ -264,9 +264,7 @@ test.describe('UC-L1 часть 2: черновик и публикация (2.1
         await page.getByRole('button', { name: 'Опубликовать' }).click();
 
         await expect(
-            page.getByText(
-                'Уберите телефон из описания — покупатели напишут вам в сообщениях.',
-            ),
+            page.getByText('Уберите телефон из описания — покупатели напишут вам в сообщениях.'),
         ).toBeVisible();
         await expect(
             page.getByRole('heading', { level: 2, name: 'Объявление опубликовано' }),

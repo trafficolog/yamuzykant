@@ -30,16 +30,15 @@ beforeEach(function () {
 /**
  * Содержимое формы для вызова действия публикации напрямую (в обход HTTP).
  *
- * @param  array<string, mixed>  $overrides
- * @return array<string, mixed>
+ * @return array{category_id: int, title: string, model_id: int|null, year: int|null, serial: string|null, condition: string, description: string|null, price: int, negotiable: bool, meet: bool, ship: bool}
  */
-function publishContent(int $categoryId, array $overrides = []): array
+function publishContent(int $categoryId, ?string $description = null): array
 {
-    return array_merge([
+    return [
         'category_id' => $categoryId, 'title' => 'Fender Stratocaster', 'model_id' => null, 'year' => null,
-        'serial' => null, 'condition' => 'excellent', 'description' => null,
+        'serial' => null, 'condition' => 'excellent', 'description' => $description,
         'price' => 100_000, 'negotiable' => false, 'meet' => true, 'ship' => false,
-    ], $overrides);
+    ];
 }
 
 /** @param  list<ListingStatus>  $statuses */
@@ -99,7 +98,7 @@ describe('публикация без премодерации', function () {
 
         expect($again->status)->toBe(ListingStatus::Published)
             ->and(Listing::query()->where('user_id', $owner->id)->count())->toBe(1)
-            ->and(sellReload($draft)->published_at?->equalTo($first))->toBeTrue()
+            ->and(sellReload($draft)->published_at?->toIso8601String())->toBe($first?->toIso8601String())
             ->and(sellReload($draft)->price)->toBe(184_500);
         Event::assertDispatchedTimes(ListingPublished::class, 1);
     });
@@ -183,7 +182,7 @@ describe('автопроверки и фото перед публикацией
 
     it('и вне HTTP: действие публикации само вызывает ListingAutoChecks::validate()', function () {
         [$owner, $kind, $draft] = sellCase();
-        $content = publishContent($kind->id, ['description' => 'Пишите ivan@mail.ru']);
+        $content = publishContent($kind->id, 'Пишите ivan@mail.ru');
 
         expect(fn () => app(PublishListing::class)($draft, $content, null))->toThrow(ValidationException::class);
         expect(sellReload($draft)->status)->toBe(ListingStatus::Draft)->and(sellReload($draft)->description)->toBeNull();

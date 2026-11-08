@@ -9,11 +9,12 @@ declare(strict_types=1);
 use App\Domain\Accounts\Models\User;
 use App\Domain\Listings\Actions\FindOrCreateDraft;
 use App\Domain\Listings\Models\Listing;
+use Illuminate\Contracts\Console\Kernel;
 
 require __DIR__.'/../../vendor/autoload.php';
 
 $app = require __DIR__.'/../../bootstrap/app.php';
-$app->make(Illuminate\Contracts\Console\Kernel::class)->bootstrap();
+$app->make(Kernel::class)->bootstrap();
 
 [, $mode, $userId, $startAt] = $argv;
 

@@ -20,9 +20,7 @@ describe('Объявление опубликовано', () => {
     it('заголовок, срок публикации и название объявления', () => {
         render(<SellPublished status="published" listing={listing} days={60} />);
 
-        expect(
-            screen.getByRole('heading', { level: 1, name: 'Продать инструмент' }),
-        ).toBeVisible();
+        expect(screen.getByRole('heading', { level: 1, name: 'Продать инструмент' })).toBeVisible();
         expect(
             screen.getByRole('heading', { level: 2, name: 'Объявление опубликовано' }),
         ).toBeVisible();
@@ -44,7 +42,9 @@ describe('Объявление опубликовано', () => {
     });
 
     it('срок склоняется: 1 день, 2 дня, 60 дней', () => {
-        const { rerender } = render(<SellPublished status="published" listing={listing} days={1} />);
+        const { rerender } = render(
+            <SellPublished status="published" listing={listing} days={1} />,
+        );
         expect(screen.getByText(/1 день/)).toBeVisible();
 
         rerender(<SellPublished status="published" listing={listing} days={2} />);
@@ -52,7 +52,9 @@ describe('Объявление опубликовано', () => {
     });
 
     it('запрещённых слов нет, восклицательных знаков нет', () => {
-        const { container } = render(<SellPublished status="published" listing={listing} days={60} />);
+        const { container } = render(
+            <SellPublished status="published" listing={listing} days={60} />,
+        );
 
         expect(container.textContent ?? '').not.toMatch(/!|гир|сетап/i);
     });

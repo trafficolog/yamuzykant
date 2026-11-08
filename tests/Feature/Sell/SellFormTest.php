@@ -347,7 +347,8 @@ describe('StoreListingRequest', function () {
     })->with(['скрытая' => ['hiddenStatus'], 'предложенная' => ['suggested']]);
 
     it('2 фото: отказ с текстом «ещё 1 фото»', function () {
-        [$owner, $kind, $draft] = sellCase();
+        $owner = User::factory()->create();
+        $kind = sellKind();
         $listing = sellDraft($owner, photos: 2);
 
         $this->actingAs($owner)->from('/sell')
@@ -356,7 +357,8 @@ describe('StoreListingRequest', function () {
     });
 
     it('нет фото серийного номера: отказ', function () {
-        [$owner, $kind, $draft] = sellCase();
+        $owner = User::factory()->create();
+        $kind = sellKind();
         $listing = sellDraft($owner, photos: 3, serial: false);
 
         $this->actingAs($owner)->from('/sell')
@@ -365,7 +367,8 @@ describe('StoreListingRequest', function () {
     });
 
     it('больше 12 фото: отказ', function () {
-        [$owner, $kind, $draft] = sellCase();
+        $owner = User::factory()->create();
+        $kind = sellKind();
         $listing = sellDraft($owner, photos: 13);
 
         $this->actingAs($owner)->from('/sell')

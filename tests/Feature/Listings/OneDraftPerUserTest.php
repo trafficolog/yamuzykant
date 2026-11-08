@@ -69,6 +69,17 @@ describe('частичный уникальный индекс', function () {
     });
 });
 
+/** Id пользователя текущего теста гонки: тесты Pest не объявляют свойства, поэтому — статическая переменная. */
+function raceUserId(?int $set = null): int
+{
+    static $id = 0;
+    if ($set !== null) {
+        $id = $set;
+    }
+
+    return $id;
+}
+
 /**
  * Запускает $count процессов одновременно и возвращает их разобранные ответы.
  *
@@ -106,32 +117,33 @@ describe('настоящая гонка двух процессов', function (
         while (DB::transactionLevel() > 0) {
             DB::rollBack();
         }
-        $this->racer = User::factory()->create();
+        raceUserId(User::factory()->create()->id);
     });
 
     afterEach(function () {
-        if (isset($this->racer)) {
-            DB::table('listings')->where('user_id', $this->racer->id)->delete();
-            DB::table('users')->where('id', $this->racer->id)->delete();
+        if (raceUserId() !== 0) {
+            DB::table('listings')->where('user_id', raceUserId())->delete();
+            DB::table('users')->where('id', raceUserId())->delete();
+            raceUserId(0);
         }
     });
 
     it('два FindOrCreateDraft одновременно: один черновик, оба получают один и тот же', function () {
-        $results = raceDrafts('find', $this->racer->id);
+        $results = raceDrafts('find', raceUserId());
 
         expect(collect($results)->pluck('ok')->all())->toBe([true, true])
             ->and(collect($results)->pluck('id')->unique()->count())->toBe(1)
-            ->and(Listing::query()->where('user_id', $this->racer->id)->count())->toBe(1);
+            ->and(Listing::query()->where('user_id', raceUserId())->count())->toBe(1);
     });
 
     it('две прямые вставки черновика одновременно (мимо блокировки): проходит одна, вторую отклоняет индекс', function () {
-        $results = raceDrafts('insert', $this->racer->id);
+        $results = raceDrafts('insert', raceUserId());
 
         $ok = collect($results)->where('ok', true)->count();
         $failed = collect($results)->where('ok', false)->pluck('error')->all();
 
         expect($ok)->toBe(1)
             ->and($failed)->toBe([UniqueConstraintViolationException::class])
-            ->and(Listing::query()->where('user_id', $this->racer->id)->where('status', 'draft')->count())->toBe(1);
+            ->and(Listing::query()->where('user_id', raceUserId())->where('status', 'draft')->count())->toBe(1);
     });
 });

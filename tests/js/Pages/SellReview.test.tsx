@@ -149,9 +149,7 @@ describe('фокус после ответа сервера с ошибками'
 
 describe('превью до гидратации', () => {
     it('в серверной разметке карточки с «0 ₽» нет: превью рисуется только в браузере', () => {
-        const html = renderToString(
-            <SellCreate listingId="draft-1" photos={THREE} />,
-        );
+        const html = renderToString(<SellCreate listingId="draft-1" photos={THREE} />);
 
         expect(html).not.toMatch(/0\s₽/);
         expect(html).not.toContain('ym-card');
