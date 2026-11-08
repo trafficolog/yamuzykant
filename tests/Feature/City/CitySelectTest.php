@@ -212,6 +212,13 @@ it('выбор города: не больше одного запроса к ci
     expect($count)->toBeLessThanOrEqual(1);
 });
 
+it('справочник отдаёт тип населённого пункта: перед названием «г.» в профиле (1.1.3)', function () {
+    $this->getJson('/cities?q=казан')
+        ->assertOk()
+        ->assertJsonPath('data.0.name', 'Казань')
+        ->assertJsonPath('data.0.type', 'г.');
+});
+
 it('поиск по справочнику: без запроса все города по алфавиту, с запросом — подстрока без учёта регистра', function () {
     $this->getJson('/cities')
         ->assertOk()
