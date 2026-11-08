@@ -3,7 +3,7 @@ id: "1.1.3"
 phase: "1"
 epic: "1.1"
 title: "Профиль, город и уведомления"
-status: in_progress
+status: review
 gate: G1
 risk: medium
 model_impl: sonnet

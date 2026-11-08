@@ -3,7 +3,7 @@ id: "3.1.9"
 phase: "3"
 epic: "3.1"
 title: "Барахолка: подпись цены без JS, e2e цены, позиция прокрутки"
-status: todo
+status: in_progress
 gate: G1
 risk: low
 model_impl: sonnet
