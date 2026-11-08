@@ -57,6 +57,9 @@ const listReload = () => ({
     preserveScroll: true,
 });
 
+/** Минимальный промежуток между обновлениями списка, мс. */
+const RELOAD_GAP = 300;
+
 const useIsoLayoutEffect = typeof window === 'undefined' ? useEffect : useLayoutEffect;
 
 /**
@@ -100,30 +103,37 @@ export default function MessagesIndex({ conversations, active, compose }: Props)
     const unread = useUnreadCount();
     const rootRef = useRef<HTMLDivElement>(null);
     const [focusOnOpen, setFocusOnOpen] = useState(false);
-    const reloading = useRef(false);
-    const again = useRef(false);
+    const lastReload = useRef(0);
+    const timer = useRef<ReturnType<typeof setTimeout> | null>(null);
     const previousUnread = useRef(unread);
 
     useViewportHeight(rootRef);
 
-    // Одна перезагрузка за раз; запросы, пришедшие во время неё, сливаются в один повтор.
+    // Обновления списка идут сразу, но не чаще раза в 300 мс: лишний вызов откладывается в один повтор.
+    // Новый запрос Inertia отменяет прежний, поэтому «зависшего» обновления быть не может.
     const refreshList = useCallback(() => {
-        if (reloading.current) {
-            again.current = true;
+        const now = Date.now();
+        const wait = lastReload.current + RELOAD_GAP - now;
+        if (wait > 0) {
+            if (timer.current === null) {
+                timer.current = setTimeout(() => {
+                    timer.current = null;
+                    lastReload.current = Date.now();
+                    router.reload(listReload());
+                }, wait);
+            }
             return;
         }
-        reloading.current = true;
-        router.reload({
-            ...listReload(),
-            onFinish: () => {
-                reloading.current = false;
-                if (again.current) {
-                    again.current = false;
-                    refreshList();
-                }
-            },
-        });
+        lastReload.current = now;
+        router.reload(listReload());
     }, []);
+
+    useEffect(
+        () => () => {
+            if (timer.current !== null) clearTimeout(timer.current);
+        },
+        [],
+    );
 
     // Счётчик изменился (событие канала пользователя) — список обновляется без перезагрузки страницы.
     useEffect(() => {
