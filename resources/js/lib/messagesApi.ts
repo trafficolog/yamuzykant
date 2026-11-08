@@ -13,6 +13,10 @@ export type SendOutcome =
           error: string;
       }
     | /** 404: беседы или объявления больше нет для этого пользователя. */ { kind: 'unavailable' }
+    | /** 429 с кодом new_chats_limit: суточный лимит новых чатов — текст сервера, повтор сегодня не поможет. */ {
+          kind: 'limited';
+          error: string;
+      }
     | /** Нет сети, 5xx, 429, 419: повтор возможен. */ { kind: 'failed'; status: number | null };
 
 function text(value: unknown): string | null {
@@ -31,6 +35,7 @@ function firstError(body: Record<string, unknown>): string | null {
 async function send(
     url: string,
     body: string,
+    clientId: string,
     pick: (payload: Record<string, unknown>) => {
         message: ChatMessage;
         conversation: ChatConversation | null;
@@ -38,12 +43,13 @@ async function send(
 ): Promise<SendOutcome> {
     let result;
     try {
-        result = await postJson(url, { body });
+        result = await postJson(url, { body, client_id: clientId });
     } catch {
         return { kind: 'failed', status: null };
     }
 
-    if (result.status === 201) {
+    // 201 — сохранено; 200 — повтор с тем же client_id вернул уже сохранённое сообщение.
+    if (result.status === 201 || result.status === 200) {
         return { kind: 'sent', ...pick(result.body) };
     }
     if (result.status === 409) {
@@ -55,20 +61,41 @@ async function send(
     if (result.status === 404) {
         return { kind: 'unavailable' };
     }
+    if (result.status === 429 && result.body.code === 'new_chats_limit') {
+        return { kind: 'limited', error: text(result.body.message) ?? '' };
+    }
     return { kind: 'failed', status: result.status };
 }
 
+/**
+ * Ключ идемпотентности отправки: уникален в беседе; повтор («Повторить») идёт с тем же ключом, и сервер не создаёт дубль.
+ */
+export function newClientId(): string {
+    if (typeof crypto !== 'undefined' && typeof crypto.randomUUID === 'function') {
+        return crypto.randomUUID();
+    }
+    return `c${Date.now().toString(36)}${Math.random().toString(36).slice(2, 12)}`;
+}
+
 /** Сообщение в существующую беседу: POST /conversations/{id}/messages (4.1.1). */
-export function sendMessage(conversationId: string, body: string): Promise<SendOutcome> {
-    return send(`/conversations/${conversationId}/messages`, body, (payload) => ({
+export function sendMessage(
+    conversationId: string,
+    body: string,
+    clientId: string,
+): Promise<SendOutcome> {
+    return send(`/conversations/${conversationId}/messages`, body, clientId, (payload) => ({
         message: payload.data as ChatMessage,
         conversation: null,
     }));
 }
 
 /** «Написать продавцу»: первое сообщение создаёт беседу по объявлению (POST /listings/{id}/conversations). */
-export function startConversation(listingId: string, body: string): Promise<SendOutcome> {
-    return send(`/listings/${listingId}/conversations`, body, (payload) => ({
+export function startConversation(
+    listingId: string,
+    body: string,
+    clientId: string,
+): Promise<SendOutcome> {
+    return send(`/listings/${listingId}/conversations`, body, clientId, (payload) => ({
         message: payload.message as ChatMessage,
         conversation: payload.conversation as ChatConversation,
     }));

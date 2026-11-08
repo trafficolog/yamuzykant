@@ -30,6 +30,8 @@ export const message = (
     created_at: '2026-09-08T16:08:00Z',
     mine,
     read_at: null,
+    client_id: null,
+    caution: false,
     ...extra,
 });
 

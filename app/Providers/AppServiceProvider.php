@@ -25,16 +25,13 @@ use App\Domain\Search\Listeners\QueueListingIndexSync;
 use App\Support\Flags\FeatureFlag;
 use App\Support\YandexId\YandexOAuth;
 use Illuminate\Auth\Events\Login;
-use Illuminate\Cache\RateLimiting\Limit;
 use Illuminate\Contracts\Foundation\Application;
 use Illuminate\Filesystem\AwsS3V3Adapter;
-use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Config;
 use Illuminate\Support\Facades\Event;
 use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\Facades\Queue;
-use Illuminate\Support\Facades\RateLimiter;
 use Illuminate\Support\ServiceProvider;
 use Laravel\Pennant\Feature;
 use Laravel\Socialite\Facades\Socialite;
@@ -94,11 +91,6 @@ class AppServiceProvider extends ServiceProvider
         // Политики домена лежат в app/Domain/*/Policies — регистрируем явно, а не по соглашению имён.
         Gate::policy(Listing::class, ListingPolicy::class);
         Gate::policy(Conversation::class, ConversationPolicy::class);
-
-        // Сообщения (ARCHITECTURE §7): 30 в минуту на пользователя, новые беседы — в том же лимите.
-        RateLimiter::for('messages', fn (Request $request): Limit => Limit::perMinute(Config::integer('messaging.send_per_minute'))
-            ->by('messages:'.($request->user()?->getAuthIdentifier() ?? $request->ip()))
-            ->response(fn (Request $request, array $headers): JsonResponse => response()->json(['message' => __('messaging.errors.throttled')], 429, $headers)));
 
         // Яндекс ID: настоящий провайдер или подменный (YANDEX_OAUTH_FAKE только в testing и e2e).
         Socialite::extend(YandexOAuth::DRIVER, fn (Application $app): AbstractProvider => YandexOAuth::makeProvider($app->make(Request::class)));

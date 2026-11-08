@@ -441,6 +441,13 @@ a.ym-chat__listing-in:hover {
 .ym-chat__tick.is-read {
     color: var(--accent);
 }
+.ym-chat__caution {
+    display: flex;
+    align-items: center;
+    gap: var(--space-1);
+    margin: 0 0 var(--space-1);
+    color: var(--warning);
+}
 .ym-chat__failed {
     margin: 0;
     color: var(--danger-text);

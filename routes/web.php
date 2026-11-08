@@ -23,6 +23,7 @@ use App\Http\Controllers\Listings\SellController;
 use App\Http\Controllers\Messaging\ConversationController;
 use App\Http\Controllers\Messaging\MessagesPageController;
 use App\Http\Middleware\EnsureE2eEnvironment;
+use App\Http\Middleware\ThrottleMessages;
 use Illuminate\Foundation\Http\Middleware\ValidateCsrfToken;
 use Illuminate\Support\Facades\Route;
 
@@ -94,15 +95,15 @@ Route::middleware('auth')->prefix('listings/{listing}/photos')->name('listings.p
     Route::delete('{photo}', [ListingPhotoController::class, 'destroy'])->name('destroy');
 });
 
-// Сообщения (4.1.1): JSON для экрана сообщений (4.1.2). Отправка и новые беседы — общий лимит `messages`
-// (AppServiceProvider, ARCHITECTURE §7); чужая беседа — 404.
+// Сообщения (4.1.1): JSON для экрана сообщений (4.1.2). Отправка и новые беседы — общий лимит ThrottleMessages
+// (ARCHITECTURE §7, атомарный счётчик); чужая беседа — 404.
 Route::middleware('auth')->group(function (): void {
     Route::post('listings/{listing}/conversations', [ConversationController::class, 'store'])
-        ->middleware('throttle:messages')
+        ->middleware(ThrottleMessages::class)
         ->name('conversations.store');
     Route::prefix('conversations/{conversation}')->name('conversations.')->group(function (): void {
         Route::get('messages', [ConversationController::class, 'messages'])->middleware('throttle:120,1')->name('messages');
-        Route::post('messages', [ConversationController::class, 'send'])->middleware('throttle:messages')->name('send');
+        Route::post('messages', [ConversationController::class, 'send'])->middleware(ThrottleMessages::class)->name('send');
         Route::post('read', [ConversationController::class, 'read'])->middleware('throttle:120,1')->name('read');
     });
 
