@@ -1,5 +1,13 @@
-import { FilterChip, Icon } from '@ds';
-import { useEffect, useMemo, useRef, useState, type KeyboardEvent, type MouseEvent } from 'react';
+import { Button, FilterChip, Icon, SearchBar } from '@ds';
+import {
+    useEffect,
+    useMemo,
+    useRef,
+    useState,
+    type FormEvent,
+    type KeyboardEvent,
+    type MouseEvent,
+} from 'react';
 
 import { ru } from '@/lang/ru';
 import { formatListDate, groupDigits, type ConversationListItem } from '@/lib/messages';
@@ -17,6 +25,8 @@ export interface ConversationListProps {
 }
 
 const t = ru.messages.list;
+
+const SEARCH_ID = 'ym-messages-search';
 
 const matches = (item: ConversationListItem, query: string): boolean =>
     [item.counterpart.name, item.listing.title ?? '', item.last_message?.body ?? ''].some((part) =>
@@ -40,12 +50,11 @@ export default function ConversationList({
     const [filter, setFilter] = useState<Filter>('all');
     const [searching, setSearching] = useState(false);
     const [query, setQuery] = useState('');
-    const toggleRef = useRef<HTMLButtonElement>(null);
+    const headRef = useRef<HTMLDivElement>(null);
     const groupRef = useRef<HTMLDivElement>(null);
-    const searchRef = useRef<HTMLInputElement>(null);
 
     useEffect(() => {
-        if (searching) searchRef.current?.focus();
+        if (searching) document.getElementById(SEARCH_ID)?.focus();
     }, [searching]);
 
     const counts = useMemo(() => {
@@ -71,7 +80,7 @@ export default function ConversationList({
     const closeSearch = () => {
         setSearching(false);
         setQuery('');
-        toggleRef.current?.focus();
+        headRef.current?.querySelector<HTMLElement>('button')?.focus();
     };
 
     const onFilterKey = (event: KeyboardEvent<HTMLDivElement>) => {
@@ -99,36 +108,36 @@ export default function ConversationList({
 
     return (
         <section aria-label={t.label} className="ym-messages__list">
-            <div className="ym-messages__list-head">
+            <div ref={headRef} className="ym-messages__list-head">
                 <h2 className="h3 ym-messages__list-title">{ru.messages.title}</h2>
-                <button
-                    ref={toggleRef}
-                    type="button"
-                    className="ym-messages__round"
+                <Button
+                    variant="ghost"
+                    icon="search"
                     aria-label={t.searchToggle}
                     aria-expanded={searching}
                     onClick={() => (searching ? closeSearch() : setSearching(true))}
-                >
-                    <Icon name="search" size={20} />
-                </button>
+                />
             </div>
 
             {searching ? (
-                <div className="ym-messages__search">
-                    <input
-                        ref={searchRef}
-                        type="search"
-                        className="ym-messages__search-input body"
-                        aria-label={t.searchField}
+                // SearchBar ДС не отдаёт ввод наружу (только onSearch по отправке): живой отбор — через всплытие change.
+                // eslint-disable-next-line jsx-a11y/no-static-element-interactions
+                <div
+                    className="ym-messages__search"
+                    onChange={(event: FormEvent<HTMLDivElement>) =>
+                        setQuery((event.target as HTMLInputElement).value)
+                    }
+                    onKeyDown={(event) => {
+                        if (event.key === 'Escape') {
+                            event.preventDefault();
+                            closeSearch();
+                        }
+                    }}
+                >
+                    <SearchBar
+                        id={SEARCH_ID}
                         placeholder={t.searchPlaceholder}
-                        value={query}
-                        onChange={(event) => setQuery(event.target.value)}
-                        onKeyDown={(event) => {
-                            if (event.key === 'Escape') {
-                                event.preventDefault();
-                                closeSearch();
-                            }
-                        }}
+                        onSearch={setQuery}
                     />
                 </div>
             ) : null}
@@ -232,13 +241,19 @@ function ConversationRow({
                             <span className="caption ym-messages__readonly">{t.readOnly}</span>
                         ) : null}
                         {item.unread > 0 ? (
-                            <span className="ym-messages__badge" aria-label={t.unread(item.unread)}>
+                            <span className="ym-messages__badge" aria-hidden="true">
                                 {item.unread > 99 ? `99+` : groupDigits(item.unread)}
                             </span>
                         ) : null}
                     </span>
                 </span>
                 <span className="ym-sr">{role}</span>
+                {item.unread > 0 ? (
+                    <>
+                        {' '}
+                        <span className="ym-sr">{t.unread(item.unread)}</span>
+                    </>
+                ) : null}
             </a>
         </li>
     );

@@ -129,6 +129,8 @@ export default function ChatThread({
     const [more, setMore] = useState(hasMore);
     const [loadingMore, setLoadingMore] = useState(false);
     const [moreFailed, setMoreFailed] = useState(false);
+    // Пока старая страница вставляется в начало журнала, он «занят»: диктор не зачитывает её как новые сообщения.
+    const [inserting, setInserting] = useState(false);
     const [pending, setPending] = useState<Pending[]>([]);
     const [draft, setDraft] = useState('');
     const [fieldError, setFieldError] = useState<string | null>(null);
@@ -214,7 +216,17 @@ export default function ChatThread({
             .error(() => setConnection('offline'))
             .listen('.message.sent', (payload: BroadcastMessage) => {
                 if (payload.conversation_id !== conversationId) return;
-                setItems((current) => addMessages(current, [fromBroadcast(payload, viewerId)]));
+                const incoming = fromBroadcast(payload, viewerId);
+                // Своё сообщение пришло раньше ответа POST: «Отправляется» с тем же текстом заменяется настоящим.
+                if (incoming.mine) {
+                    setPending((current) => {
+                        const index = current.findIndex(
+                            (item) => item.status === 'sending' && item.body === incoming.body,
+                        );
+                        return index === -1 ? current : current.filter((_, i) => i !== index);
+                    });
+                }
+                setItems((current) => addMessages(current, [incoming]));
             })
             .listen(
                 '.conversation.read',
@@ -379,6 +391,7 @@ export default function ChatThread({
     const loadEarlier = async () => {
         if (conversationId === null || items.length === 0 || loadingMore) return;
         setLoadingMore(true);
+        setInserting(true);
         setMoreFailed(false);
         const first = items[0] as ChatMessage;
         const log = logRef.current;
@@ -387,6 +400,7 @@ export default function ChatThread({
         setLoadingMore(false);
         if (page === null) {
             setMoreFailed(true);
+            setInserting(false);
             return;
         }
         pinned.current = false;
@@ -395,6 +409,7 @@ export default function ChatThread({
         // Позиция чтения не прыгает: прокрутка сохраняет расстояние до нижнего края.
         requestAnimationFrame(() => {
             if (log) log.scrollTop = log.scrollHeight - before;
+            setInserting(false);
         });
     };
 
@@ -440,16 +455,16 @@ export default function ChatThread({
     return (
         <div className="ym-chat" data-connection={connection}>
             <header className="ym-chat__head">
-                <button
-                    type="button"
-                    className="ym-messages__round"
+                <Button
+                    variant="ghost"
+                    className="ym-chat__close"
                     aria-label={t.close}
                     onClick={onBack}
                 >
                     <span className="ym-chat__back" aria-hidden="true">
                         <Icon name="chevron-right" size={20} />
                     </span>
-                </button>
+                </Button>
                 <span className="ym-chat__avatar" aria-hidden="true">
                     {conversation?.counterpart.deleted ? (
                         <Icon name="user" size={20} />
@@ -486,6 +501,7 @@ export default function ChatThread({
                 // eslint-disable-next-line jsx-a11y/no-noninteractive-tabindex
                 tabIndex={0}
                 aria-live="polite"
+                aria-busy={inserting ? 'true' : undefined}
                 aria-relevant="additions"
                 aria-label={ru.messages.thread.logLabel(name)}
                 className="ym-chat__log"
@@ -538,13 +554,13 @@ export default function ChatThread({
                                         <p className="caption ym-chat__failed">
                                             <span>{t.notSent}</span>
                                             <span aria-hidden="true"> · </span>
-                                            <button
-                                                type="button"
-                                                className="ym-chat__retry"
+                                            <Button
+                                                variant="ghost"
+                                                size="xs"
                                                 onClick={() => retry(row.pending)}
                                             >
                                                 {t.retry}
-                                            </button>
+                                            </Button>
                                         </p>
                                     ) : (
                                         <p className="caption ym-chat__failed ym-chat__sending">
@@ -600,17 +616,18 @@ export default function ChatThread({
                 {showQuick ? (
                     <div role="group" aria-label={t.quickLabel} className="ym-chat__quick">
                         {t.quick.map((label) => (
-                            <button
+                            <Button
                                 key={label}
-                                type="button"
-                                className="body-s ym-chat__quick-item"
+                                variant="outline"
+                                size="s"
+                                className="ym-chat__quick-item"
                                 onClick={() => {
                                     setDraft(label);
                                     fieldRef.current?.focus();
                                 }}
                             >
                                 {label}
-                            </button>
+                            </Button>
                         ))}
                     </div>
                 ) : null}

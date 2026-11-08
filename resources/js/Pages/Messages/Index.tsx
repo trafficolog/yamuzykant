@@ -106,6 +106,8 @@ export default function MessagesIndex({ conversations, active, compose }: Props)
     const lastReload = useRef(0);
     const timer = useRef<ReturnType<typeof setTimeout> | null>(null);
     const previousUnread = useRef(unread);
+    // Беседа, закрытая кнопкой «Закрыть чат»: после перехода к списку фокус возвращается на её строку.
+    const returnFocusTo = useRef<string | null>(null);
 
     useViewportHeight(rootRef);
 
@@ -147,9 +149,20 @@ export default function MessagesIndex({ conversations, active, compose }: Props)
         router.visit(conversationPath(conversationId), paneVisit());
     }, []);
 
+    const activeId = active?.conversation.id ?? null;
     const close = useCallback(() => {
+        returnFocusTo.current = activeId;
         router.visit(MESSAGES_PATH, paneVisit());
-    }, []);
+    }, [activeId]);
+
+    useEffect(() => {
+        const id = returnFocusTo.current;
+        if (id === null || activeId !== null) return;
+        returnFocusTo.current = null;
+        rootRef.current
+            ?.querySelector<HTMLElement>(`a[href="${conversationPath(id)}"]`)
+            ?.focus({ preventScroll: true });
+    }, [activeId]);
 
     const started = useCallback((conversation: ChatConversation) => {
         // Беседа создана первым сообщением: настоящий адрес без шага «черновик» в истории, список — с сервера.

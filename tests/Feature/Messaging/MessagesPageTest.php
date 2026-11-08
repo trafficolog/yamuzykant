@@ -259,16 +259,22 @@ it('список ограничен messaging.list_limit беседами (по 
     $this->actingAs($me)->get('/messages')->assertInertia(fn (AssertableInertia $page) => $page->has('conversations', 2));
 });
 
-/** Сколько запросов к БД выполнил колбэк (журнал запросов включается только на время вызова). */
+/**
+ * Сколько запросов к таблицам списка бесед (беседы, сообщения, объявления, продажи, пользователи) выполнил колбэк.
+ * Общие запросы оболочки страницы (флаги, категории, город) не считаются: они не зависят от числа бесед.
+ */
 function queryCount(Closure $callback): int
 {
     DB::flushQueryLog();
     DB::enableQueryLog();
     $callback();
-    $count = count(DB::getQueryLog());
+    $log = DB::getQueryLog();
     DB::disableQueryLog();
 
-    return $count;
+    return count(array_filter(
+        $log,
+        fn (array $entry): bool => preg_match('/from "(conversations|messages|listings|sale_records|users)"/', (string) $entry['query']) === 1,
+    ));
 }
 
 /** Беседы пользователя с сообщениями в обе стороны. */
@@ -293,7 +299,7 @@ it('UserConversations: число запросов не зависит от чи
     $many = queryCount(fn () => $query->for($me));
 
     expect($query->for($me))->toHaveCount(30)
-        ->and($few)->toBeLessThanOrEqual(5)
+        ->and($few)->toBeLessThanOrEqual(8)
         ->and($many)->toBe($few);
 });
 

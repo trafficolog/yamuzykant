@@ -50,12 +50,18 @@ test.describe('@visual messages', () => {
         const { buyer, first } = await seeded(browser, { width: 1440, height: 900 });
         await hydrated(buyer, `/messages/${first}`);
         await buyer.getByRole('log').waitFor();
-        await expectMatchesReference(buyer, 'messages', '1440', { state: 'r1', maxDiffPixelRatio: R1_RATIO });
+        await expectMatchesReference(buyer, 'messages', '1440', {
+            state: 'r1',
+            maxDiffPixelRatio: R1_RATIO,
+        });
     });
 
     test('messages@390, R1: список чатов', async ({ browser }) => {
         const { buyer } = await seeded(browser, { width: 390, height: 844 });
         await hydrated(buyer, '/messages');
-        await expectMatchesReference(buyer, 'messages', '390', { state: 'r1', maxDiffPixelRatio: R1_RATIO });
+        await expectMatchesReference(buyer, 'messages', '390', {
+            state: 'r1',
+            maxDiffPixelRatio: R1_RATIO,
+        });
     });
 });

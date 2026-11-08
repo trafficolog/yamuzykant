@@ -46,7 +46,7 @@ test.describe('UC-D1: экран сообщений', () => {
         await hydrated(seller, '/messages');
         await expect(headerCounter(seller)).toHaveAccessibleName('Сообщения, 1');
         const row = seller.getByRole('list', { name: 'Чаты' }).getByRole('link', { name: /Анна/ });
-        await expect(row.getByLabel('1 непрочитанное')).toBeVisible();
+        await expect(row).toContainText('1 непрочитанное');
         await row.click();
         await expect(thread(seller).getByText(first)).toBeVisible();
         await expect(connected(seller)).toBeVisible({ timeout: 10_000 });
@@ -170,6 +170,10 @@ test.describe('UC-D1: экран сообщений', () => {
 
         await buyer.getByRole('button', { name: 'Закрыть чат' }).click();
         await expect(buyer.getByRole('region', { name: 'Список чатов' })).toBeVisible();
+        // Фокус вернулся на строку закрытой беседы (клавиатура и диктор не теряют место).
+        await expect(
+            buyer.getByRole('list', { name: 'Чаты' }).getByRole('link', { name: /Олег/ }),
+        ).toBeFocused();
         expect(await seriousOrCritical(buyer)).toEqual([]);
     });
 });

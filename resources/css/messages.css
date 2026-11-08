@@ -32,30 +32,11 @@
     overflow: hidden;
 }
 
-/* Круглые кнопки 44 px: поиск, «Закрыть чат» */
-.ym-messages__round {
+/* Кнопки и поиск — компоненты ДС (Button, SearchBar); здесь только «Закрыть чат» и фокус собственных элементов. */
+.ym-chat__close {
     flex: none;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    width: var(--hit-min);
-    height: var(--hit-min);
-    padding: 0;
-    border: 0;
-    border-radius: var(--radius-full);
-    background: none;
-    color: var(--ink);
-    cursor: pointer;
 }
-@media (hover: hover) {
-    .ym-messages__round:hover {
-        background: var(--surface-recessed);
-    }
-}
-.ym-messages__round:focus-visible,
 .ym-messages__row:focus-visible,
-.ym-chat__quick-item:focus-visible,
-.ym-chat__retry:focus-visible,
 .ym-chat__send:focus-visible,
 .ym-chat__log:focus-visible,
 .ym-chat__listing-in:focus-visible {
@@ -76,21 +57,6 @@
 }
 .ym-messages__search {
     padding: 0 var(--space-5) var(--space-3);
-}
-.ym-messages__search-input {
-    box-sizing: border-box;
-    width: 100%;
-    min-height: var(--hit-min);
-    padding: 0 var(--space-4);
-    border: 1px solid var(--line-control);
-    border-radius: var(--radius-full);
-    background: var(--surface-raised);
-    color: var(--ink);
-    font: 400 var(--text-m) / 22px var(--font-text);
-}
-.ym-messages__search-input:focus-visible {
-    outline: 2px solid var(--focus-ring);
-    outline-offset: 1px;
 }
 .ym-messages__filters {
     display: flex;
@@ -482,16 +448,6 @@ a.ym-chat__listing-in:hover {
 .ym-chat__sending {
     color: var(--ink-muted);
 }
-.ym-chat__retry {
-    padding: 0;
-    border: 0;
-    background: none;
-    color: var(--accent-text);
-    font: inherit;
-    font-weight: 600;
-    text-decoration: underline;
-    cursor: pointer;
-}
 .ym-chat__foot {
     display: flex;
     flex-direction: column;
@@ -510,21 +466,6 @@ a.ym-chat__listing-in:hover {
 }
 .ym-chat__quick-item {
     flex: none;
-    min-height: 36px;
-    padding: 0 var(--space-3);
-    border: 1px solid var(--line-control);
-    border-radius: var(--radius-full);
-    background: var(--surface-raised);
-    color: var(--ink);
-    font-weight: 500;
-    white-space: nowrap;
-    cursor: pointer;
-}
-@media (hover: hover) {
-    .ym-chat__quick-item:hover {
-        border-color: var(--accent-text);
-        color: var(--accent-text);
-    }
 }
 .ym-chat__readonly {
     margin: 0;
