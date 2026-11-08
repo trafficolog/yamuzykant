@@ -72,6 +72,7 @@ it('отдаёт опубликованное объявление гостю: I
             ->where('crumbs.1.name', 'Электрогитары')
             ->where('viewer.is_owner', false)
             ->where('viewer.authenticated', false)
+            ->missing('viewer.is_staff')
             ->etc());
 });
 
@@ -181,6 +182,36 @@ it('фото серийного номера не раздаётся чужом�
 
     $this->get("/media/photos/{$serial->id}/wide.webp")->assertNotFound();
     $this->actingAs(User::factory()->create())->get("/media/photos/{$serial->id}/wide.webp")->assertNotFound();
+});
+
+it('город лота — с типом населённого пункта, без склонения (решение OWNER 08.11.2026)', function () {
+    $city = ListingFixtures::city('Казань');
+    $city->forceFill(['settlement_type' => 'пос.'])->save();
+    $listing = ListingFixtures::published([], $city);
+
+    $this->get("/listings/{$listing->id}")->assertInertia(fn (Assert $page) => $page
+        ->where('listing.city.type', 'пос.')
+        ->where('listing.city.name', 'Казань')
+        ->etc());
+});
+
+it('не опубликованное: ссылки на фото есть у владельца и сотрудника, гостю страница и фото недоступны', function () {
+    $listing = ListingFixtures::published();
+    $photo = lotPhoto($listing, 0);
+    $staff = User::factory()->create();
+    lotStaff($staff);
+    $listing->forceFill(['status' => ListingStatus::Withdrawn])->saveQuietly();
+
+    foreach ([$listing->user, $staff] as $viewer) {
+        $this->actingAs($viewer)->get("/listings/{$listing->id}")->assertInertia(fn (Assert $page) => $page
+            ->has('photos', 1)
+            ->where('photos.0.urls.wide.webp', fn (string $url) => str_contains($url, "/media/photos/{$photo->id}/wide.webp"))
+            ->etc());
+    }
+
+    auth()->logout();
+    $this->get("/listings/{$listing->id}")->assertNotFound();
+    $this->get("/media/photos/{$photo->id}/wide.webp")->assertNotFound();
 });
 
 it('вошедший: viewer.authenticated, владелец — is_owner', function () {

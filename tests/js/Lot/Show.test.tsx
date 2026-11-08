@@ -42,7 +42,7 @@ const base: LotShowProps = {
         model: 'American Vintage ’57 Stratocaster',
         serial: 'V09****',
         description: 'Гриф шлифовали один раз.',
-        city: 'Москва',
+        city: { type: 'г.', name: 'Москва' },
         meet: true,
         ship: true,
         posted: '3 дня назад',
@@ -59,7 +59,7 @@ const base: LotShowProps = {
         { id: 3, is_serial: true, urls: urls(3) },
     ],
     seller: { name: 'Гитарный угол', city: 'Москва', since: 2025 },
-    viewer: { authenticated: false, is_owner: false, is_staff: false },
+    viewer: { authenticated: false, is_owner: false },
     similar: [
         {
             id: 's1',
@@ -151,12 +151,7 @@ describe('Lot/Show: кнопки действий', () => {
 
     it('вошедший: появляется поле сообщения, отправка — POST по объявлению', async () => {
         postJson.mockResolvedValue({ status: 201, body: { conversation: { id: 7 } } });
-        render(
-            <LotShow
-                {...base}
-                viewer={{ authenticated: true, is_owner: false, is_staff: false }}
-            />,
-        );
+        render(<LotShow {...base} viewer={{ authenticated: true, is_owner: false }} />);
 
         fireEvent.click(screen.getByRole('button', { name: 'Написать продавцу' }));
         expect(openLogin).not.toHaveBeenCalled();
@@ -174,12 +169,7 @@ describe('Lot/Show: кнопки действий', () => {
     });
 
     it('пустое сообщение не отправляется', () => {
-        render(
-            <LotShow
-                {...base}
-                viewer={{ authenticated: true, is_owner: false, is_staff: false }}
-            />,
-        );
+        render(<LotShow {...base} viewer={{ authenticated: true, is_owner: false }} />);
 
         fireEvent.click(screen.getByRole('button', { name: 'Написать продавцу' }));
 
@@ -188,12 +178,7 @@ describe('Lot/Show: кнопки действий', () => {
 
     it('ошибка сервера показывается и не теряет текст', async () => {
         postJson.mockResolvedValue({ status: 429, body: {} });
-        render(
-            <LotShow
-                {...base}
-                viewer={{ authenticated: true, is_owner: false, is_staff: false }}
-            />,
-        );
+        render(<LotShow {...base} viewer={{ authenticated: true, is_owner: false }} />);
 
         fireEvent.click(screen.getByRole('button', { name: 'Написать продавцу' }));
         fireEvent.change(screen.getByRole('textbox', { name: /Сообщение/ }), {
@@ -206,9 +191,7 @@ describe('Lot/Show: кнопки действий', () => {
     });
 
     it('своё объявление: вместо «Написать» — пометка владельца', () => {
-        render(
-            <LotShow {...base} viewer={{ authenticated: true, is_owner: true, is_staff: false }} />,
-        );
+        render(<LotShow {...base} viewer={{ authenticated: true, is_owner: true }} />);
 
         expect(screen.queryByRole('button', { name: 'Написать продавцу' })).toBeNull();
         expect(screen.getByText('Это ваше объявление')).toBeInTheDocument();
@@ -230,21 +213,18 @@ describe('Lot/Show: плашки статуса (видны только вла�
         [{ status: 'expired' as const, sold: false }, 'Срок публикации истёк'],
     ])('%j — «%s», кнопки «Написать» нет', (patch, label) => {
         render(
-            <LotShow
-                {...withListing(patch)}
-                viewer={{ authenticated: true, is_owner: true, is_staff: false }}
-            />,
+            <LotShow {...withListing(patch)} viewer={{ authenticated: true, is_owner: true }} />,
         );
 
         expect(screen.getByTestId('lot-status')).toHaveTextContent(label);
         expect(screen.queryByRole('button', { name: 'Написать продавцу' })).toBeNull();
     });
 
-    it('сотрудник видит плашку, но не «Это ваше объявление»', () => {
+    it('сотрудник (не владелец) видит плашку, но не «Это ваше объявление»', () => {
         render(
             <LotShow
                 {...withListing({ status: 'pending' })}
-                viewer={{ authenticated: true, is_owner: false, is_staff: true }}
+                viewer={{ authenticated: true, is_owner: false }}
             />,
         );
 
@@ -285,7 +265,7 @@ describe('Lot/Show: характеристики, продавец, получе
 
         const list = screen.getByRole('list', { name: 'Доставка и получение' });
         expect(list.textContent).toContain('Доставка');
-        expect(list.textContent).toContain('Встреча: Москва');
+        expect(list.textContent).toContain('Встреча в г. Москва');
         expect(document.body.textContent).not.toMatch(/\d\s?км/);
     });
 

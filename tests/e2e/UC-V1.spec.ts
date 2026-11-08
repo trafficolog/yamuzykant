@@ -36,6 +36,7 @@ test.describe('UC-V1: страница объявления', () => {
         );
         await expect(page.locator('.ym-price--pdp')).toHaveText(/184\s500\s₽/);
         await expect(page.getByText('V09****')).toBeVisible();
+        await expect(page.getByText('Встреча в г. Санкт-Петербург')).toBeVisible();
 
         const html = await page.content();
         expect(html).not.toContain('V091187');
