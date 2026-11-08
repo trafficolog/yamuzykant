@@ -163,7 +163,7 @@ describe('assess: признаки риска', function () {
 
         $stored = (string) json_encode($signal->toArray(), JSON_UNESCAPED_UNICODE);
 
-        expect($stored)->not->toContain('1234567')->not->toContain('ivan.petrov')
+        expect(str_contains($stored, '1234567') || str_contains($stored, 'ivan.petrov'))->toBeFalse()
             ->and($signal->details['excerpt'])->toBe('i***@mail.ru');
     });
 
