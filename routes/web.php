@@ -17,6 +17,7 @@ use App\Http\Controllers\HomeController;
 use App\Http\Controllers\Listings\ListingPhotoController;
 use App\Http\Controllers\Listings\LocalPhotoUploadController;
 use App\Http\Controllers\Listings\PhotoMediaController;
+use App\Http\Controllers\Listings\SellController;
 use App\Http\Controllers\Messaging\ConversationController;
 use App\Http\Controllers\Messaging\MessagesPageController;
 use App\Http\Middleware\EnsureE2eEnvironment;
@@ -63,6 +64,12 @@ Route::prefix('auth')->name('auth.')->group(function (): void {
         Route::post('logout', [LogoutController::class, 'logout'])->name('logout');
         Route::post('logout-everywhere', [LogoutController::class, 'everywhere'])->name('logout-everywhere');
     });
+});
+
+// Форма «Продать инструмент» (2.1.3): страница с черновиком и проверка содержимого. Гость — на главную, вход — окно.
+Route::middleware('auth')->group(function (): void {
+    Route::get('/sell', [SellController::class, 'create'])->name('sell');
+    Route::post('/sell', [SellController::class, 'store'])->middleware('throttle:60,1')->name('sell.store');
 });
 
 // Фото объявления (2.1.2): URL загрузки, подтверждение, порядок, удаление — для владельца (ListingPolicy::update).

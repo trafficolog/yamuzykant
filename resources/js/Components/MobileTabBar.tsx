@@ -1,4 +1,5 @@
 import { Icon, type IconName } from '@ds';
+import { router } from '@inertiajs/react';
 import { useRef } from 'react';
 
 import AccountPanel from '@/Components/AccountPanel';
@@ -6,7 +7,7 @@ import { openLogin } from '@/Hooks/loginDialog';
 import type { AuthUser } from '@/Hooks/useAuthUser';
 import { useDisclosure } from '@/Hooks/useDisclosure';
 import { ru } from '@/lang/ru';
-import { MESSAGES_PATH } from '@/lib/paths';
+import { MESSAGES_PATH, SELL_PATH } from '@/lib/paths';
 
 export type MobileTab = 'home' | 'search' | 'sell' | 'messages' | 'account';
 
@@ -33,7 +34,7 @@ interface Tab {
 const TABS: readonly Tab[] = [
     { key: 'home', icon: 'layout-grid', label: ru.tabBar.home, href: '/' },
     { key: 'search', icon: 'search', label: ru.tabBar.search, href: '/baraholka' },
-    { key: 'sell', icon: 'plus', label: ru.tabBar.sell, href: '#' },
+    { key: 'sell', icon: 'plus', label: ru.tabBar.sell, href: SELL_PATH },
     { key: 'messages', icon: 'message-circle', label: ru.tabBar.messages, href: MESSAGES_PATH },
     { key: 'account', icon: 'user', label: ru.tabBar.account, href: '#' },
 ];
@@ -98,6 +99,15 @@ export default function MobileTabBar({
                         href={tab.href}
                         className="ym-iconbtn ym-tabbar__item"
                         aria-current={tab.key === active ? 'page' : undefined}
+                        onClick={(event) => {
+                            if (tab.key !== 'sell' || user) return;
+                            // Гость: сначала вход, затем форма продажи.
+                            event.preventDefault();
+                            openLogin({
+                                opener: event.currentTarget,
+                                onAuthenticated: () => router.visit(SELL_PATH),
+                            });
+                        }}
                         aria-label={
                             tab.key === 'messages' && count > 0
                                 ? ru.tabBar.messagesLabel(shown)

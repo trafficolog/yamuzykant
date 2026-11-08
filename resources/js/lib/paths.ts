@@ -36,3 +36,6 @@ export const lotPath = (listingId: string): string => {
 export function openWriteToSeller(listingId: string): void {
     router.visit(writeToSellerPath(listingId));
 }
+
+/** Форма «Продать инструмент» (2.1.3). Гостю после входа открывается она же. */
+export const SELL_PATH = '/sell';
