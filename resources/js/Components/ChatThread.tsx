@@ -28,6 +28,7 @@ import {
 import {
     loadHistory,
     markRead,
+    newClientId,
     sendMessage,
     startConversation,
     type SendOutcome,
@@ -60,8 +61,12 @@ type Connection = 'idle' | 'connecting' | 'connected' | 'offline';
 
 interface Pending {
     key: string;
+    /** Ключ идемпотентности: не меняется при «Повторить», по нему сервер не создаёт дубль, а эхо находит отправку. */
+    clientId: string;
     body: string;
     status: 'sending' | 'failed';
+    /** POST вернулся (с любым исходом): до этого момента отправка «в пути». */
+    posted: boolean;
     createdAt: string;
 }
 
@@ -217,14 +222,12 @@ export default function ChatThread({
             .listen('.message.sent', (payload: BroadcastMessage) => {
                 if (payload.conversation_id !== conversationId) return;
                 const incoming = fromBroadcast(payload, viewerId);
-                // Своё сообщение пришло раньше ответа POST: «Отправляется» с тем же текстом заменяется настоящим.
-                if (incoming.mine) {
-                    setPending((current) => {
-                        const index = current.findIndex(
-                            (item) => item.status === 'sending' && item.body === incoming.body,
-                        );
-                        return index === -1 ? current : current.filter((_, i) => i !== index);
-                    });
+                // Эхо своей отправки находится строго по client_id, не по тексту: эхо первого «ок» не снимает
+                // «Отправляется» у второго, а эхо из другой вкладки с тем же текстом ничего не трогает. Эхо отправки
+                // с потерянным ответом (pending в «Не отправлено») тоже снимает её: сообщение уже сохранено.
+                if (incoming.mine && incoming.client_id) {
+                    const echoed = incoming.client_id;
+                    setPending((current) => current.filter((item) => item.clientId !== echoed));
                 }
                 setItems((current) => addMessages(current, [incoming]));
             })
@@ -304,12 +307,12 @@ export default function ChatThread({
     const canSend = !closed && length > 0 && !tooLong;
 
     const deliver = useCallback(
-        async (key: string, body: string) => {
+        async (key: string, clientId: string, body: string) => {
             let outcome: SendOutcome;
             if (conversationId !== null) {
-                outcome = await sendMessage(conversationId, body);
+                outcome = await sendMessage(conversationId, body, clientId);
             } else if (compose) {
-                outcome = await startConversation(compose.listing.id, body);
+                outcome = await startConversation(compose.listing.id, body, clientId);
             } else {
                 outcome = { kind: 'unavailable' };
             }
@@ -337,6 +340,11 @@ export default function ChatThread({
                     setDraft(body);
                     setClosedReason(t.listingGone);
                     return;
+                case 'limited':
+                    drop();
+                    setDraft(body);
+                    setFieldError(outcome.error || ru.messages.sendError);
+                    return;
                 case 'invalid':
                     drop();
                     setDraft(body);
@@ -345,7 +353,7 @@ export default function ChatThread({
                 case 'failed':
                     setPending((current) =>
                         current.map((item) =>
-                            item.key === key ? { ...item, status: 'failed' } : item,
+                            item.key === key ? { ...item, status: 'failed', posted: true } : item,
                         ),
                     );
                     return;
@@ -358,23 +366,31 @@ export default function ChatThread({
         if (!canSend) return;
         const body = draft.trim();
         const key = `local-${(sequence.current += 1)}`;
+        const clientId = newClientId();
         pinned.current = true;
         setPending((current) => [
             ...current,
-            { key, body, status: 'sending', createdAt: new Date().toISOString() },
+            {
+                key,
+                clientId,
+                body,
+                status: 'sending',
+                posted: false,
+                createdAt: new Date().toISOString(),
+            },
         ]);
         setDraft('');
         setFieldError(null);
-        void deliver(key, body);
+        void deliver(key, clientId, body);
     };
 
     const retry = (item: Pending) => {
         setPending((current) =>
             current.map((entry) =>
-                entry.key === item.key ? { ...entry, status: 'sending' } : entry,
+                entry.key === item.key ? { ...entry, status: 'sending', posted: false } : entry,
             ),
         );
-        void deliver(item.key, item.body);
+        void deliver(item.key, item.clientId, item.body);
     };
 
     const onKeyDown = (event: KeyboardEvent<HTMLTextAreaElement>) => {
@@ -589,6 +605,12 @@ export default function ChatThread({
                                 <div
                                     className={`ym-chat__bubble ym-chat__bubble--${message.mine ? 'out' : 'in'}`}
                                 >
+                                    {!message.mine && message.caution ? (
+                                        <p className="caption ym-chat__caution" role="note">
+                                            <Icon name="triangle-alert" size={14} />
+                                            {t.caution}
+                                        </p>
+                                    ) : null}
                                     <p className="body ym-chat__text">{message.body}</p>
                                     <span className="caption ym-chat__meta">
                                         <time dateTime={message.created_at} data-dynamic>

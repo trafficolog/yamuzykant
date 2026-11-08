@@ -65,11 +65,17 @@ it('продавец не может быть покупателем в свое
 });
 
 it('миграции сообщений откатываются', function () {
+    // Сначала миграция антиспама (4.1.3): message_flags ссылается на messages.
+    Artisan::call('migrate:rollback', ['--path' => 'database/migrations/2026_11_08_200000_add_antispam_to_messages.php']);
+    expect(Schema::hasTable('message_flags'))->toBeFalse()
+        ->and(Schema::hasColumn('messages', 'client_id'))->toBeFalse();
+
     Artisan::call('migrate:rollback', ['--path' => 'database/migrations/2026_11_07_100000_create_messaging_tables.php']);
 
     expect(Schema::hasTable('messages'))->toBeFalse()
         ->and(Schema::hasTable('conversations'))->toBeFalse();
 
     Artisan::call('migrate', ['--path' => 'database/migrations/2026_11_07_100000_create_messaging_tables.php']);
+    Artisan::call('migrate', ['--path' => 'database/migrations/2026_11_08_200000_add_antispam_to_messages.php']);
     expect(Schema::hasTable('messages'))->toBeTrue();
 });

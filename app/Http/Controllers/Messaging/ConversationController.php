@@ -29,13 +29,14 @@ final class ConversationController extends Controller
     /** «Написать продавцу»: первое сообщение создаёт беседу, повторное — продолжает. */
     public function store(SendMessageRequest $request, Listing $listing, StartConversation $action): JsonResponse
     {
-        $message = $action->handle($this->user($request), $listing, $request->body());
+        $message = $action->handle($this->user($request), $listing, $request->body(), $request->clientId());
         $conversation = $message->conversation;
 
         return response()->json([
             'conversation' => (new ConversationResource($conversation))->resolve($request),
             'message' => (new MessageResource($message))->resolve($request),
-        ], 201);
+            // Повтор с тем же client_id возвращает сохранённое сообщение: 200, а не 201.
+        ], $message->wasRecentlyCreated ? 201 : 200);
     }
 
     public function messages(Request $request, Conversation $conversation, ConversationHistory $history): JsonResponse
@@ -56,9 +57,9 @@ final class ConversationController extends Controller
     {
         $this->authorizeParticipant($request, $conversation);
 
-        $message = $action->handle($this->user($request), $conversation, $request->body());
+        $message = $action->handle($this->user($request), $conversation, $request->body(), $request->clientId());
 
-        return (new MessageResource($message))->response()->setStatusCode(201);
+        return (new MessageResource($message))->response()->setStatusCode($message->wasRecentlyCreated ? 201 : 200);
     }
 
     public function read(Request $request, Conversation $conversation, MarkConversationRead $action, UnreadMessages $unread): JsonResponse

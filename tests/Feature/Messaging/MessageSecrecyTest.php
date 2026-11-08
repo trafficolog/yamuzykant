@@ -31,6 +31,7 @@ beforeEach(function () {
 /** Принудительная ошибка БД: таблицы сообщений нет, QueryException несёт SQL с текстом в привязках. */
 function breakMessagesTable(): void
 {
+    DB::statement('drop table message_flags');
     DB::statement('drop table messages');
 }
 

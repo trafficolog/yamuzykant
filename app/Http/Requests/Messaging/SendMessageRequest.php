@@ -53,6 +53,8 @@ final class SendMessageRequest extends FormRequest
     {
         return [
             'body' => ['required', 'string', 'max:'.Config::integer('messaging.max_length')],
+            // Ключ идемпотентности отправки (4.1.3): uuid или случайная строка клиента.
+            'client_id' => ['nullable', 'string', 'max:64', 'regex:/^[A-Za-z0-9_-]+$/'],
         ];
     }
 
@@ -64,6 +66,13 @@ final class SendMessageRequest extends FormRequest
             'body.string' => (string) __('messaging.validation.required'),
             'body.max' => (string) __('messaging.validation.max', ['max' => Config::integer('messaging.max_length')]),
         ];
+    }
+
+    public function clientId(): ?string
+    {
+        $clientId = $this->input('client_id');
+
+        return is_string($clientId) && $clientId !== '' ? $clientId : null;
     }
 
     public function body(): string
