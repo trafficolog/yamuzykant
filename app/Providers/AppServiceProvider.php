@@ -17,6 +17,7 @@ use App\Domain\Listings\Photos\SignedRouteUploads;
 use App\Domain\Listings\Policies\ListingPolicy;
 use App\Domain\Messaging\Models\Conversation;
 use App\Domain\Messaging\Policies\ConversationPolicy;
+use App\Domain\Moderation\Listeners\QueueListingRiskAssessment;
 use App\Domain\Search\Console\BenchmarkSearchCommand;
 use App\Domain\Search\Console\ReconcileListingIndexCommand;
 use App\Domain\Search\Console\SeedLoadListingsCommand;
@@ -78,6 +79,9 @@ class AppServiceProvider extends ServiceProvider
 
         // Поисковый индекс объявлений: любое событие машины статусов → job SyncListingToIndex.
         Event::listen('App\Domain\Listings\Events\*', QueueListingIndexSync::class);
+
+        // Автопроверки (UC-O1): публикация, существенная правка и повторная отправка → job AssessListingRisk.
+        Event::listen('App\Domain\Listings\Events\*', QueueListingRiskAssessment::class);
 
         if ($this->app->runningInConsole()) {
             $this->commands([
