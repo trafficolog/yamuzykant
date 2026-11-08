@@ -38,6 +38,10 @@ dataset('phones', [
     'белорусский номер' => ['+375 29 123-45-67'],
     'городской номер' => ['8 (495) 123-45-67'],
     'телефон после года и цены' => ['Fender 1957, 184 500 ₽, звоните 8 916 123 45 67'],
+    'буква l вместо единицы' => ['8916l234567'],
+    'заглавная I вместо единицы' => ['+7 9I6 123 45 67'],
+    'префикс 00 слитно' => ['007 916 123 45 67'],
+    'префикс 00 отдельно' => ['00 7 916 123 45 67'],
     'цифры с клавишными эмодзи' => ["8\u{FE0F}\u{20E3}9\u{FE0F}\u{20E3}1\u{FE0F}\u{20E3}6\u{FE0F}\u{20E3}1234567"],
 ]);
 
@@ -61,6 +65,8 @@ dataset('links', [
     'короткая ссылка телеграма' => ['t.me/ivan_guitar'],
     'ссылка на whatsapp' => ['wa.me/79161234567'],
     'ссылка вконтакте' => ['vk.com/id12345'],
+    'ссылка с пробелами вокруг точки и слеша' => ['t . me / ivan'],
+    'слеш словом' => ['vk com slash id12345'],
 ]);
 
 dataset('messengers', [
@@ -76,6 +82,17 @@ dataset('messengers', [
     'точки между буквами' => ['w.h.a.t.s.a.p.p'],
     'смесь алфавитов' => ['wһаtsapp'],
     'кириллица вместо латиницы в слове' => ['Вaйбeр'],
+    'телегу' => ['пишите в телегу'],
+    'телега' => ['мой контакт — телега'],
+    'tg и ник' => ['tg ivanov_g'],
+    'тг' => ['мой тг'],
+    'вк с двоеточием' => ['вк: ivan'],
+    'ig с двоеточием' => ['ig: ivan'],
+    'инста' => ['пишите в инста'],
+    'инстаграм' => ['Инстаграм ivan'],
+    'авито' => ['дешевле на авито'],
+    'avito' => ['Avito'],
+    'буквы через пробел внутри слова' => ['tele gram'],
 ]);
 
 dataset('handles', [
@@ -117,6 +134,12 @@ dataset('clean', [
     'собака как животное' => ['Гитара не для собаки, хранилась в кейсе'],
     'at в обычном английском' => ['Look at this: Fender at its best'],
     'расширение файла' => ['фото photo.jpg приложены'],
+    'пропущен пробел после точки, зона «со»' => ['Состояние отличное.Со всеми аксессуарами'],
+    'пропущен пробел после точки, зона «ме»' => ['Гитара.Ме нравится звук'],
+    'пропущен пробел после точки, слово «Ру»' => ['Продаю.Ру'],
+    'пропущен пробел после точки, зона «по»' => ['Куплена.По акции'],
+    'сокращение внутри слова' => ['Big Muff, вкладыш в кейс, ВКР нет, инстанция'],
+    'телеграф — не телеграм' => ['Телеграфный ключ в комплекте'],
     'при встрече' => ['Звонок при встрече не нужен, пишите в сообщениях'],
 ]);
 
@@ -144,15 +167,61 @@ it('не принимает за контакт год, модель, цену, 
     expect(contactOf($text))->toBeNull();
 })->with('clean');
 
-it('возвращает найденный фрагмент для пояснения модератору', function () {
-    $contact = (new ContactDetector)->find('Звоните +7 (916) 123-45-67 после шести');
+it('возвращает вид, а маска прячет сам контакт', function (string $text, ContactKind $kind, string $masked) {
+    $contact = (new ContactDetector)->find($text);
 
-    expect($contact?->excerpt)->toContain('916');
+    expect($contact?->kind)->toBe($kind)->and($contact?->masked())->toBe($masked);
+})->with([
+    'телефон' => ['Звоните +7 (916) 123-45-67 после шести', ContactKind::Phone, '79*******67'],
+    'почта' => ['пишите ivan.petrov@mail.ru', ContactKind::Email, 'i***@mail.ru'],
+    'ссылка без пути' => ['смотрите https://example.com/lot/123?x=1', ContactKind::Link, 'example.com'],
+    'ссылка без схемы' => ['t.me/ivan_guitar', ContactKind::Link, 't.me'],
+    'ник' => ['мой ник @ivan_guitar', ContactKind::Handle, '@iv***'],
+    'мессенджер — название как есть' => ['Пишите в WhatsApp', ContactKind::Messenger, 'whatsapp'],
+]);
+
+it('маска не длиннее 40 символов', function () {
+    $contact = (new ContactDetector)->find('https://'.str_repeat('a', 80).'.com/path');
+
+    expect(mb_strlen((string) $contact?->masked()))->toBeLessThanOrEqual(40);
 });
 
-it('берёт список мессенджеров из конфига', function () {
-    config(['moderation.contacts.messengers' => ['новыймесс']]);
+it('берёт основы и сокращения мессенджеров из конфига', function () {
+    config(['moderation.messengers.stems' => ['новыймесс'], 'moderation.messengers.abbreviations' => ['нм']]);
 
-    expect(contactOf('пишите в новыймесс'))->toBe(ContactKind::Messenger)
+    expect(contactOf('пишите в новыймессе'))->toBe(ContactKind::Messenger)
+        ->and(contactOf('мой нм'))->toBe(ContactKind::Messenger)
+        ->and(contactOf('нмх рядом'))->toBeNull()
         ->and(contactOf('пишите в ватсап'))->toBeNull();
+});
+
+describe('режим «блокирует только название с номером или ником»', function () {
+    beforeEach(function () {
+        config(['moderation.messengers.block_mention_only' => false]);
+    });
+
+    it('голое упоминание не блокирует', function (string $text) {
+        expect(contactOf($text))->toBeNull();
+    })->with([
+        'не пишу' => ['в WhatsApp не пишу'],
+        'быстрее в телеграм' => ['ответ быстрее в телеграм'],
+        'просто тг' => ['мой тг'],
+        'цифра рядом' => ['WhatsApp 5 минут'],
+    ]);
+
+    it('название с ником, номером или @ блокирует', function (string $text, ContactKind $kind) {
+        expect(contactOf($text))->toBe($kind);
+    })->with([
+        'tg и ник с подчёркиванием' => ['tg ivanov_g', ContactKind::Messenger],
+        'вк с двоеточием' => ['вк: ivan', ContactKind::Messenger],
+        'ig с двоеточием' => ['ig: ivan', ContactKind::Messenger],
+        'название и номер' => ['WhatsApp 8 916 123 45 67', ContactKind::Phone],
+        'название и @-ник' => ['Telegram @ivan_guitar', ContactKind::Handle],
+        'название и длинный идентификатор' => ['skype ivan.guitar77', ContactKind::Messenger],
+    ]);
+});
+
+it('режим по умолчанию — любое упоминание блокирует', function () {
+    expect(config('moderation.messengers.block_mention_only'))->toBeTrue()
+        ->and(contactOf('в WhatsApp не пишу'))->toBe(ContactKind::Messenger);
 });

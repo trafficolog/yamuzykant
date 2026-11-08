@@ -71,7 +71,7 @@ describe('validate: блокирующие ошибки', function () {
 
         expect($report->blocked())->toBeTrue()
             ->and($report->errors())->toBe([
-                'description' => 'Уберите телефон и ссылки из описания — покупатели напишут вам в сообщениях.',
+                'description' => 'Уберите телефон из описания — покупатели напишут вам в сообщениях.',
             ]);
     });
 
@@ -82,12 +82,15 @@ describe('validate: блокирующие ошибки', function () {
             ->and($report->errors()['title'])->toContain('из названия');
     });
 
-    it('e-mail и ссылка на мессенджер блокируют', function (string $text) {
-        expect(autoChecks()->validate(textListing('Fender ’57 Stratocaster', $text))->blocked())->toBeTrue();
+    it('e-mail, ссылка и мессенджер блокируют, подсказка называет вид найденного без самого фрагмента', function (string $text, string $hint) {
+        $errors = autoChecks()->validate(textListing('Fender ’57 Stratocaster', $text))->errors();
+
+        expect($errors)->toBe(['description' => "Уберите {$hint} из описания — покупатели напишут вам в сообщениях."]);
     })->with([
-        'e-mail' => ['пишите ivan@mail.ru'],
-        'ссылка на мессенджер' => ['t.me/ivan_guitar'],
-        'название мессенджера' => ['напишите в WhatsApp'],
+        'e-mail' => ['пишите ivan@mail.ru', 'почту'],
+        'ссылка' => ['смотрите https://example.com/lot', 'ссылку'],
+        'мессенджер' => ['напишите в WhatsApp', 'мессенджер'],
+        'ник' => ['мой ник @ivan_guitar', 'ник'],
     ]);
 
     it('стоп-слова и ценовые признаки не блокируют отправку', function () {
@@ -149,6 +152,17 @@ describe('assess: признаки риска', function () {
         $listing = Listing::factory()->inStatus(ListingStatus::Published)->create(['description' => 'предоплата']);
 
         expect(autoChecks()->assess($listing)->codes())->toBe([]);
+    });
+
+    it('в пояснении и деталях контакт замаскирован, полный номер и почта не хранятся', function () {
+        $listing = Listing::factory()->inStatus(ListingStatus::Published)->create([
+            'description' => 'Звоните 8 916 123-45-67 или ivan.petrov@mail.ru',
+        ]);
+
+        $signal = autoChecks()->assess($listing)->signals()[0];
+
+        expect(json_encode($signal->toArray(), JSON_UNESCAPED_UNICODE))->not->toContain('1234567')->not->toContain('ivan.petrov')
+            ->and($signal->details['excerpt'])->toBe('i***@mail.ru');
     });
 
     it('контакты в тексте — сигнал риска и для уже сохранённого объявления', function () {

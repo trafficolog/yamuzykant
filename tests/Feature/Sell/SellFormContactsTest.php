@@ -62,7 +62,7 @@ function contactsPayload(Listing $listing, Category $kind, array $overrides = []
     ], $overrides);
 }
 
-const CONTACTS_HINT = 'Уберите телефон и ссылки из описания — покупатели напишут вам в сообщениях.';
+const CONTACTS_HINT = 'Уберите телефон из описания — покупатели напишут вам в сообщениях.';
 
 it('телефон в описании: ошибка у поля «Описание», черновик не изменён', function () {
     [$owner, $kind, $draft] = contactsCase();
@@ -74,17 +74,17 @@ it('телефон в описании: ошибка у поля «Описан�
     expect(Listing::query()->findOrFail($draft->id)->description)->toBeNull();
 });
 
-it('e-mail, ссылка и мессенджер в описании блокируют', function (string $text) {
+it('e-mail, ссылка и мессенджер в описании блокируют, подсказка называет вид', function (string $text, string $hint) {
     [$owner, $kind, $draft] = contactsCase();
 
     $this->actingAs($owner)
         ->post('/sell', contactsPayload($draft, $kind, ['description' => $text]))
-        ->assertSessionHasErrors(['description' => CONTACTS_HINT]);
+        ->assertSessionHasErrors(['description' => "Уберите {$hint} из описания — покупатели напишут вам в сообщениях."]);
 })->with([
-    'e-mail' => ['Пишите ivan@mail.ru'],
-    'ссылка' => ['Больше фото: https://example.com/strat'],
-    'мессенджер' => ['Все вопросы в WhatsApp'],
-    'цифры словами' => ['восемь девять один шесть один два три четыре пять шесть семь'],
+    'e-mail' => ['Пишите ivan@mail.ru', 'почту'],
+    'ссылка' => ['Больше фото: https://example.com/strat', 'ссылку'],
+    'мессенджер' => ['Все вопросы в WhatsApp', 'мессенджер'],
+    'цифры словами' => ['восемь девять один шесть один два три четыре пять шесть семь', 'телефон'],
 ]);
 
 it('контакт в названии: ошибка у поля «Название»', function () {
