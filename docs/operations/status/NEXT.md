@@ -5,5 +5,4 @@
 - 0.2.9 Визуальные тесты: строгий порог для эталонов R1 — sonnet → sonnet, risk low
 - 3.1.3 Барахолка: пусто, загрузка, ошибка — haiku → sonnet, risk low
 - 3.1.6 Страница продавца — haiku → sonnet, risk low
-- 3.1.9 Барахолка: подпись цены без JS, e2e цены, позиция прокрутки — sonnet → sonnet, risk low
 - 5.1.4 Автопроверки: доработки после ревью и решения OWNER — sonnet → sonnet, risk low
