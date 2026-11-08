@@ -9,6 +9,7 @@ import LotPrice from '@/Components/LotPrice';
 import PublicLayout from '@/Layouts/PublicLayout';
 import { openLogin } from '@/Hooks/loginDialog';
 import { ru } from '@/lang/ru';
+import { capitalize, memberSince } from '@/lib/account';
 import { HREF_SOON, fleaPath, lotPath } from '@/lib/paths';
 import { postJson } from '@/lib/postJson';
 
@@ -55,7 +56,7 @@ export interface LotShowProps {
     listing: LotData;
     crumbs: { name: string; path: string }[];
     photos: LotPhoto[];
-    seller: { name: string; city: string | null; since: number | null };
+    seller: { name: string; city: string | null; since: string | null };
     viewer: { authenticated: boolean; is_owner: boolean };
     similar: LotSimilar[];
 }
@@ -172,8 +173,8 @@ export default function LotShow({
 }: LotShowProps) {
     const [composing, setComposing] = useState(false);
     const [sent, setSent] = useState(false);
-
     const status = statusLabel(listing);
+    const since = memberSince(seller.since);
     const published = listing.status === 'published';
     const canWrite = published && !viewer.is_owner;
     const categoryPath = crumbs.length > 0 ? (crumbs[crumbs.length - 1]?.path ?? null) : null;
@@ -342,8 +343,8 @@ export default function LotShow({
                                     ) : null}
                                 </div>
                             </div>
-                            {seller.since !== null ? (
-                                <div className="ym-card__meta">{t.seller.since(seller.since)}</div>
+                            {since !== null ? (
+                                <div className="ym-card__meta">{capitalize(since)}</div>
                             ) : null}
                         </section>
                     </aside>

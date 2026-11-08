@@ -62,10 +62,12 @@ it('почта (BR-04): в общих props и в чужих ответах её
     $own->assertInertia(fn (Assert $page) => $page
         ->where('profile.email', 'me@example.test')
         ->missing('auth.user.email'));
-    expect($own->getContent())->not->toContain('other@example.test')->not->toContain('ya-secret');
+    expect($own->getContent())->not->toContain('other@example.test');
+    expect($own->getContent())->not->toContain('ya-secret');
 
     $overview = $this->actingAs($other)->get('/account')->getContent();
-    expect($overview)->not->toContain('me@example.test')->not->toContain('other@example.test');
+    expect($overview)->not->toContain('me@example.test');
+    expect($overview)->not->toContain('other@example.test');
 });
 
 it('меняет имя и город: сохраняется, шапка и город сайта берут новый', function () {
@@ -76,9 +78,9 @@ it('меняет имя и город: сохраняется, шапка и г�
         ->assertRedirect()
         ->assertSessionHasNoErrors();
 
-    expect($user->fresh()->name)->toBe('Анна Ким')->and($user->fresh()->city_id)->toBe($spb->id);
+    expect($user->refresh()->name)->toBe('Анна Ким')->and($user->refresh()->city_id)->toBe($spb->id);
 
-    $this->actingAs($user->fresh())->get('/account/profile')->assertInertia(fn (Assert $page) => $page
+    $this->actingAs($user->refresh())->get('/account/profile')->assertInertia(fn (Assert $page) => $page
         ->where('auth.user.name', 'Анна Ким')
         ->where('auth.user.city.name', 'Санкт-Петербург')
         ->where('city.name', 'Санкт-Петербург'));
@@ -89,7 +91,7 @@ it('город можно не указывать', function () {
 
     $this->actingAs($user)->patch('/account/profile', ['name' => 'Анна', 'city_id' => null])->assertSessionHasNoErrors();
 
-    expect($user->fresh()->city_id)->toBeNull();
+    expect($user->refresh()->city_id)->toBeNull();
 });
 
 it('проверяет имя и город', function (array $payload, string $field) {
@@ -97,7 +99,7 @@ it('проверяет имя и город', function (array $payload, string $
 
     $this->actingAs($user)->patch('/account/profile', $payload)->assertSessionHasErrors($field);
 
-    expect($user->fresh()->name)->toBe('Анна');
+    expect($user->refresh()->name)->toBe('Анна');
 })->with([
     'пустое имя' => [['name' => '   '], 'name'],
     'без имени' => [[], 'name'],
@@ -114,7 +116,7 @@ it('почту, Яндекс ID и согласие через профиль н
         'name' => 'Анна', 'email' => 'new@example.test', 'yandex_id' => 'ya-new', 'consent_version' => 'x',
     ])->assertSessionHasNoErrors();
 
-    $fresh = $user->fresh();
+    $fresh = $user->refresh();
     expect($fresh->email)->toBe('keep@example.test')
         ->and($fresh->yandex_id)->toBe('ya-keep')
         ->and($fresh->consent_version)->toBe('factory');
@@ -136,11 +138,11 @@ it('уведомления: выключение сохраняется и от�
         ->assertRedirect()
         ->assertSessionHasNoErrors();
 
-    $this->actingAs($user->fresh())->get('/account/profile')->assertInertia(fn (Assert $page) => $page
+    $this->actingAs($user->refresh())->get('/account/profile')->assertInertia(fn (Assert $page) => $page
         ->where('notifications', [['key' => 'new_message', 'enabled' => false]]));
 
-    $this->actingAs($user->fresh())->put('/account/notifications', ['new_message' => true]);
-    expect($user->fresh()->notification_prefs)->toBe(['new_message' => true]);
+    $this->actingAs($user->refresh())->put('/account/notifications', ['new_message' => true]);
+    expect($user->refresh()->notification_prefs)->toBe(['new_message' => true]);
 });
 
 it('уведомления: значение обязательно и логическое, чужие ключи игнорируются', function () {
@@ -150,7 +152,7 @@ it('уведомления: значение обязательно и логи�
     $this->actingAs($user)->put('/account/notifications', ['new_message' => 'может'])->assertSessionHasErrors('new_message');
 
     $this->actingAs($user)->put('/account/notifications', ['new_message' => false, 'is_staff' => true, 'mystery' => false]);
-    expect($user->fresh()->notification_prefs)->toBe(['new_message' => false]);
+    expect($user->refresh()->notification_prefs)->toBe(['new_message' => false]);
 });
 
 it('изменения — не чаще 30 раз в минуту', function () {

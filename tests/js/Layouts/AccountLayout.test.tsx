@@ -61,7 +61,7 @@ describe('AccountLayout', () => {
         render(<AccountLayout active="profile">{null}</AccountLayout>);
 
         const links = within(nav()).getAllByRole('link');
-        expect(links.map((link) => [link.textContent, link.getAttribute('href')])).toEqual([
+        expect(links.map((link) => [link.textContent?.trim(), link.getAttribute('href')])).toEqual([
             ['Обзор', '/account'],
             ['Сообщения', '/messages'],
             ['Профиль', '/account/profile'],
@@ -97,12 +97,12 @@ describe('AccountLayout', () => {
         expect(
             within(buy)
                 .getAllByRole('link')
-                .map((l) => l.textContent),
+                .map((l) => l.textContent?.trim()),
         ).toEqual(['Избранное']);
         expect(
             within(sell)
                 .getAllByRole('link')
-                .map((l) => l.textContent),
+                .map((l) => l.textContent?.trim()),
         ).toEqual(['Объявления']);
     });
 

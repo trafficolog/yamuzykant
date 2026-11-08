@@ -34,7 +34,7 @@ it('сохраняет только известные виды', function () {
 
     NotificationPreferences::update($user, ['new_message' => false, 'bogus' => true]);
 
-    expect($user->fresh()->notification_prefs)->toBe(['new_message' => false]);
+    expect($user->refresh()->notification_prefs)->toBe(['new_message' => false]);
 });
 
 it('каждый вид имеет ключ и значение по умолчанию «включено»', function () {
