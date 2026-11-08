@@ -1,7 +1,7 @@
 ---
 id: "5"
 title: "Безопасность площадки и консоль"
-status: todo
+status: in_progress
 gate: G2
 ---
 

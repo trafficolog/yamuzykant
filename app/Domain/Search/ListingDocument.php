@@ -9,21 +9,20 @@ use App\Domain\Catalog\Search\ModelAliases;
 use App\Domain\Listings\Models\Listing;
 
 /**
- * Документ объявления в поисковом индексе (ARCHITECTURE §5). Поля перечислены явно:
+ * Документ объявления в поисковом индексе (ARCHITECTURE §5). Координат нет: «рядом» в MVP не бывает (решение OWNER 07.11.2026). Поля перечислены явно:
  * серийного номера, e-mail, user_id, итоговой цены и прочего, чего нет в списке, в индексе не бывает.
  */
 final class ListingDocument
 {
     /** Связи, которые нужны документу: подгружаются пачкой, а не по запросу на объявление. */
-    public const RELATIONS = ['model', 'city', 'category.parent.parent'];
+    public const RELATIONS = ['model', 'category.parent.parent'];
 
     /** @return array<string, mixed> */
     public static function for(Listing $listing): array
     {
         $model = $listing->model;
-        $city = $listing->city;
 
-        $document = [
+        return [
             'id' => $listing->id,
             'title' => $listing->title,
             'model' => $model?->name,
@@ -39,12 +38,6 @@ final class ListingDocument
             'negotiable' => $listing->negotiable,
             'published_at' => $listing->published_at?->getTimestamp(),
         ];
-
-        if ($city !== null) {
-            $document['_geo'] = ['lat' => $city->lat, 'lng' => $city->lng];
-        }
-
-        return $document;
     }
 
     /**

@@ -2,7 +2,7 @@
 id: "5.1"
 phase: "5"
 title: "Модерация"
-status: todo
+status: in_progress
 gate: G2
 ---
 
@@ -16,7 +16,7 @@ gate: G2
 <!-- docs:ops:begin tasks -->
 | Задача | Статус | Риск | Исполнитель → Ревьюер |
 |---|---|---|---|
-| [5.1.1 Автопроверки объявлений](../tasks/5-1-1-auto-checks.md) | todo | medium | sonnet → sonnet |
+| [5.1.1 Автопроверки объявлений](../tasks/5-1-1-auto-checks.md) | review | medium | sonnet → sonnet |
 | [5.1.2 Модерация в консоли](../tasks/5-1-2-moderation-queue.md) | todo | high | opus → opus |
 | [5.1.3 Решения модерации и уведомление продавца](../tasks/5-1-3-moderation-decisions.md) | todo | medium | sonnet → sonnet |
 <!-- docs:ops:end -->

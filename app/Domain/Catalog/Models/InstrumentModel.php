@@ -82,12 +82,6 @@ class InstrumentModel extends Model
         return $this->brand.' '.$this->name;
     }
 
-    /** Индекс подсказки; имя совпадает с таблицей и ключом в config/scout.php. */
-    public function searchableAs(): string
-    {
-        return 'instrument_models';
-    }
-
     /** @return array<string, mixed> */
     public function toSearchableArray(): array
     {

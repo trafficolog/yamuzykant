@@ -10,6 +10,7 @@ use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Foundation\Bus\Dispatchable;
 use Illuminate\Foundation\Queue\Queueable;
+use Illuminate\Queue\Middleware\WithoutOverlapping;
 
 /**
  * Приводит документ объявления в индексе в соответствие с БД: published — записать, иначе (или строки нет) — убрать.
@@ -30,6 +31,18 @@ final class SyncListingToIndex implements ShouldQueue
     public function backoff(): array
     {
         return [2, 5, 10, 20];
+    }
+
+    /**
+     * Задачи одного объявления идут по очереди: без этого «публикация» читает строку, «снятие» удаляет документ,
+     * и только потом «публикация» пишет устаревший документ. Вторая задача не отбрасывается (в отличие от
+     * ShouldBeUnique), а возвращается в очередь; замок не вечный — упавший воркер его не удержит.
+     *
+     * @return list<WithoutOverlapping>
+     */
+    public function middleware(): array
+    {
+        return [(new WithoutOverlapping($this->listingId))->releaseAfter(2)->expireAfter(60)];
     }
 
     public function handle(): void

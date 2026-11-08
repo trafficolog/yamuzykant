@@ -58,7 +58,6 @@ final class LoadData
 
         [$brand, $model, $kind, $path] = self::MODELS[mt_rand(0, count(self::MODELS) - 1)];
         $cityIndex = mt_rand(0, count(self::CITIES) - 1);
-        [$lat, $lng] = self::CITIES[$cityIndex];
 
         $words = [];
         for ($i = mt_rand(12, 40); $i > 0; $i--) {
@@ -79,7 +78,6 @@ final class LoadData
             'ship' => mt_rand(0, 3) === 0,
             'negotiable' => mt_rand(0, 1) === 1,
             'published_at' => time() - mt_rand(0, 60 * 86400),
-            '_geo' => ['lat' => $lat, 'lng' => $lng],
         ];
     }
 }

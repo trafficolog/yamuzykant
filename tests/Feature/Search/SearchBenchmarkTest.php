@@ -2,9 +2,11 @@
 
 declare(strict_types=1);
 
+use App\Domain\Catalog\Models\InstrumentModel;
 use App\Domain\Search\ListingIndex;
 use Illuminate\Support\Facades\Artisan;
 use Meilisearch\Contracts\DocumentsQuery;
+use Tests\Support\ListingFixtures;
 use Tests\Support\MeilisearchIndex;
 
 // Критерий 3.1.1: «p95 поиска ≤ 300 мс на 100 тыс.» — команды сида и замера. Здесь проверяются на малом объёме
@@ -38,7 +40,7 @@ it('документы нагрузочного сида — той же схе�
     sort($keys);
 
     expect($keys)->toBe([
-        '_geo', 'aliases', 'brand', 'category_path', 'city_id', 'condition', 'description', 'id',
+        'aliases', 'brand', 'category_path', 'city_id', 'condition', 'description', 'id',
         'model', 'negotiable', 'price', 'published_at', 'ship', 'title',
     ]);
 });
@@ -70,4 +72,33 @@ it('замер завершается с ошибкой, если p95 выше �
     $exit = Artisan::call('listings:benchmark-search', ['--index' => BENCH_INDEX, '--runs' => 20, '--threshold' => 0]);
 
     expect($exit)->toBe(1);
+});
+
+it('сид отказывается работать с индексом вне семейства listings_bench и не трогает его', function (string $name) {
+    MeilisearchIndex::reset();
+    ListingFixtures::stratocaster(ListingFixtures::electricGuitars());
+    MeilisearchIndex::waitForTasks();
+    $models = ListingIndex::named('instrument_models');
+    $before = $models->client()->index($models->name)->getDocuments()->getTotal();
+    expect($before)->toBe(1);
+
+    $exit = Artisan::call('listings:seed-load', ['count' => 10, '--index' => $name]);
+    MeilisearchIndex::waitForTasks();
+
+    expect($exit)->not->toBe(0)
+        ->and(Artisan::output())->toContain('listings_bench')
+        ->and($models->client()->index($models->name)->getDocuments()->getTotal())->toBe(1)
+        ->and((new InstrumentModel)->searchableAs())->toBe($models->name);
+})->with([
+    'модели' => ['instrument_models'],
+    'без префикса семейства' => ['bench_listings'],
+    'не с начала имени' => ['my_listings_bench'],
+]);
+
+it('сид принимает индексы семейства listings_bench с суффиксом', function () {
+    $exit = Artisan::call('listings:seed-load', ['count' => 5, '--index' => 'listings_bench_extra']);
+    MeilisearchIndex::waitForTasks();
+
+    expect($exit)->toBe(0);
+    ListingIndex::named('listings_bench_extra')->delete();
 });

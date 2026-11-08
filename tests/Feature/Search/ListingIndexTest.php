@@ -45,7 +45,6 @@ it('опубликованное объявление попадает в инд
         'city_id' => $city->id,
         'ship' => true,
         'negotiable' => true,
-        '_geo' => ['lat' => 55.7558, 'lng' => 37.6173],
     ]);
     expect($document['published_at'])->toBe($listing->fresh()?->published_at?->getTimestamp());
 });
@@ -57,7 +56,7 @@ it('набор полей документа фиксирован: ничего 
     sort($keys);
 
     expect($keys)->toBe([
-        '_geo', 'aliases', 'brand', 'category_path', 'city_id', 'condition', 'description', 'id',
+        'aliases', 'brand', 'category_path', 'city_id', 'condition', 'description', 'id',
         'model', 'negotiable', 'price', 'published_at', 'ship', 'title',
     ]);
 });
@@ -78,11 +77,11 @@ it('в индексе нет серийного номера, e-mail, user_id и
         ->and($json)->not->toContain('"user_id"');
 });
 
-it('без города с координатами в документе нет _geo', function () {
-    $listing = ListingFixtures::draft();
-    $listing->city_id = null;
+it('координат в документе нет: «рядом» в MVP не бывает (решение OWNER 07.11.2026)', function () {
+    $listing = ListingFixtures::published(city: ListingFixtures::city('Москва', 55.7558, 37.6173));
 
-    expect($listing->toSearchableArray())->not->toHaveKey('_geo');
+    expect($listing->toSearchableArray())->not->toHaveKey('_geo')
+        ->and(indexedDocument($listing))->not->toHaveKey('_geo');
 });
 
 it('в индексе только published: прочие статусы не индексируются', function (ListingStatus $status, bool $indexed) {
@@ -113,9 +112,9 @@ it('настройки индекса: фильтры, сортировки, п�
 
     expect($settings['searchableAttributes'])->toBe(['title', 'model', 'brand', 'aliases', 'description'])
         ->and($settings['filterableAttributes'])->toEqualCanonicalizing([
-            'category_path', 'condition', 'price', 'city_id', 'ship', 'negotiable', '_geo',
+            'category_path', 'condition', 'price', 'city_id', 'ship', 'negotiable',
         ])
-        ->and($settings['sortableAttributes'])->toEqualCanonicalizing(['published_at', 'price', '_geo'])
+        ->and($settings['sortableAttributes'])->toEqualCanonicalizing(['published_at', 'price'])
         ->and($settings['rankingRules'])->toBe(['words', 'sort', 'typo', 'proximity', 'attribute', 'exactness'])
         ->and($settings['stopWords'])->toContain('для', 'на')
         ->and($settings['typoTolerance']['enabled'])->toBeTrue();
