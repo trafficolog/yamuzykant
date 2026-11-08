@@ -224,7 +224,7 @@ it('поиск по справочнику: без запроса все гор�
         ->assertOk()
         ->assertJsonCount(16, 'data')
         ->assertJsonPath('data.0.name', 'Волгоград')
-        ->assertJsonStructure(['data' => [['id', 'name', 'region']]]);
+        ->assertJsonStructure(['data' => [['id', 'name', 'region', 'type']]]);
 
     $this->getJson('/cities?q=петер')
         ->assertOk()
@@ -237,7 +237,7 @@ it('поиск по справочнику: без запроса все гор�
 it('поиск отдаёт только явные поля (без координат и дат)', function () {
     $item = $this->getJson('/cities?q=Москва')->json('data.0');
 
-    expect(array_keys($item))->toBe(['id', 'name', 'region']);
+    expect(array_keys($item))->toBe(['id', 'name', 'region', 'type']);
 });
 
 it('поиск: строка запроса длиннее 100 символов отклоняется с 422', function () {
