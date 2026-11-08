@@ -14,6 +14,7 @@ use App\Domain\Listings\StateMachines\ListingStateMachine;
 use App\Domain\Search\Jobs\SyncListingToIndex;
 use App\Domain\Search\ListingIndex;
 use Illuminate\Database\Seeder;
+use Illuminate\Support\Carbon;
 use Meilisearch\Contracts\TasksQuery;
 use RuntimeException;
 
@@ -73,10 +74,15 @@ class FleaDemoSeeder extends Seeder
             $lots[] = [sprintf('Гитара демо %02d', $i), 10_000 + $i * 1_000, self::FILLER_CONDITIONS[$i % 5], false];
         }
 
+        // Разные секунды публикации: порядок «сначала свежие» определён, и выдача с главной не зависит от гонки (3.1.4).
+        $start = now()->subMinutes(10);
         foreach ($lots as $index => [$title, $price, $condition, $ship]) {
+            Carbon::setTestNow($start->copy()->addSeconds($index));
             $this->publish($category, $model, $moscow, $title, $price, $condition, $ship, $index);
         }
+        Carbon::setTestNow($start->copy()->addSeconds(count($lots)));
         $this->publish($category, $model, $kazan, 'Gibson Les Paul Казань', 120_000, 'good', true, 99);
+        Carbon::setTestNow();
 
         $this->waitForIndex();
     }
