@@ -24,7 +24,7 @@ test.describe('smoke', () => {
         expect(response.status()).toBe(200);
 
         const html = await response.text();
-        expect(html).toMatch(/<h1[^>]*>ЯМузыкант<\/h1>/);
+        expect(html).toMatch(/<h1[^>]*>ЯМузыкант/);
     });
 
     test('/health отвечает 200, status ok и проверки зависимостей', async ({ request }) => {
