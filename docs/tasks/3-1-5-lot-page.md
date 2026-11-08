@@ -3,7 +3,7 @@ id: "3.1.5"
 phase: "3"
 epic: "3.1"
 title: "Страница объявления"
-status: in_progress
+status: review
 gate: G1
 risk: medium
 model_impl: sonnet
@@ -33,13 +33,13 @@ escalations: []
 ## Критерии приёмки
 - [ ] Страница в пороге эталона `lot`
 - [ ] Почта продавца нигде не выводится
-- [ ] Снятое объявление отдаёт 200 с плашкой и похожими, удалённое — 410
+- [ ] Объявление не в published отдаёт 200 с плашкой только владельцу и сотрудникам, остальным — 404; удалённое (черновик) — 404 (решение OWNER 07.11.2026, SPEC §6.1; 410 и soft delete не делаем)
 - [ ] Definition of Done — AGENTS.md §3
 
 ## Тесты (пишутся первыми)
 - Playwright visual: lot
 - Playwright UC-V1.spec.ts
-- Pest feature: props без ПДн; 404/410
+- Pest feature: props без ПДн; 404 по статусам и ролям
 
 ## Не делать
 - Выходить за объём карточки
