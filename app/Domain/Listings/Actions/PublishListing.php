@@ -72,6 +72,9 @@ final class PublishListing
                 return $listing->refresh();
             }
 
+            // Публикуется строка БД, а не запрос: между записью формы и блокировкой вторая вкладка могла её
+            // перезаписать автосохранением (контакты, пустые поля). Проверяем то, что реально уйдёт в published.
+            $this->assertPublishable($fresh);
             PhotoRequirements::assertSatisfied($fresh);
             ActiveListingLimit::assertAvailable($fresh->user);
 
@@ -81,6 +84,32 @@ final class PublishListing
 
             return $this->machine->publish($listing);
         });
+    }
+
+    /**
+     * Свежая строка черновика под блокировкой: обязательные поля формы и блокирующие автопроверки (контакты).
+     *
+     * @throws ValidationException
+     */
+    private function assertPublishable(Listing $fresh): void
+    {
+        $errors = [];
+        foreach (['title', 'category_id', 'condition'] as $field) {
+            if ($fresh->{$field} === null || $fresh->{$field} === '') {
+                $errors[$field] = (string) __("listings.form.messages.{$field}.required");
+            }
+        }
+        if (! $fresh->meet && ! $fresh->ship) {
+            $errors['meet'] = (string) __('listings.form.messages.meet.required_one');
+        }
+
+        foreach ($this->checks->validate($fresh)->errors() as $field => $message) {
+            $errors[$field] ??= $message;
+        }
+
+        if ($errors !== []) {
+            throw ValidationException::withMessages($errors);
+        }
     }
 
     /**
