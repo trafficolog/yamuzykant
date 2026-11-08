@@ -164,19 +164,34 @@ it('сортировка по цене главнее релевантности
     expect($ids)->toBe([$cheap->id, $dear->id]);
 });
 
-it('сортировка «рядом» отдаёт расстояние до точки пользователя', function () {
+it('сортировки «рядом» нет: ни в перечислении, ни в параметрах запроса', function () {
+    $sorts = array_map(fn (ListingSort $sort): string => $sort->value, ListingSort::cases());
+
+    expect($sorts)->toBe(['relevance', 'published_at:desc', 'price:asc', 'price:desc'])
+        ->and((new ReflectionMethod(ListingSearch::class, 'sortBy'))->getNumberOfParameters())->toBe(1);
+});
+
+it('цена по возрастанию: «Договорная» (price = null) в конце, бесплатное первым (BR-11)', function () {
+    $free = ListingFixtures::published(['price' => 0], moscow());
+    $cheap = ListingFixtures::published(['price' => 5_000], moscow());
+    $unpriced = ListingFixtures::published(['price' => null], moscow());
+
+    expect(searchIn(moscow())->sortBy(ListingSort::PriceAsc)->get()->ids)->toBe([$free->id, $cheap->id, $unpriced->id])
+        ->and(searchIn(moscow())->sortBy(ListingSort::PriceDesc)->get()->ids)->toBe([$cheap->id, $free->id, $unpriced->id]);
+});
+
+it('категория в filter экранируется: кавычка и обратная косая не выходят из строки', function (string $category) {
     ListingFixtures::published(city: moscow());
 
-    $result = searchIn(moscow())->sortBy(ListingSort::Nearest, lat: 55.75, lng: 37.62)->get();
+    $result = searchIn(moscow())->inCategory($category)->get();
 
-    expect($result->total)->toBe(1)
-        ->and($result->hits[0]['_geoDistance'])->toBeInt()->toBeLessThan(2_000);
-});
-
-it('сортировка «рядом» без точки — ошибка вызова', function () {
-    expect(fn () => ListingSearch::inCity(moscow())->sortBy(ListingSort::Nearest))
-        ->toThrow(InvalidArgumentException::class);
-});
+    expect($result->total)->toBe(0)
+        ->and($result->ids)->toBe([]);
+})->with([
+    'кавычка и OR' => ['x" OR city_id != 0 OR category_path = "'],
+    'обратная косая в конце' => ['a\\'],
+    'косая и кавычка' => ['a\\" OR city_id != 0 OR category_path = "'],
+]);
 
 it('фасеты считаются по выдаче города: состояние и категория', function () {
     ListingFixtures::published(['condition' => 'mint'], moscow());

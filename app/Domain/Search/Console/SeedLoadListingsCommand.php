@@ -15,9 +15,12 @@ use Meilisearch\Contracts\TasksQuery;
  */
 final class SeedLoadListingsCommand extends Command
 {
+    /** Только индексы с этим началом имени (до префикса окружения) команда вправе удалять. */
+    public const INDEX_PREFIX = 'listings_bench';
+
     protected $signature = 'listings:seed-load
         {count=100000 : Сколько объявлений создать}
-        {--index=listings_bench : Имя индекса без префикса окружения}
+        {--index=listings_bench : Имя индекса без префикса окружения; только `listings_bench…`}
         {--batch=5000 : Размер порции записи}';
 
     protected $description = 'Заполнить отдельный индекс синтетическими объявлениями для замера скорости поиска';
@@ -26,13 +29,16 @@ final class SeedLoadListingsCommand extends Command
     {
         $count = max(1, (int) $this->argument('count'));
         $batch = max(1, (int) $this->option('batch'));
-        $index = ListingIndex::named((string) $this->option('index'));
+        $name = (string) $this->option('index');
 
-        if ($index->name === ListingIndex::default()->name) {
-            $this->error('Нагрузочный индекс не может совпадать с боевым.');
+        // Команда удаляет и пересоздаёт индекс: чужой (боевой `listings`, `instrument_models`) трогать нельзя.
+        if (! str_starts_with($name, self::INDEX_PREFIX)) {
+            $this->error('Нагрузочный индекс должен называться «'.self::INDEX_PREFIX.'» или начинаться с этого имени, получено «'.$name.'».');
 
             return self::FAILURE;
         }
+
+        $index = ListingIndex::named($name);
 
         $index->delete();
         $client = $index->client();

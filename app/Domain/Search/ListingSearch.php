@@ -8,7 +8,6 @@ use App\Domain\Catalog\Models\Category;
 use App\Domain\Catalog\Models\City;
 use App\Domain\Listings\Enums\Condition;
 use Illuminate\Support\Arr;
-use InvalidArgumentException;
 
 /**
  * Запрос к индексу объявлений (UC-S2, UC-S3). Город обязателен (BR-01): поиска без города не бывает,
@@ -33,10 +32,6 @@ final class ListingSearch
     private bool $negotiable = false;
 
     private ?ListingSort $sort = null;
-
-    private ?float $lat = null;
-
-    private ?float $lng = null;
 
     private function __construct(
         private readonly City $city,
@@ -102,19 +97,10 @@ final class ListingSearch
         return $clone;
     }
 
-    /**
-     * @throws InvalidArgumentException «рядом» без точки пользователя
-     */
-    public function sortBy(ListingSort $sort, ?float $lat = null, ?float $lng = null): self
+    public function sortBy(ListingSort $sort): self
     {
-        if ($sort === ListingSort::Nearest && ($lat === null || $lng === null)) {
-            throw new InvalidArgumentException('Сортировке «рядом» нужны координаты пользователя.');
-        }
-
         $clone = clone $this;
         $clone->sort = $sort;
-        $clone->lat = $lat;
-        $clone->lng = $lng;
 
         return $clone;
     }
@@ -191,7 +177,6 @@ final class ListingSearch
 
         return match ($sort) {
             ListingSort::Relevance => null,
-            ListingSort::Nearest => sprintf('_geoPoint(%F,%F):asc', $this->lat, $this->lng),
             default => $sort->value,
         };
     }
