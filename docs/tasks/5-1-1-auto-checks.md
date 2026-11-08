@@ -3,7 +3,7 @@ id: "5.1.1"
 phase: "5"
 epic: "5.1"
 title: "Автопроверки объявлений"
-status: in_progress
+status: review
 gate: G1
 risk: medium
 model_impl: sonnet
