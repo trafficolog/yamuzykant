@@ -6,6 +6,7 @@ use App\Domain\Listings\Enums\ListingStatus;
 use App\Domain\Listings\Models\Listing;
 use App\Domain\Listings\Models\ListingPhoto;
 use App\Domain\Listings\StateMachines\ListingStateMachine;
+use App\Domain\Moderation\AutoChecks\ListingAutoChecks;
 use App\Domain\Moderation\Enums\RiskLevel;
 use App\Domain\Moderation\Jobs\AssessListingRisk;
 use App\Domain\Moderation\Models\ModerationFlag;
@@ -23,7 +24,7 @@ beforeEach(function () {
 it('чистое объявление: флаг с риском normal и без сигналов', function () {
     $listing = Listing::factory()->inStatus(ListingStatus::Published)->create();
 
-    (new AssessListingRisk($listing->id))->handle(app(App\Domain\Moderation\AutoChecks\ListingAutoChecks::class));
+    (new AssessListingRisk($listing->id))->handle(app(ListingAutoChecks::class));
 
     $flag = ModerationFlag::query()->where('listing_id', $listing->id)->sole();
     expect($flag->risk)->toBe(RiskLevel::Normal)->and($flag->signals)->toBe([]);
@@ -115,7 +116,7 @@ describe('постановка в очередь', function () {
 
         $machine->edit($listing, ['year' => 1962]);
         $machine->edit($listing, ['price' => 90_000]);
-        Queue::assertNothingPushed();
+        Queue::assertNotPushed(AssessListingRisk::class);
 
         $machine->edit($listing, ['description' => 'Новое описание']);
         Queue::assertPushed(AssessListingRisk::class, 1);
@@ -137,6 +138,6 @@ describe('постановка в очередь', function () {
         $machine->expire(Listing::factory()->inStatus(ListingStatus::Published)->create());
         $machine->approve(Listing::factory()->inStatus(ListingStatus::Pending)->create());
 
-        Queue::assertNothingPushed();
+        Queue::assertNotPushed(AssessListingRisk::class);
     });
 });

@@ -13,6 +13,7 @@ use App\Domain\Listings\Enums\ListingStatus;
 use App\Domain\Listings\Enums\PriceMode;
 use App\Domain\Listings\Models\Listing;
 use App\Domain\Listings\Rules\PhotoRequirements;
+use App\Domain\Moderation\AutoChecks\ListingAutoChecks;
 use Illuminate\Contracts\Validation\Validator as ValidatorContract;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Support\Arr;
@@ -24,7 +25,7 @@ use Illuminate\Validation\Rule;
  * принадлежать вошедшему и быть в статусе draft. Город, владелец и статус в запросе не принимаются.
  *
  * Пределы — технические, до решения OWNER: название до 120 символов (как у предложения модели), описание
- * до 5000, серийный номер до 64, год с 1800, цена до 99 999 999 ₽. Проверка контактов в описании — 5.1.1.
+ * до 5000, серийный номер до 64, год с 1800, цена до 99 999 999 ₽. Контакты в названии и описании блокируют отправку (ListingAutoChecks::validate, 5.1.1).
  */
 final class StoreListingRequest extends FormRequest
 {
@@ -88,6 +89,7 @@ final class StoreListingRequest extends FormRequest
             }
 
             $this->validateModel($validator);
+            $this->validateContacts($validator);
 
             // Фото — по черновику на сервере: клиентскому списку не верим (BR-03).
             if (! $errors->has('listing_id') && is_string($this->input('listing_id'))) {
@@ -100,6 +102,23 @@ final class StoreListingRequest extends FormRequest
                 }
             }
         }];
+    }
+
+    /**
+     * Контакты в названии и описании блокируют отправку (BR-04): ошибка у поля с подсказкой «Уберите телефон и ссылки…».
+     * Поле, уже получившее другую ошибку, не перекрывается.
+     */
+    private function validateContacts(ValidatorContract $validator): void
+    {
+        $errors = $validator->errors();
+        $text = fn (string $key): ?string => is_string($this->input($key)) ? $this->input($key) : null;
+
+        $content = new Listing(['title' => $text('title'), 'description' => $text('description')]);
+        foreach (app(ListingAutoChecks::class)->validate($content)->errors() as $field => $message) {
+            if (! $errors->has($field)) {
+                $errors->add($field, $message);
+            }
+        }
     }
 
     /**

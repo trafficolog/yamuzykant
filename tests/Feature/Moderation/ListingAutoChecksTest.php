@@ -228,13 +228,10 @@ describe('assess: признаки риска', function () {
     });
 
     describe('цена ниже рынка', function () {
-        beforeEach(function () {
-            $this->model = InstrumentModel::factory()->create();
-        });
-
         it('цена ниже 60 % медианы продаж модели при 5 продажах — сигнал', function () {
-            salesOfModel($this->model, 5, 100_000);
-            $listing = Listing::factory()->inStatus(ListingStatus::Published)->create(['model_id' => $this->model->id, 'price' => 59_999]);
+            $model = InstrumentModel::factory()->create();
+            salesOfModel($model, 5, 100_000);
+            $listing = Listing::factory()->inStatus(ListingStatus::Published)->create(['model_id' => $model->id, 'price' => 59_999]);
 
             $report = autoChecks()->assess($listing);
 
@@ -245,46 +242,52 @@ describe('assess: признаки риска', function () {
         });
 
         it('ровно 60 % медианы и выше — не сигнал', function () {
-            salesOfModel($this->model, 5, 100_000);
-            $listing = Listing::factory()->inStatus(ListingStatus::Published)->create(['model_id' => $this->model->id, 'price' => 60_000]);
+            $model = InstrumentModel::factory()->create();
+            salesOfModel($model, 5, 100_000);
+            $listing = Listing::factory()->inStatus(ListingStatus::Published)->create(['model_id' => $model->id, 'price' => 60_000]);
 
             expect(autoChecks()->assess($listing)->codes())->toBe([]);
         });
 
         it('меньше 5 продаж — медиана не считается', function () {
-            salesOfModel($this->model, 4, 100_000);
-            $listing = Listing::factory()->inStatus(ListingStatus::Published)->create(['model_id' => $this->model->id, 'price' => 1_000]);
+            $model = InstrumentModel::factory()->create();
+            salesOfModel($model, 4, 100_000);
+            $listing = Listing::factory()->inStatus(ListingStatus::Published)->create(['model_id' => $model->id, 'price' => 1_000]);
 
             expect(autoChecks()->assess($listing)->codes())->toBe([]);
         });
 
         it('медиана, а не среднее: одна экстремальная продажа её не сдвигает', function () {
-            salesOfModel($this->model, 4, 100_000);
-            salesOfModel($this->model, 1, 9_000_000);
-            $listing = Listing::factory()->inStatus(ListingStatus::Published)->create(['model_id' => $this->model->id, 'price' => 70_000]);
+            $model = InstrumentModel::factory()->create();
+            salesOfModel($model, 4, 100_000);
+            salesOfModel($model, 1, 9_000_000);
+            $listing = Listing::factory()->inStatus(ListingStatus::Published)->create(['model_id' => $model->id, 'price' => 70_000]);
 
             expect(autoChecks()->assess($listing)->codes())->toBe([]);
         });
 
         it('продажи без итоговой цены и «не продал» не участвуют', function () {
-            salesOfModel($this->model, 4, 100_000);
-            $noPrice = Listing::factory()->inStatus(ListingStatus::Withdrawn)->create(['model_id' => $this->model->id]);
+            $model = InstrumentModel::factory()->create();
+            salesOfModel($model, 4, 100_000);
+            $noPrice = Listing::factory()->inStatus(ListingStatus::Withdrawn)->create(['model_id' => $model->id]);
             SaleRecord::query()->create(['listing_id' => $noPrice->id, 'reason' => WithdrawReason::SoldElsewhere, 'final_price' => null]);
-            $listing = Listing::factory()->inStatus(ListingStatus::Published)->create(['model_id' => $this->model->id, 'price' => 1_000]);
+            $listing = Listing::factory()->inStatus(ListingStatus::Published)->create(['model_id' => $model->id, 'price' => 1_000]);
 
             expect(autoChecks()->assess($listing)->codes())->toBe([]);
         });
 
         it('продажи другой модели не участвуют', function () {
+            $model = InstrumentModel::factory()->create();
             salesOfModel(InstrumentModel::factory()->create(), 5, 100_000);
-            $listing = Listing::factory()->inStatus(ListingStatus::Published)->create(['model_id' => $this->model->id, 'price' => 1_000]);
+            $listing = Listing::factory()->inStatus(ListingStatus::Published)->create(['model_id' => $model->id, 'price' => 1_000]);
 
             expect(autoChecks()->assess($listing)->codes())->toBe([]);
         });
 
         it('цена «Договорная» (null) и «Бесплатно» (0) пропускаются (BR-11)', function (?int $price) {
-            salesOfModel($this->model, 5, 100_000);
-            $listing = Listing::factory()->inStatus(ListingStatus::Published)->create(['model_id' => $this->model->id, 'price' => $price]);
+            $model = InstrumentModel::factory()->create();
+            salesOfModel($model, 5, 100_000);
+            $listing = Listing::factory()->inStatus(ListingStatus::Published)->create(['model_id' => $model->id, 'price' => $price]);
 
             expect(autoChecks()->assess($listing)->codes())->toBe([]);
         })->with(['договорная' => [null], 'бесплатно' => [0]]);
@@ -296,9 +299,10 @@ describe('assess: признаки риска', function () {
         });
 
         it('процент и минимум продаж берутся из конфига', function () {
+            $model = InstrumentModel::factory()->create();
             config(['moderation.price_median_percent' => 80, 'moderation.price_median_min_sales' => 3]);
-            salesOfModel($this->model, 3, 100_000);
-            $listing = Listing::factory()->inStatus(ListingStatus::Published)->create(['model_id' => $this->model->id, 'price' => 79_000]);
+            salesOfModel($model, 3, 100_000);
+            $listing = Listing::factory()->inStatus(ListingStatus::Published)->create(['model_id' => $model->id, 'price' => 79_000]);
 
             expect(autoChecks()->assess($listing)->codes())->toBe(['low_price']);
         });

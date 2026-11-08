@@ -147,7 +147,7 @@ it('не принимает за контакт год, модель, цену, 
 it('возвращает найденный фрагмент для пояснения модератору', function () {
     $contact = (new ContactDetector)->find('Звоните +7 (916) 123-45-67 после шести');
 
-    expect($contact)->not->toBeNull()->and($contact->excerpt)->toContain('916');
+    expect($contact?->excerpt)->toContain('916');
 });
 
 it('берёт список мессенджеров из конфига', function () {
