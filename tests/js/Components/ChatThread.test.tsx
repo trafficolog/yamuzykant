@@ -42,6 +42,14 @@ const field = () => screen.getByRole('textbox', { name: 'Сообщение' });
 const sendButton = () => screen.getByRole('button', { name: 'Отправить' });
 const log = () => screen.getByRole('log');
 
+/** client_id всех отправок (POST сообщений) по порядку. */
+const postedClientIds = (): string[] =>
+    fetchMock.mock.calls
+        .filter(([, init]) => (init as RequestInit | undefined)?.method === 'POST')
+        .map(([, init]) => JSON.parse(String((init as RequestInit).body)) as { client_id?: string })
+        .filter((body) => body.client_id !== undefined)
+        .map((body) => body.client_id as string);
+
 /** Ответ POST /conversations/{id}/messages. */
 const created = (id: number, body: string) => json({ data: message(id, body, true) }, 201);
 
@@ -450,6 +458,8 @@ describe('ChatThread: доступность и realtime', () => {
                 body: 'Раньше',
                 sender_id: VIEWER,
                 created_at: '2026-09-10T08:00:00Z',
+                client_id: postedClientIds()[0],
+                caution: false,
             });
         });
         // Пока ответ POST не пришёл, рядом не стоят «отправляется» и настоящее сообщение.
@@ -650,5 +660,187 @@ describe('ChatThread: «Написать продавцу» (беседы ещё
             await screen.findByText('Объявление уже недоступно — написать по нему нельзя.'),
         ).toBeInTheDocument();
         expect(field()).toBeDisabled();
+    });
+});
+
+describe('ChatThread: client_id и сопоставление эха (4.1.3)', () => {
+    const echoOf = (id: number, body: string, clientId: string | null, senderId = VIEWER) => ({
+        id,
+        conversation_id: 'c1',
+        kind: 'text',
+        body,
+        sender_id: senderId,
+        created_at: '2026-09-10T08:00:00Z',
+        client_id: clientId,
+        caution: false,
+    });
+
+    const type = (value: string) => {
+        fireEvent.change(field(), { target: { value } });
+        fireEvent.keyDown(field(), { key: 'Enter' });
+    };
+
+    const hanging = () =>
+        fetchMock.mockImplementation((url: string) =>
+            String(url).endsWith('/read')
+                ? Promise.resolve(json({ unread: 0 }))
+                : new Promise<Response>(() => undefined),
+        );
+
+    const offline = () =>
+        fetchMock.mockImplementation(async (url: string) => {
+            if (String(url).endsWith('/read')) return json({ unread: 0 });
+            throw new TypeError('Failed to fetch');
+        });
+
+    it('каждая отправка уходит с client_id; повтор — с тем же', async () => {
+        offline();
+        view();
+
+        type('ок');
+        fireEvent.click(await screen.findByRole('button', { name: 'Повторить' }));
+        await waitFor(() => expect(postedClientIds()).toHaveLength(2));
+
+        const [first, second] = postedClientIds();
+        expect(first).toMatch(/^[A-Za-z0-9_-]{8,64}$/);
+        expect(second).toBe(first);
+    });
+
+    it('два одинаковых сообщения подряд: эхо первого не снимает «Отправляется» у второго', async () => {
+        const resolvers: Array<(response: Response) => void> = [];
+        fetchMock.mockImplementation((url: string) =>
+            String(url).endsWith('/read')
+                ? Promise.resolve(json({ unread: 0 }))
+                : new Promise<Response>((r) => resolvers.push(r)),
+        );
+        view();
+
+        type('ок');
+        type('ок');
+        await waitFor(() => expect(postedClientIds()).toHaveLength(2));
+        const [first, second] = postedClientIds();
+        expect(first).not.toBe(second);
+
+        // POST первого вернулся, потом пришло его эхо; второй POST ещё в пути.
+        await act(async () => {
+            resolvers[0]?.(created(21, 'ок'));
+        });
+        act(() => fake.emit('.message.sent', echoOf(21, 'ок', first ?? null)));
+
+        expect(screen.getAllByText('Отправляется')).toHaveLength(1);
+        expect(within(log()).getAllByText('ок')).toHaveLength(2);
+    });
+
+    it('эхо из другой вкладки с тем же текстом не трогает pending', async () => {
+        hanging();
+        view();
+
+        type('ок');
+        await waitFor(() => expect(postedClientIds()).toHaveLength(1));
+        act(() => fake.emit('.message.sent', echoOf(30, 'ок', 'other-tab-client-id')));
+
+        expect(screen.getByText('Отправляется')).toBeInTheDocument();
+        expect(within(log()).getAllByText('ок')).toHaveLength(2);
+    });
+
+    it('эхо без client_id pending не снимает', async () => {
+        hanging();
+        view();
+
+        type('ок');
+        await waitFor(() => expect(postedClientIds()).toHaveLength(1));
+        act(() => fake.emit('.message.sent', echoOf(31, 'ок', null)));
+
+        expect(screen.getByText('Отправляется')).toBeInTheDocument();
+    });
+
+    it('второй «ок» без сети показывает «Повторить», хотя эхо первого «ок» пришло после ответа', async () => {
+        let call = 0;
+        fetchMock.mockImplementation(async (url: string) => {
+            if (String(url).endsWith('/read')) return json({ unread: 0 });
+            call += 1;
+            if (call === 1) return created(40, 'ок');
+            throw new TypeError('Failed to fetch');
+        });
+        view();
+
+        type('ок');
+        await waitFor(() => expect(within(log()).getAllByText('ок')).toHaveLength(1));
+        type('ок');
+        await screen.findByRole('button', { name: 'Повторить' });
+
+        act(() => fake.emit('.message.sent', echoOf(40, 'ок', postedClientIds()[0] ?? null)));
+
+        expect(screen.getByRole('button', { name: 'Повторить' })).toBeInTheDocument();
+        expect(screen.getByText('Не отправлено')).toBeInTheDocument();
+    });
+
+    it('эхо с client_id отправки, ответ которой потерян, снимает «Повторить»', async () => {
+        offline();
+        view();
+
+        type('Потерялся ответ');
+        await screen.findByRole('button', { name: 'Повторить' });
+        act(() =>
+            fake.emit('.message.sent', echoOf(50, 'Потерялся ответ', postedClientIds()[0] ?? null)),
+        );
+
+        expect(screen.queryByRole('button', { name: 'Повторить' })).toBeNull();
+        expect(within(log()).getAllByText('Потерялся ответ')).toHaveLength(1);
+    });
+
+    it('«Написать продавцу» тоже передаёт client_id', async () => {
+        fetchMock.mockImplementation(async () => json({ message: 'Server Error' }, 500));
+        view({
+            conversation: null,
+            messages: [],
+            realtime: null,
+            compose: {
+                listing: { id: 'l1', title: 'Fender ’57 Stratocaster', price: 184_500 },
+                counterpart: { name: 'Андрей К.' },
+            },
+        });
+
+        type('Здравствуйте');
+        await screen.findByRole('button', { name: 'Повторить' });
+
+        expect(postedClientIds()).toHaveLength(1);
+    });
+});
+
+describe('ChatThread: плашка «Будьте осторожны» (4.1.3)', () => {
+    it('у входящего подозрительного сообщения есть плашка; у обычного чужого и у моего — нет', () => {
+        view({
+            messages: [
+                message(1, 'Оплатите по ссылке', false, { caution: true }),
+                message(2, 'Здравствуйте', false, { caution: false }),
+                message(3, 'Моё сообщение', true, { caution: true }),
+            ],
+        });
+
+        expect(screen.getAllByText('Будьте осторожны')).toHaveLength(1);
+        expect(screen.getByText('Оплатите по ссылке').closest('li')).toHaveTextContent(
+            'Будьте осторожны',
+        );
+    });
+
+    it('сообщение с плашкой из realtime тоже её показывает', () => {
+        view();
+        act(() =>
+            fake.emit('.message.sent', {
+                id: 60,
+                conversation_id: 'c1',
+                kind: 'text',
+                body: 'Пишите в телеграм',
+                sender_id: 2,
+                created_at: '2026-09-10T08:00:00Z',
+                client_id: null,
+                caution: true,
+            }),
+        );
+
+        expect(screen.getByText('Пишите в телеграм').closest('li')).toHaveTextContent(
+            'Будьте осторожны',
+        );
     });
 });
