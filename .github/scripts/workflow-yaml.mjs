@@ -307,18 +307,12 @@ export function evaluate(expression, context, status = {}) {
             return fn(...args);
         }
         let v = context[tok.v];
-        let star = false; // после `.*` следующие `.имя` берутся у каждого элемента (labels.*.name)
         for (;;) {
             if (isOp('.')) {
                 i++;
                 const name = peek();
                 i++;
-                if (name.v === '*') {
-                    star = true;
-                    v = v === null || v === undefined ? [] : Object.values(v);
-                } else if (star) {
-                    v = v.map((x) => (x === null || x === undefined ? null : x[name.v]));
-                } else v = v === null || v === undefined ? null : v[name.v];
+                v = v === null || v === undefined ? null : v[name.v];
             } else if (isOp('[')) {
                 i++;
                 const key = or();

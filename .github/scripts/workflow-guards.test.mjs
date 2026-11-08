@@ -814,95 +814,62 @@ test('provision.yml: provision.sh remote и deploy.sh rollback stage — по в
 });
 
 // ---------- ci.yml: экономия минут (0.1.17) ----------
-// docs-only изменения не гоняют php/js/e2e; e2e на PR — по метке ready; чужая метка CI не запускает.
+// docs-only изменения не гоняют php/js/e2e; e2e — на push в main и по workflow_dispatch (перед мержем).
 
-const ciPush = (code) => ({
-    github: { event_name: 'push', repository: REPO, ref: 'refs/heads/main', event: {} },
-    needs: { changes: { outputs: { code } } },
+const ciEvent = (event_name, ref) => ({
+    github: { event_name, repository: REPO, ref, event: {} },
 });
-const ciPr = ({ action = 'synchronize', label = null, labels = [], code = 'true', runId = 1 } = {}) => ({
-    github: {
-        event_name: 'pull_request',
-        repository: REPO,
-        ref: 'refs/pull/7/merge',
-        run_id: runId,
-        event: {
-            action,
-            label: label ? { name: label } : null,
-            pull_request: { labels: labels.map((name) => ({ name })) },
-        },
-    },
-    needs: { changes: { outputs: { code } } },
-});
-const ciJobs = (ctx) => {
+const ciJobs = (event_name, code) => {
     const wf = load('ci.yml');
+    const ctx = {
+        ...ciEvent(event_name, 'refs/heads/x'),
+        needs: { changes: { outputs: { code } } },
+    };
     return ['changes', 'docs', 'php', 'js', 'e2e'].filter((n) => runs(wf, n, ctx));
 };
 
-test('ci.yml: триггеры PR — opened, synchronize, reopened, labeled; push — main', () => {
+test('ci.yml: триггеры — PR (типы по умолчанию), push в main, workflow_dispatch', () => {
     const on = load('ci.yml').on;
-    assert.deepEqual(on.pull_request.types, ['opened', 'synchronize', 'reopened', 'labeled']);
+    assert.ok(Object.hasOwn(on, 'pull_request'));
+    assert.ok(!on.pull_request?.types, 'на PR не должно быть labeled и других типов');
     assert.deepEqual(on.push.branches, ['main']);
+    assert.ok(Object.hasOwn(on, 'workflow_dispatch'));
 });
 
-test('ci.yml: job changes без сторонних actions, база из PR или github.event.before', () => {
+test('ci.yml: job changes без сторонних actions, результат в выходе code', () => {
     const job = load('ci.yml').jobs.changes;
     assert.ok(job, 'нет job changes');
     for (const step of job.steps) {
-        if (step.uses) assert.match(step.uses, /^actions\/checkout@/, `сторонний action: ${step.uses}`);
+        if (step.uses)
+            assert.match(step.uses, /^actions\/checkout@/, `сторонний action: ${step.uses}`);
     }
-    assert.match(text(job), /pull_request\.base\.sha/);
     assert.match(text(job), /event\.before/);
     assert.match(text(job.outputs), /code/);
 });
 
-test('ci.yml: docs-only push в main — только docs (и changes)', () => {
-    assert.deepEqual(ciJobs(ciPush('false')), ['changes', 'docs']);
+test('ci.yml: docs-only (code=false) — для любого события только docs', () => {
+    for (const event of ['push', 'pull_request', 'workflow_dispatch'])
+        assert.deepEqual(ciJobs(event, 'false'), ['changes', 'docs'], event);
 });
 
-test('ci.yml: push в main с кодом — все jobs', () => {
-    assert.deepEqual(ciJobs(ciPush('true')), ['changes', 'docs', 'php', 'js', 'e2e']);
+test('ci.yml: код — push и dispatch запускают e2e, PR без e2e', () => {
+    assert.deepEqual(ciJobs('push', 'true'), ['changes', 'docs', 'php', 'js', 'e2e']);
+    assert.deepEqual(ciJobs('workflow_dispatch', 'true'), ['changes', 'docs', 'php', 'js', 'e2e']);
+    assert.deepEqual(ciJobs('pull_request', 'true'), ['changes', 'docs', 'php', 'js']);
 });
 
-test('ci.yml: PR с кодом без метки ready — docs, php, js; с меткой — плюс e2e', () => {
-    assert.deepEqual(ciJobs(ciPr()), ['changes', 'docs', 'php', 'js']);
-    assert.deepEqual(ciJobs(ciPr({ labels: ['ready'] })), ['changes', 'docs', 'php', 'js', 'e2e']);
-    assert.deepEqual(ciJobs(ciPr({ labels: ['bug'] })), ['changes', 'docs', 'php', 'js']);
-});
-
-test('ci.yml: docs-only PR — только docs, даже с меткой ready', () => {
-    assert.deepEqual(ciJobs(ciPr({ code: 'false' })), ['changes', 'docs']);
-    assert.deepEqual(ciJobs(ciPr({ code: 'false', labels: ['ready'] })), ['changes', 'docs']);
-});
-
-test('ci.yml: метка ready запускает полный прогон с e2e', () => {
-    const ctx = ciPr({ action: 'labeled', label: 'ready', labels: ['ready'] });
-    assert.deepEqual(ciJobs(ctx), ['changes', 'docs', 'php', 'js', 'e2e']);
-});
-
-test('ci.yml: посторонняя метка не запускает ни одного job', () => {
-    const ctx = ciPr({ action: 'labeled', label: 'bug', labels: ['bug'] });
-    assert.deepEqual(ciJobs(ctx), []);
-});
-
-test('ci.yml: посторонняя метка в своей группе concurrency и не отменяет прогон', () => {
+test('ci.yml: метки на CI не влияют, concurrency — ci-<ref>, отмена только на PR', () => {
     const wf = load('ci.yml');
-    const group = (ctx) => evaluate(wf.concurrency.group, ctx);
-    const sync = ciPr({ labels: ['ready'] });
-    const other = ciPr({ action: 'labeled', label: 'bug', labels: ['bug'] });
-    const ready = ciPr({ action: 'labeled', label: 'ready', labels: ['ready'] });
-    assert.notEqual(group(other), group(sync), 'чужая метка делит группу с прогоном PR');
-    assert.equal(group(ready), group(sync), 'ready должна заменять устаревший прогон PR');
-    assert.equal(group(ciPush('true')), 'ci-refs/heads/main');
-    // Группа чужой метки уникальна на запуск: ничего не отменяет и не ждёт.
-    const other2 = ciPr({ action: 'labeled', label: 'bug', labels: ['bug'], runId: 2 });
-    assert.notEqual(group(other), group(other2));
-});
-
-test('ci.yml: на main отмена запусков по-прежнему выключена', () => {
-    const wf = load('ci.yml');
-    assert.equal(evaluate(wf.concurrency['cancel-in-progress'], ciPush('true')), false);
-    assert.equal(evaluate(wf.concurrency['cancel-in-progress'], ciPr()), true);
+    assert.doesNotMatch(text(wf), /labels|labeled|ready/);
+    const pr = ciEvent('pull_request', 'refs/pull/7/merge');
+    const push = ciEvent('push', 'refs/heads/main');
+    assert.equal(evaluate(wf.concurrency.group, pr), 'ci-refs/pull/7/merge');
+    assert.equal(evaluate(wf.concurrency['cancel-in-progress'], pr), true);
+    assert.equal(evaluate(wf.concurrency['cancel-in-progress'], push), false);
+    assert.equal(
+        evaluate(wf.concurrency['cancel-in-progress'], ciEvent('workflow_dispatch', 'refs/heads/x')),
+        false,
+    );
 });
 
 test('ci.yml: deploy.yml стартует только по conclusion == success', () => {
@@ -914,7 +881,9 @@ test('ci.yml: deploy.yml стартует только по conclusion == succes
 
 // Скрипт job changes запускается на настоящем git-репозитории.
 const changesScript = () => {
-    const step = load('ci.yml').jobs.changes.steps.find((s) => /git diff/.test(String(s.run ?? '')));
+    const step = load('ci.yml').jobs.changes.steps.find((s) =>
+        /git diff/.test(String(s.run ?? '')),
+    );
     assert.ok(step, 'нет шага git diff в job changes');
     return step.run;
 };
@@ -922,13 +891,17 @@ const gitIn = (dir, ...args) =>
     spawnSync('git', ['-C', dir, '-c', 'user.name=t', '-c', 'user.email=t@t', ...args], {
         encoding: 'utf8',
     });
-const codeFor = (files, base = 'good') => {
+// event: pull_request сравнивает HEAD^1 с HEAD (merge-ref), push — с BEFORE_SHA, прочее — code=true.
+const codeFor = (files, { event = 'pull_request', before = 'good', commits = 2 } = {}) => {
     const dir = mkdtempSync(join(tmpdir(), 'changes-'));
     gitIn(dir, 'init', '-q');
-    writeFileSync(join(dir, 'README.md'), 'x');
-    gitIn(dir, 'add', '.');
-    gitIn(dir, 'commit', '-qm', 'base');
-    const baseSha = gitIn(dir, 'rev-parse', 'HEAD').stdout.trim();
+    let baseSha = null;
+    if (commits > 1) {
+        writeFileSync(join(dir, 'README.md'), 'x');
+        gitIn(dir, 'add', '.');
+        gitIn(dir, 'commit', '-qm', 'base');
+        baseSha = gitIn(dir, 'rev-parse', 'HEAD').stdout.trim();
+    }
     for (const f of files) {
         mkdirSync(dirname(join(dir, f)), { recursive: true });
         writeFileSync(join(dir, f), 'y');
@@ -940,25 +913,41 @@ const codeFor = (files, base = 'good') => {
     const res = spawnSync('bash', ['-c', changesScript()], {
         cwd: dir,
         encoding: 'utf8',
-        env: { ...process.env, BASE_SHA: base === 'good' ? baseSha : base, GITHUB_OUTPUT: out },
+        env: {
+            ...process.env,
+            EVENT_NAME: event,
+            BEFORE_SHA: before === 'good' ? baseSha : before,
+            GITHUB_OUTPUT: out,
+        },
     });
     assert.equal(res.status, 0, res.stderr);
     return readFileSync(out, 'utf8').trim();
 };
 
-test('changes: docs/** и *.md в корне — code=false', () => {
-    assert.equal(codeFor(['docs/a/b.md', 'docs/x.json', 'AGENTS.md']), 'code=false');
-    assert.equal(codeFor([]), 'code=false');
+test('changes: docs/** и *.md в корне — code=false (PR и push)', () => {
+    for (const event of ['pull_request', 'push']) {
+        assert.equal(codeFor(['docs/a/b.md', 'docs/x.json', 'AGENTS.md'], { event }), 'code=false');
+        assert.equal(codeFor([], { event }), 'code=false');
+    }
 });
 
-test('changes: любой другой файл — code=true', () => {
-    assert.equal(codeFor(['docs/a.md', 'app/Foo.php']), 'code=true');
-    assert.equal(codeFor(['sub/README.md']), 'code=true');
-    assert.equal(codeFor(['.github/workflows/ci.yml']), 'code=true');
+test('changes: любой другой файл — code=true (PR и push)', () => {
+    for (const event of ['pull_request', 'push']) {
+        assert.equal(codeFor(['docs/a.md', 'app/Foo.php'], { event }), 'code=true');
+        assert.equal(codeFor(['sub/README.md'], { event }), 'code=true');
+        assert.equal(codeFor(['.github/workflows/ci.yml'], { event }), 'code=true');
+    }
 });
 
-test('changes: нет базы (пусто, нули, неизвестный коммит) — code=true', () => {
-    assert.equal(codeFor(['docs/a.md'], ''), 'code=true');
-    assert.equal(codeFor(['docs/a.md'], '0'.repeat(40)), 'code=true');
-    assert.equal(codeFor(['docs/a.md'], 'f'.repeat(40)), 'code=true');
+test('changes: PR сравнивается с первым родителем merge-ref, без родителя — code=true', () => {
+    assert.equal(codeFor(['docs/a.md'], { event: 'pull_request', commits: 1 }), 'code=true');
+});
+
+test('changes: push без базы (пусто, нули, неизвестный коммит) — code=true', () => {
+    for (const before of ['', '0'.repeat(40), 'f'.repeat(40)])
+        assert.equal(codeFor(['docs/a.md'], { event: 'push', before }), 'code=true', before);
+});
+
+test('changes: workflow_dispatch — всегда code=true', () => {
+    assert.equal(codeFor(['docs/a.md'], { event: 'workflow_dispatch' }), 'code=true');
 });
