@@ -18,8 +18,8 @@ gate: G1
 |---|---|---|---|
 | [2.1.1 Объявление: модель и жизненный цикл](../tasks/2-1-1-listing-domain.md) | done | high | opus → opus |
 | [2.1.2 Загрузка и обработка фото](../tasks/2-1-2-photos.md) | done | high | opus → opus |
-| [2.1.3 Форма «Продать инструмент»](../tasks/2-1-3-sell-form.md) | review | medium | sonnet → sonnet |
-| [2.1.4 Черновик, публикация, экран «Опубликовано»](../tasks/2-1-4-sell-publish.md) | todo | medium | sonnet → sonnet |
+| [2.1.3 Форма «Продать инструмент»](../tasks/2-1-3-sell-form.md) | done | medium | sonnet → sonnet |
+| [2.1.4 Черновик, публикация, экран «Опубликовано»](../tasks/2-1-4-sell-publish.md) | in_progress | medium | sonnet → sonnet |
 | [2.1.5 Мои объявления: изменить, снизить цену, снять](../tasks/2-1-5-my-listings.md) | todo | medium | sonnet → sonnet |
 | [2.1.6 Лимит активных объявлений](../tasks/2-1-6-listing-limit.md) | todo | low | haiku → sonnet |
 | [2.1.7 Объявление: защита владельца и смены статуса в глубину](../tasks/2-1-7-listing-defense-in-depth.md) | done | medium | sonnet → opus |
