@@ -6,6 +6,7 @@ namespace App\Http\Resources\Messaging;
 
 use App\Domain\Accounts\Models\User;
 use App\Domain\Listings\Enums\ListingStatus;
+use App\Domain\Messaging\ConversationAvailability;
 use App\Domain\Messaging\Models\Conversation;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
@@ -13,6 +14,7 @@ use Illuminate\Http\Resources\Json\JsonResource;
 /**
  * Беседа глазами участника: роль, объявление (id, название, цена, открыто ли для сообщений) и собеседник —
  * только имя (BR-04: почта, yandex_id и прочие ПДн не уходят). Удалившийся собеседник — без имени (BR-09).
+ * `closed_reason` — почему писать нельзя (BR-10, тот же текст, что в ответе 409); null — можно.
  *
  * @mixin Conversation
  */
@@ -42,6 +44,7 @@ final class ConversationResource extends JsonResource
                 'name' => $counterpart === null ? (string) __('messaging.deleted_user') : $counterpart->name,
                 'deleted' => $counterpart === null,
             ],
+            'closed_reason' => ConversationAvailability::closure($conversation, $listing, $viewer)?->getMessage(),
             'last_message_at' => $conversation->last_message_at?->toIso8601ZuluString(),
         ];
     }

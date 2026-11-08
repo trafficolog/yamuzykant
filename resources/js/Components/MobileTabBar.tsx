@@ -7,7 +7,7 @@ import { openLogin } from '@/Hooks/loginDialog';
 import type { AuthUser } from '@/Hooks/useAuthUser';
 import { useDisclosure } from '@/Hooks/useDisclosure';
 import { ru } from '@/lang/ru';
-import { SELL_PATH } from '@/lib/paths';
+import { MESSAGES_PATH, SELL_PATH } from '@/lib/paths';
 
 export type MobileTab = 'home' | 'search' | 'sell' | 'messages' | 'account';
 
@@ -28,14 +28,14 @@ interface Tab {
 }
 
 /**
- * «Поиск» — выдача Барахолки (карточка 3.1.2). Форма продажи, сообщения и кабинет — задачи 4.1.2, 4.3.1,
- * 2.1.3: адресов ещё нет, как и у ссылок шапки (0.2.4).
+ * «Поиск» — выдача Барахолки (карточка 3.1.2), «Сообщения» — экран сообщений (4.1.2). Форма продажи и кабинет —
+ * задачи 2.1.3 и 4.3.1: адресов ещё нет, как и у ссылок шапки (0.2.4).
  */
 const TABS: readonly Tab[] = [
     { key: 'home', icon: 'layout-grid', label: ru.tabBar.home, href: '/' },
     { key: 'search', icon: 'search', label: ru.tabBar.search, href: '/baraholka' },
     { key: 'sell', icon: 'plus', label: ru.tabBar.sell, href: SELL_PATH },
-    { key: 'messages', icon: 'message-circle', label: ru.tabBar.messages, href: '#' },
+    { key: 'messages', icon: 'message-circle', label: ru.tabBar.messages, href: MESSAGES_PATH },
     { key: 'account', icon: 'user', label: ru.tabBar.account, href: '#' },
 ];
 

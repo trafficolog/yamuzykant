@@ -74,7 +74,10 @@ describe('шапка: вошедший', () => {
         expect(within(menu).getByText('Продаю')).toBeInTheDocument();
         expect(within(menu).getByRole('link', { name: 'Избранное' })).toBeInTheDocument();
         expect(within(menu).getByRole('link', { name: 'Объявления' })).toBeInTheDocument();
-        expect(within(menu).getByRole('link', { name: 'Сообщения' })).toBeInTheDocument();
+        expect(within(menu).getByRole('link', { name: 'Сообщения' })).toHaveAttribute(
+            'href',
+            '/messages',
+        );
         expect(within(menu).getByRole('link', { name: 'Профиль' })).toBeInTheDocument();
         expect(within(menu).getByRole('button', { name: 'Выйти' })).toBeInTheDocument();
     });
