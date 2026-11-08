@@ -95,12 +95,12 @@ it('повтор отправки не создаёт вторую запись 
 });
 
 it('текст подозрительного сообщения не попадает в журнал', function () {
-    Log::spy();
+    $log = Log::spy();
     $newcomer = User::factory()->create();
     $conversation = MessagingFixtures::conversation(buyer: $newcomer);
 
     $this->actingAs($newcomer)->postJson("/conversations/{$conversation->id}/messages", ['body' => 'секретный-текст https://example.com']);
 
-    Log::shouldNotHaveReceived('warning', fn (string $message, array $context = []): bool => str_contains($message.json_encode($context), 'секретный-текст'));
+    $log->shouldNotHaveReceived('warning', fn (string $message, array $context = []): bool => str_contains($message.json_encode($context), 'секретный-текст'));
     expect(MessageFlag::query()->sole()->toJson())->not->toContain('секретный-текст');
 });

@@ -7,7 +7,7 @@ namespace App\Domain\Catalog\Actions;
 use App\Domain\Catalog\Enums\InstrumentModelStatus;
 use App\Domain\Catalog\Exceptions\SuggestionLimitReached;
 use App\Domain\Catalog\Models\InstrumentModel;
-use Illuminate\Support\Facades\RateLimiter;
+use App\Support\AtomicLimiter;
 use InvalidArgumentException;
 use LogicException;
 
@@ -31,14 +31,12 @@ final class SuggestInstrumentModel
      */
     public function forUser(int $userId, string $text, int $categoryId): InstrumentModel
     {
-        $model = RateLimiter::attempt(
-            'model-suggest:'.$userId,
-            (int) config('catalog.suggestions_per_day'),
-            fn (): InstrumentModel => $this($text, $categoryId),
-            self::DAY_SECONDS,
-        );
+        // Атомарно: сначала увеличить счётчик, потом сравнить (ревью PR #126) — attempt() читал и увеличивал раздельно.
+        if (! (new AtomicLimiter)->hit('model-suggest:'.$userId, (int) config('catalog.suggestions_per_day'), self::DAY_SECONDS)) {
+            throw new SuggestionLimitReached;
+        }
 
-        return $model === false ? throw new SuggestionLimitReached : $model;
+        return $this($text, $categoryId);
     }
 
     /** Это та же модель, что записана в тексте: бренд и название без учёта регистра и лишних пробелов. */

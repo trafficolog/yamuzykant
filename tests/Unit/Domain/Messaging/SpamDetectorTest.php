@@ -24,6 +24,7 @@ function accountAged(int $hours): User
     return $user;
 }
 
+/** @return list<SpamSignal> */
 function detect(User $sender, string $body, ?Conversation $conversation = null): array
 {
     return app(SpamDetector::class)->detect($sender, $conversation ?? MessagingFixtures::conversation(buyer: $sender), $body);
