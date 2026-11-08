@@ -3,7 +3,7 @@ id: "4.1.5"
 phase: "4"
 epic: "4.1"
 title: "Сообщения: беседы всегда открыты, последнее состояние объявления, без архива"
-status: in_progress
+status: todo
 gate: G1
 risk: medium
 model_impl: sonnet
