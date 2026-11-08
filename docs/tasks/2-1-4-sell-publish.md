@@ -3,7 +3,7 @@ id: "2.1.4"
 phase: "2"
 epic: "2.1"
 title: "Черновик, публикация, экран «Опубликовано»"
-status: in_progress
+status: todo
 gate: G1
 risk: medium
 model_impl: sonnet

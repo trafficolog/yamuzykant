@@ -42,7 +42,7 @@
 | 2.1.1 Объявление: модель и жизненный цикл | G1 | done | high | opus → opus | #20 |
 | 2.1.2 Загрузка и обработка фото | G1 | done | high | opus → opus | #21 |
 | 2.1.3 Форма «Продать инструмент» | G1 | done | medium | sonnet → sonnet | #22 |
-| 2.1.4 Черновик, публикация, экран «Опубликовано» | G1 | in_progress | medium | sonnet → sonnet | #23 |
+| 2.1.4 Черновик, публикация, экран «Опубликовано» | G1 | todo | medium | sonnet → sonnet | #23 |
 | 2.1.5 Мои объявления: изменить, снизить цену, снять | G1 | todo | medium | sonnet → sonnet | #24 |
 | 2.1.6 Лимит активных объявлений | G1 | todo | low | haiku → sonnet | #25 |
 | 2.1.7 Объявление: защита владельца и смены статуса в глубину | G1 | done | medium | sonnet → opus | #105 |
@@ -67,7 +67,7 @@
 | 4.3.2 Сохранённые поиски | G2 | todo | medium | sonnet → sonnet | #39 |
 | 4.4.1 Письма: шаблон, код входа, новое сообщение | G1 | todo | low | haiku → sonnet | #40 |
 | 4.4.2 Центр уведомлений в шапке | G2 | todo | low | haiku → sonnet | #41 |
-| 5.1.1 Автопроверки объявлений | G1 | todo | medium | sonnet → sonnet | #42 |
+| 5.1.1 Автопроверки объявлений | G1 | in_progress | medium | sonnet → sonnet | #42 |
 | 5.1.2 Модерация в консоли | G2 | todo | high | opus → opus | #43 |
 | 5.1.3 Решения модерации и уведомление продавца | G2 | todo | medium | sonnet → sonnet | #44 |
 | 5.2.1 Жалобы | G2 | todo | medium | sonnet → sonnet | #45 |
