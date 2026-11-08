@@ -19,6 +19,9 @@ use Illuminate\Support\Carbon;
  * @property int|null $sender_id
  * @property MessageKind $kind
  * @property string $body
+ * @property string|null $client_id ключ идемпотентности отправки (4.1.3)
+ * @property string|null $body_hash
+ * @property bool $suspicious плашка «Будьте осторожны» у получателя (4.1.3)
  * @property Carbon|null $read_at
  * @property Carbon $created_at
  * @property-read Conversation $conversation
@@ -32,6 +35,7 @@ class Message extends Model
     /** @var array<string, mixed> */
     protected $attributes = [
         'kind' => 'text',
+        'suspicious' => false,
     ];
 
     /** @return array<string, string> */
@@ -40,6 +44,7 @@ class Message extends Model
         return [
             'sender_id' => 'integer',
             'kind' => MessageKind::class,
+            'suspicious' => 'boolean',
             'read_at' => 'datetime',
         ];
     }
@@ -47,7 +52,7 @@ class Message extends Model
     /**
      * Поля для трансляции в канал беседы — явный список, без данных пользователей (BR-04).
      *
-     * @return array{id: int, conversation_id: string, kind: string, body: string, sender_id: int|null, created_at: string}
+     * @return array{id: int, conversation_id: string, kind: string, body: string, sender_id: int|null, created_at: string, client_id: string|null, caution: bool}
      */
     public function broadcastPayload(): array
     {
@@ -58,6 +63,9 @@ class Message extends Model
             'body' => $this->body,
             'sender_id' => $this->sender_id,
             'created_at' => $this->created_at->toIso8601ZuluString(),
+            // client_id — чтобы клиент сопоставлял эхо со своей отправкой; caution — плашку показывает получатель.
+            'client_id' => $this->client_id,
+            'caution' => $this->suspicious,
         ];
     }
 

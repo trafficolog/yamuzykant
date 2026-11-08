@@ -61,6 +61,35 @@ final class ContactDetector
         return null;
     }
 
+    /**
+     * Первая ссылка в тексте (со схемой, www или «слово.зона») — для сообщений (4.1.3): e-mail и телефон
+     * в беседе нужны, а вот ссылка от нового аккаунта — признак мошенничества.
+     */
+    public function findLink(string $text): ?string
+    {
+        $folded = TextFolding::clean($text);
+
+        return trim($folded) === '' ? null : $this->link($folded);
+    }
+
+    /**
+     * Просьба перейти в мессенджер (4.1.3): @-ник или название мессенджера. Название считается и без ника после него
+     * («давайте в телеграм»): в сообщении это уже просьба, режим `block_mention_only` относится к тексту объявления.
+     */
+    public function findMessengerRequest(string $text): ?string
+    {
+        $folded = TextFolding::clean($text);
+        if (trim($folded) === '') {
+            return null;
+        }
+
+        if (preg_match(self::HANDLE, $folded, $m) === 1) {
+            return $m[0];
+        }
+
+        return $this->messenger($folded, true);
+    }
+
     /** E-mail с «@» или с «собака»/«at», «точка»/«dot» вместо знаков. */
     private function email(string $text): ?string
     {
@@ -104,11 +133,11 @@ final class ContactDetector
     }
 
     /** Название мессенджера: основа с начала слова или сокращение целым словом; режим — `block_mention_only`. */
-    private function messenger(string $folded): ?string
+    private function messenger(string $folded, ?bool $mentionOnly = null): ?string
     {
         $stems = (array) config('moderation.messengers.stems', []);
         $abbreviations = (array) config('moderation.messengers.abbreviations', []);
-        $mentionOnly = (bool) config('moderation.messengers.block_mention_only', true);
+        $mentionOnly ??= (bool) config('moderation.messengers.block_mention_only', true);
 
         // Кириллический и латинский вид текста (и со склеенными буквами вразбивку):
         // названия кириллицей сверяются с первыми двумя, латиницей — с остальными.
