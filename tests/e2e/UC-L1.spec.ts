@@ -282,6 +282,8 @@ test.describe('UC-L1 часть 2: черновик и публикация (2.1
         await expect(
             page.getByRole('heading', { level: 2, name: 'Объявление опубликовано' }),
         ).toBeVisible();
+        // Индикатор перехода Inertia (NProgress, role="bar") гаснет не сразу: axe ждёт, пока его уберут.
+        await expect(page.locator('#nprogress')).toHaveCount(0);
 
         const axe = await new AxeBuilder({ page }).withTags(['wcag2a', 'wcag2aa']).analyze();
         const serious = axe.violations.filter(
