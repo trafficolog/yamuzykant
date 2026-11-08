@@ -18,6 +18,7 @@ use Illuminate\Database\Eloquent\Model;
  * @property string $region
  * @property float $lat
  * @property float $lng
+ * @property string $settlement_type Краткий тип населённого пункта: «г.», «пос.», «д.»
  */
 #[UseFactory(CityFactory::class)]
 class City extends Model
@@ -26,7 +27,7 @@ class City extends Model
     use HasFactory;
 
     /** @var list<string> */
-    protected $fillable = ['name', 'slug', 'region', 'lat', 'lng'];
+    protected $fillable = ['name', 'slug', 'region', 'lat', 'lng', 'settlement_type'];
 
     /** @return array<string, string> */
     protected function casts(): array

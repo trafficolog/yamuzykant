@@ -1,0 +1,232 @@
+/*
+ * Экран «Продать инструмент» (2.1.3). Подключается страницей Sell/Create после токенов ДС.
+ * Только токены var(--*) и классы ym-*. Раскладка и размеры — по прототипу design/prototypes/Десктоп - Продать.dc.html.
+ */
+
+.ym-sell {
+    max-width: var(--content-max);
+    margin: 0 auto;
+    padding: var(--space-6) var(--space-10) var(--space-16);
+    box-sizing: border-box;
+}
+
+.ym-sell__crumbs {
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: var(--space-2);
+    margin-bottom: var(--space-4);
+}
+.ym-sell__crumb {
+    display: flex;
+    align-items: center;
+    min-height: 32px;
+    color: var(--ink-muted);
+    white-space: nowrap;
+}
+.ym-sell__crumb-sep {
+    display: flex;
+    color: var(--ink-faint);
+}
+.ym-sell__crumb-current {
+    color: var(--ink);
+    white-space: nowrap;
+}
+
+.ym-sell__head {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-2);
+    margin-bottom: var(--space-8);
+}
+.ym-sell__title,
+.ym-sell__lead,
+.ym-sell__step-title,
+.ym-sell__hint {
+    margin: 0;
+}
+.ym-sell__lead,
+.ym-sell__hint {
+    color: var(--ink-muted);
+}
+
+/* Описание: высота поля как в макете (145 px); пустая строка подсказки под полем не занимает места. */
+.ym-sell .ym-textarea {
+    position: relative;
+    margin-bottom: -1px;
+}
+.ym-sell .ym-textarea .ym-field__label {
+    line-height: 18px;
+    margin-bottom: 3px;
+}
+.ym-sell .ym-textarea textarea {
+    min-height: 146px;
+}
+.ym-sell .ym-textarea__foot:has(.ym-field__hint:empty) {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+    clip-path: inset(50%);
+}
+
+/* «Готов к торгу» тянется на ширину колонки, как в макете; «Договорная» и «Бесплатно» — справа от него. */
+.ym-sell__modes {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto auto;
+    gap: var(--space-2);
+}
+.ym-sell__modes .ym-chip {
+    justify-content: center;
+}
+
+.ym-sell__saved {
+    margin-bottom: var(--space-6);
+}
+
+.ym-sell__layout {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) minmax(300px, 360px);
+    gap: var(--space-10);
+    align-items: start;
+}
+
+.ym-sell__form {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-10);
+    min-width: 0;
+}
+
+.ym-sell__step {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-5);
+    min-width: 0;
+}
+.ym-sell__step-head {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-1);
+}
+.ym-sell__step-no {
+    color: var(--ink-muted);
+}
+
+.ym-sell__chips {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--space-2);
+}
+
+.ym-sell__pair {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(min(100%, 200px), 1fr));
+    gap: var(--space-4);
+}
+
+.ym-sell__price {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(min(100%, 260px), 1fr));
+    gap: var(--space-6);
+    align-items: start;
+}
+.ym-sell__price-col {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-3);
+}
+
+.ym-sell__handover {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-3);
+    min-width: 0;
+    margin: 0;
+    padding: 0;
+    border: 0;
+}
+.ym-sell__legend {
+    padding: 0;
+    margin-bottom: var(--space-3);
+    font-weight: 600;
+}
+
+.ym-sell__footer {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-3);
+    padding-top: var(--space-6);
+    border-top: 1px solid var(--line);
+}
+.ym-sell__missing {
+    margin: 0;
+    color: var(--ink-muted);
+}
+.ym-sell__actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--space-3);
+}
+
+.ym-sell__aside {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-4);
+    position: sticky;
+    top: var(--space-4);
+}
+.ym-sell__aside-title {
+    margin: 0;
+    font-weight: 600;
+    color: var(--ink-muted);
+}
+.ym-sell__preview {
+    max-width: 280px;
+}
+/* До гидратации карточки нет (в SSR она показала бы «0 ₽»): место под неё занято, страница не прыгает. */
+.ym-sell__preview.is-pending {
+    min-height: 354px;
+}
+.ym-sell__alert:focus {
+    outline: none;
+}
+
+/* Планшет и телефон: одна колонка, превью под формой без прилипания. */
+@media (max-width: 899px) {
+    .ym-sell__layout {
+        grid-template-columns: minmax(0, 1fr);
+        gap: var(--space-8);
+    }
+    .ym-sell__aside {
+        position: static;
+    }
+}
+
+/* Телефон: поля страницы как у остальных экранов, зоны нажатия не меньше 44 px (SCREENS §3). */
+@media (max-width: 639px) {
+    .ym-sell {
+        padding: var(--space-4) var(--space-4) var(--space-10);
+    }
+    .ym-sell__head {
+        margin-bottom: var(--space-6);
+    }
+    .ym-sell__form {
+        gap: var(--space-8);
+    }
+    .ym-sell .ym-chip {
+        min-height: var(--hit-min);
+    }
+    .ym-sell__modes {
+        grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+    }
+    .ym-sell__modes > :first-child {
+        grid-column: 1 / -1;
+    }
+    .ym-sell__actions .ym-btn {
+        width: 100%;
+    }
+    .ym-sell__preview {
+        max-width: none;
+    }
+}
