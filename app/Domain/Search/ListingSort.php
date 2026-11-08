@@ -11,5 +11,4 @@ enum ListingSort: string
     case Newest = 'published_at:desc';
     case PriceAsc = 'price:asc';
     case PriceDesc = 'price:desc';
-    case Nearest = '_geoPoint';
 }

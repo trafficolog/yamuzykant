@@ -14,13 +14,18 @@ class CityFactory extends Factory
 {
     protected $model = City::class;
 
+    /** Счётчик: Faker->unique() исчерпывается (слов и городов сотни), а пара (name, region) и slug должны быть уникальны. */
+    private static int $sequence = 0;
+
     /** @return array<string, mixed> */
     public function definition(): array
     {
+        $number = ++self::$sequence;
+
         return [
-            'name' => fake()->unique()->city(),
-            'slug' => fake()->unique()->slug(),
-            'region' => fake()->word().' область',
+            'name' => fake()->city(),
+            'slug' => 'gorod-'.$number,
+            'region' => 'Область '.$number,
             'lat' => fake()->latitude(41, 70),
             'lng' => fake()->longitude(20, 170),
         ];
