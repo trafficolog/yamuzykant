@@ -75,16 +75,21 @@ class FleaDemoSeeder extends Seeder
         }
 
         // Публикации разнесены по секундам, первая строка списка — самая свежая: порядок «сначала свежие» определён,
-        // выдача и главная не зависят от гонки (3.1.4). Давность 2,5 ч держит подпись карточек «2 ч назад» стабильной.
+        // выдача и главная не зависят от гонки (3.1.4). Давность 2,5 ч — середина окна «2 ч назад» (2–3 ч): подпись карточек не меняется ±30 мин после посева.
         $start = now()->subMinutes(150);
         $count = count($lots);
-        foreach ($lots as $index => [$title, $price, $condition, $ship]) {
-            Carbon::setTestNow($start->copy()->addSeconds($count - $index));
-            $this->publish($category, $model, $moscow, $title, $price, $condition, $ship, $index);
+        $frozen = Carbon::hasTestNow() ? Carbon::getTestNow() : null;
+        try {
+            foreach ($lots as $index => [$title, $price, $condition, $ship]) {
+                Carbon::setTestNow($start->copy()->addSeconds($count - $index));
+                $this->publish($category, $model, $moscow, $title, $price, $condition, $ship, $index);
+            }
+            Carbon::setTestNow($start);
+            $this->publish($category, $model, $kazan, 'Gibson Les Paul Казань', 120_000, 'good', true, 99);
+        } finally {
+            // Возвращаем чужое замороженное время (тест), а не сбрасываем его.
+            Carbon::setTestNow($frozen);
         }
-        Carbon::setTestNow($start);
-        $this->publish($category, $model, $kazan, 'Gibson Les Paul Казань', 120_000, 'good', true, 99);
-        Carbon::setTestNow();
 
         $this->waitForIndex();
     }

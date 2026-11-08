@@ -73,7 +73,7 @@
     gap: var(--space-4);
     padding: var(--space-6);
     border-radius: var(--radius-lg);
-    background: var(--lad-soft);
+    background: var(--accent-soft);
     box-sizing: border-box;
 }
 .ym-home__sell-text {
@@ -84,7 +84,7 @@
 .ym-home__sell-title {
     margin: 0;
     font: 600 var(--text-l) / 24px var(--font-text);
-    color: var(--lad-strong);
+    color: var(--ink);
 }
 .ym-home__sell-lead {
     margin: 0;
@@ -113,12 +113,12 @@
     display: inline-flex;
     align-items: center;
     min-height: var(--hit-min);
-    color: var(--lad);
+    color: var(--accent-text);
     white-space: nowrap;
     text-decoration: none;
 }
 .ym-home__all:hover {
-    color: var(--lad-strong);
+    color: var(--ink);
     text-decoration: underline;
 }
 .ym-home__grid {
