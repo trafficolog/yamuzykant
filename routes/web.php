@@ -16,6 +16,7 @@ use App\Http\Controllers\FleaController;
 use App\Http\Controllers\HomeController;
 use App\Http\Controllers\Listings\ListingPhotoController;
 use App\Http\Controllers\Listings\LocalPhotoUploadController;
+use App\Http\Controllers\Listings\LotController;
 use App\Http\Controllers\Listings\PhotoMediaController;
 use App\Http\Controllers\Listings\SellController;
 use App\Http\Controllers\Messaging\ConversationController;
@@ -64,6 +65,9 @@ Route::prefix('auth')->name('auth.')->group(function (): void {
         Route::post('logout-everywhere', [LogoutController::class, 'everywhere'])->name('logout-everywhere');
     });
 });
+
+// Страница объявления (3.1.5, UC-V1): открыта всем; не опубликованное — только владельцу и сотрудникам, остальным 404.
+Route::get('/listings/{listing}', LotController::class)->whereUuid('listing')->name('lot.show');
 
 // Форма «Продать инструмент» (2.1.3): страница с черновиком и проверка содержимого. Гость — на главную, вход — окно.
 Route::middleware('auth')->group(function (): void {
