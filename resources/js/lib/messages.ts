@@ -33,6 +33,10 @@ export interface ChatMessage {
     created_at: string;
     mine: boolean;
     read_at: string | null;
+    /** Ключ идемпотентности отправки (4.1.3): по нему эхо сопоставляется с отправкой, а не по тексту. */
+    client_id: string | null;
+    /** Подозрительное входящее сообщение: плашка «Будьте осторожны» (у своих сообщений всегда false). */
+    caution: boolean;
 }
 
 /** Полезная нагрузка `.message.sent`: без «моё» и «прочитано» — их считает клиент. */

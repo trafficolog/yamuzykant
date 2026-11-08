@@ -207,7 +207,10 @@ describe('ChatThread: поле ввода и клавиатура', () => {
             ([url]) => String(url) === '/conversations/c1/messages',
         );
         expect(call).toBeDefined();
-        expect(JSON.parse(String((call?.[1] as RequestInit).body))).toEqual({ body: 'Привет' });
+        expect(JSON.parse(String((call?.[1] as RequestInit).body))).toEqual({
+            body: 'Привет',
+            client_id: expect.stringMatching(/^[A-Za-z0-9_-]{8,64}$/),
+        });
         expect((call?.[1] as RequestInit).method).toBe('POST');
         expect(field()).toHaveValue('');
         await waitFor(() => expect(onChanged).toHaveBeenCalled());
@@ -645,7 +648,10 @@ describe('ChatThread: «Написать продавцу» (беседы ещё
         await waitFor(() => expect(onStarted).toHaveBeenCalledTimes(1));
         const [url, init] = fetchMock.mock.calls[0] as [string, RequestInit];
         expect(url).toBe('/listings/l1/conversations');
-        expect(JSON.parse(String(init.body))).toEqual({ body: 'Здравствуйте' });
+        expect(JSON.parse(String(init.body))).toEqual({
+            body: 'Здравствуйте',
+            client_id: expect.stringMatching(/^[A-Za-z0-9_-]{8,64}$/),
+        });
         expect(onStarted.mock.calls[0]?.[0]).toMatchObject({ id: 'new-1' });
     });
 

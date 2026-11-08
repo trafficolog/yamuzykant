@@ -34,7 +34,8 @@ it('21-й новый чат за сутки отклонён с понятным
     $listing = MessagingFixtures::listing();
     $this->postJson("/listings/{$listing->id}/conversations", ['body' => 'Ещё один чат'])
         ->assertTooManyRequests()
-        ->assertJsonPath('message', 'Вы начали слишком много новых чатов за сутки. Продолжите завтра или ответьте в уже начатых.');
+        ->assertJsonPath('message', 'Вы начали слишком много новых чатов за сутки. Продолжите завтра или ответьте в уже начатых.')
+        ->assertJsonPath('code', 'new_chats_limit');
 
     expect(Conversation::query()->count())->toBe(20)
         ->and(Message::query()->count())->toBe(20);

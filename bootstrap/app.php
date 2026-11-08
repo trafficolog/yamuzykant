@@ -100,7 +100,7 @@ return Application::configure(basePath: dirname(__DIR__))
 
         // Антиспам (4.1.3): суточный лимит новых бесед. Retry-After — до конца окна неизвестен точно (ключ по пользователю),
         // клиенту достаточно текста.
-        $exceptions->render(fn (NewChatLimitReached $e): JsonResponse => response()->json(['message' => $e->getMessage()], 429));
+        $exceptions->render(fn (NewChatLimitReached $e): JsonResponse => response()->json(['message' => $e->getMessage(), 'code' => 'new_chats_limit'], 429));
 
         // Отказы по фото (BR-03) — как ошибка валидации поля формы.
         $exceptions->render(fn (PhotoRejected $e): JsonResponse => response()->json([
