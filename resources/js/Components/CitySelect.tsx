@@ -10,7 +10,9 @@ export type { CityOption };
 /** Адрес смены города (POST, CSRF по группе web). */
 const CHANGE_URL = '/city';
 
-const TOGGLE_ID = 'site-city-toggle';
+/** Кнопка города в шапке: с неё открывается окно выбора (и с главной, при пустом городе). */
+export const CITY_TOGGLE_ID = 'site-city-toggle';
+const TOGGLE_ID = CITY_TOGGLE_ID;
 const PANEL_ID = 'site-city-panel';
 const SEARCH_ID = 'site-city-search';
 

@@ -3,6 +3,7 @@
 declare(strict_types=1);
 
 use App\Domain\Catalog\Models\City;
+use App\Domain\Search\HomeRails;
 use Database\Seeders\CitySeeder;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
@@ -91,7 +92,8 @@ it('карточки рельсов — белый список полей: бе
 
     expect(array_keys($rails['fresh'][0]))
         ->toEqualCanonicalizing(['id', 'title', 'price', 'condition', 'city', 'ship', 'negotiable', 'posted'])
-        ->and(json_encode($rails))->not->toContain('V091234')->not->toContain('Секретное описание');
+        ->and((string) json_encode($rails))->not->toContain('V091234');
+    expect((string) json_encode($rails))->not->toContain('Секретное описание');
 });
 
 it('город берётся из cookie выбора; в другом городе — его объявления', function () {
@@ -136,25 +138,30 @@ it('рельсы кэшируются на 60 секунд на город', fun
 });
 
 it('число запросов к БД не растёт с числом карточек (без N+1)', function () {
-    $count = function (): int {
-        $queries = 0;
-        DB::listen(function () use (&$queries): void {
-            $queries++;
-        });
-        homeGet()->assertOk();
+    // Запросы страницы без карточек: город, флаги, справочник. Данные карточек берутся из индекса, не из БД.
+    $measure = function (): array {
+        Cache::forget(HomeRails::key(homeCity('Москва')));
+        MeilisearchIndex::waitForTasks();
+        DB::flushQueryLog();
+        DB::enableQueryLog();
+        currentTest()->withCookie('ym_city', (string) homeCity('Москва')->id)->get('/')->assertOk();
+        $sql = array_column(DB::getQueryLog(), 'query');
+        DB::disableQueryLog();
 
-        return $queries;
+        return $sql;
     };
 
     homeListing();
-    $few = $count();
-    Cache::flush();
+    $measure();
+    $few = $measure();
     foreach (range(1, 9) as $i) {
         homeListing(['title' => "Ещё {$i}"]);
     }
-    $many = $count();
+    $measure();
+    $many = $measure();
 
-    expect($many)->toBe($few);
+    expect($many)->toHaveCount(count($few))
+        ->and(implode(' ', $many))->not->toContain('"listings"');
 });
 
 it('у карточки есть давность публикации', function () {

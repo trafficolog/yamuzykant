@@ -93,7 +93,7 @@ describe('Home', () => {
     it('категории: 8 ссылок на выдачу Барахолки по слагу', () => {
         render(<Home {...props()} />);
 
-        const nav = screen.getByRole('navigation', { name: 'Категории' });
+        const nav = screen.getByRole('navigation', { name: 'Виды инструментов' });
         const links = within(nav).getAllByRole('link');
         expect(links).toHaveLength(8);
         expect(links[0]).toHaveAttribute('href', '/baraholka/gitary');
@@ -111,7 +111,7 @@ describe('Home', () => {
         }));
         render(<Home {...props({ categories: [...CATEGORIES, ...extra] })} />);
 
-        const nav = screen.getByRole('navigation', { name: 'Категории' });
+        const nav = screen.getByRole('navigation', { name: 'Виды инструментов' });
         expect(within(nav).getAllByRole('link')).toHaveLength(8);
         expect(screen.queryByText('Лишняя 0')).toBeNull();
     });
@@ -222,5 +222,17 @@ describe('Home', () => {
         ]) {
             expect(screen.queryByText(text)).toBeNull();
         }
+    });
+});
+
+describe('Home: SSR', () => {
+    it('на сервере рендерит категории, рельсы и карточки без браузерных API', async () => {
+        const { renderToString } = await import('react-dom/server');
+        const html = renderToString(<Home {...props()} />);
+
+        expect(html).toContain('Новые в г. Москва');
+        expect(html).toContain('href="/baraholka/gitary"');
+        expect(html).toContain('href="/listings/id-1"');
+        expect(html).toContain('Гитара 1');
     });
 });

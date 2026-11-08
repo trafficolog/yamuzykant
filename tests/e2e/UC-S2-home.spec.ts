@@ -51,7 +51,7 @@ test.describe('UC-S2: главная', () => {
     test('категория с главной открывает /baraholka/{категория}', async ({ page }) => {
         await page.goto('/');
         await page
-            .getByRole('navigation', { name: 'Категории' })
+            .getByRole('navigation', { name: 'Виды инструментов' })
             .getByRole('link', { name: /Гитары/ })
             .click();
 
@@ -131,7 +131,9 @@ test.describe('UC-S2: главная', () => {
             }));
             expect(metrics.scrollWidth).toBeLessThanOrEqual(metrics.clientWidth);
 
-            const links = page.getByRole('navigation', { name: 'Категории' }).getByRole('link');
+            const links = page
+                .getByRole('navigation', { name: 'Виды инструментов' })
+                .getByRole('link');
             for (const link of await links.all()) {
                 const box = await link.boundingBox();
                 expect(box?.height ?? 0).toBeGreaterThanOrEqual(44);
