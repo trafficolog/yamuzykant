@@ -1,6 +1,6 @@
 import AxeBuilder from '@axe-core/playwright';
 import { expect, test, type Page } from '@playwright/test';
-import { addPhoto, signIn, xsrf } from './_seller';
+import { addPhoto, signIn, useQuietCity, xsrf } from './_seller';
 
 // UC-L1 «Подать объявление».
 // Часть 1 — заполнение формы (2.1.3): 4 шага, превью ListingCard, список недостающего над кнопкой,
@@ -19,6 +19,7 @@ test.describe('UC-L1: заполнение формы «Продать инст�
         page,
     }) => {
         await signIn(page);
+        await useQuietCity(page);
         await page.goto('/sell');
 
         await expect(
@@ -163,13 +164,18 @@ test.describe('UC-L1 часть 2: черновик и публикация (2.1
         await page.getByRole('radio', { name: 'Отличное' }).click();
         await page.getByRole('textbox', { name: 'Описание' }).fill('Родной кейс.');
         await page.getByRole('textbox', { name: 'Цена' }).fill('184500');
-        await page.getByRole('button', { name: 'Договорная' }).click();
 
-        // Автосохранение: без нажатия кнопок, ждём запрос сохранения.
-        await page.waitForResponse(
-            (response) => response.url().endsWith('/sell/draft') && response.status() === 200,
+        // Автосохранение: без нажатия кнопок ждём запрос, в котором уже есть последняя правка («Договорная»):
+        // более ранние тики таймера могли успеть раньше.
+        const saved = page.waitForResponse(
+            (response) =>
+                response.url().endsWith('/sell/draft') &&
+                response.status() === 200 &&
+                (response.request().postData() ?? '').includes('"price_mode":"negotiable"'),
             { timeout: 12_000 },
         );
+        await page.getByRole('button', { name: 'Договорная' }).click();
+        await saved;
 
         await page.reload();
 
@@ -217,6 +223,7 @@ test.describe('UC-L1 часть 2: черновик и публикация (2.1
         page,
     }) => {
         await signIn(page);
+        await useQuietCity(page);
         await page.goto('/sell');
         const title = uniqueTitle();
         await addThreePhotos(page);
@@ -275,6 +282,7 @@ test.describe('UC-L1 часть 2: черновик и публикация (2.1
         page,
     }) => {
         await signIn(page);
+        await useQuietCity(page);
         await page.goto('/sell');
         await addThreePhotos(page);
         await fillRequired(page, uniqueTitle());
