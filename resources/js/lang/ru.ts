@@ -239,7 +239,7 @@ export const ru = {
             label: 'Доставка и получение',
             ship: 'Доставка',
             shipHint: 'Стоимость и срок согласуйте с продавцом',
-            meet: (city: string) => `Встреча: ${city}`,
+            meet: (type: string, name: string) => `Встреча в ${type} ${name}`,
             meetAnyCity: 'Встреча',
             meetHint: 'Место согласуете с продавцом',
             chat: 'Переписка остаётся на ЯМузыканте',

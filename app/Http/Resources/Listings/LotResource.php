@@ -4,7 +4,6 @@ declare(strict_types=1);
 
 namespace App\Http\Resources\Listings;
 
-use App\Domain\Accounts\Staff\StaffDirectory;
 use App\Domain\Catalog\Models\Category;
 use App\Domain\Listings\Enums\ListingStatus;
 use App\Domain\Listings\Models\Listing;
@@ -56,7 +55,7 @@ final class LotResource extends JsonResource
                 'model' => $listing->model?->name,
                 'serial' => $listing->serialMasked(),
                 'description' => $listing->description,
-                'city' => $listing->city?->name,
+                'city' => $listing->city === null ? null : ['type' => $listing->city->settlement_type, 'name' => $listing->city->name],
                 'meet' => $listing->meet,
                 'ship' => $listing->ship,
                 'posted' => $listing->published_at === null ? null : PostedAgo::format($listing->published_at),
@@ -73,7 +72,6 @@ final class LotResource extends JsonResource
             'viewer' => [
                 'authenticated' => $viewer !== null,
                 'is_owner' => $viewer !== null && $viewer->id === $listing->user_id,
-                'is_staff' => $viewer !== null && app(StaffDirectory::class)->isStaff($viewer),
             ],
             'similar' => $this->similar->map(fn (Listing $similar): array => $this->card($similar))->all(),
         ];

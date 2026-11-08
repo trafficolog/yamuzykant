@@ -31,7 +31,7 @@ export interface LotData {
     /** Маска: `V09****`. */
     serial: string | null;
     description: string | null;
-    city: string | null;
+    city: { type: string; name: string } | null;
     meet: boolean;
     ship: boolean;
     posted: string | null;
@@ -56,7 +56,7 @@ export interface LotShowProps {
     crumbs: { name: string; path: string }[];
     photos: LotPhoto[];
     seller: { name: string; city: string | null; since: number | null };
-    viewer: { authenticated: boolean; is_owner: boolean; is_staff: boolean };
+    viewer: { authenticated: boolean; is_owner: boolean };
     similar: LotSimilar[];
 }
 
@@ -281,7 +281,7 @@ export default function LotShow({
                                     icon="map-pin"
                                     title={
                                         listing.city !== null
-                                            ? t.delivery.meet(listing.city)
+                                            ? t.delivery.meet(listing.city.type, listing.city.name)
                                             : t.delivery.meetAnyCity
                                     }
                                     hint={t.delivery.meetHint}
