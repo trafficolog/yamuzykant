@@ -163,7 +163,7 @@ it('удаление строки объявления убирает докум
     expect(indexedIds())->toBe([]);
 });
 
-/** @return list<class-string<ListingTransitioned>> */
+/** @return array<int, class-string<ListingTransitioned>> */
 function transitionEventClasses(): array
 {
     return collect(glob(base_path('app/Domain/Listings/Events/Listing*.php')) ?: [])

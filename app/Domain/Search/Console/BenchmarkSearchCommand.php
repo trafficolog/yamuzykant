@@ -104,7 +104,7 @@ final class BenchmarkSearchCommand extends Command
             fn (int $i) => $search($i)->inCategory('gitary')->conditions([Condition::Mint, Condition::Excellent])->sortBy(ListingSort::PriceAsc)->get(),
             fn (int $i) => $search($i)->inCategory('pedali-i-usiliteli/pedali')->sortBy(ListingSort::PriceDesc)->get(),
             fn (int $i) => $search($i)->matching('yamaha')->negotiable()->sortBy(ListingSort::Newest)->get(),
-            fn (int $i) => $search($i)->matching('fender')->sortBy(ListingSort::Nearest, 55.75, 37.62)->get(),
+            fn (int $i) => $search($i)->matching('fender')->sortBy(ListingSort::PriceAsc)->get(),
         ];
     }
 

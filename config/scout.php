@@ -35,8 +35,8 @@ return [
             // Объявления (ARCHITECTURE §5). `aliases` — русские написания моделей (ModelAliases), вместо synonyms.
             'listings' => [
                 'searchableAttributes' => ['title', 'model', 'brand', 'aliases', 'description'],
-                'filterableAttributes' => ['category_path', 'condition', 'price', 'city_id', 'ship', 'negotiable', '_geo'],
-                'sortableAttributes' => ['published_at', 'price', '_geo'],
+                'filterableAttributes' => ['category_path', 'condition', 'price', 'city_id', 'ship', 'negotiable'],
+                'sortableAttributes' => ['published_at', 'price'],
                 // `words` первым: сортировка по цене и дате действует среди совпавших по всем словам запроса,
                 // а не ставит выше случайное объявление, где совпало одно слово из трёх.
                 'rankingRules' => ['words', 'sort', 'typo', 'proximity', 'attribute', 'exactness'],

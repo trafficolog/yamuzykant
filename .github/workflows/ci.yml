@@ -68,7 +68,7 @@ jobs:
         ports: ['6379:6379']
         options: --health-cmd "redis-cli ping" --health-interval 5s --health-retries 10
       meilisearch:
-        image: getmeili/meilisearch:v1.10
+        image: getmeili/meilisearch:v1.15
         env:
           MEILI_MASTER_KEY: testing
           MEILI_NO_ANALYTICS: 'true'
@@ -197,7 +197,7 @@ jobs:
         ports: ['6379:6379']
         options: --health-cmd "redis-cli ping" --health-interval 5s --health-retries 10
       meilisearch:
-        image: getmeili/meilisearch:v1.10
+        image: getmeili/meilisearch:v1.15
         env:
           MEILI_MASTER_KEY: testing
           MEILI_NO_ANALYTICS: 'true'
