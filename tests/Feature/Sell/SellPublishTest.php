@@ -3,6 +3,7 @@
 declare(strict_types=1);
 
 use App\Domain\Accounts\Models\User;
+use App\Domain\Listings\Actions\AutosaveListingDraft;
 use App\Domain\Listings\Actions\PublishListing;
 use App\Domain\Listings\Enums\ListingStatus;
 use App\Domain\Listings\Events\ListingPublished;
@@ -195,6 +196,44 @@ describe('автопроверки и фото перед публикацией
 
         expect(fn () => app(PublishListing::class)($draft, publishContent($kind->id), null))
             ->toThrow(PhotoRequirementsNotMet::class);
+        expect(sellReload($draft)->status)->toBe(ListingStatus::Draft);
+    });
+});
+
+/**
+ * Второй запрос автосохранения (вторая вкладка) успевает между фиксацией записи формы и блокировкой публикации:
+ * срабатывает один раз сразу после коммита транзакции SaveListingDraft.
+ *
+ * @param  array<string, mixed>  $other
+ */
+function sellRaceAutosave(Listing $draft, array $other): void
+{
+    $fired = false;
+    Listing::saved(function () use (&$fired, $draft, $other): void {
+        if ($fired) {
+            return;
+        }
+        $fired = true;
+        DB::afterCommit(fn () => app(AutosaveListingDraft::class)(Listing::query()->findOrFail($draft->id), $other, null));
+    });
+}
+
+describe('гонка со второй вкладкой: публикуется то, что проверено (ревью PR #136)', function () {
+    it('контакт, записанный второй вкладкой после проверки: публикации нет, 422 у описания', function () {
+        [$owner, $kind, $draft] = sellCase();
+        sellRaceAutosave($draft, ['description' => 'Звоните +7 916 123-45-67']);
+
+        expect(fn () => app(PublishListing::class)($draft, publishContent($kind->id), null))
+            ->toThrow(fn (ValidationException $e) => expect($e->errors())->toHaveKey('description'));
+        expect(sellReload($draft)->status)->toBe(ListingStatus::Draft)->and(sellReload($draft)->published_at)->toBeNull();
+    });
+
+    it('неполная форма из второй вкладки (нет названия и состояния): публикации нет', function () {
+        [$owner, $kind, $draft] = sellCase();
+        sellRaceAutosave($draft, ['title' => '', 'condition' => null]);
+
+        expect(fn () => app(PublishListing::class)($draft, publishContent($kind->id), null))
+            ->toThrow(fn (ValidationException $e) => expect($e->errors())->toHaveKeys(['title', 'condition']));
         expect(sellReload($draft)->status)->toBe(ListingStatus::Draft);
     });
 });
