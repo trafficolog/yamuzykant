@@ -21,7 +21,7 @@
 | 0.1.14 Наблюдаемость: доработки после ревью и проверка на stage | G1 | todo | low | sonnet → sonnet | #110 |
 | 0.1.15 Инфраструктура фото: S3 для stage, HEIC и AVIF на сервере, очистка загрузок | G1 | todo | medium | sonnet → opus | #111 |
 | 0.1.16 Reverb на stage и production: процесс, wss-прокси, переменные | G1 | todo | medium | sonnet → opus | #121 |
-| 0.1.17 Экономия минут CI: docs-only без тяжёлых джобов, e2e по метке ready | G1 | in_progress | medium | sonnet → sonnet | #142 |
+| 0.1.17 Экономия минут CI: docs-only без тяжёлых джобов, e2e перед мержем | G1 | in_progress | medium | sonnet → sonnet | #142 |
 | 0.2.1 Подключение дизайн-системы: ds:sync и @ds | G0 | done | medium | sonnet → sonnet | #7 |
 | 0.2.2 Проверка текстов: lint:copy и copy.spec | G0 | done | low | haiku → sonnet | #8 |
 | 0.2.3 Эталоны макетов и визуальные тесты | G0 | done | medium | sonnet → sonnet | #9 |
