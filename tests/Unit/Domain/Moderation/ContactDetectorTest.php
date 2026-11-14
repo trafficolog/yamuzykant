@@ -193,7 +193,7 @@ it('возвращает вид, а маска прячет сам контак�
     'ссылка без пути' => ['смотрите https://example.com/lot/123?x=1', ContactKind::Link, 'example.com'],
     'ссылка без схемы' => ['t.me/ivan_guitar', ContactKind::Link, 't.me'],
     'ник' => ['мой ник @ivan_guitar', ContactKind::Handle, '@iv***'],
-    'мессенджер — название как есть' => ['Пишите в WhatsApp', ContactKind::Messenger, 'whatsapp'],
+    'мессенджер — название как есть' => ['Пишите в WhatsApp ivan_g77', ContactKind::Messenger, 'whatsapp'],
 ]);
 
 it('маска не длиннее 40 символов', function () {
@@ -203,7 +203,7 @@ it('маска не длиннее 40 символов', function () {
 });
 
 it('берёт основы и сокращения мессенджеров из конфига', function () {
-    config(['moderation.messengers.stems' => ['новыймесс'], 'moderation.messengers.abbreviations' => ['нм']]);
+    config(['moderation.messengers.block_mention_only' => true, 'moderation.messengers.stems' => ['новыймесс'], 'moderation.messengers.abbreviations' => ['нм']]);
 
     expect(contactOf('пишите в новыймессе'))->toBe(ContactKind::Messenger)
         ->and(contactOf('мой нм'))->toBe(ContactKind::Messenger)

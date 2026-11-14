@@ -25,11 +25,12 @@ final class ListingAutoChecks
 
     public function __construct(
         ContactsCheck $contacts,
+        SerialNumberCheck $serialNumber,
         StopWordsCheck $stopWords,
         DuplicatePhotoCheck $duplicatePhoto,
         LowPriceCheck $lowPrice,
     ) {
-        $this->checks = [$contacts, $stopWords, $duplicatePhoto, $lowPrice];
+        $this->checks = [$contacts, $serialNumber, $stopWords, $duplicatePhoto, $lowPrice];
     }
 
     /** @return list<AutoCheck> */
