@@ -146,6 +146,9 @@ it('заблокированный продавец и несуществующ�
     $this->get("/sellers/{$seller->id}")->assertNotFound();
     $this->get('/sellers/999999')->assertNotFound();
     $this->get('/sellers/abc')->assertNotFound();
+    // Больше bigint: маршрут не совпадает, запрос в БД не уходит (на PostgreSQL был бы 500).
+    $this->get('/sellers/99999999999999999999')->assertNotFound();
+    $this->get('/sellers/0')->assertNotFound();
 });
 
 it('в props нет почты, yandex_id и телефона продавца (BR-04)', function () {
