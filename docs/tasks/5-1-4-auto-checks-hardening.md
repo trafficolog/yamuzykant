@@ -3,7 +3,7 @@ id: "5.1.4"
 phase: "5"
 epic: "5.1"
 title: "Автопроверки: доработки после ревью и решения OWNER"
-status: todo
+status: done
 gate: G1
 risk: low
 model_impl: sonnet
@@ -14,7 +14,7 @@ uc: ["O1"]
 prototype: ""
 screens: []
 issue: 132
-sync_state: drifted
+sync_state: aligned
 escalations: []
 ---
 

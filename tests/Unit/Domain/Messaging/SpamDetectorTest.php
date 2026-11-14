@@ -61,9 +61,21 @@ describe('внешняя ссылка от нового аккаунта', funct
 });
 
 describe('просьба перейти в мессенджер', function () {
-    it('упоминание мессенджера с призывом — признак у любого аккаунта', function () {
-        expect(detect(accountAged(500), 'Давайте общаться в телеграм, так быстрее'))->toBe([SpamSignal::MessengerRequest]);
+    it('упоминание мессенджера с ником — признак у любого аккаунта', function () {
+        expect(detect(accountAged(500), 'Давайте общаться в телеграм @fast_deal_77, так быстрее'))->toBe([SpamSignal::MessengerRequest]);
     });
+
+    it('название мессенджера без ника, номера и идентификатора — без признака (решение G1)', function (string $text) {
+        expect(detect(accountAged(500), $text))->toBe([]);
+    })->with(['WhatsApp есть?', 'Вы в телеграм?', 'Пишите в вотсап, если удобно', 'Давайте в телеграм, так быстрее']);
+
+    it('название вместе с ником, номером или идентификатором — признак', function (string $text) {
+        expect(detect(accountAged(500), $text))->toBe([SpamSignal::MessengerRequest]);
+    })->with([
+        'ник' => 'Напишите в телеграм @fast_deal_77',
+        'номер' => 'Мой ватсап 89161234567',
+        'идентификатор' => 'Телеграм: fast_deal_77',
+    ]);
 
     it('ник в телеграме — признак', function () {
         expect(detect(accountAged(500), 'Напишите мне @fast_deal_77'))->toBe([SpamSignal::MessengerRequest]);
@@ -75,12 +87,40 @@ describe('просьба перейти в мессенджер', function () {
 });
 
 describe('одинаковый текст в ≥ 5 чатах', function () {
+    beforeEach(function () {
+        config(['messaging.spam.same_text_min_length' => 5]);
+    });
+
     function sendSame(User $sender, string $text, int $chats): void
     {
         foreach (range(1, $chats) as $ignored) {
             app(SendMessage::class)->handle($sender, MessagingFixtures::conversation(buyer: $sender), $text);
         }
     }
+
+    it('короткий текст («Ещё продаётся?») рассылкой не считается, как бы часто он ни повторялся', function () {
+        config(['messaging.spam.same_text_min_length' => 30]);
+        $sender = accountAged(500);
+        sendSame($sender, 'Ещё продаётся?', 6);
+
+        $next = MessagingFixtures::conversation(buyer: $sender);
+        expect(app(SpamDetector::class)->detect($sender, $next, 'Ещё продаётся?'))->toBe([]);
+    });
+
+    it('минимальная длина считается после нормализации и берётся из конфига', function () {
+        config(['messaging.spam.same_text_min_length' => 10]);
+        expect(config('messaging.spam.same_text_min_length'))->toBe(10);
+
+        $sender = accountAged(500);
+        sendSame($sender, "Продаю   дёшево\n", 4);
+        $fifth = MessagingFixtures::conversation(buyer: $sender);
+
+        // «продаю дёшево» — 13 знаков после нормализации (пробелы и перевод строки схлопнуты).
+        expect(app(SpamDetector::class)->detect($sender, $fifth, 'Продаю дёшево'))->toBe([SpamSignal::SameTextManyChats]);
+
+        config(['messaging.spam.same_text_min_length' => 14]);
+        expect(app(SpamDetector::class)->detect($sender, $fifth, 'Продаю дёшево'))->toBe([]);
+    });
 
     it('в пятом чате — признак, в четвёртом ещё нет', function () {
         $sender = accountAged(500);
@@ -140,7 +180,33 @@ describe('одинаковый текст в ≥ 5 чатах', function () {
 });
 
 it('несколько признаков возвращаются вместе', function () {
-    expect(detect(accountAged(1), 'Пишите в телеграм: https://t.me/fast_deal'))
+    expect(detect(accountAged(1), 'Пишите в телеграм @fast_deal: https://t.me/fast_deal'))
         ->toContain(SpamSignal::NewAccountLink)
         ->toContain(SpamSignal::MessengerRequest);
+});
+
+it('порог длины текста для признака дубля по умолчанию — 30 знаков', function () {
+    expect(config('messaging.spam.same_text_min_length'))->toBe(30);
+});
+
+describe('хеш текста', function () {
+    it('HMAC с ключом приложения, а не голый sha1', function () {
+        $hash = SpamDetector::hash('  Продаю  ДЁШЕВО ');
+        $expected = substr(hash_hmac('sha256', 'продаю дёшево', (string) config('app.key')), 0, 40);
+
+        expect($hash)->toBe($expected)
+            ->and($hash)->not->toBe(sha1('продаю дёшево'))
+            ->and($hash)->toHaveLength(40);
+    });
+
+    it('с другим ключом приложения хеш другой', function () {
+        $first = SpamDetector::hash('Продаю дёшево');
+        config(['app.key' => 'base64:'.base64_encode(str_repeat('k', 32))]);
+
+        expect(SpamDetector::hash('Продаю дёшево'))->not->toBe($first);
+    });
+
+    it('регистр и пробелы хеш не меняют', function () {
+        expect(SpamDetector::hash("ПРОДАЮ \n дёшево"))->toBe(SpamDetector::hash('продаю дёшево'));
+    });
 });

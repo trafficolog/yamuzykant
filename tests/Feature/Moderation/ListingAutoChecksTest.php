@@ -89,7 +89,7 @@ describe('validate: блокирующие ошибки', function () {
     })->with([
         'e-mail' => ['пишите ivan@mail.ru', 'почту'],
         'ссылка' => ['смотрите https://example.com/lot', 'ссылку'],
-        'мессенджер' => ['напишите в WhatsApp', 'мессенджер'],
+        'мессенджер' => ['напишите в WhatsApp ivan_g77', 'мессенджер'],
         'ник' => ['мой ник @ivan_guitar', 'ник'],
     ]);
 
@@ -103,6 +103,41 @@ describe('validate: блокирующие ошибки', function () {
         $report = autoChecks()->validate(textListing('Yamaha DX7 1983', 'Shure SM58 в комплекте, цена 184 500 ₽, год 1983.'));
 
         expect($report->blocked())->toBeFalse();
+    });
+
+    it('номер, похожий на серийный, в описании: подсказка указать его в отдельном поле', function (string $text) {
+        $errors = autoChecks()->validate(textListing('Fender ’57 Stratocaster', $text))->errors();
+
+        expect($errors)->toBe(['description' => 'Серийный номер укажите в поле «Серийный номер».']);
+    })->with([
+        'буква и цифры после слов' => ['Серийный номер V091234 на пластине'],
+        'с/н' => ['Гриф родной, с/н AB-12345'],
+        'после слов «серийный номер»' => ['Серийный номер: 12345678'],
+        's/n' => ['S/N 1234567'],
+    ]);
+
+    it('модель, год, цена, дата и размеры серийным номером не считаются', function (string $text) {
+        expect(autoChecks()->validate(textListing('Fender ’57 Stratocaster', $text))->blocked())->toBeFalse();
+    })->with([
+        'JCM800 2203' => ['Marshall JCM800 2203 1983 года'],
+        'модель с дефисом и номером' => ['Marshall JCM800-2203, Roland JC-120, Korg SV-1 73'],
+        'SM58 и цена' => ['Shure SM58, цена 184 500 ₽, год 1983'],
+        'дата' => ['Куплена 03.11.2019'],
+        'размеры' => ['Барабаны 22x18, 12x8'],
+        'серийный номер без цифр' => ['Серийный номер на пластине, укажу в карточке'],
+        'диапазон частот' => ['Диапазон 20-20000Гц'],
+        'диапазон частот латиницей' => ['Диапазон 20Hz-20000Hz'],
+        'частота дискретизации' => ['Звуковая карта 48000Hz'],
+        'ёмкость' => ['Аккумулятор 10000mAh'],
+        'пробег' => ['Пробег 120000км, 12345 км'],
+        'артикул' => ['Микшер XR18-00012, арт. 0123456'],
+        'модель гитары' => ['Ibanez RG7620, PRS SE Custom 24-08, Jackson SLX DX 2020'],
+    ]);
+
+    it('телефон в описании остаётся контактом, а не серийным номером', function () {
+        $errors = autoChecks()->validate(textListing('Fender ’57 Stratocaster', 'Звоните 8 916 123-45-67'))->errors();
+
+        expect($errors['description'])->toContain('телефон');
     });
 });
 
@@ -130,6 +165,13 @@ describe('assess: признаки риска', function () {
             ->and($report->signals()[0]->field)->toBe('description');
     });
 
+    it('«копия» и «реплика» из списка по умолчанию — сигнал риска, но не блокировка (решение OWNER, G1)', function (string $text) {
+        $listing = Listing::factory()->inStatus(ListingStatus::Published)->create(['description' => $text]);
+
+        expect(autoChecks()->assess($listing)->codes())->toBe(['stop_words'])
+            ->and(autoChecks()->validate($listing)->blocked())->toBeFalse();
+    })->with(['Копия Stratocaster, очень похожа', 'Продаю реплику Les Paul']);
+
     it('стоп-слово ищется целым словом: часть чужого слова не срабатывает', function () {
         config(['moderation.stop_words' => ['аванс']]);
         $listing = Listing::factory()->inStatus(ListingStatus::Published)->create(['description' => 'Авансцена, барабаны для авансцены.']);
@@ -145,6 +187,14 @@ describe('assess: признаки риска', function () {
         ]);
 
         expect(autoChecks()->assess($listing)->codes())->toBe(['stop_words']);
+    });
+
+    it('подсказка про серийный номер — только блокирующая ошибка формы, в сигналы риска не попадает', function () {
+        $listing = Listing::factory()->inStatus(ListingStatus::Published)->create(['description' => 'Серийный номер V091234']);
+
+        $report = autoChecks()->assess($listing);
+
+        expect($report->codes())->toBe([])->and($report->risk())->toBe(RiskLevel::Normal);
     });
 
     it('пустой список стоп-слов в конфиге ничего не находит', function () {

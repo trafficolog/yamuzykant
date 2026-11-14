@@ -11,7 +11,7 @@ use Illuminate\Http\Resources\Json\JsonResource;
 
 /**
  * Строка списка бесед: данные беседы (ConversationResource), последнее сообщение для превью, число
- * непрочитанных и признак «закрыта для ответов» (архив). Нужны relation `lastMessage` и атрибут
+ * непрочитанных. Нужны relation `lastMessage` и атрибут
  * `unread_count` из UserConversations. Превью обрезано: в список целиком текст не уходит.
  *
  * @mixin Conversation
@@ -38,7 +38,6 @@ final class ConversationListItemResource extends JsonResource
                 'created_at' => $last->created_at->toIso8601ZuluString(),
             ] : null,
             'unread' => (int) $conversation->getAttribute('unread_count'),
-            'closed' => $base['closed_reason'] !== null,
         ];
     }
 }

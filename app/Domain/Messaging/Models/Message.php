@@ -52,7 +52,10 @@ class Message extends Model
     /**
      * Поля для трансляции в канал беседы — явный список, без данных пользователей (BR-04).
      *
-     * @return array{id: int, conversation_id: string, kind: string, body: string, sender_id: int|null, created_at: string, client_id: string|null, caution: bool}
+     * Признака «подозрительное» здесь нет: канал беседы видят оба участника, плашка — только получателю
+     * (событие MessageCautioned в его канал; в истории — MessageResource).
+     *
+     * @return array{id: int, conversation_id: string, kind: string, body: string, sender_id: int|null, created_at: string, client_id: string|null}
      */
     public function broadcastPayload(): array
     {
@@ -63,9 +66,8 @@ class Message extends Model
             'body' => $this->body,
             'sender_id' => $this->sender_id,
             'created_at' => $this->created_at->toIso8601ZuluString(),
-            // client_id — чтобы клиент сопоставлял эхо со своей отправкой; caution — плашку показывает получатель.
+            // client_id — чтобы клиент сопоставлял эхо со своей отправкой.
             'client_id' => $this->client_id,
-            'caution' => $this->suspicious,
         ];
     }
 

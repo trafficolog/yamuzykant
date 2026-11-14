@@ -9,6 +9,7 @@ use App\Domain\Listings\Enums\ListingStatus;
 use App\Domain\Listings\Models\Listing;
 use App\Domain\Listings\Models\ListingPhoto;
 use App\Domain\Listings\Photos\PhotoVisibility;
+use App\Support\MemberSince;
 use App\Support\PostedAgo;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
@@ -67,7 +68,7 @@ final class LotResource extends JsonResource
             'seller' => [
                 'name' => $seller->name,
                 'city' => $seller->city?->name,
-                'since' => $seller->created_at?->year,
+                'since' => MemberSince::month($seller->created_at),
             ],
             'viewer' => [
                 'authenticated' => $viewer !== null,

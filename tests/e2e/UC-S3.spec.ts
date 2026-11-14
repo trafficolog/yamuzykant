@@ -149,4 +149,20 @@ test.describe('UC-S3: фильтры и сортировка', () => {
         await expect(page.getByRole('article')).toHaveCount(24);
         await expect.poll(() => page.evaluate(() => window.scrollY)).toBeGreaterThan(y - 200);
     });
+
+    test('«Назад» после полной перезагрузки возвращает прежнюю позицию прокрутки', async ({
+        page,
+    }) => {
+        await page.goto('/baraholka');
+        await page.getByRole('link', { name: 'Страница 2' }).scrollIntoViewIfNeeded();
+        const y = await page.evaluate(() => window.scrollY);
+        expect(y).toBeGreaterThan(500);
+
+        // Полная загрузка другой страницы и «Назад»: страница собирается заново, без bfcache.
+        await page.goto('/health');
+        await page.goBack();
+
+        await expect(page.getByRole('article')).toHaveCount(24);
+        await expect.poll(() => page.evaluate(() => window.scrollY)).toBeGreaterThan(y - 200);
+    });
 });

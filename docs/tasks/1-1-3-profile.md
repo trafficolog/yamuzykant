@@ -3,7 +3,7 @@ id: "1.1.3"
 phase: "1"
 epic: "1.1"
 title: "Профиль, город и уведомления"
-status: review
+status: done
 gate: G1
 risk: medium
 model_impl: sonnet
@@ -14,7 +14,7 @@ uc: ["A2"]
 prototype: "Десктоп - Кабинет.dc.html"
 screens: ["account"]
 issue: 15
-sync_state: drifted
+sync_state: aligned
 escalations: []
 ---
 

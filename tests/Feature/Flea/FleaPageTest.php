@@ -336,6 +336,13 @@ describe('страницы', function () {
         fleaGet('/baraholka?page=99&sort=cheap')->assertRedirect('/baraholka?sort=cheap&page=2');
     });
 
+    it('на единственную страницу редирект без хвостового «?»', function () {
+        MeilisearchIndex::resetListings();
+        fleaListing(['title' => 'Гитара единственная']);
+
+        fleaGet('/baraholka?page=99')->assertRedirect('/baraholka');
+    });
+
     it('в категории редирект остаётся в категории', function () {
         fleaGet('/baraholka/gitary?page=99')->assertRedirect('/baraholka/gitary?page=2');
     });

@@ -35,6 +35,9 @@ test.describe('UC-D1: экран сообщений', () => {
         await expect(buyer.getByRole('region', { name: 'Объявление' })).toContainText(
             'Fender ’57 Stratocaster',
         );
+        // BR-10 (4.1.5): быстрых ответов, архива и «Только чтение» нет.
+        await expect(buyer.getByRole('group', { name: 'Быстрые ответы' })).toHaveCount(0);
+        await expect(buyer.getByRole('radio', { name: /^Архив/ })).toHaveCount(0);
         const first = `Здравствуйте, гитара ещё продаётся? ${Date.now()}`;
         await field(buyer).fill(first);
         await field(buyer).press('Enter');

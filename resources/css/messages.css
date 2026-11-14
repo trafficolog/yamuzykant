@@ -175,10 +175,6 @@
     overflow: hidden;
     text-overflow: ellipsis;
 }
-.ym-messages__readonly {
-    flex: none;
-    color: var(--ink-muted);
-}
 .ym-messages__badge {
     flex: none;
     box-sizing: border-box;
@@ -306,6 +302,13 @@ a.ym-chat__listing-in:hover {
     justify-content: center;
     background: var(--surface-recessed);
     color: var(--ink-faint);
+    overflow: hidden;
+}
+.ym-chat__listing-thumb img {
+    display: block;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
 }
 .ym-chat__listing-text {
     flex: 1;
@@ -461,18 +464,6 @@ a.ym-chat__listing-in:hover {
     gap: var(--space-2);
     padding: var(--space-3);
     border-top: 1px solid var(--line);
-}
-.ym-chat__quick {
-    display: flex;
-    gap: var(--space-2);
-    overflow-x: auto;
-    scrollbar-width: none;
-}
-.ym-chat__quick::-webkit-scrollbar {
-    display: none;
-}
-.ym-chat__quick-item {
-    flex: none;
 }
 .ym-chat__readonly {
     margin: 0;

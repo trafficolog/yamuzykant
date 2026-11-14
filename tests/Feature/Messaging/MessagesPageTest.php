@@ -4,7 +4,10 @@ declare(strict_types=1);
 
 use App\Domain\Accounts\Models\User;
 use App\Domain\Listings\Enums\ListingStatus;
+use App\Domain\Listings\Enums\WithdrawReason;
 use App\Domain\Listings\Models\Listing;
+use App\Domain\Listings\Models\ListingPhoto;
+use App\Domain\Listings\Models\SaleRecord;
 use App\Domain\Messaging\Actions\AnonymizeParticipant;
 use App\Domain\Messaging\Actions\MarkConversationRead;
 use App\Domain\Messaging\Actions\SendMessage;
@@ -12,6 +15,7 @@ use App\Domain\Messaging\Models\Conversation;
 use App\Domain\Messaging\Models\Message;
 use App\Domain\Messaging\Queries\UserConversations;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
 use Inertia\Testing\AssertableInertia;
 use Tests\Support\MessagingFixtures;
@@ -73,7 +77,7 @@ it('список: только беседы пользователя, свежи
             ->where('conversations.0.last_message.mine', true)
             ->where('conversations.0.counterpart.name', 'Покупатель')
             ->where('conversations.0.listing.id', $newer->listing_id)
-            ->where('conversations.0.closed', false)
+            ->missing('conversations.0.closed')
             ->where('conversations.1.id', $older->id)
             ->where('conversations.1.role', 'buying')
             ->where('conversations.1.unread', 2)
@@ -105,22 +109,17 @@ it('прочитанные сообщения в непрочитанные не
         ->assertInertia(fn (AssertableInertia $page) => $page->where('conversations.0.unread', 0));
 });
 
-it('беседа по объявлению, ушедшему из published больше 30 дней назад, в списке помечена закрытой', function () {
-    $closed = MessagingFixtures::conversation(MessagingFixtures::listing(ListingStatus::Withdrawn, now()->subDays(31)));
-    $open = MessagingFixtures::conversation(MessagingFixtures::listing(ListingStatus::Withdrawn, now()->subDays(29)));
-    $me = participant($closed, 'buyer');
-    $open->forceFill(['buyer_id' => $me->id])->save();
-
-    $closed->forceFill(['last_message_at' => now()->subDay()])->save();
-    $open->forceFill(['last_message_at' => now()])->save();
+it('беседа по давно снятому объявлению в списке остаётся обычной: без признаков «закрыта» и причины', function () {
+    $old = MessagingFixtures::conversation(MessagingFixtures::listing(ListingStatus::Withdrawn, now()->subDays(100)));
+    $me = participant($old, 'buyer');
+    $old->forceFill(['last_message_at' => now()->subDay()])->save();
 
     $this->actingAs($me)->get('/messages')
         ->assertInertia(fn (AssertableInertia $page) => $page
-            ->where('conversations.0.id', $open->id)
-            ->where('conversations.0.closed', false)
-            ->where('conversations.1.id', $closed->id)
-            ->where('conversations.1.closed', true)
-            ->where('conversations.1.closed_reason', 'Объявление не опубликовано больше 30 дней — беседа доступна только для чтения.'));
+            ->where('conversations.0.id', $old->id)
+            ->missing('conversations.0.closed')
+            ->missing('conversations.0.closed_reason')
+            ->where('conversations.0.listing.status', 'withdrawn'));
 });
 
 it('открытая беседа: данные беседы, сообщения от старых к новым, признак «моё», есть ли более ранние', function () {
@@ -136,7 +135,7 @@ it('открытая беседа: данные беседы, сообщения
             ->component('Messages/Index')
             ->has('conversations', 1)
             ->where('active.conversation.id', $conversation->id)
-            ->where('active.conversation.closed_reason', null)
+            ->missing('active.conversation.closed_reason')
             ->where('active.messages.0.body', 'Ещё продаётся?')
             ->where('active.messages.0.mine', true)
             ->where('active.messages.1.body', 'Да')
@@ -162,28 +161,56 @@ it('чужая беседа и несуществующий id — 404', functio
     $this->get('/messages/'.Str::uuid())->assertNotFound();
 });
 
-it('причина «только чтение»: опубликовано — нет; ушло из published, окно открыто — нет; окно закрыто — срок', function () {
-    $published = MessagingFixtures::conversation();
-    $buyer = participant($published, 'buyer');
-    $inWindow = MessagingFixtures::conversation(MessagingFixtures::listing(ListingStatus::Withdrawn, now()->subDays(10)), $buyer);
-    $expired = MessagingFixtures::conversation(MessagingFixtures::listing(ListingStatus::Expired, now()->subDays(31)), $buyer);
-
-    $this->actingAs($buyer);
-    $this->get("/messages/{$published->id}")->assertInertia(fn (AssertableInertia $p) => $p->where('active.conversation.closed_reason', null));
-    $this->get("/messages/{$inWindow->id}")->assertInertia(fn (AssertableInertia $p) => $p->where('active.conversation.closed_reason', null));
-    $this->get("/messages/{$expired->id}")->assertInertia(fn (AssertableInertia $p) => $p
-        ->where('active.conversation.closed_reason', 'Объявление не опубликовано больше 30 дней — беседа доступна только для чтения.'));
-});
-
-it('отклонено модератором — закрыто сразу, даже в окне 30 дней', function () {
-    $conversation = MessagingFixtures::conversation(MessagingFixtures::listing(ListingStatus::Rejected, now()->subDay()));
+it('статус объявления в беседе: последнее состояние без причины снятия', function (ListingStatus $status, ?WithdrawReason $reason, string $expected) {
+    $listing = MessagingFixtures::listing($status, now()->subDays(40));
+    $conversation = MessagingFixtures::conversation($listing);
+    if ($reason !== null) {
+        SaleRecord::query()->create(['listing_id' => $listing->id, 'reason' => $reason]);
+    }
 
     $this->actingAs(participant($conversation, 'buyer'))->get("/messages/{$conversation->id}")
         ->assertInertia(fn (AssertableInertia $p) => $p
-            ->where('active.conversation.closed_reason', 'Объявление снято модерацией — беседа доступна только для чтения.'));
+            ->where('active.conversation.listing.status', $expected)
+            ->missing('active.conversation.listing.reason')
+            ->missing('active.conversation.listing.withdraw_reason'));
+})->with([
+    'опубликовано' => [ListingStatus::Published, null, 'published'],
+    'продано' => [ListingStatus::Withdrawn, WithdrawReason::SoldHere, 'sold'],
+    'продано в другом месте' => [ListingStatus::Withdrawn, WithdrawReason::SoldElsewhere, 'sold'],
+    'снято' => [ListingStatus::Withdrawn, WithdrawReason::ChangedMind, 'withdrawn'],
+    'снято модерацией: причина не раскрывается' => [ListingStatus::Withdrawn, WithdrawReason::Moderation, 'withdrawn'],
+    'истёк срок' => [ListingStatus::Expired, null, 'expired'],
+    'на проверке' => [ListingStatus::Pending, null, 'pending'],
+    'отклонено' => [ListingStatus::Rejected, null, 'rejected'],
+]);
+
+it('карточка объявления вверху беседы: название, цена, статус и обложка без серийного номера', function () {
+    Storage::fake(config('photos.disk'));
+    $listing = MessagingFixtures::listing(ListingStatus::Withdrawn, now()->subDays(40));
+    $listing->forceFill(['price' => 184_500])->save();
+    $serial = ListingPhoto::query()->create(['listing_id' => $listing->id, 'path' => 'photos/s', 'position' => 0, 'is_serial' => true]);
+    $serial->forceFill(['processed_at' => now()])->save();
+    $cover = ListingPhoto::query()->create(['listing_id' => $listing->id, 'path' => 'photos/c', 'position' => 1]);
+    $cover->forceFill(['processed_at' => now()])->save();
+    $conversation = MessagingFixtures::conversation($listing);
+
+    $this->actingAs(participant($conversation, 'buyer'))->get("/messages/{$conversation->id}")
+        ->assertInertia(fn (AssertableInertia $p) => $p
+            ->where('active.conversation.listing.title', $listing->title)
+            ->where('active.conversation.listing.price', 184_500)
+            ->where('active.conversation.listing.available', false)
+            ->where('active.conversation.listing.cover.webp', fn ($url) => str_contains((string) $url, "/media/photos/{$cover->id}/square.webp"))
+            ->where('active.conversation.listing.cover.avif', fn ($url) => str_contains((string) $url, "/media/photos/{$cover->id}/square.avif")));
 });
 
-it('собеседник удалил аккаунт — закрыто с причиной, имя не показывается', function () {
+it('без готовой обложки cover — null', function () {
+    $conversation = MessagingFixtures::conversation();
+
+    $this->actingAs(participant($conversation, 'buyer'))->get("/messages/{$conversation->id}")
+        ->assertInertia(fn (AssertableInertia $p) => $p->where('active.conversation.listing.cover', null));
+});
+
+it('собеседник удалил аккаунт — имя не показывается, признак deleted есть, причины закрытия нет', function () {
     $conversation = MessagingFixtures::conversation();
     $seller = participant($conversation, 'seller');
     $buyer = participant($conversation, 'buyer');
@@ -192,16 +219,17 @@ it('собеседник удалил аккаунт — закрыто с пр�
 
     $this->actingAs($seller)->get("/messages/{$conversation->id}")
         ->assertInertia(fn (AssertableInertia $p) => $p
-            ->where('active.conversation.closed_reason', 'Собеседник удалил аккаунт — новые сообщения недоступны.')
+            ->missing('active.conversation.closed_reason')
             ->where('active.conversation.counterpart.deleted', true));
 });
 
-it('причина закрытия есть и в JSON истории беседы — клиент берёт её при обновлении', function () {
+it('JSON истории беседы: статус объявления есть, причины закрытия нет', function () {
     $conversation = MessagingFixtures::conversation(MessagingFixtures::listing(ListingStatus::Rejected, now()->subDay()));
 
     $this->actingAs(participant($conversation, 'buyer'))->getJson("/conversations/{$conversation->id}/messages")
         ->assertOk()
-        ->assertJsonPath('conversation.closed_reason', 'Объявление снято модерацией — беседа доступна только для чтения.');
+        ->assertJsonPath('conversation.listing.status', 'rejected')
+        ->assertJsonMissingPath('conversation.closed_reason');
 });
 
 it('«Написать»: по опубликованному чужому объявлению без беседы открывает черновик — беседа появится с первым сообщением', function () {

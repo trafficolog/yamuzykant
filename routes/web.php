@@ -2,6 +2,7 @@
 
 declare(strict_types=1);
 
+use App\Http\Controllers\Account\AccountController;
 use App\Http\Controllers\Auth\EmailLoginController;
 use App\Http\Controllers\Auth\LogoutController;
 use App\Http\Controllers\Auth\RegistrationController;
@@ -71,10 +72,21 @@ Route::prefix('auth')->name('auth.')->group(function (): void {
 // Страница объявления (3.1.5, UC-V1): открыта всем; не опубликованное — только владельцу и сотрудникам, остальным 404.
 Route::get('/listings/{listing}', LotController::class)->whereUuid('listing')->name('lot.show');
 
-// Форма «Продать инструмент» (2.1.3): страница с черновиком и проверка содержимого. Гость — на главную, вход — окно.
+// Кабинет (1.1.3, UC-A2): «Обзор» и «Профиль»; правки профиля и писем — не чаще 30 в минуту. Гость — на главную.
+Route::middleware('auth')->prefix('account')->name('account.')->group(function (): void {
+    Route::get('/', [AccountController::class, 'overview'])->name('overview');
+    Route::get('profile', [AccountController::class, 'profile'])->name('profile');
+    Route::patch('profile', [AccountController::class, 'updateProfile'])->middleware('throttle:30,1')->name('profile.update');
+    Route::put('notifications', [AccountController::class, 'updateNotifications'])->middleware('throttle:30,1')->name('notifications.update');
+});
+
+// Форма «Продать инструмент» (2.1.3, 2.1.4): страница с черновиком, публикация, автосохранение черновика (раз в 5 с,
+// поэтому лимит выше), экран «Объявление опубликовано». Гость — на главную, вход — окно.
 Route::middleware('auth')->group(function (): void {
     Route::get('/sell', [SellController::class, 'create'])->name('sell');
     Route::post('/sell', [SellController::class, 'store'])->middleware('throttle:60,1')->name('sell.store');
+    Route::put('/sell/draft', [SellController::class, 'saveDraft'])->middleware('throttle:120,1')->name('sell.draft');
+    Route::get('/sell/{listing}/done', [SellController::class, 'done'])->whereUuid('listing')->name('sell.done');
 });
 
 // Фото объявления (2.1.2): URL загрузки, подтверждение, порядок, удаление — для владельца (ListingPolicy::update).

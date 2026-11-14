@@ -10,8 +10,10 @@ export interface CityOption {
 }
 
 /** Строка справочника из `GET /cities`. */
-interface CityListItem extends CityOption {
+export interface CityListItem extends CityOption {
     region: string;
+    /** Тип населённого пункта: «г.», «пос.», «д.» — перед названием в тексте. */
+    type?: string;
 }
 
 type CityResult = { key: string; items: CityListItem[] } | { key: string; failed: true };
@@ -32,7 +34,7 @@ export interface CityPickerProps {
     searchId: string;
     /** Выбранный сейчас город — помечается `aria-current`. */
     selectedId?: number;
-    onChoose: (city: CityOption) => void;
+    onChoose: (city: CityListItem) => void;
     /** Сообщение об ошибке выбора (например, не удалось сохранить) над списком. */
     notice?: string | null;
 }

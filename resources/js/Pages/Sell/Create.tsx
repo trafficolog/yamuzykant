@@ -1,7 +1,7 @@
 import { Alert, Button, Field, FilterChip, Icon, PriceGuide, Textarea } from '@ds';
 import type { Condition, IconName } from '@ds';
 import { router, usePage } from '@inertiajs/react';
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import type { FormEvent, ReactNode } from 'react';
 
 import { ModelCombobox } from '@/Components/ModelCombobox';
@@ -13,6 +13,8 @@ import { useFlag } from '@/Hooks/useFlag';
 import PublicLayout from '@/Layouts/PublicLayout';
 import { ru } from '@/lang/ru';
 import { formatPrice, parsePrice } from '@/lib/price';
+import { saveDraft } from '@/lib/sellDraft';
+import type { DraftPayload } from '@/lib/sellDraft';
 import { SERIAL_MAX, TITLE_MAX, fieldErrors, missingItems } from '@/lib/sellForm';
 import type { PriceMode } from '@/lib/sellForm';
 
@@ -34,12 +36,31 @@ type SharedProps = {
     errors?: Record<string, string>;
 };
 
+/**
+ * Сохранённое содержимое формы (SellController::draftProps). null — форма ещё не сохранялась.
+ * Серийный номер целиком не приходит: только маска (AGENTS.md §4).
+ */
+interface SellDraft {
+    kind_id: number | null;
+    title: string | null;
+    model_id: number | null;
+    year: number | null;
+    serial_masked: string | null;
+    condition: Condition | null;
+    description: string | null;
+    price_mode: PriceMode;
+    price: number | null;
+    negotiable: boolean;
+    meet: boolean;
+    ship: boolean;
+}
+
 interface SellCreateProps {
     /** Черновик продавца: к нему привязываются фото. */
     listingId: string;
     photos: ListingPhoto[];
-    /** Содержимое формы только что записано в черновик. */
-    saved: boolean;
+    /** Восстанавливаемое содержимое формы после перезагрузки (UC-L1 7b). */
+    draft?: SellDraft | null;
     /** Город шапки для «Встреча в г. Москва»: тип населённого пункта и название, без склонения. */
     place?: { type: string; name: string } | null;
     /** Вилка цен продаж модели для PriceGuide; сервер отдаёт её с флагом sale_prices (вне MVP — не отдаёт). */
@@ -64,6 +85,24 @@ const STEPS_ID = {
     cond: 'sell-step-3',
     price: 'sell-step-4',
 };
+
+/** Как часто автосохранение отправляет несохранённые правки (UC-L1 7b). */
+const AUTOSAVE_MS = 5000;
+
+/** Время сохранения по Москве (AGENTS.md §4): «14:03». */
+function timeLabel(iso: string | null): string {
+    const parsed = iso === null ? new Date() : new Date(iso);
+    const date = Number.isNaN(parsed.getTime()) ? new Date() : parsed;
+
+    return date.toLocaleTimeString('ru-RU', {
+        hour: '2-digit',
+        minute: '2-digit',
+        timeZone: 'Europe/Moscow',
+    });
+}
+
+type DraftStatus =
+    { kind: 'idle' } | { kind: 'saved'; time: string } | { kind: 'failed'; message: string | null };
 
 /** Корневой вид, в дереве которого лежит категория (модель справочника привязана к пункту, не к виду). */
 function rootKindOf(categories: readonly SharedCategory[], categoryId: number): number | null {
@@ -101,14 +140,15 @@ function Step({
 }
 
 /**
- * Форма «Продать инструмент» (UC-L1 п. 1–6): четыре шага на одной странице, превью ListingCard справа,
- * список недостающего над кнопкой. Сейчас форма записывает содержимое в черновик (StoreListingRequest);
- * публикация, автосохранение и экран «Опубликовано» — 2.1.4.
+ * Форма «Продать инструмент» (UC-L1): четыре шага на одной странице, превью ListingCard справа,
+ * список недостающего над кнопкой. «Опубликовать» отправляет форму на публикацию (экран результата — Sell/Published);
+ * правки уходят в черновик каждые 5 с, при уходе со страницы и по «Сохранить черновик»; после перезагрузки
+ * форма восстанавливается из черновика.
  */
 export default function SellCreate({
     listingId,
     photos: initialPhotos,
-    saved,
+    draft = null,
     place = null,
     priceGuide = null,
 }: SellCreateProps) {
@@ -120,20 +160,30 @@ export default function SellCreate({
     const showPriceGuide = useFlag('sale_prices');
     const safeDeal = useFlag('safe_deal');
 
-    const [kindId, setKindId] = useState<number | null>(categories[0]?.id ?? null);
-    const [title, setTitle] = useState('');
-    const [modelId, setModelId] = useState<number | null>(null);
-    const [year, setYear] = useState('');
+    const [kindId, setKindId] = useState<number | null>(
+        draft?.kind_id ?? categories[0]?.id ?? null,
+    );
+    const [title, setTitle] = useState(draft?.title ?? '');
+    const [modelId, setModelId] = useState<number | null>(draft?.model_id ?? null);
+    const [year, setYear] = useState(draft?.year == null ? '' : String(draft.year));
+    // Серийный номер целиком не восстанавливается: поле пустое, пока продавец не введёт новый.
     const [serial, setSerial] = useState('');
+    const [serialTouched, setSerialTouched] = useState(false);
+    const serialMask = draft?.serial_masked ?? null;
     const [photos, setPhotos] = useState<ListingPhoto[]>(initialPhotos);
-    const [condition, setCondition] = useState<Condition | null>(null);
-    const [description, setDescription] = useState('');
-    const [priceMode, setPriceMode] = useState<PriceMode>('amount');
-    const [priceText, setPriceText] = useState('');
-    const [negotiable, setNegotiable] = useState(true);
-    const [meet, setMeet] = useState(true);
-    const [ship, setShip] = useState(true);
+    const [condition, setCondition] = useState<Condition | null>(draft?.condition ?? null);
+    const [description, setDescription] = useState(draft?.description ?? '');
+    const [priceMode, setPriceMode] = useState<PriceMode>(draft?.price_mode ?? 'amount');
+    const [priceText, setPriceText] = useState(
+        draft?.price_mode === 'amount' && draft.price ? formatPrice(String(draft.price)) : '',
+    );
+    const [negotiable, setNegotiable] = useState(
+        draft === null || draft.price_mode !== 'amount' ? true : draft.negotiable,
+    );
+    const [meet, setMeet] = useState(draft?.meet ?? true);
+    const [ship, setShip] = useState(draft?.ship ?? true);
     const [sending, setSending] = useState(false);
+    const [draftStatus, setDraftStatus] = useState<DraftStatus>({ kind: 'idle' });
     // Превью рисуется только в браузере: в серверной разметке и до гидратации карточка ДС показала бы «0 ₽» (BR-11).
     const [mounted, setMounted] = useState(false);
     useEffect(() => setMounted(true), []);
@@ -148,6 +198,71 @@ export default function SellCreate({
     const grade = ru.sell.conditions.find((item) => item.key === condition);
     const previewPhoto = photos.find((photo) => photo.is_serial === false && photo.urls !== null);
     const amountMode = priceMode === 'amount';
+
+    // Содержимое для черновика: неполная форма допустима. Нетронутый серийный номер не отправляется —
+    // на сервере остаётся прежний; невалидный год (пока печатают) уходит пустым.
+    const serialKept = serialMask !== null && !serialTouched;
+    const draftPayload: DraftPayload = {
+        listing_id: listingId,
+        category_id: kindId,
+        title: title.trim() === '' ? null : title.trim(),
+        model_id: modelId,
+        year: year.length === 4 && limits.year === undefined ? Number(year) : null,
+        ...(serialKept ? {} : { serial: serial.trim() === '' ? null : serial.trim() }),
+        condition,
+        description: description.trim() === '' ? null : description.trim(),
+        price_mode: priceMode,
+        price: amountMode && price > 0 ? price : null,
+        negotiable: amountMode && negotiable,
+        meet,
+        ship,
+    };
+    const signature = JSON.stringify(draftPayload);
+
+    // Сигнатура последнего сохранённого (или исходного) состояния: без правок автосохранение молчит.
+    const savedSignature = useRef(signature);
+    const latest = useRef({ payload: draftPayload, signature });
+    const inFlight = useRef(false);
+    // «Опубликовать» нажато: черновик больше не трогаем (публикация сама записывает форму).
+    const publishing = useRef(false);
+    useEffect(() => {
+        latest.current = { payload: draftPayload, signature };
+    });
+
+    const flush = useCallback(async (keepalive: boolean, force = false): Promise<void> => {
+        const { payload, signature: current } = latest.current;
+        if (publishing.current || inFlight.current) return;
+        if (!force && current === savedSignature.current) return;
+
+        inFlight.current = true;
+        const result = await saveDraft(payload, keepalive);
+        inFlight.current = false;
+
+        if (result.ok) {
+            savedSignature.current = current;
+            setDraftStatus({ kind: 'saved', time: timeLabel(result.savedAt) });
+        } else {
+            setDraftStatus({ kind: 'failed', message: result.message });
+        }
+    }, []);
+
+    useEffect(() => {
+        const timer = window.setInterval(() => void flush(false), AUTOSAVE_MS);
+        const leave = () => void flush(true);
+        const hidden = () => {
+            if (document.visibilityState === 'hidden') leave();
+        };
+        window.addEventListener('pagehide', leave);
+        document.addEventListener('visibilitychange', hidden);
+
+        return () => {
+            window.clearInterval(timer);
+            window.removeEventListener('pagehide', leave);
+            document.removeEventListener('visibilitychange', hidden);
+            // Переход на другую страницу Inertia: страница не выгружается, pagehide не будет.
+            leave();
+        };
+    }, [flush]);
     // BR-11: в превью «0 ₽» не бывает — «Договорная», «Бесплатно» или просьба указать цену.
     const priceLabel =
         priceMode === 'amount'
@@ -181,6 +296,8 @@ export default function SellCreate({
         if (missing.length > 0 || Object.keys(limits).length > 0) return;
         if (kindId === null || condition === null || sending) return;
 
+        publishing.current = true;
+        setSending(true);
         router.post(
             '/sell',
             {
@@ -189,7 +306,7 @@ export default function SellCreate({
                 title: title.trim(),
                 model_id: modelId,
                 year: year === '' ? null : Number(year),
-                serial: serial.trim() === '' ? null : serial.trim(),
+                ...(serialKept ? {} : { serial: serial.trim() === '' ? null : serial.trim() }),
                 condition,
                 description: description.trim() === '' ? null : description.trim(),
                 price_mode: priceMode,
@@ -201,15 +318,19 @@ export default function SellCreate({
             {
                 preserveScroll: true,
                 preserveState: true,
-                onStart: () => setSending(true),
                 onFinish: () => setSending(false),
-                onError: focusProblem,
+                onError: (serverErrors) => {
+                    publishing.current = false;
+                    focusProblem(serverErrors);
+                },
             },
         );
     };
 
     const otherErrors = Object.entries(errors)
-        .filter(([field]) => !(FIELD_ERRORS as readonly string[]).includes(field))
+        .filter(
+            ([field]) => field !== 'limit' && !(FIELD_ERRORS as readonly string[]).includes(field),
+        )
         .map(([, message]) => message);
 
     return (
@@ -230,14 +351,6 @@ export default function SellCreate({
                 <h1 className="type-h1 ym-sell__title">{ru.sell.title}</h1>
                 <p className="type-body-s ym-sell__lead">{ru.sell.lead}</p>
             </div>
-
-            {saved ? (
-                <div className="ym-sell__saved">
-                    <Alert tone="success" title={ru.sell.saved.title}>
-                        {ru.sell.saved.text}
-                    </Alert>
-                </div>
-            ) : null}
 
             <div className="ym-sell__layout">
                 <form className="ym-sell__form" onSubmit={submit} noValidate>
@@ -282,11 +395,18 @@ export default function SellCreate({
                                 id="sell-serial"
                                 label={ru.sell.serial.label}
                                 placeholder={ru.sell.serial.placeholder}
-                                hint={ru.sell.serial.hint}
+                                hint={
+                                    serialKept && serialMask !== null
+                                        ? ru.sell.draft.serialSaved(serialMask)
+                                        : ru.sell.serial.hint
+                                }
                                 value={serial}
                                 maxLength={SERIAL_MAX}
                                 error={message('serial')}
-                                onChange={(event) => setSerial(event.target.value)}
+                                onChange={(event) => {
+                                    setSerial(event.target.value);
+                                    setSerialTouched(true);
+                                }}
                             />
                         </div>
                     </Step>
@@ -400,11 +520,18 @@ export default function SellCreate({
                     </Step>
 
                     <div className="ym-sell__footer">
-                        {otherErrors.length > 0 ? (
+                        {otherErrors.length > 0 || errors.limit !== undefined ? (
                             <div ref={alertRef} tabIndex={-1} className="ym-sell__alert">
-                                <Alert tone="danger" title={ru.sell.errorsTitle}>
-                                    {otherErrors.join(' ')}
-                                </Alert>
+                                {errors.limit !== undefined ? (
+                                    <Alert tone="danger" title={ru.sell.limit.title}>
+                                        {errors.limit}
+                                    </Alert>
+                                ) : null}
+                                {otherErrors.length > 0 ? (
+                                    <Alert tone="danger" title={ru.sell.errorsTitle}>
+                                        {otherErrors.join(' ')}
+                                    </Alert>
+                                ) : null}
                             </div>
                         ) : null}
                         {missing.length > 0 ? (
@@ -422,7 +549,26 @@ export default function SellCreate({
                             >
                                 {ru.sell.publish}
                             </Button>
+                            <Button
+                                variant="ghost"
+                                size="l"
+                                type="button"
+                                disabled={sending}
+                                onClick={() => void flush(false, true)}
+                            >
+                                {ru.sell.saveDraft}
+                            </Button>
                         </div>
+                        {draftStatus.kind === 'saved' ? (
+                            <p role="status" className="type-body-s ym-sell__draft-status">
+                                {ru.sell.draft.saved(draftStatus.time)}
+                            </p>
+                        ) : null}
+                        {draftStatus.kind === 'failed' ? (
+                            <p role="status" className="type-body-s ym-sell__draft-status">
+                                {draftStatus.message ?? ru.sell.draft.failed}
+                            </p>
+                        ) : null}
                     </div>
                 </form>
 

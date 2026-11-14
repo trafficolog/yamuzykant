@@ -8,13 +8,16 @@ use App\Domain\Catalog\Models\City;
 use App\Domain\Catalog\Models\InstrumentModel;
 use App\Domain\Listings\Enums\Condition;
 use App\Domain\Listings\Enums\ListingStatus;
+use App\Domain\Listings\Enums\WithdrawReason;
 use App\Domain\Listings\Events\ListingMinorEdited;
 use App\Domain\Listings\Events\ListingPriceDropped;
 use App\Domain\Listings\Events\ListingSubstantiallyEdited;
+use App\Domain\Listings\Events\ListingTransitioned;
 use App\Domain\Listings\Models\Listing;
 use App\Domain\Listings\StateMachines\ListingStateMachine;
 use App\Support\Flags\FeatureFlag;
 use Illuminate\Support\Facades\Event;
+use Illuminate\Validation\ValidationException;
 use Laravel\Pennant\Feature;
 
 beforeEach(function () {
@@ -176,4 +179,59 @@ it('цена 0 допустима (отдам даром) и считается 
 
     expect($listing->fresh()?->price)->toBe(0);
     Event::assertDispatched(ListingPriceDropped::class);
+});
+
+describe('блокирующие автопроверки при правке опубликованного (ревью PR #130, 2.1.4)', function () {
+    it('контакт в новом описании: правка отклонена, объявление не изменено, событий нет', function (string $text) {
+        $listing = publishedStrat();
+        Event::fake();
+
+        expect(fn () => app(ListingStateMachine::class)->edit($listing, ['description' => $text, 'price' => 100_000]))
+            ->toThrow(ValidationException::class);
+
+        $fresh = $listing->fresh();
+        expect($fresh?->status)->toBe(ListingStatus::Published)
+            ->and($fresh?->description)->toBe('Оригинальный корпус, родной кейс.')
+            ->and($fresh?->price)->toBe(184_500);
+        Event::assertNotDispatched(ListingTransitioned::class);
+    })->with([
+        'телефон' => ['Звоните +7 916 123-45-67'],
+        'почта' => ['Пишите ivan@mail.ru'],
+        'ссылка' => ['Больше фото: https://example.com/strat'],
+    ]);
+
+    it('ошибка приходит по полю: description или title', function () {
+        $listing = publishedStrat();
+
+        try {
+            app(ListingStateMachine::class)->edit($listing, ['title' => 'Fender @ivan_guitar', 'description' => 'Звоните 89161234567']);
+            $this->fail('Правка с контактами прошла.');
+        } catch (ValidationException $e) {
+            expect(array_keys($e->errors()))->toEqualCanonicalizing(['title', 'description']);
+        }
+    });
+
+    it('объявление с пометкой серийного номера в описании: продление, возврат и правка цены не блокируются', function () {
+        $listing = Listing::factory()->inStatus(ListingStatus::Published)->create(['description' => 'Серийный номер V091234']);
+        $machine = app(ListingStateMachine::class);
+
+        $machine->edit($listing, ['price' => 170_000]);
+        $machine->expire($listing);
+        $machine->renew($listing);
+        $machine->withdraw($listing, WithdrawReason::ChangedMind);
+        $machine->relist($listing);
+
+        expect($listing->fresh()?->status)->toBe(ListingStatus::Published)
+            ->and($listing->fresh()?->price)->toBe(170_000);
+    });
+
+    it('правка без текста (цена, фото) автопроверок не требует; чистый текст проходит', function () {
+        $listing = publishedStrat();
+        $machine = app(ListingStateMachine::class);
+
+        $machine->edit($listing, ['price' => 170_000]);
+        $machine->edit($listing, ['description' => 'Родной кейс, 1957 год, торг при осмотре.']);
+
+        expect($listing->fresh()?->description)->toBe('Родной кейс, 1957 год, торг при осмотре.');
+    });
 });
