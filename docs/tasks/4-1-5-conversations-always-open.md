@@ -3,7 +3,7 @@ id: "4.1.5"
 phase: "4"
 epic: "4.1"
 title: "Сообщения: беседы всегда открыты, последнее состояние объявления, без архива"
-status: review
+status: done
 gate: G1
 risk: medium
 model_impl: sonnet
@@ -14,7 +14,7 @@ uc: []
 prototype: ""
 screens: ["messages"]
 issue: 134
-sync_state: drifted
+sync_state: aligned
 escalations: []
 ---
 

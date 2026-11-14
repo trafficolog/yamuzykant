@@ -3,7 +3,7 @@ id: "2.1.4"
 phase: "2"
 epic: "2.1"
 title: "Черновик, публикация, экран «Опубликовано»"
-status: review
+status: done
 gate: G1
 risk: medium
 model_impl: sonnet
@@ -14,7 +14,7 @@ uc: ["L1"]
 prototype: "Десктоп - Продать.dc.html"
 screens: ["sell"]
 issue: 23
-sync_state: drifted
+sync_state: aligned
 escalations: []
 ---
 
