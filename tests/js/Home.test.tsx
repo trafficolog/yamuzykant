@@ -164,8 +164,12 @@ describe('Home', () => {
             />,
         );
 
-        expect(screen.getByText('Договорная')).toBeInTheDocument();
-        expect(screen.getByText('Бесплатно')).toBeInTheDocument();
+        // Подпись задаёт CSS из --price-label на обёртке карточки (3.1.9), в DOM текста цены нет.
+        const [negotiable, free] = screen.getAllByRole('article') as HTMLElement[];
+        const labelOf = (article?: HTMLElement) =>
+            article?.parentElement?.style.getPropertyValue('--price-label');
+        expect(labelOf(negotiable)).toBe('"Договорная"');
+        expect(labelOf(free)).toBe('"Бесплатно"');
         expect(document.body.textContent).not.toMatch(/0\s*₽/);
     });
 
