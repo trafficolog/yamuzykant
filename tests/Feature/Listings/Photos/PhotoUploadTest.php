@@ -109,10 +109,13 @@ describe('presign', function () {
         $user = photoOwner();
         $this->actingAs($user);
 
-        requestUpload(draftOf($user), 'image/jpeg', 15 * 1024 * 1024 + 1)
+        // У пользователя один черновик (индекс listings_one_draft_per_user, 2.1.4).
+        $draft = draftOf($user);
+
+        requestUpload($draft, 'image/jpeg', 15 * 1024 * 1024 + 1)
             ->assertUnprocessable()
             ->assertJsonValidationErrors(['size' => 'Фото больше 15 МБ. Уменьшите его и загрузите снова.']);
-        requestUpload(draftOf($user), 'image/jpeg', 15 * 1024 * 1024)->assertCreated();
+        requestUpload($draft, 'image/jpeg', 15 * 1024 * 1024)->assertCreated();
     });
 
     it('гостю — 401, чужому — 403', function () {
@@ -330,8 +333,8 @@ describe('confirm', function () {
         $this->actingAs($owner);
         $uploadId = uploadBytes($listing, ImageFixtures::jpeg());
 
-        // Та же загрузка к другому черновику того же владельца.
-        confirmUpload(draftOf($owner), $uploadId)->assertUnprocessable();
+        // Та же загрузка к другому объявлению того же владельца (на доработке: оно тоже редактируемое).
+        confirmUpload(Listing::factory()->for($owner)->inStatus(ListingStatus::NeedsChanges)->create(), $uploadId)->assertUnprocessable();
 
         // Чужой пользователь к этому черновику — 403.
         $this->actingAs(photoOwner());
@@ -507,7 +510,7 @@ describe('порядок и удаление', function () {
         $this->actingAs(photoOwner());
         $this->deleteJson("/listings/{$listing->id}/photos/{$photo->id}")->assertForbidden();
 
-        $other = draftOf($user);
+        $other = Listing::factory()->for($user)->inStatus(ListingStatus::NeedsChanges)->create();
         $this->actingAs($user);
         $this->deleteJson("/listings/{$other->id}/photos/{$photo->id}")->assertNotFound();
     });

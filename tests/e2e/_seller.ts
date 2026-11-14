@@ -80,3 +80,22 @@ export async function addPhoto(page: Page, cell: string, seed: number): Promise<
         await chooser
     ).setFiles({ name: `photo-${seed}.png`, mimeType: 'image/png', buffer: stripedPng(seed) });
 }
+
+/**
+ * Переключает продавца на город без демо-объявлений (Воронеж): публикация в тестах не меняет число лотов
+ * Москвы, Казани и Санкт-Петербурга, на которые рассчитаны UC-S2, UC-S3 и экран лота.
+ */
+export async function useQuietCity(page: Page): Promise<void> {
+    const search = await page.request.get(`/cities?q=${encodeURIComponent('Воронеж')}`, {
+        headers: { Accept: 'application/json' },
+    });
+    const cities = ((await search.json()) as { data: Array<{ id: number; name: string }> }).data;
+    const city = cities.find((item) => item.name === 'Воронеж');
+    if (!city) throw new Error('В справочнике нет города Воронеж');
+
+    const response = await page.request.post('/city', {
+        data: { city_id: city.id },
+        headers: { 'X-XSRF-TOKEN': await xsrf(page), Accept: 'application/json' },
+    });
+    expect(response.ok(), `/city: ${response.status()}`).toBeTruthy();
+}

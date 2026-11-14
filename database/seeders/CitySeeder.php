@@ -7,7 +7,11 @@ namespace Database\Seeders;
 use App\Domain\Catalog\Models\City;
 use Illuminate\Database\Seeder;
 
-/** Города-миллионники России (перепись 2021) с координатами центра, стабильным slug и типом населённого пункта «г.». */
+/**
+ * Города-миллионники России (перепись 2021) с координатами центра и стабильным slug.
+ * Тип населённого пункта «г.» задаётся только при создании записи: правка вручную (например «гор.») переживает
+ * повторный запуск сидера (ревью PR #126), а slug и координаты по-прежнему приводятся к справочнику.
+ */
 class CitySeeder extends Seeder
 {
     /**
@@ -35,10 +39,12 @@ class CitySeeder extends Seeder
     public function run(): void
     {
         foreach (self::CITIES as [$name, $region, $slug, $lat, $lng]) {
-            City::query()->updateOrCreate(
-                ['name' => $name, 'region' => $region],
-                ['slug' => $slug, 'lat' => $lat, 'lng' => $lng, 'settlement_type' => 'г.'],
-            );
+            $city = City::query()->firstOrNew(['name' => $name, 'region' => $region]);
+            $city->fill(['slug' => $slug, 'lat' => $lat, 'lng' => $lng]);
+            if (! $city->exists) {
+                $city->settlement_type = 'г.';
+            }
+            $city->save();
         }
     }
 }

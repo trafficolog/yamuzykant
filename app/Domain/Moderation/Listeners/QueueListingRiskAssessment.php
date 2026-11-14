@@ -27,7 +27,8 @@ final class QueueListingRiskAssessment
         }
 
         if (in_array($event->event, self::TRIGGERS, true)) {
-            AssessListingRisk::dispatch($event->listing->id);
+            // После фиксации: публикация идёт в транзакции под блокировкой лимита, очередь не должна опередить commit.
+            AssessListingRisk::dispatch($event->listing->id)->afterCommit();
         }
     }
 }
