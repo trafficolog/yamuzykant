@@ -18,6 +18,10 @@ export const fleaPath = (categoryPath?: string | null): string =>
  */
 export const HREF_SOON = '#';
 
+/** Кабинет (1.1.3): «Обзор» и «Профиль». */
+export const ACCOUNT_PATH = '/account';
+export const PROFILE_PATH = '/account/profile';
+
 /** Экран сообщений (4.1.2): шапка, меню кабинета, вкладка нижней панели. */
 export const MESSAGES_PATH = '/messages';
 

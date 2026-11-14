@@ -78,7 +78,10 @@ describe('шапка: вошедший', () => {
             'href',
             '/messages',
         );
-        expect(within(menu).getByRole('link', { name: 'Профиль' })).toBeInTheDocument();
+        expect(within(menu).getByRole('link', { name: 'Профиль' })).toHaveAttribute(
+            'href',
+            '/account/profile',
+        );
         expect(within(menu).getByRole('button', { name: 'Выйти' })).toBeInTheDocument();
     });
 

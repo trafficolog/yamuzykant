@@ -12,6 +12,7 @@ import '../css/site.css';
 import '../css/flea.css';
 import '../css/messages.css';
 import '../css/lot.css';
+import '../css/account.css';
 
 // Ошибки браузера в Sentry: без VITE_SENTRY_DSN выключено (CI, локальная разработка).
 initSentry({
