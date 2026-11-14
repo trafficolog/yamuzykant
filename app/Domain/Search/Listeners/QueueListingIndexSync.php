@@ -24,7 +24,8 @@ final class QueueListingIndexSync
         }
 
         if ($event->from === ListingStatus::Published || $event->to === ListingStatus::Published) {
-            SyncListingToIndex::dispatch($event->listing->id);
+            // После фиксации: публикация идёт в транзакции под блокировкой лимита, очередь не должна опередить commit.
+            SyncListingToIndex::dispatch($event->listing->id)->afterCommit();
         }
     }
 }

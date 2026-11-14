@@ -3,7 +3,7 @@ id: "3.1.6"
 phase: "3"
 epic: "3.1"
 title: "Страница продавца"
-status: todo
+status: in_progress
 gate: G1
 risk: low
 model_impl: haiku

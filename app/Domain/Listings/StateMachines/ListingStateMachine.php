@@ -24,11 +24,13 @@ use App\Domain\Listings\Exceptions\IllegalTransition;
 use App\Domain\Listings\Models\Listing;
 use App\Domain\Listings\Models\SaleRecord;
 use App\Domain\Listings\Rules\SubstantialEdit;
+use App\Domain\Moderation\AutoChecks\ListingAutoChecks;
 use App\Domain\Moderation\Enums\ModerationVerdict;
 use App\Domain\Moderation\Models\ModerationDecision;
 use App\Support\Flags\FeatureFlag;
 use Closure;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Validation\ValidationException;
 use InvalidArgumentException;
 use Laravel\Pennant\Feature;
 
@@ -88,6 +90,8 @@ final class ListingStateMachine
         'renew' => ListingRenewed::class,
         'relist' => ListingRelisted::class,
     ];
+
+    public function __construct(private readonly ListingAutoChecks $checks) {}
 
     /**
      * Статус после события.
@@ -172,6 +176,7 @@ final class ListingStateMachine
      * @param  array<string, mixed>  $attributes
      *
      * @throws InvalidArgumentException поле вне белого списка или отрицательная цена
+     * @throws ValidationException контакты в новом названии или описании (блокирующие автопроверки 5.1.1, BR-04)
      */
     public function edit(Listing $listing, array $attributes, bool $photosChanged = false): Listing
     {
@@ -186,6 +191,7 @@ final class ListingStateMachine
         return $this->transition($listing, function (Listing $fresh) use ($attributes, $photosChanged): ListingEvent {
             $oldPrice = $fresh->price;
             $fresh->fill($attributes);
+            $this->assertTextAllowed($fresh, $attributes);
             $changed = array_keys($fresh->getDirty());
             if ($photosChanged) {
                 $changed[] = SubstantialEdit::PHOTOS;
@@ -193,6 +199,24 @@ final class ListingStateMachine
 
             return SubstantialEdit::eventFor($changed, $oldPrice, $fresh->price);
         });
+    }
+
+    /**
+     * Новое название или описание проходит блокирующие автопроверки, как при публикации: контакты в тексте
+     * опубликованного объявления недопустимы (ревью PR #130). Исключение откатывает транзакцию правки.
+     *
+     * @param  array<string, mixed>  $attributes
+     */
+    private function assertTextAllowed(Listing $listing, array $attributes): void
+    {
+        if (! array_key_exists('title', $attributes) && ! array_key_exists('description', $attributes)) {
+            return;
+        }
+
+        $errors = $this->checks->validate($listing)->errors();
+        if ($errors !== []) {
+            throw ValidationException::withMessages($errors);
+        }
     }
 
     /**
