@@ -75,10 +75,13 @@ Route::get('/listings/{listing}', LotController::class)->whereUuid('listing')->n
 // Страница продавца (3.1.6, UC-V2): открыта всем; заблокированный продавец — 404.
 Route::get('/sellers/{seller}', SellerController::class)->whereNumber('seller')->name('seller.show');
 
-// Форма «Продать инструмент» (2.1.3): страница с черновиком и проверка содержимого. Гость — на главную, вход — окно.
+// Форма «Продать инструмент» (2.1.3, 2.1.4): страница с черновиком, публикация, автосохранение черновика (раз в 5 с,
+// поэтому лимит выше), экран «Объявление опубликовано». Гость — на главную, вход — окно.
 Route::middleware('auth')->group(function (): void {
     Route::get('/sell', [SellController::class, 'create'])->name('sell');
     Route::post('/sell', [SellController::class, 'store'])->middleware('throttle:60,1')->name('sell.store');
+    Route::put('/sell/draft', [SellController::class, 'saveDraft'])->middleware('throttle:120,1')->name('sell.draft');
+    Route::get('/sell/{listing}/done', [SellController::class, 'done'])->whereUuid('listing')->name('sell.done');
 });
 
 // Фото объявления (2.1.2): URL загрузки, подтверждение, порядок, удаление — для владельца (ListingPolicy::update).

@@ -15,7 +15,7 @@ use Illuminate\Support\Facades\DB;
 use Inertia\Testing\AssertableInertia;
 
 // UC-L1 п. 1–6 (задача 2.1.3): страница «Продать инструмент» и серверная проверка формы (StoreListingRequest).
-// Публикация, автосохранение и экран «Опубликовано» — 2.1.4: здесь запрос только записывает содержимое в черновик.
+// Публикация, автосохранение и экран «Опубликовано» (2.1.4): POST /sell проверяет форму и публикует (SellPublishTest, SellDraftTest).
 
 beforeEach(function () {
     config(['scout.driver' => 'null']);
@@ -106,7 +106,7 @@ describe('страница /sell', function () {
                 ->component('Sell/Create')
                 ->where('listingId', Listing::query()->sole()->id)
                 ->has('photos', 0)
-                ->where('saved', false));
+                ->where('draft', null));
 
         $this->get('/sell')->assertOk();
 
@@ -146,16 +146,16 @@ describe('страница /sell', function () {
 });
 
 describe('StoreListingRequest', function () {
-    it('полный запрос записывает содержимое в черновик и не меняет статус', function () {
+    it('полный запрос записывает содержимое и публикует объявление', function () {
         [$owner, $kind, $draft] = sellCase();
         $this->actingAs($owner)
             ->post('/sell', sellPayload($draft, $kind))
             ->assertSessionHasNoErrors()
-            ->assertRedirect('/sell');
+            ->assertRedirect(route('sell.done', $draft));
 
         $listing = sellReload($draft);
-        expect($listing->status)->toBe(ListingStatus::Draft)
-            ->and($listing->published_at)->toBeNull()
+        expect($listing->status)->toBe(ListingStatus::Published)
+            ->and($listing->published_at)->not->toBeNull()
             ->and($listing->title)->toBe('Fender American Vintage ’57 Stratocaster')
             ->and($listing->category_id)->toBe($kind->id)
             ->and($listing->year)->toBe(2009)
@@ -166,14 +166,6 @@ describe('StoreListingRequest', function () {
             ->and($listing->meet)->toBeTrue()
             ->and($listing->ship)->toBeTrue()
             ->and($listing->city?->name)->toBe('Москва');
-    });
-
-    it('после записи страница один раз сообщает, что данные сохранены', function () {
-        [$owner, $kind, $draft] = sellCase();
-        $this->actingAs($owner)->post('/sell', sellPayload($draft, $kind));
-
-        $this->get('/sell')->assertInertia(fn (AssertableInertia $page) => $page->where('saved', true));
-        $this->get('/sell')->assertInertia(fn (AssertableInertia $page) => $page->where('saved', false));
     });
 
     it('серийный номер хранится зашифрованным', function () {
@@ -216,13 +208,17 @@ describe('StoreListingRequest', function () {
             ->and(sellReload($draft)->model_id)->toBe($suggested->id);
     });
 
-    it('повторная отправка перезаписывает черновик, а не создаёт второй', function () {
+    it('«Продать ещё один» открывает новый пустой черновик, опубликованное остаётся', function () {
         [$owner, $kind, $draft] = sellCase();
         $this->actingAs($owner)->post('/sell', sellPayload($draft, $kind));
-        $this->actingAs($owner)->post('/sell', sellPayload($draft, $kind, ['price' => 170_000]));
 
-        expect(Listing::query()->where('user_id', $owner->id)->count())->toBe(1)
-            ->and(sellReload($draft)->price)->toBe(170_000);
+        $this->get('/sell')->assertInertia(fn (AssertableInertia $page) => $page
+            ->where('listingId', fn (string $id) => $id !== $draft->id)
+            ->where('draft', null)
+            ->has('photos', 0));
+
+        expect(Listing::query()->where('user_id', $owner->id)->count())->toBe(2)
+            ->and(sellReload($draft)->status)->toBe(ListingStatus::Published);
     });
 
     it('гость — на главную, ничего не записано', function () {
@@ -351,7 +347,8 @@ describe('StoreListingRequest', function () {
     })->with(['скрытая' => ['hiddenStatus'], 'предложенная' => ['suggested']]);
 
     it('2 фото: отказ с текстом «ещё 1 фото»', function () {
-        [$owner, $kind, $draft] = sellCase();
+        $owner = User::factory()->create();
+        $kind = sellKind();
         $listing = sellDraft($owner, photos: 2);
 
         $this->actingAs($owner)->from('/sell')
@@ -360,7 +357,8 @@ describe('StoreListingRequest', function () {
     });
 
     it('нет фото серийного номера: отказ', function () {
-        [$owner, $kind, $draft] = sellCase();
+        $owner = User::factory()->create();
+        $kind = sellKind();
         $listing = sellDraft($owner, photos: 3, serial: false);
 
         $this->actingAs($owner)->from('/sell')
@@ -369,7 +367,8 @@ describe('StoreListingRequest', function () {
     });
 
     it('больше 12 фото: отказ', function () {
-        [$owner, $kind, $draft] = sellCase();
+        $owner = User::factory()->create();
+        $kind = sellKind();
         $listing = sellDraft($owner, photos: 13);
 
         $this->actingAs($owner)->from('/sell')
@@ -412,7 +411,7 @@ describe('StoreListingRequest', function () {
 
         $listing = sellReload($draft);
         expect($listing->user_id)->toBe($owner->id)
-            ->and($listing->status)->toBe(ListingStatus::Draft)
+            ->and($listing->status)->toBe(ListingStatus::Published)
             ->and($listing->city?->name)->toBe('Москва');
     });
 });
