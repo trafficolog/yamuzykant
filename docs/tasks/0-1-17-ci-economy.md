@@ -3,7 +3,7 @@ id: "0.1.17"
 phase: "0"
 epic: "0.1"
 title: "Экономия минут CI: docs-only без тяжёлых джобов, e2e перед мержем"
-status: in_progress
+status: done
 gate: G1
 risk: medium
 model_impl: sonnet
