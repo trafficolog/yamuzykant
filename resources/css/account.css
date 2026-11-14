@@ -1,0 +1,216 @@
+/*
+ * Кабинет (задача 1.1.3): заголовок, вкладки «Обзор / Покупаю / Продаю / Сообщения / Профиль», «Обзор», «Профиль».
+ * Подключается из resources/js/app.tsx. Только токены var(--*) и классы ym-*.
+ * Раскладка — по прототипу design/prototypes/Десктоп - Кабинет.dc.html и эталону design/screens/account@390.png:
+ * вкладки в одну строку с горизонтальной прокруткой, блоки на всю ширину.
+ */
+
+.ym-account-page {
+    box-sizing: border-box;
+    width: 100%;
+    max-width: var(--content-max);
+    margin: 0 auto;
+}
+.ym-account-page__head {
+    padding: var(--space-6) var(--space-10) 0;
+    border-bottom: 1px solid var(--line);
+}
+.ym-account-page__title {
+    margin: 0 0 var(--space-4);
+}
+.ym-account-page__body {
+    padding: var(--space-8) var(--space-10) var(--space-10);
+}
+
+/* Вкладки */
+.ym-account-nav {
+    overflow-x: auto;
+    scrollbar-width: none;
+}
+.ym-account-nav::-webkit-scrollbar {
+    display: none;
+}
+.ym-account-nav__list {
+    display: flex;
+    align-items: stretch;
+    gap: var(--space-1);
+    margin: 0;
+    padding: 0;
+    list-style: none;
+    width: max-content;
+}
+.ym-account-nav__group {
+    display: flex;
+    align-items: center;
+    gap: var(--space-2);
+    padding-left: var(--space-3);
+    border-left: 1px solid var(--line);
+}
+.ym-account-nav__group-label {
+    color: var(--ink-muted);
+    font: 500 var(--text-s)/18px var(--font-text);
+    white-space: nowrap;
+}
+.ym-account-nav__tab {
+    position: relative;
+    display: flex;
+    align-items: center;
+    gap: var(--space-2);
+    min-height: var(--hit-min);
+    padding: var(--space-2) var(--space-3);
+    border-bottom: 2px solid transparent;
+    color: var(--ink-muted);
+    font: 500 var(--text-m)/22px var(--font-text);
+    text-decoration: none;
+    white-space: nowrap;
+}
+.ym-account-nav__tab:hover {
+    color: var(--ink);
+}
+.ym-account-nav__tab[aria-current='page'] {
+    border-bottom-color: var(--ink);
+    color: var(--ink);
+}
+.ym-account-nav__tab:focus-visible {
+    outline: 2px solid var(--focus-ring);
+    outline-offset: -2px;
+}
+.ym-account-nav__count {
+    min-width: 20px;
+    padding: 0 var(--space-1);
+    border-radius: var(--radius-md);
+    background: var(--accent-text);
+    color: var(--surface-raised);
+    font: 600 var(--text-s)/20px var(--font-text);
+    text-align: center;
+}
+
+/* Обзор */
+.ym-account-overview {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-8);
+}
+.ym-account-overview__greeting {
+    margin: 0;
+}
+.ym-account-block {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-4);
+}
+.ym-account-block > h3 {
+    margin: 0;
+}
+.ym-account-tiles {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--space-4);
+}
+.ym-account-tile {
+    box-sizing: border-box;
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-1);
+    min-width: 240px;
+    padding: var(--space-4) var(--space-5);
+    border-radius: var(--radius-lg);
+    background: var(--surface-recessed);
+    color: var(--ink);
+    text-decoration: none;
+}
+.ym-account-tile--link:hover {
+    background: var(--surface-raised);
+    box-shadow: inset 0 0 0 1px var(--line);
+}
+.ym-account-tile--link:focus-visible {
+    outline: 2px solid var(--focus-ring);
+    outline-offset: 2px;
+}
+.ym-account-tile__label,
+.ym-account-tile__hint {
+    color: var(--ink-muted);
+}
+.ym-account-tile__value {
+    font: 600 var(--text-3xl)/32px var(--font-mono);
+    font-variant-numeric: tabular-nums;
+}
+
+/* Профиль */
+.ym-account-profile {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-8);
+}
+.ym-account-profile__status {
+    min-height: 22px;
+    margin: 0;
+    color: var(--ink);
+}
+.ym-account-profile__status--failed,
+.ym-account-profile__error {
+    margin: 0;
+    color: var(--danger-text);
+}
+.ym-account-section {
+    display: grid;
+    grid-template-columns: minmax(220px, 1fr) minmax(0, 2fr);
+    gap: var(--space-8);
+    margin: 0;
+    padding: 0;
+    border: 0;
+}
+.ym-account-section__intro {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-2);
+}
+.ym-account-section__intro > h2 {
+    margin: 0;
+}
+.ym-account-section__text {
+    margin: 0;
+    color: var(--ink-muted);
+    text-wrap: pretty;
+}
+.ym-account-section__fields {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-4);
+    align-content: start;
+    max-width: 480px;
+}
+.ym-account-city {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-2);
+}
+.ym-account-city__row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: var(--space-3);
+}
+.ym-account-city__panel {
+    padding: var(--space-4);
+    border-radius: var(--radius-lg);
+    background: var(--surface-raised);
+    box-shadow: inset 0 0 0 1px var(--line);
+}
+
+@media (max-width: 639px) {
+    .ym-account-page__head {
+        padding: var(--space-4) var(--space-4) 0;
+    }
+    .ym-account-page__body {
+        padding: var(--space-6) var(--space-4) var(--space-8);
+    }
+    .ym-account-tile {
+        flex: 1 1 100%;
+        min-width: 0;
+    }
+    .ym-account-section {
+        grid-template-columns: minmax(0, 1fr);
+        gap: var(--space-4);
+    }
+}
