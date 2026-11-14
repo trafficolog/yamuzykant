@@ -39,6 +39,8 @@ dataset('phones', [
     'городской номер' => ['8 (495) 123-45-67'],
     'телефон после года и цены' => ['Fender 1957, 184 500 ₽, звоните 8 916 123 45 67'],
     'буква l вместо единицы' => ['8916l234567'],
+    'буква l после скобки' => ['8(916)l23-45-67'],
+    'буква l после пробела' => ['8 916 l23 45 67'],
     'заглавная I вместо единицы' => ['+7 9I6 123 45 67'],
     'префикс 00 слитно' => ['007 916 123 45 67'],
     'префикс 00 отдельно' => ['00 7 916 123 45 67'],
@@ -53,6 +55,8 @@ dataset('emails', [
     'квадратные скобки' => ['ivan[at]yandex[dot]ru'],
     'латиница и кириллица вперемешку' => ['ivаn сoбака mail тoчка ru'],
     'английское at dot' => ['ivan at mail dot ru'],
+    'пробелы вокруг собаки и точки' => ['ivan @ mail . ru'],
+    'пробел перед точкой в домене' => ['ivan@mail .ru'],
 ]);
 
 dataset('links', [
@@ -67,6 +71,9 @@ dataset('links', [
     'ссылка вконтакте' => ['vk.com/id12345'],
     'ссылка с пробелами вокруг точки и слеша' => ['t . me / ivan'],
     'слеш словом' => ['vk com slash id12345'],
+    'зона со смешанными алфавитами (кириллическая «о»)' => ["больше фото на guitar.c\u{043E}m"],
+    'зона со смешанными алфавитами (кириллическая «с»)' => ["сайт guitarshop.\u{0441}om"],
+    'ссылка с userinfo' => ['https://ivan@guitarshop.ru/lot'],
 ]);
 
 dataset('messengers', [
@@ -93,6 +100,11 @@ dataset('messengers', [
     'авито' => ['дешевле на авито'],
     'avito' => ['Avito'],
     'буквы через пробел внутри слова' => ['tele gram'],
+    'собака вместо «а»' => ['wh@tsapp'],
+    'собака вместо «а» в телеграме' => ['Telegr@m'],
+    'вайб' => ['пишите в вайб'],
+    'в директ' => ['пишите в директ'],
+    'в лс' => ['пиши в лс'],
 ]);
 
 dataset('handles', [
@@ -140,6 +152,8 @@ dataset('clean', [
     'пропущен пробел после точки, зона «по»' => ['Куплена.По акции'],
     'сокращение внутри слова' => ['Big Muff, вкладыш в кейс, ВКР нет, инстанция'],
     'телеграф — не телеграм' => ['Телеграфный ключ в комплекте'],
+    'цена с собакой и точкой' => ['цена @ договорная. Продаю быстро'],
+    'телега для кофра в комплекте' => ['Телегу для кофра в комплекте'],
     'при встрече' => ['Звонок при встрече не нужен, пишите в сообщениях'],
 ]);
 
@@ -155,7 +169,9 @@ it('находит ссылки', function (string $text) {
     expect(contactOf($text))->toBe(ContactKind::Link);
 })->with('links');
 
-it('находит мессенджеры, в том числе с подменой букв', function (string $text) {
+it('находит мессенджеры, в том числе с подменой букв (режим «любое упоминание»)', function (string $text) {
+    config(['moderation.messengers.block_mention_only' => true]);
+
     expect(contactOf($text))->toBe(ContactKind::Messenger);
 })->with('messengers');
 
@@ -221,7 +237,34 @@ describe('режим «блокирует только название с но�
     ]);
 });
 
-it('режим по умолчанию — любое упоминание блокирует', function () {
-    expect(config('moderation.messengers.block_mention_only'))->toBeTrue()
-        ->and(contactOf('в WhatsApp не пишу'))->toBe(ContactKind::Messenger);
+it('режим по умолчанию — блокирует только мессенджер с номером, ником или идентификатором (решение OWNER, G1)', function () {
+    expect(config('moderation.messengers.block_mention_only'))->toBeFalse()
+        ->and(contactOf('в WhatsApp не пишу'))->toBeNull()
+        ->and(contactOf('Телегу для кофра в комплекте'))->toBeNull()
+        ->and(contactOf('пиши в лс'))->toBeNull()
+        ->and(contactOf('в директ'))->toBeNull()
+        ->and(contactOf('вайб есть'))->toBeNull()
+        ->and(contactOf('tg ivanov_g'))->toBe(ContactKind::Messenger)
+        ->and(contactOf('wh@tsapp ivan_g77'))->toBe(ContactKind::Messenger);
 });
+
+it('в режиме «любое упоминание» «Телегу для кофра» блокируется', function () {
+    config(['moderation.messengers.block_mention_only' => true]);
+
+    expect(contactOf('Телегу для кофра в комплекте'))->toBe(ContactKind::Messenger);
+});
+
+it('зона целиком на кириллице не приводится к латинице', function () {
+    expect(contactOf("Состояние отличное.\u{0421}\u{043E}"))->toBeNull()
+        ->and(contactOf("Гитара.\u{041C}\u{0435} нравится"))->toBeNull();
+});
+
+it('маска ссылки срезает userinfo', function (string $text, string $masked) {
+    $contact = (new ContactDetector)->find($text);
+
+    expect($contact?->kind)->toBe(ContactKind::Link)->and($contact?->masked())->toBe($masked);
+})->with([
+    'логин' => ['https://ivan@guitarshop.ru/lot', 'guitarshop.ru'],
+    'логин и пароль' => ['http://ivan:secret@guitarshop.ru:8080/lot?x=1', 'guitarshop.ru:8080'],
+    'без userinfo' => ['https://guitarshop.ru/lot', 'guitarshop.ru'],
+]);

@@ -89,7 +89,7 @@ describe('validate: блокирующие ошибки', function () {
     })->with([
         'e-mail' => ['пишите ivan@mail.ru', 'почту'],
         'ссылка' => ['смотрите https://example.com/lot', 'ссылку'],
-        'мессенджер' => ['напишите в WhatsApp', 'мессенджер'],
+        'мессенджер' => ['напишите в WhatsApp ivan_g77', 'мессенджер'],
         'ник' => ['мой ник @ivan_guitar', 'ник'],
     ]);
 
@@ -103,6 +103,34 @@ describe('validate: блокирующие ошибки', function () {
         $report = autoChecks()->validate(textListing('Yamaha DX7 1983', 'Shure SM58 в комплекте, цена 184 500 ₽, год 1983.'));
 
         expect($report->blocked())->toBeFalse();
+    });
+
+    it('номер, похожий на серийный, в описании: подсказка указать его в отдельном поле', function (string $text) {
+        $errors = autoChecks()->validate(textListing('Fender ’57 Stratocaster', $text))->errors();
+
+        expect($errors)->toBe(['description' => 'Серийный номер укажите в поле «Серийный номер».']);
+    })->with([
+        'буква и цифры слитно' => ['Серийный номер V091234 на пластине'],
+        'через дефис' => ['Номер AB-12345 на грифе'],
+        'после слов «серийный номер»' => ['Серийный номер: 12345678'],
+        's/n' => ['S/N 1234567'],
+    ]);
+
+    it('модель, год, цена, дата и размеры серийным номером не считаются', function (string $text) {
+        expect(autoChecks()->validate(textListing('Fender ’57 Stratocaster', $text))->blocked())->toBeFalse();
+    })->with([
+        'JCM800 2203' => ['Marshall JCM800 2203 1983 года'],
+        'модель с дефисом и номером' => ['Marshall JCM800-2203, Roland JC-120, Korg SV-1 73'],
+        'SM58 и цена' => ['Shure SM58, цена 184 500 ₽, год 1983'],
+        'дата' => ['Куплена 03.11.2019'],
+        'размеры' => ['Барабаны 22x18, 12x8'],
+        'серийный номер без цифр' => ['Серийный номер на пластине, укажу в карточке'],
+    ]);
+
+    it('телефон в описании остаётся контактом, а не серийным номером', function () {
+        $errors = autoChecks()->validate(textListing('Fender ’57 Stratocaster', 'Звоните 8 916 123-45-67'))->errors();
+
+        expect($errors['description'])->toContain('телефон');
     });
 });
 
@@ -129,6 +157,13 @@ describe('assess: признаки риска', function () {
             ->and($report->signals()[0]->message)->toContain('предоплата')
             ->and($report->signals()[0]->field)->toBe('description');
     });
+
+    it('«копия» и «реплика» из списка по умолчанию — сигнал риска, но не блокировка (решение OWNER, G1)', function (string $text) {
+        $listing = Listing::factory()->inStatus(ListingStatus::Published)->create(['description' => $text]);
+
+        expect(autoChecks()->assess($listing)->codes())->toBe(['stop_words'])
+            ->and(autoChecks()->validate($listing)->blocked())->toBeFalse();
+    })->with(['Копия Stratocaster, очень похожа', 'Продаю реплику Les Paul']);
 
     it('стоп-слово ищется целым словом: часть чужого слова не срабатывает', function () {
         config(['moderation.stop_words' => ['аванс']]);
@@ -339,5 +374,5 @@ describe('assess: признаки риска', function () {
 it('все проверки сервиса реализуют AutoCheck и различаются кодами', function () {
     $codes = array_map(fn (AutoCheck $check): string => $check->code(), autoChecks()->checks());
 
-    expect($codes)->toBe(['contacts', 'stop_words', 'duplicate_photo', 'low_price']);
+    expect($codes)->toBe(['contacts', 'serial_number', 'stop_words', 'duplicate_photo', 'low_price']);
 });
