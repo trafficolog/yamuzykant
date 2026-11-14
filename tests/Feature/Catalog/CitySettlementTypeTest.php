@@ -84,3 +84,23 @@ it('общий shared prop city остаётся прежним: id и name, б�
             ->where('city.name', 'Москва')
             ->missing('city.settlement_type'));
 });
+
+it('сидер задаёт тип только при создании: ручная правка города из списка переживает повторный запуск (ревью PR #126)', function () {
+    $this->seed(CitySeeder::class);
+    City::query()->where('name', 'Москва')->update(['settlement_type' => 'гор.']);
+
+    $this->seed(CitySeeder::class);
+
+    expect(City::query()->where('name', 'Москва')->value('settlement_type'))->toBe('гор.')
+        ->and(City::query()->where('name', 'Казань')->value('settlement_type'))->toBe('г.');
+});
+
+it('сидер по-прежнему обновляет slug и координаты существующего города, но не тип', function () {
+    $this->seed(CitySeeder::class);
+    City::query()->where('name', 'Москва')->update(['slug' => 'old', 'lat' => 1.0, 'settlement_type' => 'гор.']);
+
+    $this->seed(CitySeeder::class);
+
+    $moscow = City::query()->where('name', 'Москва')->firstOrFail();
+    expect($moscow->slug)->toBe('moscow')->and($moscow->settlement_type)->toBe('гор.');
+});

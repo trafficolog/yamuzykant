@@ -10,6 +10,7 @@ use App\Domain\Listings\Enums\ListingEvent;
 use App\Domain\Listings\Enums\ListingStatus;
 use App\Domain\Listings\Models\Listing;
 use App\Domain\Listings\StateMachines\ListingStateMachine;
+use Illuminate\Auth\Access\Response;
 
 /**
  * Права на объявление: гость, владелец, сотрудник (до 5.3.1 — через заглушку StaffDirectory).
@@ -46,6 +47,14 @@ final class ListingPolicy
     public function publish(User $user, Listing $listing): bool
     {
         return $this->ownerMay($user, $listing, ListingEvent::Publish);
+    }
+
+    /** Экран результата публикации («Опубликовано» / «Отправлено на проверку»): владелец, после публикации; остальным — 404. */
+    public function viewResult(User $user, Listing $listing): Response
+    {
+        return $this->owns($user, $listing) && in_array($listing->status, [ListingStatus::Published, ListingStatus::Pending], true)
+            ? Response::allow()
+            : Response::denyAsNotFound();
     }
 
     public function resubmit(User $user, Listing $listing): bool

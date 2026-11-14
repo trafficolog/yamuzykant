@@ -3,7 +3,7 @@ id: "5.1.4"
 phase: "5"
 epic: "5.1"
 title: "Автопроверки: доработки после ревью и решения OWNER"
-status: todo
+status: in_progress
 gate: G1
 risk: low
 model_impl: sonnet

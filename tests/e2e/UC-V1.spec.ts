@@ -71,9 +71,10 @@ test.describe('UC-V1: страница объявления', () => {
             await expect(heading).toBeVisible({ timeout: 2_000 });
         }).toPass({ timeout: 30_000 });
 
+        // Подписи «Договорная» и «Бесплатно» кладутся в карточки после гидратации (LotListingCard): ждём их, а не читаем текст сразу.
+        await expect(page.locator('main')).toContainText('Договорная');
+        await expect(page.locator('main')).toContainText('Бесплатно');
         const text = await page.locator('main').innerText();
-        expect(text).toContain('Договорная');
-        expect(text).toContain('Бесплатно');
         expect(text).not.toMatch(/(^|\D)0\s₽/);
         await expect(page.locator('main a[href^="/listings/"]').first()).toBeVisible();
     });

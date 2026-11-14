@@ -3,6 +3,7 @@
 declare(strict_types=1);
 
 use App\Domain\Accounts\Models\User;
+use App\Domain\Messaging\Events\MessageCautioned;
 use App\Domain\Messaging\Events\MessageSent;
 use App\Domain\Messaging\Models\Message;
 use App\Domain\Messaging\Models\MessageFlag;
@@ -44,15 +45,38 @@ it('сообщение со ссылкой от аккаунта младше 24
         ->assertJsonPath('data.0.caution', true);
 });
 
-it('в сообщении realtime признак плашки есть, текст признаков и причин наружу не уходит', function () {
+it('в канал беседы признак плашки не уходит: его видит только получатель, отдельным событием в его канал', function () {
     $newcomer = User::factory()->create();
     $conversation = MessagingFixtures::conversation(buyer: $newcomer);
+    Event::fake([MessageSent::class, MessageCautioned::class]);
+
     $this->actingAs($newcomer)->postJson("/conversations/{$conversation->id}/messages", ['body' => 'https://example.com']);
 
-    $payload = Message::query()->sole()->broadcastPayload();
+    $message = Message::query()->sole();
+    expect($message->broadcastPayload())->not->toHaveKey('caution')
+        ->and($message->broadcastPayload())->not->toHaveKey('signals');
 
-    expect($payload['caution'])->toBeTrue()
-        ->and($payload)->not->toHaveKey('signals');
+    Event::assertDispatched(MessageCautioned::class, function (MessageCautioned $event) use ($message, $conversation): bool {
+        $channels = $event->broadcastOn();
+
+        return $event->message->is($message)
+            && $event->recipientId === $conversation->seller_id
+            && $channels[0]->name === "private-user.{$conversation->seller_id}"
+            && $event->broadcastAs() === 'message.cautioned'
+            && $event->broadcastWith() === ['conversation_id' => $conversation->id, 'message_id' => $message->id];
+    });
+    Event::assertDispatchedTimes(MessageCautioned::class, 1);
+});
+
+it('обычное сообщение: события плашки нет', function () {
+    $veteran = User::factory()->create();
+    $veteran->forceFill(['created_at' => now()->subHours(30)])->save();
+    $conversation = MessagingFixtures::conversation(buyer: $veteran);
+    Event::fake([MessageSent::class, MessageCautioned::class]);
+
+    $this->actingAs($veteran)->postJson("/conversations/{$conversation->id}/messages", ['body' => 'Здравствуйте']);
+
+    Event::assertNotDispatched(MessageCautioned::class);
 });
 
 it('сообщение от аккаунта старше 24 ч со ссылкой — без плашки и без очереди', function () {
@@ -76,7 +100,7 @@ it('первое сообщение нового чата проверяется
     $listing = MessagingFixtures::listing();
 
     $this->actingAs($newcomer)
-        ->postJson("/listings/{$listing->id}/conversations", ['body' => 'Пишите в телеграм, там дешевле'])
+        ->postJson("/listings/{$listing->id}/conversations", ['body' => 'Пишите в телеграм @fast_deal, там дешевле'])
         ->assertCreated();
 
     expect(MessageFlag::query()->sole()->signals)->toBe(['messenger_request']);

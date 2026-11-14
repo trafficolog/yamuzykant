@@ -24,6 +24,7 @@ import {
     type ChatConversation,
     type ChatMessage,
     type ComposeTarget,
+    type ListingState,
 } from '@/lib/messages';
 import {
     loadHistory,
@@ -35,6 +36,7 @@ import {
 } from '@/lib/messagesApi';
 import { lotPath } from '@/lib/paths';
 import { getEcho, type RealtimeConfig } from '@/realtime/echo';
+import { subscribeCautioned } from '@/realtime/userChannel';
 
 export interface ChatThreadProps {
     /** id вошедшего: по нему «моё» и «прочитал собеседник» отличаются от чужого. */
@@ -65,8 +67,6 @@ interface Pending {
     clientId: string;
     body: string;
     status: 'sending' | 'failed';
-    /** POST вернулся (с любым исходом): до этого момента отправка «в пути». */
-    posted: boolean;
     createdAt: string;
 }
 
@@ -88,6 +88,8 @@ const fromBroadcast = (payload: BroadcastMessage, viewerId: number): ChatMessage
     ...payload,
     mine: payload.sender_id !== null && payload.sender_id === viewerId,
     read_at: null,
+    // Плашку получателю ставит `.message.cautioned` (канал беседы признака не несёт).
+    caution: false,
 });
 
 const byId = (a: ChatMessage, b: ChatMessage): number => a.id - b.id;
@@ -139,9 +141,10 @@ export default function ChatThread({
     const [pending, setPending] = useState<Pending[]>([]);
     const [draft, setDraft] = useState('');
     const [fieldError, setFieldError] = useState<string | null>(null);
-    const [closedReason, setClosedReason] = useState<string | null>(
-        conversation?.closed_reason ?? null,
-    );
+    // Беседа открыта всегда (BR-10); писать нельзя, только если сервер ответил 409 (собеседник удалил аккаунт).
+    const [rejectedReason, setRejectedReason] = useState<string | null>(null);
+    // Сообщения, помеченные подозрительными до того, как само сообщение пришло в канал беседы.
+    const [cautioned, setCautioned] = useState<ReadonlySet<number>>(() => new Set());
     const [connection, setConnection] = useState<Connection>('idle');
     const [readTick, setReadTick] = useState(0);
 
@@ -161,8 +164,11 @@ export default function ChatThread({
     const listingTitle = listing?.title ?? compose?.listing.title ?? null;
     const listingPrice = listing ? listing.price : (compose?.listing.price ?? null);
     const listingId = listing?.id ?? compose?.listing.id ?? null;
-    const listingActive = listing?.available ?? true;
+    const listingState: ListingState = listing?.status ?? 'published';
     const buying = conversation ? conversation.role === 'buying' : true;
+    // Не опубликованное объявление — страница 404 для всех, кроме владельца: покупателю карточка не ссылка.
+    const listingLinked = listing === null || listing.available || conversation?.role === 'selling';
+    const closedReason = conversation?.counterpart.deleted ? t.counterpartDeleted : rejectedReason;
     const closed = closedReason !== null;
 
     // Первый показ: к последним сообщениям; фокус — на переписку, если открыли действием пользователя.
@@ -187,7 +193,7 @@ export default function ChatThread({
         field.style.height = `${Math.min(field.scrollHeight, FIELD_MAX_HEIGHT)}px`;
     }, [draft]);
 
-    // Догнать сервер: пропущенные сообщения, «прочитано», причина закрытия (после обрыва связи).
+    // Догнать сервер: пропущенные сообщения, «прочитано», плашки (после обрыва связи).
     const resync = useCallback(async () => {
         if (conversationId === null) return;
         const page = await loadHistory(conversationId);
@@ -197,7 +203,6 @@ export default function ChatThread({
             const merged = current.map((message) => fresh.get(message.id) ?? message);
             return addMessages(merged, page.messages);
         });
-        setClosedReason(page.conversation.closed_reason);
     }, [conversationId]);
 
     // Realtime: сообщения и «прочитано» беседы. Без настроек Reverb канала нет.
@@ -268,6 +273,17 @@ export default function ChatThread({
         realtime?.scheme,
     ]);
 
+    // Плашка «Будьте осторожны»: событие приходит только получателю, в канал пользователя.
+    useEffect(() => {
+        if (conversationId === null) return;
+        return subscribeCautioned(viewerId, realtime, (cautionedConversation, messageId) => {
+            if (cautionedConversation !== conversationId) return;
+            setCautioned((current) => new Set(current).add(messageId));
+        });
+        // realtime — объект из props: сравниваем по содержимому, а не по ссылке.
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [conversationId, viewerId, realtime?.key, realtime?.host, realtime?.port, realtime?.scheme]);
+
     // «Прочитано»: когда в открытой беседе есть непрочитанные от собеседника и вкладка видна.
     const unreadKey = items
         .filter(isUnreadIncoming)
@@ -333,12 +349,12 @@ export default function ChatThread({
                     // Сервер не принял: сообщения нет, текст возвращается в поле, поле блокируется причиной.
                     drop();
                     setDraft(body);
-                    setClosedReason(outcome.reason || t.readOnlyDefault);
+                    setRejectedReason(outcome.reason || t.counterpartDeleted);
                     return;
                 case 'unavailable':
                     drop();
                     setDraft(body);
-                    setClosedReason(t.listingGone);
+                    setRejectedReason(t.listingGone);
                     return;
                 case 'limited':
                     drop();
@@ -353,7 +369,7 @@ export default function ChatThread({
                 case 'failed':
                     setPending((current) =>
                         current.map((item) =>
-                            item.key === key ? { ...item, status: 'failed', posted: true } : item,
+                            item.key === key ? { ...item, status: 'failed' } : item,
                         ),
                     );
                     return;
@@ -375,7 +391,6 @@ export default function ChatThread({
                 clientId,
                 body,
                 status: 'sending',
-                posted: false,
                 createdAt: new Date().toISOString(),
             },
         ]);
@@ -387,7 +402,7 @@ export default function ChatThread({
     const retry = (item: Pending) => {
         setPending((current) =>
             current.map((entry) =>
-                entry.key === item.key ? { ...entry, status: 'sending', posted: false } : entry,
+                entry.key === item.key ? { ...entry, status: 'sending' } : entry,
             ),
         );
         void deliver(item.key, item.clientId, item.body);
@@ -449,21 +464,28 @@ export default function ChatThread({
         return result;
     }, [items, pending]);
 
-    const showQuick = !closed && draft === '' && buying;
     const error = tooLong ? t.tooLong(groupDigits(MAX_LENGTH)) : fieldError;
-    const lotHref = listingId === null ? null : lotPath(listingId);
+    const lotHref = listingId === null || !listingLinked ? null : lotPath(listingId);
 
     const listingBody = (
         <>
             <span className="ym-chat__listing-thumb" aria-hidden="true">
-                <Icon name="guitar" size={24} />
+                {listing?.cover ? (
+                    <picture>
+                        <source type="image/avif" srcSet={listing.cover.avif} />
+                        <source type="image/webp" srcSet={listing.cover.webp} />
+                        <img src={listing.cover.webp} alt="" width={48} height={48} />
+                    </picture>
+                ) : (
+                    <Icon name="guitar" size={24} />
+                )}
             </span>
             <span className="ym-chat__listing-text">
                 <span className="body ym-chat__listing-title">{listingTitle}</span>
                 <span className="body-s ym-chat__listing-price">{formatPrice(listingPrice)}</span>
             </span>
-            <Badge tone={listingActive ? 'accent' : 'neutral'}>
-                {listingActive ? t.listingActive : t.listingClosed}
+            <Badge tone={listingState === 'published' ? 'accent' : 'neutral'}>
+                {t.listingStatus[listingState]}
             </Badge>
         </>
     );
@@ -605,7 +627,8 @@ export default function ChatThread({
                                 <div
                                     className={`ym-chat__bubble ym-chat__bubble--${message.mine ? 'out' : 'in'}`}
                                 >
-                                    {!message.mine && message.caution ? (
+                                    {!message.mine &&
+                                    (message.caution || cautioned.has(message.id)) ? (
                                         <p className="caption ym-chat__caution" role="note">
                                             <Icon name="triangle-alert" size={14} />
                                             {t.caution}
@@ -635,25 +658,6 @@ export default function ChatThread({
             </div>
 
             <div className="ym-chat__foot">
-                {showQuick ? (
-                    <div role="group" aria-label={t.quickLabel} className="ym-chat__quick">
-                        {t.quick.map((label) => (
-                            <Button
-                                key={label}
-                                variant="outline"
-                                size="s"
-                                className="ym-chat__quick-item"
-                                onClick={() => {
-                                    setDraft(label);
-                                    fieldRef.current?.focus();
-                                }}
-                            >
-                                {label}
-                            </Button>
-                        ))}
-                    </div>
-                ) : null}
-
                 {closedReason !== null ? (
                     <p id={noteId} className="body-s ym-chat__readonly">
                         {closedReason}

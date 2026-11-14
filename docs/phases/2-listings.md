@@ -13,5 +13,5 @@ gate: G1
 <!-- docs:ops:begin epics -->
 | Эпик | Задач | Готово |
 |---|---|---|
-| [2.1 Объявление](../epics/2-1-listing.md) | 9 | 6 |
+| [2.1 Объявление](../epics/2-1-listing.md) | 9 | 7 |
 <!-- docs:ops:end -->

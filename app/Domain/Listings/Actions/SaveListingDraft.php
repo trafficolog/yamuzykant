@@ -8,13 +8,14 @@ use App\Domain\Catalog\Actions\SuggestInstrumentModel;
 use App\Domain\Catalog\Exceptions\SuggestionLimitReached;
 use App\Domain\Catalog\Models\InstrumentModel;
 use App\Domain\Listings\Enums\ListingStatus;
+use App\Domain\Listings\Enums\PriceMode;
 use App\Domain\Listings\Models\Listing;
 use Illuminate\Support\Facades\DB;
 use LogicException;
 
 /**
- * Записывает содержимое формы «Продать инструмент» в черновик (UC-L1 п. 1–6). Статус не меняется:
- * публикация — отдельное событие ListingStateMachine (2.1.4). Модель без выбора из подсказки сохраняется
+ * Записывает полное содержимое формы «Продать инструмент» в черновик (UC-L1 п. 1–6) при публикации. Статус не меняется:
+ * его меняет ListingStateMachine (PublishListing); неполную форму сохраняет AutosaveListingDraft. Модель без выбора из подсказки сохраняется
  * как предложенная продавцом (UC-L1 2a) и привязывается к черновику; предложение идёт через общий суточный лимит
  * (SuggestInstrumentModel::forUser), а повторная отправка с той же моделью лимит не расходует.
  */
@@ -23,7 +24,7 @@ final class SaveListingDraft
     public function __construct(private readonly SuggestInstrumentModel $suggest) {}
 
     /**
-     * @param  array{category_id: int, title: string, model_id?: int|null, year?: int|null, serial?: string|null, condition: string, description?: string|null, price: int|null, negotiable: bool, meet: bool, ship: bool}  $data
+     * @param  array{category_id: int, title: string, model_id?: int|null, year?: int|null, serial?: string|null, condition: string, description?: string|null, price: int|null, negotiable: bool, meet: bool, ship: bool}  $data  без ключа `serial` серийный номер не меняется
      *
      * @throws LogicException объявление не в статусе draft: опубликованное правится через ListingStateMachine::edit()
      * @throws SuggestionLimitReached суточный лимит предложений моделей исчерпан
@@ -37,7 +38,6 @@ final class SaveListingDraft
             }
 
             $modelId = $data['model_id'] ?? $this->suggestedModelId($fresh, $data);
-            $serial = trim((string) ($data['serial'] ?? ''));
             $description = trim((string) ($data['description'] ?? ''));
 
             $fresh->fill([
@@ -45,7 +45,6 @@ final class SaveListingDraft
                 'model_id' => $modelId,
                 'title' => $data['title'],
                 'year' => $data['year'] ?? null,
-                'serial_enc' => $serial === '' ? null : $serial,
                 'condition' => $data['condition'],
                 'description' => $description === '' ? null : $description,
                 'price' => $data['price'],
@@ -54,6 +53,16 @@ final class SaveListingDraft
                 'ship' => $data['ship'],
                 'city_id' => $cityId,
             ]);
+            if (array_key_exists('serial', $data)) {
+                $serial = trim((string) $data['serial']);
+                $fresh->serial_enc = $serial === '' ? null : $serial;
+            }
+            // Режим цены черновика вытекает из price (BR-11): если публикацию отклонят, форма восстановится верно.
+            $fresh->draft_price_mode = match (true) {
+                $data['price'] === null => PriceMode::Negotiable->value,
+                $data['price'] === 0 => PriceMode::Free->value,
+                default => PriceMode::Amount->value,
+            };
             $fresh->save();
 
             return $fresh;

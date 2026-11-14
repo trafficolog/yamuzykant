@@ -86,6 +86,7 @@ it('в props нет почты продавца, полного серийног
         ->where('listing.serial', 'V09****')
         ->where('seller.name', $seller->name)
         ->has('seller', fn (Assert $s) => $s->hasAll(['name', 'city', 'since']))
+        ->where('seller.since', $seller->created_at?->format('Y-m'))
         ->etc());
 
     $props = json_encode($response->viewData('page')['props'], JSON_THROW_ON_ERROR);

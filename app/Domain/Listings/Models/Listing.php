@@ -42,6 +42,7 @@ use LogicException;
  * @property Condition|null $condition
  * @property string|null $description
  * @property int|null $price
+ * @property string|null $draft_price_mode Режим цены в форме черновика (amount|negotiable|free); у опубликованного null
  * @property bool $negotiable
  * @property bool $meet
  * @property bool $ship
@@ -108,6 +109,7 @@ class Listing extends Model
         'meet',
         'ship',
         'city_id',
+        'draft_price_mode',
     ];
 
     /**
