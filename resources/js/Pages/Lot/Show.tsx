@@ -1,5 +1,5 @@
 import { Alert, Badge, Button, ConditionBadge, Icon, Textarea, type IconName } from '@ds';
-import { Head } from '@inertiajs/react';
+import { Head, Link } from '@inertiajs/react';
 import { useState, type ReactNode } from 'react';
 
 import Breadcrumbs, { type Crumb } from '@/Components/Breadcrumbs';
@@ -9,7 +9,8 @@ import LotPrice from '@/Components/LotPrice';
 import PublicLayout from '@/Layouts/PublicLayout';
 import { openLogin } from '@/Hooks/loginDialog';
 import { ru } from '@/lang/ru';
-import { HREF_SOON, fleaPath, lotPath } from '@/lib/paths';
+import { initials } from '@/lib/initials';
+import { HREF_SOON, fleaPath, lotPath, sellerPath } from '@/lib/paths';
 import { postJson } from '@/lib/postJson';
 
 type ConditionKey = 'new' | 'mint' | 'excellent' | 'very-good' | 'good' | 'fair' | 'poor' | 'parts';
@@ -55,7 +56,7 @@ export interface LotShowProps {
     listing: LotData;
     crumbs: { name: string; path: string }[];
     photos: LotPhoto[];
-    seller: { name: string; city: string | null; since: number | null };
+    seller: { id: number; name: string; city: string | null; since: number | null };
     viewer: { authenticated: boolean; is_owner: boolean };
     similar: LotSimilar[];
 }
@@ -67,17 +68,6 @@ function statusLabel(listing: LotData): string | null {
     if (listing.status === 'published') return null;
     if (listing.status === 'withdrawn') return listing.sold ? t.status.sold : t.status.withdrawn;
     return t.status[listing.status];
-}
-
-function initials(name: string): string {
-    const words = name.split(/\s+/).filter((word) => /^\p{L}/u.test(word));
-    return (
-        words
-            .slice(0, 2)
-            .map((word) => word.charAt(0))
-            .join('')
-            .toUpperCase() || '?'
-    );
 }
 
 function DeliveryItem({
@@ -334,7 +324,14 @@ export default function LotShow({
                                     {initials(seller.name)}
                                 </span>
                                 <div className="ym-lot__seller-text">
-                                    <p className="ym-seller__name">{seller.name}</p>
+                                    <p className="ym-seller__name">
+                                        <Link
+                                            href={sellerPath(seller.id)}
+                                            className="ym-lot__seller-link"
+                                        >
+                                            {seller.name}
+                                        </Link>
+                                    </p>
                                     {seller.city !== null ? (
                                         <div className="ym-card__meta">
                                             <span>{seller.city}</span>

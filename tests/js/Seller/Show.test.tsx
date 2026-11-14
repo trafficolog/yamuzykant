@@ -69,7 +69,7 @@ describe('Seller/Show', () => {
         );
 
         expect(screen.queryByText(/На ЯМузыканте с/)).toBeNull();
-        expect(screen.queryByText(/продаж/)).toBeNull();
+        expect(screen.queryByText(/^\d+ продаж/)).toBeNull();
     });
 
     it('вкладки — ссылки со счётчиками, активная помечена aria-current', () => {
@@ -115,7 +115,9 @@ describe('Seller/Show', () => {
     });
 
     it('нет объявлений — пустое состояние для вкладки', () => {
-        const { unmount } = render(<SellerShow {...base} listings={[]} counts={{ sale: 0, sold: 0 }} />);
+        const { unmount } = render(
+            <SellerShow {...base} listings={[]} counts={{ sale: 0, sold: 0 }} />,
+        );
         expect(screen.getByText('Сейчас у продавца нет объявлений в продаже.')).toBeTruthy();
         unmount();
 

@@ -300,6 +300,17 @@ export const ru = {
         prev: 'Назад',
         next: 'Вперёд',
     },
+    seller: {
+        tabsLabel: 'Разделы продавца',
+        onSale: 'В продаже',
+        sold: 'Продано',
+        sales: (count: number) => `${count} ${plural(count, 'продажа', 'продажи', 'продаж')}`,
+        listingsLabel: 'Объявления продавца',
+        soldLabel: 'Проданные объявления',
+        soldAt: (when: string) => `Продано ${when}`,
+        emptyOnSale: 'Сейчас у продавца нет объявлений в продаже.',
+        emptySold: 'Проданных инструментов пока нет.',
+    },
     flea: {
         title: 'Барахолка',
         lead: 'Б/у инструменты от частных продавцов вашего города.',

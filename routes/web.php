@@ -19,6 +19,7 @@ use App\Http\Controllers\Listings\LocalPhotoUploadController;
 use App\Http\Controllers\Listings\LotController;
 use App\Http\Controllers\Listings\PhotoMediaController;
 use App\Http\Controllers\Listings\SellController;
+use App\Http\Controllers\Listings\SellerController;
 use App\Http\Controllers\Messaging\ConversationController;
 use App\Http\Controllers\Messaging\MessagesPageController;
 use App\Http\Middleware\EnsureE2eEnvironment;
@@ -70,6 +71,9 @@ Route::prefix('auth')->name('auth.')->group(function (): void {
 
 // Страница объявления (3.1.5, UC-V1): открыта всем; не опубликованное — только владельцу и сотрудникам, остальным 404.
 Route::get('/listings/{listing}', LotController::class)->whereUuid('listing')->name('lot.show');
+
+// Страница продавца (3.1.6, UC-V2): открыта всем; заблокированный продавец — 404.
+Route::get('/sellers/{seller}', SellerController::class)->whereNumber('seller')->name('seller.show');
 
 // Форма «Продать инструмент» (2.1.3): страница с черновиком и проверка содержимого. Гость — на главную, вход — окно.
 Route::middleware('auth')->group(function (): void {
