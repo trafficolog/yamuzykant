@@ -21,13 +21,14 @@ final class SpamDetector
 
     /**
      * Хеш текста без учёта регистра и пробелов: «Продаю  ДЁШЕВО» и «продаю дёшево» — один текст.
-     * Только для сравнения, обратно текст не восстанавливается из хеша в журнал не уходит.
+     * HMAC с ключом приложения (а не голый sha1): по утёкшей базе тексты коротких сообщений подбором не восстановить.
+     * Усечён до 40 знаков (колонка body_hash). Только для сравнения, в журнал не уходит.
      */
     public static function hash(#[\SensitiveParameter] string $text): string
     {
         $folded = (string) preg_replace('/\s+/u', ' ', mb_strtolower(MessageBody::normalize($text)));
 
-        return sha1(trim($folded));
+        return substr(hash_hmac('sha256', trim($folded), (string) config('app.key')), 0, 40);
     }
 
     /** @return list<SpamSignal> */
@@ -48,9 +49,17 @@ final class SpamDetector
         return $signals;
     }
 
-    /** Тот же текст уже отправлен в остальных чатах за окно: вместе с этим — не меньше порога. */
+    /**
+     * Тот же текст уже отправлен в остальных чатах за окно: вместе с этим — не меньше порога. Короткие тексты
+     * («Ещё продаётся?») не считаются: их пишут в каждый чат честно.
+     */
     private function sameTextInManyChats(User $sender, Conversation $conversation, string $body): bool
     {
+        $normalized = trim((string) preg_replace('/\s+/u', ' ', mb_strtolower(MessageBody::normalize($body))));
+        if (mb_strlen($normalized) < (int) config('messaging.spam.same_text_min_length')) {
+            return false;
+        }
+
         $threshold = (int) config('messaging.spam.same_text_chats');
         $otherChats = Message::query()
             ->where('sender_id', $sender->id)

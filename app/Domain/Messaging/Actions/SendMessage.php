@@ -5,10 +5,8 @@ declare(strict_types=1);
 namespace App\Domain\Messaging\Actions;
 
 use App\Domain\Accounts\Models\User;
-use App\Domain\Listings\Enums\ListingStatus;
-use App\Domain\Listings\Enums\WithdrawReason;
-use App\Domain\Listings\Models\Listing;
 use App\Domain\Messaging\Enums\MessageKind;
+use App\Domain\Messaging\Events\MessageCautioned;
 use App\Domain\Messaging\Events\MessageSent;
 use App\Domain\Messaging\Events\UnreadCountChanged;
 use App\Domain\Messaging\Exceptions\ConversationClosed;
@@ -26,8 +24,8 @@ use Illuminate\Support\Facades\DB;
 use InvalidArgumentException;
 
 /**
- * Отправить текстовое сообщение в беседу. Писать можно, только пока объявление опубликовано и собеседник
- * не удалил аккаунт. События (сообщение в канал беседы, счётчик получателю) уходят после commit.
+ * Отправить текстовое сообщение в беседу. Беседа открыта всегда, в каком бы статусе ни было объявление (BR-10,
+ * решение OWNER 08.11.2026); нельзя писать, только если собеседник удалил аккаунт. События (сообщение в канал беседы, счётчик получателю) уходят после commit.
  * Текст сообщения не пишется в журнал.
  *
  * Идемпотентность (ревью PR #128): клиент присылает client_id, уникальный в беседе для автора. Повтор с тем же
@@ -57,16 +55,6 @@ final class SendMessage
         }
 
         return DB::transaction(function () use ($sender, $conversation, $body, $clientId): Message {
-            $listing = Listing::query()->whereKey($conversation->listing_id)->sharedLock()->firstOrFail();
-            if ($listing->status !== ListingStatus::Published) {
-                if ($this->removedByModeration($listing)) {
-                    throw ConversationClosed::removedByModeration();
-                }
-                if (! $this->withinReplyWindow($listing)) {
-                    throw ConversationClosed::listingNotPublished();
-                }
-            }
-
             $recipientId = $conversation->counterpartId($sender);
             if ($recipientId === null) {
                 throw ConversationClosed::counterpartDeleted();
@@ -113,6 +101,10 @@ final class SendMessage
             $conversation->save();
 
             MessageSent::dispatch($message);
+            if ($message->suspicious) {
+                // Плашка «Будьте осторожны» — только получателю, в его канал: отправитель о признаке не узнаёт.
+                MessageCautioned::dispatch($message, $recipientId);
+            }
             UnreadCountChanged::dispatch($recipientId);
 
             return $message;
@@ -126,23 +118,5 @@ final class SendMessage
             ->where('sender_id', $sender->id)
             ->where('client_id', $clientId)
             ->first();
-    }
-
-    /**
-     * BR-10: после ухода из published отвечать можно ещё messaging.reply_window_days дней. Момент — unpublished_at
-     * (ведёт ListingStateMachine). Без него окно закрыто: updated_at меняется любой записью и открывал бы беседу заново.
-     * Окно — ровно N×24 часа: в момент unpublished_at + N дней отвечать уже нельзя.
-     */
-    private function withinReplyWindow(Listing $listing): bool
-    {
-        return $listing->unpublished_at !== null
-            && $listing->unpublished_at->copy()->addDays((int) config('messaging.reply_window_days'))->isFuture();
-    }
-
-    /** Решение оркестратора по BR-10: отклонено модератором или снято с причиной «модерация» — без окна. */
-    private function removedByModeration(Listing $listing): bool
-    {
-        return $listing->status === ListingStatus::Rejected
-            || $listing->saleRecord?->reason === WithdrawReason::Moderation;
     }
 }

@@ -3,7 +3,7 @@ import type { ComponentProps } from 'react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import ConversationList from '@/Components/ConversationList';
-import { listItem } from '../support/messages';
+import { listItem, listing } from '../support/messages';
 
 // 4.1.2: ConversationList — поиск, фильтр «Все / Покупаю / Продаю», архив, непрочитанные, пустые состояния.
 
@@ -19,6 +19,8 @@ const ITEMS: Props['conversations'] = [
             title: 'Fender American Vintage ’57 Stratocaster',
             price: 184_500,
             available: true,
+            status: 'published',
+            cover: null,
         },
         unread: 2,
         last_message: {
@@ -31,7 +33,7 @@ const ITEMS: Props['conversations'] = [
     listItem('sell-1', {
         role: 'selling',
         counterpart: { name: 'Ирина С.', deleted: false },
-        listing: { id: 'l2', title: 'Gibson Les Paul Studio', price: 120_000, available: true },
+        listing: listing({ id: 'l2', title: 'Gibson Les Paul Studio', price: 120_000 }),
         last_message: {
             body: 'Беру',
             mine: true,
@@ -41,8 +43,13 @@ const ITEMS: Props['conversations'] = [
     }),
     listItem('old-1', {
         counterpart: { name: 'Гитарный угол', deleted: false },
-        listing: { id: 'l3', title: 'Fender Player Telecaster', price: 87_990, available: false },
-        closed: true,
+        listing: listing({
+            id: 'l3',
+            title: 'Fender Player Telecaster',
+            price: 87_990,
+            available: false,
+            status: 'withdrawn',
+        }),
     }),
 ];
 
@@ -64,8 +71,7 @@ describe('ConversationList', () => {
         view();
 
         expect(screen.getByRole('heading', { name: 'Сообщения' })).toBeInTheDocument();
-        // Архивная беседа («old-1») по умолчанию скрыта: «Все» — активные чаты.
-        expect(rows()).toHaveLength(2);
+        expect(rows()).toHaveLength(3);
         const first = rows()[0] as HTMLElement;
         expect(first).toHaveTextContent('Андрей К.');
         expect(first).toHaveTextContent('Fender American Vintage ’57 Stratocaster');
@@ -117,6 +123,7 @@ describe('ConversationList', () => {
         expect(links.map((a) => a.getAttribute('href'))).toEqual([
             '/messages/buy-1',
             '/messages/sell-1',
+            '/messages/old-1',
         ]);
         expect(links[1]).toHaveAttribute('aria-current', 'true');
         expect(links[0]).not.toHaveAttribute('aria-current');
@@ -137,8 +144,8 @@ describe('ConversationList', () => {
     it('фильтр «Покупаю / Продаю» с количеством в чипах', () => {
         view();
 
-        expect(chip('Все')).toHaveTextContent('2');
-        expect(chip('Покупаю')).toHaveTextContent('1');
+        expect(chip('Все')).toHaveTextContent('3');
+        expect(chip('Покупаю')).toHaveTextContent('2');
         expect(chip('Продаю')).toHaveTextContent('1');
         expect(chip('Все')).toHaveAttribute('aria-checked', 'true');
 
@@ -148,19 +155,22 @@ describe('ConversationList', () => {
         expect(chip('Продаю')).toHaveAttribute('aria-checked', 'true');
 
         fireEvent.click(chip('Покупаю'));
-        expect(rows()).toHaveLength(1);
+        expect(rows()).toHaveLength(2);
         expect(rows()[0]).toHaveTextContent('Андрей К.');
     });
 
-    it('архив: закрытые для ответов беседы только там, обычные списки их не показывают', () => {
+    it('нет «Архива» и «Только чтение»: беседа по снятому объявлению в общем списке', () => {
         view();
 
-        expect(chip('Архив')).toHaveTextContent('1');
-        fireEvent.click(chip('Архив'));
-
-        expect(rows()).toHaveLength(1);
-        expect(rows()[0]).toHaveTextContent('Гитарный угол');
-        expect(rows()[0]).toHaveTextContent('Только чтение');
+        expect(screen.queryByRole('radio', { name: /^Архив/ })).toBeNull();
+        expect(screen.queryByText('Только чтение')).toBeNull();
+        expect(screen.getAllByRole('radio').map((radio) => radio.textContent)).toEqual([
+            'Все3',
+            'Покупаю2',
+            'Продаю1',
+        ]);
+        expect(rows()).toHaveLength(3);
+        expect(rows()[2]).toHaveTextContent('Гитарный угол');
     });
 
     it('поиск по собеседнику, названию объявления и тексту; сброс возвращает список', () => {
@@ -180,7 +190,7 @@ describe('ConversationList', () => {
         expect(rows()[0]).toHaveTextContent('Андрей К.');
 
         fireEvent.change(search, { target: { value: '' } });
-        expect(rows()).toHaveLength(2);
+        expect(rows()).toHaveLength(3);
     });
 
     it('поиск ничего не нашёл — сказано об этом; поиск идёт по всем чатам, включая архив', () => {
@@ -204,7 +214,7 @@ describe('ConversationList', () => {
         fireEvent.keyDown(search, { key: 'Escape' });
 
         expect(screen.queryByRole('searchbox')).toBeNull();
-        expect(rows()).toHaveLength(2);
+        expect(rows()).toHaveLength(3);
         expect(document.activeElement).toBe(screen.getByRole('button', { name: 'Поиск по чатам' }));
     });
 

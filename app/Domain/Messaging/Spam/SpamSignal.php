@@ -13,6 +13,6 @@ enum SpamSignal: string
     /** Внешняя ссылка от аккаунта младше messaging.spam.new_account_hours. */
     case NewAccountLink = 'new_account_link';
 
-    /** Просьба перейти в мессенджер: название мессенджера или @-ник. */
+    /** Просьба перейти в мессенджер: название мессенджера вместе с ником, номером или идентификатором, либо @-ник. */
     case MessengerRequest = 'messenger_request';
 }

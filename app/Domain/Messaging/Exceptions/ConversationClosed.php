@@ -6,19 +6,12 @@ namespace App\Domain\Messaging\Exceptions;
 
 use DomainException;
 
-/** В беседу больше нельзя писать: объявление не опубликовано или собеседник удалил аккаунт. */
+/**
+ * В беседу нельзя писать: собеседник удалил аккаунт (BR-09). Статус объявления беседу не закрывает (BR-10,
+ * решение OWNER 08.11.2026).
+ */
 final class ConversationClosed extends DomainException
 {
-    public static function listingNotPublished(): self
-    {
-        return new self((string) __('messaging.errors.listing_closed', ['days' => (int) config('messaging.reply_window_days')]));
-    }
-
-    public static function removedByModeration(): self
-    {
-        return new self((string) __('messaging.errors.listing_moderated'));
-    }
-
     public static function counterpartDeleted(): self
     {
         return new self((string) __('messaging.errors.counterpart_deleted'));

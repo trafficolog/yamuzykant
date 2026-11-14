@@ -4,7 +4,7 @@ import type { ComponentProps } from 'react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 import ChatThread from '@/Components/ChatThread';
-import { VIEWER, conversation, fakeEcho, json, message } from '../support/messages';
+import { VIEWER, conversation, fakeEcho, json, listing, message } from '../support/messages';
 
 // 4.1.2: ChatThread — карточка объявления сверху, сообщения, поле ввода (Enter — отправить, Shift+Enter — перенос),
 // «Не отправлено · Повторить», только чтение по 409, экранирование текста, aria-live, realtime.
@@ -90,7 +90,7 @@ describe('ChatThread: содержимое', () => {
     it('цена «Договорная» и «Бесплатно» по BR-11, «0 ₽» не показывается', () => {
         const { rerender } = view({
             conversation: conversation({
-                listing: { id: 'l1', title: 'Гриф', price: null, available: true },
+                listing: listing({ title: 'Гриф', price: null }),
             }),
         });
         expect(screen.getByRole('region', { name: 'Объявление' })).toHaveTextContent('Договорная');
@@ -99,7 +99,7 @@ describe('ChatThread: содержимое', () => {
             <ChatThread
                 viewerId={VIEWER}
                 conversation={conversation({
-                    listing: { id: 'l1', title: 'Гриф', price: 0, available: true },
+                    listing: listing({ title: 'Гриф', price: 0 }),
                 })}
                 compose={null}
                 messages={[]}
@@ -151,7 +151,6 @@ describe('ChatThread: содержимое', () => {
         view({
             conversation: conversation({
                 counterpart: { name: 'Пользователь удалил аккаунт', deleted: true },
-                closed_reason: 'Собеседник удалил аккаунт — новые сообщения недоступны.',
             }),
         });
 
@@ -275,13 +274,12 @@ describe('ChatThread: поле ввода и клавиатура', () => {
         ).toBeInTheDocument();
     });
 
-    it('быстрые ответы подставляют текст в поле и пропадают, когда есть набранный текст', () => {
+    it('быстрых ответов нет (бэклог 4.1.6): ни группы, ни кнопок', () => {
         view();
 
-        fireEvent.click(screen.getByRole('button', { name: 'Ещё продаётся?' }));
-        expect(field()).toHaveValue('Ещё продаётся?');
         expect(screen.queryByRole('group', { name: 'Быстрые ответы' })).toBeNull();
-        expect(document.activeElement).toBe(field());
+        expect(screen.queryByRole('button', { name: 'Ещё продаётся?' })).toBeNull();
+        expect(screen.queryByRole('button', { name: 'Где можно посмотреть?' })).toBeNull();
     });
 });
 
@@ -359,18 +357,135 @@ describe('ChatThread: ошибки отправки', () => {
     });
 });
 
-describe('ChatThread: только чтение с самого начала', () => {
-    it('причина из беседы: поле и «Отправить» заблокированы, быстрых ответов нет', () => {
-        const reason =
-            'Объявление не опубликовано больше 30 дней — беседа доступна только для чтения.';
-        view({ conversation: conversation({ closed_reason: reason }) });
+describe('ChatThread: беседа всегда открыта (BR-10, 4.1.5)', () => {
+    it.each(['withdrawn', 'sold', 'expired', 'pending', 'rejected'] as const)(
+        'объявление в статусе %s: поле и «Отправить» работают, «Только чтение» нет',
+        (status) => {
+            view({
+                conversation: conversation({
+                    listing: listing({ available: false, status }),
+                }),
+            });
+
+            expect(field()).toBeEnabled();
+            fireEvent.change(field(), { target: { value: 'Ещё актуально?' } });
+            expect(sendButton()).toBeEnabled();
+            expect(screen.queryByText(/только для чтения/)).toBeNull();
+            expect(screen.queryByText('Только чтение')).toBeNull();
+        },
+    );
+
+    it('собеседник удалил аккаунт: писать нельзя, сказано почему; история читается', () => {
+        view({
+            conversation: conversation({
+                counterpart: { name: 'Пользователь удалил аккаунт', deleted: true },
+            }),
+        });
 
         expect(field()).toBeDisabled();
         expect(sendButton()).toBeDisabled();
-        expect(screen.getByText(reason)).toBeInTheDocument();
-        expect(screen.queryByRole('group', { name: 'Быстрые ответы' })).toBeNull();
-        // История по-прежнему читается.
+        expect(
+            screen.getByText('Собеседник удалил аккаунт — новые сообщения недоступны.'),
+        ).toBeInTheDocument();
         expect(within(log()).getByText('Добрый вечер, гриф шлифовали?')).toBeInTheDocument();
+    });
+});
+
+describe('ChatThread: карточка объявления сверху (4.1.5)', () => {
+    const COVER = {
+        webp: '/media/photos/7/square.webp?v=1',
+        avif: '/media/photos/7/square.avif?v=1',
+    };
+    const card = () => screen.getByRole('region', { name: 'Объявление' });
+
+    it('миниатюра из обложки, название, цена; без обложки — значок инструмента', () => {
+        const { container, rerender } = view({
+            conversation: conversation({ listing: listing({ cover: COVER }) }),
+        });
+
+        const image = container.querySelector('.ym-chat__listing-thumb img') as HTMLImageElement;
+        expect(image).toHaveAttribute('src', COVER.webp);
+        expect(image).toHaveAttribute('alt', '');
+        expect(
+            container.querySelector('.ym-chat__listing-thumb source[type="image/avif"]'),
+        ).toHaveAttribute('srcset', COVER.avif);
+        expect(card()).toHaveTextContent('Fender ’57 Stratocaster');
+        expect(card()).toHaveTextContent('184 500 ₽');
+
+        rerender(
+            <ChatThread
+                viewerId={VIEWER}
+                conversation={conversation()}
+                compose={null}
+                messages={[]}
+                hasMore={false}
+                realtime={null}
+                onBack={onBack}
+            />,
+        );
+        expect(container.querySelector('.ym-chat__listing-thumb img')).toBeNull();
+        expect(container.querySelector('.ym-chat__listing-thumb svg')).not.toBeNull();
+    });
+
+    it.each([
+        ['published', 'Опубликовано'],
+        ['sold', 'Продано'],
+        ['withdrawn', 'Снято с продажи'],
+        ['expired', 'Срок истёк'],
+        ['pending', 'На проверке'],
+        ['rejected', 'Отклонено'],
+    ] as const)('статус %s — «%s»', (status, label) => {
+        view({
+            conversation: conversation({
+                listing: listing({ status, available: status === 'published' }),
+            }),
+        });
+
+        expect(card()).toHaveTextContent(label);
+    });
+
+    it('причина снятия не показывается ни в каком виде', () => {
+        view({
+            conversation: conversation({
+                listing: listing({ status: 'withdrawn', available: false }),
+            }),
+        });
+
+        expect(card()).not.toHaveTextContent(/модерац|передумал|продал/i);
+    });
+
+    it('покупатель: не опубликованное объявление — не ссылка (страница 404), опубликованное — ссылка', () => {
+        const { rerender } = view({
+            conversation: conversation({
+                role: 'buying',
+                listing: listing({ status: 'withdrawn', available: false }),
+            }),
+        });
+        expect(within(card()).queryByRole('link')).toBeNull();
+
+        rerender(
+            <ChatThread
+                viewerId={VIEWER}
+                conversation={conversation({ role: 'buying' })}
+                compose={null}
+                messages={[]}
+                hasMore={false}
+                realtime={null}
+                onBack={onBack}
+            />,
+        );
+        expect(within(card()).getByRole('link')).toHaveAttribute('href', '/listings/l1');
+    });
+
+    it('владелец: не опубликованное объявление остаётся ссылкой', () => {
+        view({
+            conversation: conversation({
+                role: 'selling',
+                listing: listing({ status: 'rejected', available: false }),
+            }),
+        });
+
+        expect(within(card()).getByRole('link')).toHaveAttribute('href', '/listings/l1');
     });
 });
 
@@ -830,23 +945,71 @@ describe('ChatThread: плашка «Будьте осторожны» (4.1.3)',
         );
     });
 
-    it('сообщение с плашкой из realtime тоже её показывает', () => {
+    it('в канале беседы плашки нет: сообщение без признака не получает её', () => {
         view();
         act(() =>
             fake.emit('.message.sent', {
                 id: 60,
                 conversation_id: 'c1',
                 kind: 'text',
-                body: 'Пишите в телеграм',
+                body: 'Пишите в телеграм @fast_deal',
                 sender_id: 2,
                 created_at: '2026-09-10T08:00:00Z',
                 client_id: null,
-                caution: true,
             }),
         );
 
-        expect(screen.getByText('Пишите в телеграм').closest('li')).toHaveTextContent(
+        expect(
+            screen.getByText('Пишите в телеграм @fast_deal').closest('li'),
+        ).not.toHaveTextContent('Будьте осторожны');
+    });
+
+    it('подписывается на канал пользователя; событие .message.cautioned ставит плашку получателю', () => {
+        view();
+        expect(fake.echo.private).toHaveBeenCalledWith(`user.${VIEWER}`);
+
+        act(() =>
+            fake.emit('.message.sent', {
+                id: 60,
+                conversation_id: 'c1',
+                kind: 'text',
+                body: 'Пишите в телеграм @fast_deal',
+                sender_id: 2,
+                created_at: '2026-09-10T08:00:00Z',
+                client_id: null,
+            }),
+        );
+        act(() => fake.emit('.message.cautioned', { conversation_id: 'c1', message_id: 60 }));
+
+        expect(screen.getByText('Пишите в телеграм @fast_deal').closest('li')).toHaveTextContent(
             'Будьте осторожны',
         );
+    });
+
+    it('событие плашки раньше самого сообщения тоже срабатывает', () => {
+        view();
+        act(() => fake.emit('.message.cautioned', { conversation_id: 'c1', message_id: 61 }));
+        act(() =>
+            fake.emit('.message.sent', {
+                id: 61,
+                conversation_id: 'c1',
+                kind: 'text',
+                body: 'Оплатите по ссылке',
+                sender_id: 2,
+                created_at: '2026-09-10T08:00:00Z',
+                client_id: null,
+            }),
+        );
+
+        expect(screen.getByText('Оплатите по ссылке').closest('li')).toHaveTextContent(
+            'Будьте осторожны',
+        );
+    });
+
+    it('плашка чужой беседы не применяется', () => {
+        view({ messages: [message(5, 'Привет', false)] });
+        act(() => fake.emit('.message.cautioned', { conversation_id: 'other', message_id: 5 }));
+
+        expect(screen.queryByText('Будьте осторожны')).toBeNull();
     });
 });

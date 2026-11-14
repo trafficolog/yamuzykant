@@ -36,7 +36,7 @@ final class ListingPhotoResource extends JsonResource
                 default => 'processing',
             },
             'error' => $photo->isFailed() ? __("photos.errors.{$photo->failed_reason}") : null,
-            'urls' => $photo->isReady() && $this->mayShow($request, $photo) ? $this->urls($photo) : null,
+            'urls' => $photo->isReady() && $this->mayShow($request, $photo) ? self::urlsFor($photo) : null,
         ];
     }
 
@@ -46,8 +46,12 @@ final class ListingPhotoResource extends JsonResource
         return PhotoVisibility::allows($request->user(), $photo);
     }
 
-    /** @return array<string, array<string, string>> */
-    private function urls(ListingPhoto $photo): array
+    /**
+     * Ссылки на версии фото. Права не проверяет: вызывающий убедился, что фото отдаётся этому зрителю.
+     *
+     * @return array<string, array<string, string>>
+     */
+    public static function urlsFor(ListingPhoto $photo): array
     {
         $version = $photo->processed_at?->getTimestamp();
         $urls = [];
