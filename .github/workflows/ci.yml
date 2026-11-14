@@ -3,6 +3,7 @@ on:
   pull_request:
   push:
     branches: [main]
+  workflow_dispatch:
 
 # На PR новый пуш отменяет устаревший запуск; на main каждый коммит проверяется до конца (от него зависит deploy.yml).
 concurrency:
@@ -19,9 +20,41 @@ env:
   NODE_VERSION: '22'
 
 # Имена jobs docs, php, js, e2e — обязательные проверки main (CI-CD.md §4, ORCHESTRATOR §0 п.4).
+# Экономия минут (0.1.17): job changes определяет, менялся ли код (всё вне docs/** и *.md в корне);
+# php, js, e2e без кода пропускаются; e2e идёт на push в main и по workflow_dispatch (перед мержем), на PR — нет.
+# Пропущенный job не роняет прогон; SKIPPED допустим только при changes = SUCCESS и code=false (CI-CD.md §2).
 # Внутри job проверки идут шагами с `if: !cancelled() && steps.install.outcome == 'success'`:
 # одна упавшая проверка не скрывает остальные, а job всё равно красный.
 jobs:
+  changes:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    outputs:
+      code: ${{ steps.diff.outputs.code }}
+    steps:
+      # PR: на merge-ref первый родитель — актуальная база, хватает глубины 2. Push: нужен event.before.
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
+        with:
+          fetch-depth: ${{ github.event_name == 'pull_request' && 2 || 0 }}
+          persist-credentials: false
+      - id: diff
+        env:
+          EVENT_NAME: ${{ github.event_name }}
+          BEFORE_SHA: ${{ github.event.before }}
+        run: |
+          # Нет базы (dispatch, новая ветка, force-push, нулевой before) — считаем, что код изменился.
+          case "$EVENT_NAME" in
+            pull_request) base=HEAD^1 ;;
+            push) base="$BEFORE_SHA" ;;
+            *) base="" ;;
+          esac
+          if [ -z "$base" ] || [ -z "${base//0/}" ] || ! git cat-file -e "$base^{commit}" 2>/dev/null \
+            || ! git diff --name-only "$base" HEAD > changed.txt; then
+            echo "code=true" >> "$GITHUB_OUTPUT"; exit 0; fi
+          cat changed.txt
+          other="$(grep -E . changed.txt | grep -cvE '^(docs/.*|[^/]+\.md)$' || true)"
+          if [ "$other" -gt 0 ]; then echo "code=true" >> "$GITHUB_OUTPUT"; else echo "code=false" >> "$GITHUB_OUTPUT"; fi
+
   docs:
     runs-on: ubuntu-latest
     timeout-minutes: 5
@@ -52,6 +85,8 @@ jobs:
             echo "::error::resources/js/ds правится только командой npm run ds:sync (AGENTS.md §4)"; exit 1; fi
 
   php:
+    needs: changes
+    if: ${{ needs.changes.outputs.code == 'true' }}
     runs-on: ubuntu-latest
     timeout-minutes: 15
     services:
@@ -132,6 +167,8 @@ jobs:
           retention-days: 14
 
   js:
+    needs: changes
+    if: ${{ needs.changes.outputs.code == 'true' }}
     runs-on: ubuntu-latest
     timeout-minutes: 10
     steps:
@@ -180,7 +217,8 @@ jobs:
           retention-days: 1
 
   e2e:
-    needs: [php, js]
+    needs: [changes, php, js]
+    if: ${{ needs.changes.outputs.code == 'true' && github.event_name != 'pull_request' }}
     runs-on: ubuntu-latest
     timeout-minutes: 15
     services:
