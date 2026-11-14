@@ -35,7 +35,7 @@ final class SaveListingDraft
                 throw new LogicException('Форма записывает только черновик.');
             }
 
-            $modelId = $data['model_id'] ?? ($this->resolveModel)($fresh, $data['title'], $data['category_id']);
+            $modelId = $data['model_id'] ?? $this->resolveModel->resolve($fresh, $data['title'], $data['category_id']);
             $description = trim((string) ($data['description'] ?? ''));
 
             $fresh->fill([

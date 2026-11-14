@@ -32,7 +32,7 @@ final class UpdateListing
         $description = trim((string) ($content['description'] ?? ''));
         $attributes = [
             'category_id' => $content['category_id'],
-            'model_id' => $content['model_id'] ?? ($this->resolveModel)($listing, $content['title'], $content['category_id']),
+            'model_id' => $content['model_id'] ?? $this->resolveModel->resolve($listing, $content['title'], $content['category_id']),
             'title' => $content['title'],
             'year' => $content['year'] ?? null,
             'condition' => $content['condition'],

@@ -18,7 +18,7 @@ final class ResolveListingModel
     public function __construct(private readonly SuggestInstrumentModel $suggest) {}
 
     /** @throws SuggestionLimitReached суточный лимит предложений моделей исчерпан */
-    public function __invoke(Listing $listing, string $title, int $categoryId): int
+    public function resolve(Listing $listing, string $title, int $categoryId): int
     {
         if ($listing->model_id !== null) {
             $current = InstrumentModel::query()->find($listing->model_id);
