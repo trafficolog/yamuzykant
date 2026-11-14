@@ -32,4 +32,5 @@ gate: G0
 | [0.1.14 Наблюдаемость: доработки после ревью и проверка на stage](../tasks/0-1-14-observability-hardening.md) | todo | low | sonnet → sonnet |
 | [0.1.15 Инфраструктура фото: S3 для stage, HEIC и AVIF на сервере, очистка загрузок](../tasks/0-1-15-photo-infra.md) | todo | medium | sonnet → opus |
 | [0.1.16 Reverb на stage и production: процесс, wss-прокси, переменные](../tasks/0-1-16-reverb-deploy.md) | todo | medium | sonnet → opus |
+| [0.1.17 Экономия минут CI: docs-only без тяжёлых джобов, e2e перед мержем](../tasks/0-1-17-ci-economy.md) | done | medium | sonnet → sonnet |
 <!-- docs:ops:end -->

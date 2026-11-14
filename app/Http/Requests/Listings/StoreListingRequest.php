@@ -162,9 +162,9 @@ final class StoreListingRequest extends FormRequest
     }
 
     /**
-     * Проверенное содержимое для SaveListingDraft: только поля формы, нужных типов.
+     * Проверенное содержимое для PublishListing: только поля формы, нужных типов.
      *
-     * @return array{category_id: int, title: string, model_id: int|null, year: int|null, serial: string|null, condition: string, description: string|null, price: int|null, negotiable: bool, meet: bool, ship: bool}
+     * @return array{category_id: int, title: string, model_id: int|null, year: int|null, serial?: string|null, condition: string, description: string|null, price: int|null, negotiable: bool, meet: bool, ship: bool}
      */
     public function content(): array
     {
@@ -172,12 +172,11 @@ final class StoreListingRequest extends FormRequest
         $amount = $this->input('price_mode') === PriceMode::Amount->value;
         $text = fn (string $key): ?string => isset($data[$key]) && is_string($data[$key]) ? $data[$key] : null;
 
-        return [
+        $content = [
             'category_id' => $this->integer('category_id'),
             'title' => (string) $text('title'),
             'model_id' => isset($data['model_id']) ? $this->integer('model_id') : null,
             'year' => isset($data['year']) ? $this->integer('year') : null,
-            'serial' => $text('serial'),
             'condition' => (string) $text('condition'),
             'description' => $text('description'),
             'price' => $amount ? $this->integer('price') : ($this->input('price_mode') === PriceMode::Free->value ? 0 : null),
@@ -186,6 +185,12 @@ final class StoreListingRequest extends FormRequest
             'meet' => $this->boolean('meet'),
             'ship' => $this->boolean('ship'),
         ];
+        // Без ключа серийный номер не меняется: форма не получает его целиком и не присылает нетронутым.
+        if (array_key_exists('serial', $data)) {
+            $content['serial'] = $text('serial');
+        }
+
+        return $content;
     }
 
     /** @return array<string, string> */

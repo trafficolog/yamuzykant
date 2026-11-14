@@ -1,5 +1,5 @@
 import { fireEvent, render, screen, within } from '@testing-library/react';
-import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 import type { ListingPhoto } from '@/Components/photoUploaderApi';
 import SellCreate from '@/Pages/Sell/Create';
@@ -72,7 +72,6 @@ function renderSell(props: Partial<React.ComponentProps<typeof SellCreate>> = {}
         <SellCreate
             listingId="9f1c-listing"
             photos={[]}
-            saved={false}
             place={{ type: 'г.', name: 'Москва' }}
             {...props}
         />,
@@ -548,10 +547,291 @@ describe('Отправка', () => {
         );
     });
 
-    it('после сохранения: сообщение о черновике', () => {
-        renderSell({ saved: true });
+    it('сообщения «Данные сохранены в черновике» больше нет: публикация настоящая (2.1.4)', () => {
+        renderSell({ photos: THREE });
 
-        expect(screen.getByText('Данные сохранены в черновике')).toBeVisible();
+        expect(screen.queryByText('Данные сохранены в черновике')).toBeNull();
+    });
+});
+
+/** Ответ сохранения черновика. */
+const draftResponse = {
+    ok: true,
+    status: 200,
+    json: async () => ({ saved_at: '2026-11-08T14:03:00+03:00' }),
+};
+
+function draftCalls(): Array<[string, RequestInit]> {
+    return (fetch as unknown as ReturnType<typeof vi.fn>).mock.calls.filter(
+        (call: unknown[]) => call[0] === '/sell/draft',
+    ) as Array<[string, RequestInit]>;
+}
+
+function draftBody(index: number): Record<string, unknown> {
+    const call = draftCalls()[index];
+    if (call === undefined) throw new Error('Запроса сохранения черновика не было');
+    return JSON.parse(String(call[1].body)) as Record<string, unknown>;
+}
+
+describe('Черновик: восстановление, автосохранение, «Сохранить черновик» (UC-L1 7b)', () => {
+    const draft = {
+        kind_id: 2,
+        title: 'Fender Stratocaster',
+        model_id: 7,
+        year: 2009,
+        serial_masked: 'V09****',
+        condition: 'excellent' as const,
+        description: 'Родной кейс.',
+        price_mode: 'amount' as const,
+        price: 184_500,
+        negotiable: false,
+        meet: true,
+        ship: false,
+    };
+
+    beforeEach(() => {
+        vi.useFakeTimers();
+        vi.stubGlobal(
+            'fetch',
+            vi.fn(async (url: string) =>
+                url === '/sell/draft'
+                    ? draftResponse
+                    : { ok: true, status: 200, json: async () => ({ data: [] }) },
+            ),
+        );
+    });
+
+    afterEach(() => {
+        vi.useRealTimers();
+    });
+
+    it('перезагрузка восстанавливает поля из черновика', () => {
+        renderSell({ photos: THREE, draft });
+
+        expect(modelField()).toHaveValue('Fender Stratocaster');
+        expect(screen.getByRole('textbox', { name: 'Год выпуска' })).toHaveValue('2009');
+        expect(screen.getByRole('textbox', { name: 'Описание' })).toHaveValue('Родной кейс.');
+        expect(screen.getByRole('textbox', { name: 'Цена' })).toHaveValue(`184${NBSP}500`);
+        expect(screen.getByRole('radio', { name: 'Педали и усилители' })).toHaveAttribute(
+            'aria-checked',
+            'true',
+        );
+        expect(screen.getByRole('radio', { name: 'Отличное' })).toHaveAttribute(
+            'aria-checked',
+            'true',
+        );
+        expect(screen.getByRole('button', { name: /^Встреча/ })).toHaveAttribute(
+            'aria-pressed',
+            'true',
+        );
+        expect(
+            screen.getByRole('button', { name: 'Доставка в защитной упаковке' }),
+        ).toHaveAttribute('aria-pressed', 'false');
+        expect(screen.getByRole('button', { name: 'Готов к торгу' })).toHaveAttribute(
+            'aria-pressed',
+            'false',
+        );
+        expect(missing()).toBeNull();
+        expect(publish()).toBeEnabled();
+    });
+
+    it('режим «Договорная» восстанавливается как режим', () => {
+        renderSell({ photos: THREE, draft: { ...draft, price_mode: 'negotiable', price: null } });
+
+        expect(screen.getByRole('button', { name: 'Договорная' })).toHaveAttribute(
+            'aria-pressed',
+            'true',
+        );
+        expect(screen.getByRole('textbox', { name: 'Цена' })).toBeDisabled();
+    });
+
+    it('серийный номер не восстанавливается целиком: поле пустое, маска — в подсказке', () => {
+        renderSell({ photos: THREE, draft });
+
+        const serial = screen.getByRole('textbox', { name: 'Серийный номер' });
+        expect(serial).toHaveValue('');
+        expect(serial).toHaveAccessibleDescription(/V09\*\*\*\*/);
+    });
+
+    it('без изменений автосохранение молчит', async () => {
+        renderSell({ photos: THREE, draft });
+
+        await vi.advanceTimersByTimeAsync(20_000);
+
+        expect(draftCalls()).toHaveLength(0);
+    });
+
+    it('правка уходит в черновик через 5 с; повторно без правок — нет', async () => {
+        renderSell({ photos: THREE });
+        fireEvent.change(modelField(), { target: { value: 'Fender Stratocaster' } });
+
+        await vi.advanceTimersByTimeAsync(4_900);
+        expect(draftCalls()).toHaveLength(0);
+        await vi.advanceTimersByTimeAsync(200);
+
+        expect(draftCalls()).toHaveLength(1);
+        const [url, init] = draftCalls()[0] ?? [];
+        expect(url).toBe('/sell/draft');
+        expect(init?.method).toBe('PUT');
+        expect(draftBody(0)).toMatchObject({
+            listing_id: '9f1c-listing',
+            category_id: 1,
+            title: 'Fender Stratocaster',
+            model_id: null,
+            price_mode: 'amount',
+            meet: true,
+            ship: true,
+        });
+
+        await vi.advanceTimersByTimeAsync(15_000);
+        expect(draftCalls()).toHaveLength(1);
+
+        fireEvent.change(screen.getByRole('textbox', { name: 'Описание' }), {
+            target: { value: 'Родной кейс.' },
+        });
+        await vi.advanceTimersByTimeAsync(5_000);
+        expect(draftCalls()).toHaveLength(2);
+        expect(draftBody(1)).toMatchObject({ description: 'Родной кейс.' });
+    });
+
+    it('неполная форма сохраняется: пустое состояние и цена уходят как null', async () => {
+        renderSell();
+        fireEvent.change(modelField(), { target: { value: 'Fender' } });
+
+        await vi.advanceTimersByTimeAsync(5_000);
+
+        expect(draftBody(0)).toMatchObject({
+            condition: null,
+            price: null,
+            year: null,
+            description: null,
+        });
+    });
+
+    it('нетронутый серийный номер в черновик не отправляется, введённый — отправляется', async () => {
+        renderSell({ photos: THREE, draft });
+        fireEvent.change(screen.getByRole('textbox', { name: 'Описание' }), {
+            target: { value: 'Новое описание' },
+        });
+        await vi.advanceTimersByTimeAsync(5_000);
+        expect(draftBody(0)).not.toHaveProperty('serial');
+
+        fireEvent.change(screen.getByRole('textbox', { name: 'Серийный номер' }), {
+            target: { value: 'V091187' },
+        });
+        await vi.advanceTimersByTimeAsync(5_000);
+        expect(draftBody(1)).toMatchObject({ serial: 'V091187' });
+    });
+
+    it('нетронутый серийный номер не уходит и при публикации', () => {
+        renderSell({ photos: THREE, draft });
+
+        fireEvent.click(publish());
+
+        expect(post.mock.calls[0]?.[1]).not.toHaveProperty('serial');
+    });
+
+    it('при уходе со страницы (pagehide) несохранённое уходит сразу, с keepalive', () => {
+        renderSell({ photos: THREE });
+        fireEvent.change(modelField(), { target: { value: 'Fender Stratocaster' } });
+
+        window.dispatchEvent(new Event('pagehide'));
+
+        expect(draftCalls()).toHaveLength(1);
+        expect(draftCalls()[0]?.[1]).toMatchObject({ keepalive: true });
+    });
+
+    it('при размонтировании (переход на другую страницу Inertia) несохранённое уходит сразу', () => {
+        const view = renderSell({ photos: THREE });
+        fireEvent.change(modelField(), { target: { value: 'Fender Stratocaster' } });
+
+        view.unmount();
+
+        expect(draftCalls()).toHaveLength(1);
+    });
+
+    it('«Сохранить черновик» сохраняет сразу и сообщает, что черновик сохранён; публикации нет', async () => {
+        renderSell();
+        fireEvent.change(modelField(), { target: { value: 'Fender Stratocaster' } });
+
+        fireEvent.click(screen.getByRole('button', { name: 'Сохранить черновик' }));
+        await vi.advanceTimersByTimeAsync(0);
+
+        expect(draftCalls()).toHaveLength(1);
+        expect(screen.getByText(/^Черновик сохранён/)).toBeVisible();
+        expect(post).not.toHaveBeenCalled();
+    });
+
+    it('«Сохранить черновик» доступна и у пустой формы', () => {
+        renderSell();
+
+        expect(screen.getByRole('button', { name: 'Сохранить черновик' })).toBeEnabled();
+    });
+
+    it('сбой сохранения: понятное сообщение, следующая попытка через 5 с', async () => {
+        const failing = vi.fn(async () => ({ ok: false, status: 500, json: async () => ({}) }));
+        vi.stubGlobal('fetch', failing);
+        renderSell();
+        fireEvent.change(modelField(), { target: { value: 'Fender' } });
+
+        await vi.advanceTimersByTimeAsync(5_000);
+        expect(
+            screen.getByText(
+                'Не удалось сохранить черновик. Проверьте соединение — повторим через несколько секунд.',
+            ),
+        ).toBeVisible();
+
+        await vi.advanceTimersByTimeAsync(5_000);
+        expect(
+            failing.mock.calls.filter((call: unknown[]) => call[0] === '/sell/draft'),
+        ).toHaveLength(2);
+    });
+
+    it('ответ 422 при сохранении показывает текст сервера', async () => {
+        vi.stubGlobal(
+            'fetch',
+            vi.fn(async () => ({
+                ok: false,
+                status: 422,
+                json: async () => ({
+                    errors: { title: ['Название длиннее 120 символов — сократите его.'] },
+                }),
+            })),
+        );
+        renderSell();
+        fireEvent.change(modelField(), { target: { value: 'Fender' } });
+        fireEvent.click(screen.getByRole('button', { name: 'Сохранить черновик' }));
+        await vi.advanceTimersByTimeAsync(0);
+
+        expect(screen.getByText('Название длиннее 120 символов — сократите его.')).toBeVisible();
+    });
+
+    it('во время публикации автосохранение не вмешивается', async () => {
+        renderSell({ photos: THREE });
+        fillRequired();
+        fireEvent.click(publish());
+
+        await vi.advanceTimersByTimeAsync(10_000);
+
+        expect(draftCalls()).toHaveLength(0);
+    });
+});
+
+describe('Отказ по лимиту (BR-06)', () => {
+    it('ошибка limit — отдельное сообщение над кнопкой с названием лимита', () => {
+        shared = {
+            ...shared,
+            errors: {
+                limit: 'Достигнут лимит: 10 активных объявлений. Снимите одно с продажи, чтобы опубликовать новое.',
+            },
+        };
+        renderSell({ photos: THREE });
+
+        const alert = screen.getByRole('alert');
+        expect(alert).toHaveTextContent('Лимит активных объявлений');
+        expect(alert).toHaveTextContent(
+            'Достигнут лимит: 10 активных объявлений. Снимите одно с продажи, чтобы опубликовать новое.',
+        );
     });
 });
 
