@@ -1,6 +1,5 @@
 import { ListingCard, type ListingCardProps } from '@ds';
-import { useLayoutEffect, useRef, useState } from 'react';
-import { createPortal } from 'react-dom';
+import type { CSSProperties } from 'react';
 
 import { ru } from '@/lang/ru';
 
@@ -10,26 +9,22 @@ export interface FleaListingCardProps extends Omit<ListingCardProps, 'price'> {
 }
 
 /**
- * ListingCard ДС с ценой по BR-11. Карточка ДС умеет только сумму и для 0 нарисовала бы «0 ₽»,
- * поэтому для «Договорная» и «Бесплатно» цена в неё не передаётся, а подпись кладётся в её блок цены.
- * Правка карточки ДС — в репозитории ДС; до неё подпись появляется после монтирования (на сервере блок цены пуст).
+ * ListingCard ДС с ценой по BR-11. Карточка ДС умеет только сумму и для 0 нарисовала бы «0 ₽», поэтому
+ * для «Договорная» и «Бесплатно» цена в неё не передаётся: блок цены пуст, а подпись рисует CSS
+ * (`.ym-flea__card .ym-price__now:empty::after`, resources/css/flea.css) из `--price-label` на обёртке.
+ * Так подпись есть в серверной разметке и без JS. Скринридеры читают сгенерированный текст как видимый.
+ * Поддержка `price: null | 0` в ListingCard — запрос в репозиторий ДС; после него обёртка не нужна.
  */
 export default function FleaListingCard({ price, ...card }: FleaListingCardProps) {
-    const root = useRef<HTMLDivElement>(null);
-    const [slot, setSlot] = useState<Element | null>(null);
     const label = price === null ? ru.price.negotiable : price === 0 ? ru.price.free : null;
-
-    useLayoutEffect(() => {
-        setSlot(label === null ? null : (root.current?.querySelector('.ym-price__now') ?? null));
-    }, [label]);
+    const style = label === null ? undefined : ({ '--price-label': `"${label}"` } as CSSProperties);
 
     return (
-        <div ref={root} className="ym-flea__card">
+        <div className="ym-flea__card" style={style}>
             <ListingCard
                 {...card}
                 price={label === null ? (price as number) : (undefined as never)}
             />
-            {slot !== null && label !== null ? createPortal(label, slot) : null}
         </div>
     );
 }
