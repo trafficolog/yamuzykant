@@ -57,12 +57,13 @@ describe('AccountLayout', () => {
         expect(main).toContainElement(nav());
     });
 
-    it('вкладки по готовым задачам: Обзор, Сообщения, Профиль; выбранная — aria-current', () => {
+    it('вкладки по готовым задачам: Обзор, Объявления, Сообщения, Профиль; выбранная — aria-current', () => {
         render(<AccountLayout active="profile">{null}</AccountLayout>);
 
         const links = within(nav()).getAllByRole('link');
         expect(links.map((link) => [link.textContent?.trim(), link.getAttribute('href')])).toEqual([
             ['Обзор', '/account'],
+            ['Объявления', '/account/listings'],
             ['Сообщения', '/messages'],
             ['Профиль', '/account/profile'],
         ]);
@@ -75,11 +76,11 @@ describe('AccountLayout', () => {
         );
     });
 
-    it('групп «Покупаю» и «Продаю» без готовых разделов нет', () => {
+    it('группы «Покупаю» без готовых разделов нет, «Продаю» — с объявлениями', () => {
         render(<AccountLayout active="overview">{null}</AccountLayout>);
 
         expect(within(nav()).queryByText('Покупаю')).toBeNull();
-        expect(within(nav()).queryByText('Продаю')).toBeNull();
+        expect(within(nav()).getByText('Продаю')).toBeInTheDocument();
     });
 
     it('когда разделы групп готовы, группы подписаны и содержат свои вкладки', () => {

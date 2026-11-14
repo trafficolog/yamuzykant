@@ -1,5 +1,5 @@
 /*
- * Кабинет (задача 1.1.3): заголовок, вкладки «Обзор / Покупаю / Продаю / Сообщения / Профиль», «Обзор», «Профиль».
+ * Кабинет (задачи 1.1.3, 2.1.5): заголовок, вкладки «Обзор / Покупаю / Продаю / Сообщения / Профиль», «Обзор», «Профиль».
  * Подключается из resources/js/app.tsx. Только токены var(--*) и классы ym-*.
  * Раскладка — по прототипу design/prototypes/Десктоп - Кабинет.dc.html и эталону design/screens/account@390.png:
  * вкладки в одну строку с горизонтальной прокруткой, блоки на всю ширину.
@@ -198,7 +198,161 @@
     box-shadow: inset 0 0 0 1px var(--line);
 }
 
+/* Объявления (2.1.5): фильтр, карточки со статусом, окна «Снизить цену» и «Снять с продажи» */
+.ym-my-listings {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-5);
+}
+.ym-my-listings__head {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: var(--space-4);
+    flex-wrap: wrap;
+}
+.ym-my-listings__title {
+    margin: 0;
+}
+.ym-my-listings__filters {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--space-2);
+}
+.ym-my-listings__list {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-4);
+    margin: 0;
+    padding: 0;
+    list-style: none;
+}
+.ym-my-listing {
+    box-sizing: border-box;
+    display: flex;
+    gap: var(--space-4);
+    padding: var(--space-4);
+    border-radius: var(--radius-lg);
+    background: var(--surface-raised);
+    box-shadow: inset 0 0 0 1px var(--line);
+}
+.ym-my-listing__cover {
+    flex: none;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 120px;
+    height: 120px;
+    overflow: hidden;
+    border-radius: var(--radius-md);
+    background: var(--surface-recessed);
+    color: var(--ink-muted);
+}
+.ym-my-listing__cover img {
+    display: block;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+.ym-my-listing__body {
+    flex: 1;
+    min-width: 0;
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-2);
+}
+.ym-my-listing__head {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: var(--space-3);
+}
+.ym-my-listing__title {
+    margin: 0;
+    min-width: 0;
+    overflow-wrap: anywhere;
+}
+.ym-my-listing__title a {
+    color: var(--ink);
+    text-decoration: none;
+}
+.ym-my-listing__title a:hover {
+    text-decoration: underline;
+}
+.ym-my-listing__price {
+    margin: 0;
+    font: 600 var(--text-xl)/26px var(--font-mono);
+    font-variant-numeric: tabular-nums;
+}
+.ym-my-listing__stats {
+    display: flex;
+    gap: var(--space-4);
+    margin: 0;
+    color: var(--ink-muted);
+}
+.ym-my-listing__reason {
+    margin: 0;
+    padding: var(--space-3);
+    border-radius: var(--radius-md);
+    background: var(--surface-recessed);
+}
+.ym-my-listing__actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--space-2);
+    margin-top: var(--space-1);
+}
+.ym-modal {
+    box-sizing: border-box;
+    width: calc(100% - 2 * var(--space-4));
+    max-width: 440px;
+    padding: 0;
+    border: 0;
+    border-radius: var(--radius-xl);
+    background: var(--surface-raised);
+    color: var(--ink);
+    box-shadow: var(--shadow-3);
+}
+.ym-modal::backdrop {
+    background: color-mix(in srgb, var(--ink) 40%, transparent);
+}
+.ym-modal__panel {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-4);
+    padding: var(--space-6);
+}
+.ym-modal__title {
+    margin: 0;
+}
+.ym-modal__form {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-4);
+    margin: 0;
+}
+.ym-modal__text {
+    margin: 0;
+    color: var(--ink-muted);
+}
+.ym-modal__error {
+    margin: 0;
+    color: var(--danger-text);
+}
+.ym-modal__actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--space-2);
+}
+
 @media (max-width: 639px) {
+    .ym-my-listing {
+        flex-direction: column;
+    }
+    .ym-my-listing__cover {
+        width: 100%;
+        height: 180px;
+    }
     .ym-account-page__head {
         padding: var(--space-4) var(--space-4) 0;
     }

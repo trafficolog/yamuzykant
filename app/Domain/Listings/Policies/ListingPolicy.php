@@ -44,6 +44,12 @@ final class ListingPolicy
         return $this->owns($user, $listing) && in_array($listing->status, self::EDITABLE, true);
     }
 
+    /** Изменить опубликованное объявление (форма «Изменить», окно «Снизить цену»): машина правит только published. */
+    public function edit(User $user, Listing $listing): bool
+    {
+        return $this->owns($user, $listing) && $listing->status === ListingStatus::Published;
+    }
+
     public function publish(User $user, Listing $listing): bool
     {
         return $this->ownerMay($user, $listing, ListingEvent::Publish);

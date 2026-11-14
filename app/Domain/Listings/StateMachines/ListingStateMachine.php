@@ -24,6 +24,7 @@ use App\Domain\Listings\Events\ListingWithdrawn;
 use App\Domain\Listings\Exceptions\IllegalTransition;
 use App\Domain\Listings\Exceptions\ListingLimitReached;
 use App\Domain\Listings\Models\Listing;
+use App\Domain\Listings\Models\ListingPriceChange;
 use App\Domain\Listings\Models\SaleRecord;
 use App\Domain\Listings\Rules\ActiveListingLimit;
 use App\Domain\Listings\Rules\SubstantialEdit;
@@ -191,7 +192,9 @@ final class ListingStateMachine
             throw new InvalidArgumentException('Цена — целое число рублей, не меньше нуля.');
         }
 
-        return $this->transition($listing, function (Listing $fresh) use ($attributes, $photosChanged): ListingEvent {
+        $oldPrice = null;
+
+        return $this->transition($listing, function (Listing $fresh) use ($attributes, $photosChanged, &$oldPrice): ListingEvent {
             $oldPrice = $fresh->price;
             $fresh->fill($attributes);
             $this->assertTextAllowed($fresh, $attributes);
@@ -201,6 +204,16 @@ final class ListingStateMachine
             }
 
             return SubstantialEdit::eventFor($changed, $oldPrice, $fresh->price);
+        }, function (Listing $fresh) use (&$oldPrice): void {
+            // Любая смена цены (вверх и вниз) идёт в историю: рост — без модерации, но не бесследно (SPEC §6.1).
+            if ($fresh->price !== $oldPrice) {
+                ListingPriceChange::query()->create([
+                    'listing_id' => $fresh->id,
+                    'old_price' => $oldPrice,
+                    'new_price' => $fresh->price,
+                    'changed_at' => now(),
+                ]);
+            }
         });
     }
 

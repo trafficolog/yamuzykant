@@ -27,7 +27,7 @@ use Illuminate\Validation\Rule;
  * Пределы — технические, до решения OWNER: название до 120 символов (как у предложения модели), описание
  * до 5000, серийный номер до 64, год с 1800, цена до 99 999 999 ₽. Контакты в названии и описании блокируют отправку (ListingAutoChecks::validate, 5.1.1).
  */
-final class StoreListingRequest extends FormRequest
+class StoreListingRequest extends FormRequest
 {
     public const TITLE_MAX = 120;
 
@@ -39,6 +39,12 @@ final class StoreListingRequest extends FormRequest
 
     public const PRICE_MAX = 99_999_999;
 
+    /** В каком статусе должно быть объявление, к которому относится форма: черновик (публикация) или опубликованное (изменение, 2.1.5). */
+    protected function listingStatus(): ListingStatus
+    {
+        return ListingStatus::Draft;
+    }
+
     /** @return array<string, array<int, mixed>> */
     public function rules(): array
     {
@@ -48,7 +54,7 @@ final class StoreListingRequest extends FormRequest
                 'uuid',
                 Rule::exists('listings', 'id')
                     ->where('user_id', $this->user()?->id)
-                    ->where('status', ListingStatus::Draft->value),
+                    ->where('status', $this->listingStatus()->value),
             ],
             // Вид инструмента — корень дерева категорий (8 видов), видимый.
             'category_id' => [

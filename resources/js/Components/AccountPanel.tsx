@@ -4,7 +4,7 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 import type { AuthUser } from '@/Hooks/useAuthUser';
 import { ru } from '@/lang/ru';
 import { hardNavigate } from '@/lib/navigate';
-import { HREF_SOON, MESSAGES_PATH, PROFILE_PATH } from '@/lib/paths';
+import { HREF_SOON, LISTINGS_PATH, MESSAGES_PATH, PROFILE_PATH } from '@/lib/paths';
 import { postJson } from '@/lib/postJson';
 
 /** Выход: POST с CSRF (cookie XSRF-TOKEN); сервер завершает сессию и меняет токен. */
@@ -73,7 +73,7 @@ export default function AccountPanel({ id, user, variant }: AccountPanelProps) {
             </a>
 
             <p className="ym-account__group">{ru.account.sell}</p>
-            <a className="ym-account__link" href={HREF_SOON}>
+            <a className="ym-account__link" href={LISTINGS_PATH}>
                 {ru.account.listings}
             </a>
 

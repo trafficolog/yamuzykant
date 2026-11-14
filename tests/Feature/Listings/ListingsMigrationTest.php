@@ -23,7 +23,7 @@ function leadingIndexColumns(string $table): array
 it('listings — поля SPEC §7', function () {
     expect(Schema::getColumnListing('listings'))->toEqualCanonicalizing([
         'id', 'user_id', 'status', 'category_id', 'model_id', 'title', 'year', 'serial_enc', 'condition',
-        'description', 'price', 'draft_price_mode', 'negotiable', 'meet', 'ship', 'city_id', 'published_at', 'unpublished_at', 'created_at', 'updated_at',
+        'description', 'price', 'draft_price_mode', 'negotiable', 'meet', 'ship', 'city_id', 'published_at', 'unpublished_at', 'views_count', 'created_at', 'updated_at',
     ]);
 });
 

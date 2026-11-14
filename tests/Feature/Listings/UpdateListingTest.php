@@ -44,7 +44,14 @@ it('изменять можно только своё опубликованно
     $this->actingAs($owner)->get("/listings/{$pending->id}/edit")->assertForbidden();
     $this->actingAs(User::factory()->create())->put("/listings/{$published->id}", MyListingFixtures::form($published))->assertForbidden();
     $this->actingAs($owner)->put("/listings/{$pending->id}", MyListingFixtures::form($pending))->assertForbidden();
-    $this->put("/listings/{$published->id}", [])->assertRedirect('/');
+});
+
+it('гостя отправляет на главную', function () {
+    $owner = User::factory()->create();
+    $listing = MyListingFixtures::listing($owner);
+
+    $this->get("/listings/{$listing->id}/edit")->assertRedirect('/');
+    $this->put("/listings/{$listing->id}", [])->assertRedirect('/');
 });
 
 it('рост цены — без модерации, статус published, запись в историю цен', function () {
@@ -87,7 +94,7 @@ it('существенная правка (название): премодера
     $owner = User::factory()->create();
     $listing = MyListingFixtures::listing($owner);
 
-    $this->actingAs($owner)->put("/listings/{$listing->id}", MyListingFixtures::form($listing, ['title' => 'Gibson Les Paul Standard']))
+    $this->actingAs($owner)->put("/listings/{$listing->id}", MyListingFixtures::form($listing, ['title' => 'Gibson Les Paul Standard', 'model_id' => null]))
         ->assertSessionHasNoErrors();
 
     expect($listing->fresh()?->status)->toBe($expected)->and($listing->fresh()?->title)->toBe('Gibson Les Paul Standard');
