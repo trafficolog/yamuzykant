@@ -1,7 +1,7 @@
 ---
 id: "1"
 title: "Аккаунт и справочники"
-status: in_progress
+status: done
 gate: G1
 ---
 
@@ -13,6 +13,6 @@ gate: G1
 <!-- docs:ops:begin epics -->
 | Эпик | Задач | Готово |
 |---|---|---|
-| [1.1 Аккаунт](../epics/1-1-account.md) | 6 | 5 |
+| [1.1 Аккаунт](../epics/1-1-account.md) | 6 | 6 |
 | [1.2 Справочники](../epics/1-2-dictionaries.md) | 3 | 3 |
 <!-- docs:ops:end -->
