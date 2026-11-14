@@ -5,6 +5,8 @@ import useScrollRestore from '@/Hooks/useScrollRestore';
 
 // Карточка 3.1.9: «Назад» после полной перезагрузки (без bfcache) возвращает прежнюю позицию прокрутки.
 
+const KEY = 'ym-scroll:/baraholka?sort=cheap';
+
 const navigationType = (type: string) =>
     vi
         .spyOn(performance, 'getEntriesByType')
@@ -21,30 +23,54 @@ describe('useScrollRestore', () => {
     });
 
     afterEach(() => {
+        vi.useRealTimers();
         vi.restoreAllMocks();
         scrollTo.mockReset();
     });
 
-    it('при уходе со страницы сохраняет прокрутку по ключу адреса', () => {
+    it('при уходе со страницы (pagehide) сохраняет прокрутку по ключу адреса', () => {
         navigationType('navigate');
         renderHook(() => useScrollRestore());
 
         window.dispatchEvent(new Event('pagehide'));
 
-        expect(sessionStorage.getItem('ym-scroll:/baraholka?sort=cheap')).toBe('1200');
+        expect(sessionStorage.getItem(KEY)).toBe('1200');
     });
 
-    it('при возврате «Назад» восстанавливает сохранённую позицию', () => {
-        sessionStorage.setItem('ym-scroll:/baraholka?sort=cheap', '1200');
+    it('сохраняет прокрутку и когда вкладка скрывается (visibilitychange)', () => {
+        navigationType('navigate');
+        renderHook(() => useScrollRestore());
+        vi.spyOn(document, 'visibilityState', 'get').mockReturnValue('hidden');
+
+        document.dispatchEvent(new Event('visibilitychange'));
+
+        expect(sessionStorage.getItem(KEY)).toBe('1200');
+    });
+
+    it('при возврате «Назад» восстанавливает позицию один раз и удаляет запись', () => {
+        sessionStorage.setItem(KEY, '1200');
         navigationType('back_forward');
 
         renderHook(() => useScrollRestore());
 
         expect(scrollTo).toHaveBeenCalledWith(0, 1200);
+        expect(sessionStorage.getItem(KEY)).toBeNull();
+    });
+
+    it('повторяет прокрутку, пока гидратация не сбросила позицию', () => {
+        vi.useFakeTimers();
+        sessionStorage.setItem(KEY, '1200');
+        navigationType('back_forward');
+
+        renderHook(() => useScrollRestore());
+        scrollTo.mockClear();
+        vi.advanceTimersByTime(500);
+
+        expect(scrollTo).toHaveBeenCalledWith(0, 1200);
     });
 
     it('при обычном заходе и перезагрузке позицию не трогает', () => {
-        sessionStorage.setItem('ym-scroll:/baraholka?sort=cheap', '1200');
+        sessionStorage.setItem(KEY, '1200');
         for (const type of ['navigate', 'reload']) {
             navigationType(type);
             renderHook(() => useScrollRestore());
