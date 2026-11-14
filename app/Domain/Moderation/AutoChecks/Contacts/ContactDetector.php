@@ -16,6 +16,9 @@ final class ContactDetector
 {
     private const EMAIL = '/[\p{L}\p{N}._%+\-]+\s*@\s*[\p{L}\p{N}\-]+(?:\.[\p{L}\p{N}\-]+)+/u';
 
+    /** «ivan @ mail . ru»: пробелы вокруг «@» и точек домена. Принимается только с известной зоной. */
+    private const EMAIL_SPACED = '/[\p{L}\p{N}._%+\-]+\s*@\s*[\p{L}\p{N}\-]+(?:\s*\.\s*[\p{L}\p{N}\-]+)+/u';
+
     private const SCHEME_LINK = '/(?:https?|ftp):\/\/\S+|(?<![\p{L}\p{N}])www\.[\p{L}\p{N}\-]+\.\S+/u';
 
     /** «t . me / ivan», «vk com slash id1»: короткие адреса мессенджеров и соцсетей, записанные вразбивку. */
@@ -91,23 +94,25 @@ final class ContactDetector
         return $this->messenger($folded, false);
     }
 
-    /** E-mail с «@» или с «собака»/«at», «точка»/«dot» вместо знаков. */
+    /** E-mail с «@» или с «собака»/«at», «точка»/«dot» вместо знаков, с пробелами вокруг знаков. */
     private function email(string $text): ?string
     {
         if (preg_match(self::EMAIL, $text, $m) === 1) {
             return $m[0];
         }
 
-        $spelled = self::spelledOut($text);
-        if ($spelled !== $text && preg_match(self::EMAIL, $spelled, $m) === 1 && $this->isTld(self::zoneOf($m[0]), true)) {
-            return $m[0];
+        foreach ([$text, self::spelledOut($text)] as $candidate) {
+            if (preg_match(self::EMAIL_SPACED, $candidate, $m) === 1 && $this->isTld(self::zoneOf($m[0]), true)) {
+                return $m[0];
+            }
         }
 
         return null;
     }
 
     /**
-     * Ссылка со схемой, www или «слово.зона». Зона сверяется как написана, без замены букв другого алфавита.
+     * Ссылка со схемой, www или «слово.зона». Зона сверяется как написана; только зона из букв двух алфавитов
+     * («cоm» с кириллической «о») приводится к латинице.
      * Зоны из `tlds_spoken` («ру») принимаются, только если адрес записан словами («guitarshop точка ру»).
      */
     private function link(string $text): ?string
@@ -138,7 +143,10 @@ final class ContactDetector
     {
         $stems = (array) config('moderation.messengers.stems', []);
         $abbreviations = (array) config('moderation.messengers.abbreviations', []);
-        $mentionOnly ??= (bool) config('moderation.messengers.block_mention_only', true);
+        $mentionOnly ??= (bool) config('moderation.messengers.block_mention_only', false);
+
+        // «wh@tsapp», «Telegr@m»: «@» между буквами — это «а».
+        $folded = (string) preg_replace('/(?<=\p{L})@(?=\p{L})/u', 'a', $folded);
 
         // Кириллический и латинский вид текста (и со склеенными буквами вразбивку):
         // названия кириллицей сверяются с первыми двумя, латиницей — с остальными.
@@ -251,13 +259,16 @@ final class ContactDetector
 
     private static function zoneOf(string $address): string
     {
-        return (string) preg_replace('/^.*\./us', '', $address);
+        return trim((string) preg_replace('/^.*\./us', '', $address));
     }
 
     /** Зона из списка как написана: без замены похожих букв. */
     private function isTld(string $zone, bool $spoken): bool
     {
         $zone = TextFolding::lower($zone);
+        if (TextFolding::hasCyrillic($zone) && TextFolding::hasLatin($zone)) {
+            $zone = TextFolding::toLatin($zone);
+        }
         $lists = $spoken ? ['tlds', 'tlds_spoken'] : ['tlds'];
         foreach ($lists as $list) {
             if (in_array($zone, (array) config("moderation.contacts.{$list}", []), true)) {

@@ -8,6 +8,7 @@ use App\Domain\Catalog\Models\City;
 use App\Domain\Catalog\Models\InstrumentModel;
 use App\Domain\Listings\Enums\Condition;
 use App\Domain\Listings\Enums\ListingStatus;
+use App\Domain\Listings\Enums\WithdrawReason;
 use App\Domain\Listings\Events\ListingMinorEdited;
 use App\Domain\Listings\Events\ListingPriceDropped;
 use App\Domain\Listings\Events\ListingSubstantiallyEdited;
@@ -208,6 +209,20 @@ describe('блокирующие автопроверки при правке о
         } catch (ValidationException $e) {
             expect(array_keys($e->errors()))->toEqualCanonicalizing(['title', 'description']);
         }
+    });
+
+    it('объявление с пометкой серийного номера в описании: продление, возврат и правка цены не блокируются', function () {
+        $listing = Listing::factory()->inStatus(ListingStatus::Published)->create(['description' => 'Серийный номер V091234']);
+        $machine = app(ListingStateMachine::class);
+
+        $machine->edit($listing, ['price' => 170_000]);
+        $machine->expire($listing);
+        $machine->renew($listing);
+        $machine->withdraw($listing, WithdrawReason::ChangedMind);
+        $machine->relist($listing);
+
+        expect($listing->fresh()?->status)->toBe(ListingStatus::Published)
+            ->and($listing->fresh()?->price)->toBe(170_000);
     });
 
     it('правка без текста (цена, фото) автопроверок не требует; чистый текст проходит', function () {

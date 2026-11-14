@@ -94,6 +94,11 @@ final class TextFolding
         return preg_match('/\p{Cyrillic}/u', $text) === 1;
     }
 
+    public static function hasLatin(string $text): bool
+    {
+        return preg_match('/\p{Latin}/u', $text) === 1;
+    }
+
     /**
      * «в а т с а п», «w.h.a.t.s.a.p.p» → «ватсап», «whatsapp»: четыре и больше одиночных буквы подряд через
      * пробелы и знаки склеиваются.
