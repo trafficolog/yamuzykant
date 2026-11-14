@@ -73,7 +73,7 @@ Route::prefix('auth')->name('auth.')->group(function (): void {
 Route::get('/listings/{listing}', LotController::class)->whereUuid('listing')->name('lot.show');
 
 // Страница продавца (3.1.6, UC-V2): открыта всем; заблокированный продавец — 404.
-Route::get('/sellers/{seller}', SellerController::class)->whereNumber('seller')->name('seller.show');
+Route::get('/sellers/{seller}', SellerController::class)->where('seller', '[1-9][0-9]{0,17}')->name('seller.show');
 
 // Форма «Продать инструмент» (2.1.3, 2.1.4): страница с черновиком, публикация, автосохранение черновика (раз в 5 с,
 // поэтому лимит выше), экран «Объявление опубликовано». Гость — на главную, вход — окно.
