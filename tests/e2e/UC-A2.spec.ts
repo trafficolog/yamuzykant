@@ -116,7 +116,7 @@ test.describe('UC-A2: профиль', () => {
         await expect(
             tabs(page)
                 .getByRole('link')
-                .evaluateAll((links) => links.map((l) => l.textContent)),
+                .evaluateAll((links) => links.map((l) => l.textContent?.trim())),
         ).resolves.toEqual(['Обзор', 'Сообщения', 'Профиль']);
         await page.context().close();
     });
@@ -137,7 +137,8 @@ test.describe('UC-A2: профиль', () => {
         }
 
         await main(page).getByLabel('Имя', { exact: true }).focus();
-        for (let i = 0; i < 6; i += 1) await page.keyboard.press('Tab');
+        // Имя → «Изменить город» → «Сохранить»: два Tab.
+        for (let i = 0; i < 2; i += 1) await page.keyboard.press('Tab');
         await expect(main(page).getByRole('button', { name: 'Сохранить' })).toBeFocused();
         await page.context().close();
     });
