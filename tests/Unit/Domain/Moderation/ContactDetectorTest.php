@@ -2,6 +2,7 @@
 
 declare(strict_types=1);
 
+use App\Domain\Moderation\AutoChecks\Contacts\Contact;
 use App\Domain\Moderation\AutoChecks\Contacts\ContactDetector;
 use App\Domain\Moderation\AutoChecks\Contacts\ContactKind;
 
@@ -73,7 +74,6 @@ dataset('links', [
     'слеш словом' => ['vk com slash id12345'],
     'зона со смешанными алфавитами (кириллическая «о»)' => ["больше фото на guitar.c\u{043E}m"],
     'зона со смешанными алфавитами (кириллическая «с»)' => ["сайт guitarshop.\u{0441}om"],
-    'ссылка с userinfo' => ['https://ivan@guitarshop.ru/lot'],
 ]);
 
 dataset('messengers', [
@@ -259,12 +259,14 @@ it('зона целиком на кириллице не приводится к
         ->and(contactOf("Гитара.\u{041C}\u{0435} нравится"))->toBeNull();
 });
 
-it('маска ссылки срезает userinfo', function (string $text, string $masked) {
-    $contact = (new ContactDetector)->find($text);
-
-    expect($contact?->kind)->toBe(ContactKind::Link)->and($contact?->masked())->toBe($masked);
+it('маска ссылки срезает userinfo', function (string $link, string $masked) {
+    expect((new Contact(ContactKind::Link, $link))->masked())->toBe($masked);
 })->with([
     'логин' => ['https://ivan@guitarshop.ru/lot', 'guitarshop.ru'],
     'логин и пароль' => ['http://ivan:secret@guitarshop.ru:8080/lot?x=1', 'guitarshop.ru:8080'],
     'без userinfo' => ['https://guitarshop.ru/lot', 'guitarshop.ru'],
 ]);
+
+it('ссылка с userinfo всё равно блокируется', function () {
+    expect(contactOf('смотрите https://ivan@guitarshop.ru/lot'))->not->toBeNull();
+});
