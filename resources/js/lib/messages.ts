@@ -6,9 +6,16 @@ export interface ChatListing {
     title: string | null;
     /** BR-11: сумма; `null` — «Договорная», `0` — «Бесплатно». */
     price: number | null;
-    /** Объявление опубликовано: пока да, переписка не ограничена окном BR-10. */
+    /** Объявление опубликовано: страница лота открыта всем. */
     available: boolean;
+    /** Последнее состояние объявления (BR-10), без причины снятия. */
+    status: ListingState;
+    /** Обложка для миниатюры (не фото серийного номера); `null` — фото нет. */
+    cover: { webp: string; avif: string } | null;
 }
+
+/** Статус объявления в беседе: `sold` — снято как проданное, `pending` — на проверке или доработке. */
+export type ListingState = 'published' | 'sold' | 'withdrawn' | 'expired' | 'pending' | 'rejected';
 
 /** Беседа глазами вошедшего. */
 export interface ChatConversation {
@@ -19,8 +26,6 @@ export interface ChatConversation {
     /** Собеседник: только имя; удалившийся аккаунт — `deleted` и имя «Пользователь удалил аккаунт» (BR-09). */
     counterpart: { name: string; deleted: boolean };
     last_message_at: string | null;
-    /** Почему писать нельзя (BR-10, текст сервера); `null` — можно. */
-    closed_reason: string | null;
 }
 
 /** Сообщение (MessageResource и событие `.message.sent`: у события нет `mine` и `read_at`). */
@@ -35,12 +40,15 @@ export interface ChatMessage {
     read_at: string | null;
     /** Ключ идемпотентности отправки (4.1.3): по нему эхо сопоставляется с отправкой, а не по тексту. */
     client_id: string | null;
-    /** Подозрительное входящее сообщение: плашка «Будьте осторожны» (у своих сообщений всегда false). */
+    /**
+     * Подозрительное входящее сообщение: плашка «Будьте осторожны». В канале беседы признака нет (его видел бы
+     * отправитель): плашку ставит история и событие `.message.cautioned` канала пользователя (у своих — всегда false).
+     */
     caution: boolean;
 }
 
 /** Полезная нагрузка `.message.sent`: без «моё» и «прочитано» — их считает клиент. */
-export type BroadcastMessage = Omit<ChatMessage, 'mine' | 'read_at'>;
+export type BroadcastMessage = Omit<ChatMessage, 'mine' | 'read_at' | 'caution'>;
 
 export interface LastMessage {
     body: string;
@@ -53,8 +61,6 @@ export interface LastMessage {
 export interface ConversationListItem extends ChatConversation {
     last_message: LastMessage | null;
     unread: number;
-    /** Закрыта для ответов — лежит в «Архиве». */
-    closed: boolean;
 }
 
 /** Черновик «Написать продавцу»: беседы ещё нет, она появится с первым сообщением. */

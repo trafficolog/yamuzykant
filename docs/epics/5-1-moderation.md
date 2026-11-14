@@ -19,5 +19,5 @@ gate: G2
 | [5.1.1 Автопроверки объявлений](../tasks/5-1-1-auto-checks.md) | done | medium | sonnet → sonnet |
 | [5.1.2 Модерация в консоли](../tasks/5-1-2-moderation-queue.md) | todo | high | opus → opus |
 | [5.1.3 Решения модерации и уведомление продавца](../tasks/5-1-3-moderation-decisions.md) | todo | medium | sonnet → sonnet |
-| [5.1.4 Автопроверки: доработки после ревью и решения OWNER](../tasks/5-1-4-auto-checks-hardening.md) | todo | low | sonnet → sonnet |
+| [5.1.4 Автопроверки: доработки после ревью и решения OWNER](../tasks/5-1-4-auto-checks-hardening.md) | in_progress | low | sonnet → sonnet |
 <!-- docs:ops:end -->

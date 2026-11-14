@@ -5,6 +5,7 @@ declare(strict_types=1);
 use App\Domain\Accounts\Models\User;
 use App\Domain\Messaging\Actions\SendMessage;
 use App\Domain\Messaging\Events\ConversationRead;
+use App\Domain\Messaging\Events\MessageCautioned;
 use App\Domain\Messaging\Events\MessageSent;
 use App\Domain\Messaging\Events\UnreadCountChanged;
 use Illuminate\Broadcasting\PrivateChannel;
@@ -24,7 +25,7 @@ it('все события сообщений транслируются в оч�
 
     expect($interfaces)->toHaveKey(ShouldBroadcast::class)
         ->and($interfaces)->toHaveKey(ShouldDispatchAfterCommit::class);
-})->with([MessageSent::class, ConversationRead::class, UnreadCountChanged::class]);
+})->with([MessageSent::class, MessageCautioned::class, ConversationRead::class, UnreadCountChanged::class]);
 
 it('MessageSent: приватный канал беседы, имя message.sent, только поля сообщения', function () {
     $conversation = MessagingFixtures::conversation();
@@ -41,9 +42,10 @@ it('MessageSent: приватный канал беседы, имя message.sent
         ->and($event->broadcastAs())->toBe('message.sent');
 
     $payload = $event->broadcastWith();
-    expect(array_keys($payload))->toBe(['id', 'conversation_id', 'kind', 'body', 'sender_id', 'created_at', 'client_id', 'caution'])
+    expect(array_keys($payload))->toBe(['id', 'conversation_id', 'kind', 'body', 'sender_id', 'created_at', 'client_id'])
         ->and($payload['body'])->toBe('Здравствуйте')
         ->and($payload['sender_id'])->toBe($buyer->id)
+        ->and($payload)->not->toHaveKey('caution')
         ->and(json_encode($payload))->not->toContain('hidden-buyer');
 });
 

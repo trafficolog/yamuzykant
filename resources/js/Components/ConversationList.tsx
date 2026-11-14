@@ -13,9 +13,9 @@ import { ru } from '@/lang/ru';
 import { formatListDate, groupDigits, type ConversationListItem } from '@/lib/messages';
 import { conversationPath } from '@/lib/paths';
 
-type Filter = 'all' | 'buying' | 'selling' | 'archive';
+type Filter = 'all' | 'buying' | 'selling';
 
-const FILTERS: readonly Filter[] = ['all', 'buying', 'selling', 'archive'];
+const FILTERS: readonly Filter[] = ['all', 'buying', 'selling'];
 
 export interface ConversationListProps {
     conversations: readonly ConversationListItem[];
@@ -38,9 +38,9 @@ const isPlainClick = (event: MouseEvent): boolean =>
     event.button === 0 && !event.metaKey && !event.ctrlKey && !event.shiftKey && !event.altKey;
 
 /**
- * Список бесед (4.1.2): фильтр «Все / Покупаю / Продаю / Архив» с количеством, поиск по чатам, строки со
- * счётчиком непрочитанных. Архив — беседы, закрытые для ответов (BR-10): только чтение. Поиск идёт по всем
- * чатам, включая архив. Строка — ссылка (открывается в новой вкладке, работает без JS).
+ * Список бесед (4.1.2): фильтр «Все / Покупаю / Продаю» с количеством, поиск по чатам, строки со счётчиком
+ * непрочитанных. Беседы открыты всегда (BR-10, 4.1.5): архива и пометки «Только чтение» нет. Строка — ссылка
+ * (открывается в новой вкладке, работает без JS).
  */
 export default function ConversationList({
     conversations,
@@ -57,24 +57,20 @@ export default function ConversationList({
         if (searching) document.getElementById(SEARCH_ID)?.focus();
     }, [searching]);
 
-    const counts = useMemo(() => {
-        const open = conversations.filter((item) => !item.closed);
-        return {
-            all: open.length,
-            buying: open.filter((item) => item.role === 'buying').length,
-            selling: open.filter((item) => item.role === 'selling').length,
-            archive: conversations.length - open.length,
-        } satisfies Record<Filter, number>;
-    }, [conversations]);
+    const counts = useMemo(
+        () =>
+            ({
+                all: conversations.length,
+                buying: conversations.filter((item) => item.role === 'buying').length,
+                selling: conversations.filter((item) => item.role === 'selling').length,
+            }) satisfies Record<Filter, number>,
+        [conversations],
+    );
 
     const needle = searching ? query.trim().toLowerCase() : '';
     const visible = useMemo(() => {
         if (needle !== '') return conversations.filter((item) => matches(item, needle));
-        return conversations.filter((item) => {
-            if (filter === 'archive') return item.closed;
-            if (item.closed) return false;
-            return filter === 'all' || item.role === filter;
-        });
+        return conversations.filter((item) => filter === 'all' || item.role === filter);
     }, [conversations, filter, needle]);
 
     const closeSearch = () => {
@@ -237,9 +233,6 @@ function ConversationRow({
                     <span className="body-s ym-messages__subject">{item.listing.title}</span>
                     <span className="ym-messages__line">
                         <span className="body-s ym-messages__preview">{preview}</span>
-                        {item.closed ? (
-                            <span className="caption ym-messages__readonly">{t.readOnly}</span>
-                        ) : null}
                         {item.unread > 0 ? (
                             <span className="ym-messages__badge" aria-hidden="true">
                                 {item.unread > 99 ? `99+` : groupDigits(item.unread)}

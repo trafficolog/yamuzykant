@@ -3,7 +3,7 @@ id: "2.1.6"
 phase: "2"
 epic: "2.1"
 title: "Лимит активных объявлений"
-status: todo
+status: review
 gate: G1
 risk: low
 model_impl: haiku

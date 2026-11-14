@@ -24,7 +24,7 @@ final class UserConversations
         /** @var Collection<int, Conversation> $conversations */
         $conversations = Conversation::query()
             ->where(fn ($query) => $query->where('buyer_id', $user->id)->orWhere('seller_id', $user->id))
-            ->with(['listing.saleRecord', 'buyer', 'seller'])
+            ->with(['listing.saleRecord', 'listing.photos', 'buyer', 'seller'])
             ->orderByRaw('last_message_at desc nulls last')
             ->orderByDesc('id')
             ->limit($limit)
