@@ -110,8 +110,8 @@ describe('validate: блокирующие ошибки', function () {
 
         expect($errors)->toBe(['description' => 'Серийный номер укажите в поле «Серийный номер».']);
     })->with([
-        'буква и цифры слитно' => ['Серийный номер V091234 на пластине'],
-        'через дефис' => ['Номер AB-12345 на грифе'],
+        'буква и цифры после слов' => ['Серийный номер V091234 на пластине'],
+        'с/н' => ['Гриф родной, с/н AB-12345'],
         'после слов «серийный номер»' => ['Серийный номер: 12345678'],
         's/n' => ['S/N 1234567'],
     ]);
@@ -125,6 +125,13 @@ describe('validate: блокирующие ошибки', function () {
         'дата' => ['Куплена 03.11.2019'],
         'размеры' => ['Барабаны 22x18, 12x8'],
         'серийный номер без цифр' => ['Серийный номер на пластине, укажу в карточке'],
+        'диапазон частот' => ['Диапазон 20-20000Гц'],
+        'диапазон частот латиницей' => ['Диапазон 20Hz-20000Hz'],
+        'частота дискретизации' => ['Звуковая карта 48000Hz'],
+        'ёмкость' => ['Аккумулятор 10000mAh'],
+        'пробег' => ['Пробег 120000км, 12345 км'],
+        'артикул' => ['Микшер XR18-00012, арт. 0123456'],
+        'модель гитары' => ['Ibanez RG7620, PRS SE Custom 24-08, Jackson SLX DX 2020'],
     ]);
 
     it('телефон в описании остаётся контактом, а не серийным номером', function () {
@@ -180,6 +187,14 @@ describe('assess: признаки риска', function () {
         ]);
 
         expect(autoChecks()->assess($listing)->codes())->toBe(['stop_words']);
+    });
+
+    it('подсказка про серийный номер — только блокирующая ошибка формы, в сигналы риска не попадает', function () {
+        $listing = Listing::factory()->inStatus(ListingStatus::Published)->create(['description' => 'Серийный номер V091234']);
+
+        $report = autoChecks()->assess($listing);
+
+        expect($report->codes())->toBe([])->and($report->risk())->toBe(RiskLevel::Normal);
     });
 
     it('пустой список стоп-слов в конфиге ничего не находит', function () {
@@ -374,5 +389,5 @@ describe('assess: признаки риска', function () {
 it('все проверки сервиса реализуют AutoCheck и различаются кодами', function () {
     $codes = array_map(fn (AutoCheck $check): string => $check->code(), autoChecks()->checks());
 
-    expect($codes)->toBe(['contacts', 'serial_number', 'stop_words', 'duplicate_photo', 'low_price']);
+    expect($codes)->toBe(['contacts', 'stop_words', 'duplicate_photo', 'low_price']);
 });
