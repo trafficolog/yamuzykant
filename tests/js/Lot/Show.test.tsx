@@ -58,7 +58,7 @@ const base: LotShowProps = {
         { id: 2, is_serial: false, urls: urls(2) },
         { id: 3, is_serial: true, urls: urls(3) },
     ],
-    seller: { id: 7, name: 'Гитарный угол', city: 'Москва', since: 2025 },
+    seller: { id: 7, name: 'Гитарный угол', city: 'Москва', since: '2025-03' },
     viewer: { authenticated: false, is_owner: false },
     similar: [
         {
@@ -251,12 +251,12 @@ describe('Lot/Show: характеристики, продавец, получе
         expect(screen.queryByText('Год')).toBeNull();
     });
 
-    it('карточка продавца: имя, город, «На ЯМузыканте с 2025», без почты', () => {
+    it('карточка продавца: имя, город, «На ЯМузыканте с марта 2025», без почты', () => {
         render(<LotShow {...base} />);
 
         const seller = screen.getByRole('region', { name: 'Продавец' });
         expect(within(seller).getByText('Гитарный угол')).toBeInTheDocument();
-        expect(seller.textContent).toContain('На ЯМузыканте с 2025');
+        expect(seller.textContent).toContain('На ЯМузыканте с марта 2025');
         expect(seller.textContent).not.toMatch(/@/);
     });
 

@@ -2,6 +2,7 @@
 
 declare(strict_types=1);
 
+use App\Http\Controllers\Account\AccountController;
 use App\Http\Controllers\Auth\EmailLoginController;
 use App\Http\Controllers\Auth\LogoutController;
 use App\Http\Controllers\Auth\RegistrationController;
@@ -74,6 +75,14 @@ Route::get('/listings/{listing}', LotController::class)->whereUuid('listing')->n
 
 // Страница продавца (3.1.6, UC-V2): открыта всем; заблокированный продавец — 404.
 Route::get('/sellers/{seller}', SellerController::class)->where('seller', '[1-9][0-9]{0,17}')->name('seller.show');
+
+// Кабинет (1.1.3, UC-A2): «Обзор» и «Профиль»; правки профиля и писем — не чаще 30 в минуту. Гость — на главную.
+Route::middleware('auth')->prefix('account')->name('account.')->group(function (): void {
+    Route::get('/', [AccountController::class, 'overview'])->name('overview');
+    Route::get('profile', [AccountController::class, 'profile'])->name('profile');
+    Route::patch('profile', [AccountController::class, 'updateProfile'])->middleware('throttle:30,1')->name('profile.update');
+    Route::put('notifications', [AccountController::class, 'updateNotifications'])->middleware('throttle:30,1')->name('notifications.update');
+});
 
 // Форма «Продать инструмент» (2.1.3, 2.1.4): страница с черновиком, публикация, автосохранение черновика (раз в 5 с,
 // поэтому лимит выше), экран «Объявление опубликовано». Гость — на главную, вход — окно.

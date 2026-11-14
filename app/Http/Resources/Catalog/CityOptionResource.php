@@ -9,7 +9,7 @@ use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
 
 /**
- * Город для списка выбора: только id, название и регион (без координат и дат).
+ * Город для списка выбора: только id, название, регион и тип населённого пункта (без координат и дат).
  *
  * @mixin City
  */
@@ -22,6 +22,8 @@ final class CityOptionResource extends JsonResource
             'id' => $this->id,
             'name' => $this->name,
             'region' => $this->region,
+            // «г.», «пос.», «д.»: в тексте перед названием, без склонения (решение OWNER 08.11.2026).
+            'type' => $this->settlement_type,
         ];
     }
 }

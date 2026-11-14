@@ -31,10 +31,10 @@ final class PhoneDetector
      */
     public function find(string $folded): ?string
     {
-        // Буквы вместо цифр внутри числа: «89l6l234567», «9O0».
+        // Буквы вместо цифр: внутри числа («89l6l234567», «9O0») и в начале группы («8(916)l23»).
         $text = (string) preg_replace(
-            ['/(?<=\d)[oо](?=\d)/u', '/(?<=\d)[liі](?=\d)/u'],
-            ['0', '1'],
+            ['/(?<=\d)[oо](?=\d)/u', '/(?<=\d)[liі](?=\d)/u', '/(?<![\p{L}\p{N}])[liі](?=\d)/u'],
+            ['0', '1', '1'],
             NumberWords::toDigits($folded),
         );
 

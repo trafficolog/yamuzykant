@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Http\Resources\Listings;
 
 use App\Domain\Accounts\Models\User;
+use App\Support\MemberSince;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
 
@@ -23,7 +24,7 @@ final class SellerResource extends JsonResource
             'id' => $this->id,
             'name' => $this->name,
             'city' => $this->city === null ? null : ['type' => $this->city->settlement_type, 'name' => $this->city->name],
-            'since' => $this->created_at?->year,
+            'since' => MemberSince::month($this->created_at),
         ];
     }
 }

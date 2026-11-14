@@ -48,7 +48,7 @@ it('отдаёт гостю страницу продавца: имя, горо�
             ->where('seller.id', $seller->id)
             ->where('seller.name', 'Гитарный угол')
             ->where('seller.city', ['type' => 'г.', 'name' => 'Казань'])
-            ->where('seller.since', $seller->created_at?->year)
+            ->where('seller.since', $seller->created_at?->format('Y-m'))
             ->where('tab', 'sale')
             ->where('counts', ['sale' => 1, 'sold' => 2])
             ->etc());

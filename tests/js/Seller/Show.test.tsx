@@ -18,7 +18,12 @@ vi.mock('@inertiajs/react', () => ({
 }));
 
 const base: SellerShowProps = {
-    seller: { id: 7, name: 'Гитарный угол', city: { type: 'г.', name: 'Москва' }, since: 2025 },
+    seller: {
+        id: 7,
+        name: 'Гитарный угол',
+        city: { type: 'г.', name: 'Москва' },
+        since: '2025-03',
+    },
     tab: 'sale',
     counts: { sale: 2, sold: 9 },
     listings: [
@@ -55,7 +60,7 @@ describe('Seller/Show', () => {
 
         expect(screen.getByRole('heading', { level: 1, name: 'Гитарный угол' })).toBeTruthy();
         expect(screen.getByText('г. Москва')).toBeTruthy();
-        expect(screen.getByText('На ЯМузыканте с 2025')).toBeTruthy();
+        expect(screen.getByText('На ЯМузыканте с марта 2025')).toBeTruthy();
         expect(screen.getByText('9 продаж')).toBeTruthy();
     });
 

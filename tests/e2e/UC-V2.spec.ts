@@ -26,7 +26,7 @@ test.describe('UC-V2: страница продавца', () => {
 
         await expect(page.getByRole('heading', { level: 1 })).toHaveText('Гитарный угол');
         await expect(page.getByText('г. Санкт-Петербург')).toBeVisible();
-        await expect(page.getByText(/На ЯМузыканте с \d{4}/)).toBeVisible();
+        await expect(page.getByText(/На ЯМузыканте с \S+ \d{4}/)).toBeVisible();
 
         const list = page.getByRole('list', { name: 'Объявления продавца' });
         await expect(list.getByRole('link').first()).toBeVisible();

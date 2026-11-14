@@ -8,6 +8,7 @@ import LotListingCard from '@/Components/LotListingCard';
 import Pagination from '@/Components/Pagination';
 import PublicLayout from '@/Layouts/PublicLayout';
 import { ru } from '@/lang/ru';
+import { capitalize, memberSince } from '@/lib/account';
 import { initials } from '@/lib/initials';
 import { lotPath, sellerPath } from '@/lib/paths';
 import type { LotSimilar } from '@/Pages/Lot/Show';
@@ -29,7 +30,7 @@ export interface SellerShowProps {
         id: number;
         name: string;
         city: { type: string; name: string } | null;
-        since: number | null;
+        since: string | null;
     };
     tab: SellerTab;
     counts: { sale: number; sold: number };
@@ -58,6 +59,7 @@ export default function SellerShow({
     sold,
     pagination,
 }: SellerShowProps) {
+    const since = memberSince(seller.since);
     const tabs: { key: SellerTab; label: string; count: number }[] = [
         { key: 'sale', label: t.onSale, count: counts.sale },
         { key: 'sold', label: t.sold, count: counts.sold },
@@ -84,8 +86,8 @@ export default function SellerShow({
                             {seller.city !== null ? (
                                 <Fact icon="map-pin">{`${seller.city.type} ${seller.city.name}`}</Fact>
                             ) : null}
-                            {seller.since !== null ? (
-                                <Fact icon="history">{ru.lot.seller.since(seller.since)}</Fact>
+                            {since !== null ? (
+                                <Fact icon="history">{capitalize(since)}</Fact>
                             ) : null}
                             {counts.sold > 0 ? (
                                 <Fact icon="circle-check">{t.sales(counts.sold)}</Fact>
