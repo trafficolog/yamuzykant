@@ -1,14 +1,18 @@
-import { fireEvent, render, screen, within } from '@testing-library/react';
+import { act, fireEvent, render, screen, within } from '@testing-library/react';
 import type { AnchorHTMLAttributes, ComponentProps } from 'react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import FleaIndex from '@/Pages/Flea/Index';
 import { EMPTY_FILTERS } from '@/Pages/Flea/query';
 
-const { get, on } = vi.hoisted(() => ({ get: vi.fn(), on: vi.fn(() => () => undefined) }));
+const { get, on, reload } = vi.hoisted(() => ({
+    get: vi.fn(),
+    on: vi.fn(() => () => undefined),
+    reload: vi.fn(),
+}));
 
 vi.mock('@inertiajs/react', () => ({
-    router: { get, on },
+    router: { get, on, reload },
     usePage: () => ({ props: { flags: {}, city: { id: 1, name: 'Москва' } }, url: '/baraholka' }),
     Head: () => null,
     Link: ({ href, children, ...rest }: AnchorHTMLAttributes<HTMLAnchorElement>) => (
@@ -70,6 +74,7 @@ function props(overrides: Partial<Props> = {}): Props {
         category: null,
         categoryCounts: {},
         categories: CATEGORIES,
+        searchError: false,
         ...overrides,
     };
 }
@@ -441,7 +446,7 @@ describe('Flea/Index: страницы', () => {
         expect(url).toBe('/baraholka');
         expect(data).toEqual({ page: 2 });
         expect(options).toMatchObject({
-            only: ['listings', 'pagination'],
+            only: ['listings', 'pagination', 'searchError'],
             preserveScroll: true,
             preserveState: true,
             replace: true,
@@ -483,7 +488,7 @@ describe('Flea/Index: страницы', () => {
 });
 
 describe('Flea/Index: пусто', () => {
-    it('по фильтрам ничего нет — EmptyState с кнопкой «Сбросить фильтры»', () => {
+    it('по фильтрам ничего нет — EmptyState, кнопка снимает самый узкий фильтр', () => {
         render(
             <FleaIndex
                 {...props({
@@ -499,8 +504,8 @@ describe('Flea/Index: пусто', () => {
         ).toBeInTheDocument();
         expect(screen.queryAllByRole('article')).toHaveLength(0);
 
-        fireEvent.click(screen.getByRole('button', { name: 'Сбросить фильтры' }));
-        expect(lastGet()[1]).toEqual({});
+        fireEvent.click(screen.getByRole('button', { name: 'Снять фильтр «Доставка»' }));
+        expect(lastGet()[1]).toEqual({ condition: ['mint'] });
     });
 
     it('в городе вообще нет объявлений — без кнопки сброса', () => {
@@ -515,5 +520,112 @@ describe('Flea/Index: пусто', () => {
 
         expect(screen.getByText('В вашем городе пока нет объявлений.')).toBeInTheDocument();
         expect(screen.queryByRole('button', { name: 'Сбросить фильтры' })).toBeNull();
+    });
+});
+
+describe('Flea/Index: самый узкий фильтр (3.1.3)', () => {
+    const empty = (filters: Partial<typeof EMPTY_FILTERS>) =>
+        props({
+            listings: [],
+            pagination: { page: 1, pages: 0, total: 0, perPage: 24 },
+            filters: { ...EMPTY_FILTERS, ...filters },
+        });
+
+    it('предлагает снять фильтр цены раньше остальных', () => {
+        render(<FleaIndex {...empty({ ship: true, priceFrom: 90_000, condition: ['mint'] })} />);
+
+        fireEvent.click(screen.getByRole('button', { name: /^Снять фильтр/ }));
+        expect(lastGet()[1]).toEqual({ ship: 1, condition: ['mint'] });
+    });
+
+    it('без цены — доставку, затем торг, затем состояние', () => {
+        const { unmount } = render(
+            <FleaIndex {...empty({ ship: true, negotiable: true, condition: ['mint'] })} />,
+        );
+        fireEvent.click(screen.getByRole('button', { name: /^Снять фильтр/ }));
+        expect(lastGet()[1]).toEqual({ negotiable: 1, condition: ['mint'] });
+        unmount();
+
+        render(<FleaIndex {...empty({ negotiable: true, condition: ['mint'] })} />);
+        fireEvent.click(screen.getByRole('button', { name: /^Снять фильтр/ }));
+        expect(lastGet()[1]).toEqual({ condition: ['mint'] });
+    });
+
+    it('только поиск без фильтров — сброс запроса', () => {
+        render(<FleaIndex {...empty({ q: 'тест' })} />);
+
+        expect(screen.queryByRole('button', { name: /^Снять фильтр/ })).toBeNull();
+        fireEvent.click(screen.getByRole('button', { name: 'Сбросить фильтры' }));
+        expect(lastGet()[1]).toEqual({});
+    });
+});
+
+describe('Flea/Index: загрузка (3.1.3)', () => {
+    const startHandler = (): (() => void) => {
+        const call = (on.mock.calls as unknown as [string, () => void][]).find(
+            ([event]) => event === 'start',
+        );
+        if (call === undefined) throw new Error('нет подписки на start');
+        return call[1];
+    };
+
+    it('во время визита вместо карточек — скелетоны той же сетки, aria-busy', () => {
+        render(<FleaIndex {...props()} />);
+
+        act(() => startHandler()());
+
+        expect(screen.queryAllByRole('article')).toHaveLength(0);
+        expect(document.querySelectorAll('.ym-flea__skeleton')).toHaveLength(3);
+        expect(document.querySelector('.ym-flea__results')).toHaveAttribute('aria-busy', 'true');
+    });
+
+    it('«Показать ещё» скелетоны не включает: карточки остаются', () => {
+        render(
+            <FleaIndex {...props({ pagination: { page: 1, pages: 2, total: 40, perPage: 24 } })} />,
+        );
+
+        fireEvent.click(screen.getByRole('button', { name: 'Показать ещё' }));
+        act(() => startHandler()());
+
+        expect(screen.getAllByRole('article')).toHaveLength(3);
+        expect(document.querySelectorAll('.ym-flea__skeleton')).toHaveLength(0);
+    });
+});
+
+describe('Flea/Index: ошибка поиска (3.1.3)', () => {
+    const failed = () =>
+        props({
+            listings: [],
+            pagination: { page: 1, pages: 0, total: 0, perPage: 24 },
+            searchError: true,
+        });
+
+    it('Alert danger вместо выдачи и пустого состояния', () => {
+        render(<FleaIndex {...failed()} />);
+
+        expect(text(screen.getByRole('alert'))).toContain('Не удалось загрузить объявления');
+        expect(screen.queryByText('В вашем городе пока нет объявлений.')).toBeNull();
+        expect(screen.queryAllByRole('article')).toHaveLength(0);
+    });
+
+    it('«Повторить» перезапрашивает страницу', () => {
+        render(<FleaIndex {...failed()} />);
+
+        fireEvent.click(screen.getByRole('button', { name: 'Повторить' }));
+        expect(reload).toHaveBeenCalledTimes(1);
+    });
+
+    it('сбой «Показать ещё»: загруженные карточки остаются, под ними Alert с повтором', () => {
+        render(<FleaIndex {...props({ searchError: true })} />);
+
+        expect(screen.getAllByRole('article')).toHaveLength(3);
+        expect(screen.getByRole('alert')).toBeInTheDocument();
+        expect(screen.getByRole('button', { name: 'Повторить' })).toBeInTheDocument();
+    });
+
+    it('без ошибки Alert нет', () => {
+        render(<FleaIndex {...props()} />);
+
+        expect(screen.queryByRole('alert')).toBeNull();
     });
 });
