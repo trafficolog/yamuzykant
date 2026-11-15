@@ -25,7 +25,7 @@
     text-decoration: none;
 }
 .ym-crumbs__link:hover {
-    color: var(--lad-strong);
+    color: var(--accent-text);
     text-decoration: underline;
 }
 .ym-crumbs__current {
@@ -34,11 +34,6 @@
 .ym-crumbs__sep {
     display: flex;
     color: var(--ink-faint);
-}
-
-/* Цена по BR-11 без JS: «Договорная» и «Бесплатно» (FleaListingCard кладёт строку в --price-label) */
-.ym-flea__card .ym-price__now:empty::after {
-    content: var(--price-label);
 }
 
 /* Пагинация: номера — ссылки для поисковиков */
@@ -169,12 +164,11 @@ a.ym-pagination__item:hover {
     padding: 0 var(--space-2);
     border: 0;
     background: none;
-    color: var(--lad);
+    color: var(--accent-text);
     cursor: pointer;
     white-space: nowrap;
 }
 .ym-flea__reset:hover {
-    color: var(--lad-strong);
     text-decoration: underline;
 }
 .ym-flea__reset:focus-visible,
@@ -228,7 +222,7 @@ a.ym-pagination__item:hover {
     text-decoration: none;
 }
 .ym-flea__cat:hover {
-    color: var(--lad-strong);
+    color: var(--accent-text);
     text-decoration: underline;
 }
 .ym-flea__cat[aria-current='page'] {

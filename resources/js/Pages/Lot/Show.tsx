@@ -5,7 +5,7 @@ import { useState, type ReactNode } from 'react';
 import Breadcrumbs, { type Crumb } from '@/Components/Breadcrumbs';
 import FavoriteToggle from '@/Components/FavoriteToggle';
 import LotGallery, { type LotPhoto } from '@/Components/LotGallery';
-import LotListingCard from '@/Components/LotListingCard';
+import PricedListingCard from '@/Components/PricedListingCard';
 import LotPrice from '@/Components/LotPrice';
 import PublicLayout from '@/Layouts/PublicLayout';
 import { openLogin } from '@/Hooks/loginDialog';
@@ -370,7 +370,7 @@ export default function LotShow({
                         </div>
                         <div className="ym-lot__grid">
                             {similar.map((lot) => (
-                                <LotListingCard
+                                <PricedListingCard
                                     key={lot.id}
                                     listingId={lot.id}
                                     favorite={lot.favorite}

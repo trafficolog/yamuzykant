@@ -4,7 +4,7 @@ import type { ReactNode } from 'react';
 
 import { CITY_TOGGLE_ID } from '@/Components/CitySelect';
 import EmptyState from '@/Components/EmptyState';
-import FleaListingCard from '@/Components/FleaListingCard';
+import PricedListingCard from '@/Components/PricedListingCard';
 import type { CategoryOption } from '@/Components/FleaFilterPanel';
 import { useRequireAuth } from '@/Hooks/useAuthUser';
 import PublicLayout from '@/Layouts/PublicLayout';
@@ -38,7 +38,7 @@ interface RailProps {
     allHref: string;
 }
 
-/** Рельс: заголовок, ссылка «все» и сетка карточек Барахолки (цена по BR-11 — в FleaListingCard). */
+/** Рельс: заголовок, ссылка «все» и сетка карточек Барахолки (цена по BR-11 — в PricedListingCard). */
 function Rail({ title, cards, allLabel, allHref }: RailProps) {
     const titleId = `home-rail-${allHref.replace(/\W+/g, '-')}`;
 
@@ -54,7 +54,7 @@ function Rail({ title, cards, allLabel, allHref }: RailProps) {
             </div>
             <div className="ym-home__grid">
                 {cards.map((card) => (
-                    <FleaListingCard
+                    <PricedListingCard
                         key={card.id}
                         title={card.title}
                         href={lotPath(card.id)}
