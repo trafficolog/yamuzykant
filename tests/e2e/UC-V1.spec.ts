@@ -1,5 +1,6 @@
 import AxeBuilder from '@axe-core/playwright';
 import { expect, test, type Page } from '@playwright/test';
+import { hydrated } from './_messaging';
 
 // UC-V1 «Посмотреть лот» и вход UC-D1 «Написать продавцу» (3.1.5). Данные — LotDemoSeeder (global-setup.lot.ts,
 // один раз на прогон): лот из прототипа (Fender American Vintage ’57 Stratocaster, 184 500 ₽), пять похожих, одно снятое.
@@ -48,7 +49,8 @@ test.describe('UC-V1: страница объявления', () => {
     test('галерея: превью переключают фото, просмотр на весь экран закрывается Escape; серийное фото гостю не отдаётся', async ({
         page,
     }) => {
-        await page.goto(`/listings/${LOT}`);
+        // Клик по превью до гидратации ничего не переключает (3.1.11): ждём признак гидратации каркаса.
+        await hydrated(page, `/listings/${LOT}`);
         const gallery = page.getByRole('region', { name: 'Фотографии' });
 
         // Гостю — 2 фото из 3: фото серийного номера только владельцу.
@@ -80,7 +82,8 @@ test.describe('UC-V1: страница объявления', () => {
     });
 
     test('«Написать продавцу» у гостя открывает окно входа', async ({ page }) => {
-        await page.goto(`/listings/${LOT}`);
+        // Без гидратации клик по кнопке не откроет окно входа (3.1.11).
+        await hydrated(page, `/listings/${LOT}`);
 
         await page.getByRole('button', { name: 'Написать продавцу' }).click();
 
