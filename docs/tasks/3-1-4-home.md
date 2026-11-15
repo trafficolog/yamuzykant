@@ -3,7 +3,7 @@ id: "3.1.4"
 phase: "3"
 epic: "3.1"
 title: "Главная"
-status: in_progress
+status: done
 gate: G1
 risk: medium
 model_impl: sonnet
@@ -14,7 +14,7 @@ uc: ["S2"]
 prototype: "Десктоп - Главная.dc.html"
 screens: ["home"]
 issue: 29
-sync_state: drifted
+sync_state: aligned
 escalations: []
 ---
 

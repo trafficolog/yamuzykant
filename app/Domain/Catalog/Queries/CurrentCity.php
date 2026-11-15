@@ -16,7 +16,24 @@ final class CurrentCity
 {
     public const COOKIE = 'ym_city';
 
+    private const ATTRIBUTE = 'ym.current_city';
+
     public function for(Request $request): ?City
+    {
+        // Шапка и страница спрашивают город в одном запросе: второй раз БД не трогаем.
+        if ($request->attributes->has(self::ATTRIBUTE)) {
+            $cached = $request->attributes->get(self::ATTRIBUTE);
+
+            return $cached instanceof City ? $cached : null;
+        }
+
+        $city = $this->resolve($request);
+        $request->attributes->set(self::ATTRIBUTE, $city);
+
+        return $city;
+    }
+
+    private function resolve(Request $request): ?City
     {
         $user = $request->user();
 

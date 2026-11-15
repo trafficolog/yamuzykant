@@ -1,0 +1,176 @@
+/*
+ * Главная (задача 3.1.4): категории, блок «Продать инструмент», рельсы объявлений города, TrustStrip.
+ * Подключается из resources/js/app.tsx после site.css. Только токены var(--*) и классы ym-*.
+ * Раскладка и размеры — по прототипу design/prototypes/Десктоп - Главная.dc.html; < 640 px — по чек-листу
+ * SCREENS §3 и мобильному UI-киту ДС. Блоки вне MVP (подборки, «Проверка мастером», «Безопасная сделка»,
+ * мастера, цены продаж) не выводятся, поэтому и стилей для них нет.
+ */
+
+.ym-home {
+    max-width: var(--content-max);
+    margin: 0 auto;
+    padding: var(--space-6) var(--space-10) var(--space-16);
+    box-sizing: border-box;
+}
+
+/* Верх: категории слева, продажа справа */
+.ym-home__top {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) minmax(280px, 320px);
+    gap: var(--space-6);
+    align-items: stretch;
+}
+.ym-home__cats {
+    min-width: 0;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+}
+.ym-home__cats-list {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    display: grid;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: var(--space-3) var(--space-4);
+}
+.ym-home__cat {
+    display: flex;
+    align-items: center;
+    gap: var(--space-3);
+    min-height: 64px;
+    color: var(--ink);
+    text-decoration: none;
+}
+.ym-home__cat:hover .ym-home__cat-name {
+    text-decoration: underline;
+}
+.ym-home__cat:focus-visible {
+    outline: 2px solid var(--focus-ring);
+    outline-offset: 2px;
+    border-radius: var(--radius-sm);
+}
+.ym-home__cat-icon {
+    flex: none;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 64px;
+    height: 64px;
+    border-radius: var(--radius-sm);
+    background: var(--surface-recessed);
+    color: var(--ink-faint);
+}
+.ym-home__cat-name {
+    min-width: 0;
+    color: var(--ink);
+    text-wrap: balance;
+}
+
+.ym-home__sell {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-4);
+    padding: var(--space-6);
+    border-radius: var(--radius-lg);
+    background: var(--accent-soft);
+    box-sizing: border-box;
+}
+.ym-home__sell-text {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-1);
+}
+.ym-home__sell-title {
+    margin: 0;
+    font: 600 var(--text-l) / 24px var(--font-text);
+    color: var(--ink);
+}
+.ym-home__sell-lead {
+    margin: 0;
+    color: var(--ink);
+    text-wrap: pretty;
+}
+.ym-home__sell-action {
+    margin-top: auto;
+}
+
+/* Рельсы */
+.ym-home__rail {
+    margin-top: var(--space-16);
+}
+.ym-home__rail-head {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: var(--space-4);
+    margin-bottom: var(--space-6);
+}
+.ym-home__rail-head h2 {
+    margin: 0;
+}
+.ym-home__all {
+    display: inline-flex;
+    align-items: center;
+    min-height: var(--hit-min);
+    color: var(--accent-text);
+    white-space: nowrap;
+    text-decoration: none;
+}
+.ym-home__all:hover {
+    color: var(--ink);
+    text-decoration: underline;
+}
+.ym-home__grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(var(--card-min), 1fr));
+    gap: var(--space-6);
+}
+
+/* Пустой город и TrustStrip идут после верхнего блока с тем же ритмом, что и рельсы */
+.ym-home > .ym-empty,
+.ym-home > .ym-trust {
+    margin-top: var(--space-16);
+}
+
+/* Планшет: продажа под категориями */
+@media (max-width: 1023px) {
+    .ym-home__top {
+        grid-template-columns: minmax(0, 1fr);
+    }
+    .ym-home__cats-list {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+}
+
+/* Телефон: компактные отступы, категории — две колонки плиток, сетка карточек компактная */
+@media (max-width: 639px) {
+    .ym-home {
+        padding: var(--space-4) var(--space-4) var(--space-10);
+    }
+    .ym-home__top {
+        gap: var(--space-4);
+    }
+    .ym-home__cat {
+        gap: var(--space-2);
+    }
+    .ym-home__cat-icon {
+        width: 48px;
+        height: 48px;
+    }
+    .ym-home__sell {
+        padding: var(--space-4);
+    }
+    .ym-home__rail,
+    .ym-home > .ym-empty,
+    .ym-home > .ym-trust {
+        margin-top: var(--space-10);
+    }
+    .ym-home__rail-head {
+        margin-bottom: var(--space-4);
+    }
+    .ym-home__grid {
+        grid-template-columns: repeat(auto-fill, minmax(var(--card-min-compact), 1fr));
+        gap: var(--space-4);
+    }
+}
