@@ -5,6 +5,7 @@ declare(strict_types=1);
 use App\Domain\Accounts\Models\User;
 use App\Domain\Listings\Enums\ListingStatus;
 use App\Domain\Listings\Events\ListingPriceDropped;
+use App\Domain\Listings\Events\ListingSubstantiallyEdited;
 use App\Domain\Listings\Models\ListingPriceChange;
 use App\Support\Flags\FeatureFlag;
 use Illuminate\Support\Facades\Event;
@@ -40,9 +41,11 @@ it('изменять можно только своё опубликованно
     $published = MyListingFixtures::listing($owner);
     $pending = MyListingFixtures::listing($owner, ListingStatus::Pending);
 
-    $this->actingAs(User::factory()->create())->get("/listings/{$published->id}/edit")->assertForbidden();
+    // Чужому — 404, как у отсутствующего (решение OWNER 07.11.2026); своему в неподходящем статусе — 403.
+    $this->actingAs(User::factory()->create())->get("/listings/{$published->id}/edit")->assertNotFound();
     $this->actingAs($owner)->get("/listings/{$pending->id}/edit")->assertForbidden();
-    $this->actingAs(User::factory()->create())->put("/listings/{$published->id}", MyListingFixtures::form($published))->assertForbidden();
+    $this->actingAs(User::factory()->create())->get("/listings/{$pending->id}/edit")->assertNotFound();
+    $this->actingAs(User::factory()->create())->put("/listings/{$published->id}", MyListingFixtures::form($published))->assertNotFound();
     $this->actingAs($owner)->put("/listings/{$pending->id}", MyListingFixtures::form($pending))->assertForbidden();
 });
 
@@ -100,15 +103,48 @@ it('существенная правка (название): премодера
     expect($listing->fresh()?->status)->toBe($expected)->and($listing->fresh()?->title)->toBe('Gibson Les Paul Standard');
 })->with([[true, ListingStatus::Pending], [false, ListingStatus::Published]]);
 
-it('изменение фото — существенная правка', function () {
+it('фото опубликованного: удаление — существенная правка без каких-либо признаков от клиента', function (bool $premoderation, ListingStatus $expected) {
+    $premoderation ? Feature::for(null)->activate(FeatureFlag::Premoderation->value) : null;
+    Event::fake([ListingSubstantiallyEdited::class]);
+    $owner = User::factory()->create();
+    $listing = MyListingFixtures::listing($owner, ListingStatus::Published, 4);
+    $photo = $listing->photos()->where('is_serial', false)->orderByDesc('position')->firstOrFail();
+
+    $this->actingAs($owner)->deleteJson("/listings/{$listing->id}/photos/{$photo->id}")->assertOk();
+
+    expect($listing->fresh()?->status)->toBe($expected);
+    Event::assertDispatched(ListingSubstantiallyEdited::class);
+})->with([[true, ListingStatus::Pending], [false, ListingStatus::Published]]);
+
+it('форма не принимает от клиента признак «фото менялись»: правка без изменений остаётся несущественной', function () {
     Feature::for(null)->activate(FeatureFlag::Premoderation->value);
     $owner = User::factory()->create();
     $listing = MyListingFixtures::listing($owner);
 
     $this->actingAs($owner)->put("/listings/{$listing->id}", MyListingFixtures::form($listing, ['photos_changed' => true]))->assertSessionHasNoErrors();
 
-    expect($listing->fresh()?->status)->toBe(ListingStatus::Pending);
+    expect($listing->fresh()?->status)->toBe(ListingStatus::Published);
 });
+
+it('цена → «Договорная» пишется в историю с new_price = null', function () {
+    $owner = User::factory()->create();
+    $listing = MyListingFixtures::listing($owner);
+
+    $this->actingAs($owner)->put("/listings/{$listing->id}", MyListingFixtures::form($listing, ['price_mode' => 'negotiable', 'price' => null, 'negotiable' => false]))
+        ->assertSessionHasNoErrors();
+
+    $change = ListingPriceChange::query()->sole();
+    expect($listing->fresh()?->price)->toBeNull()->and($change->old_price)->toBe(184_500)->and($change->new_price)->toBeNull();
+});
+
+it('«Снизить цену» у «Договорной» и «Бесплатно»: отдельный текст без «0»', function (?int $price) {
+    $owner = User::factory()->create();
+    $listing = MyListingFixtures::listing($owner);
+    $listing->forceFill(['price' => $price])->save();
+
+    $this->actingAs($owner)->patch("/listings/{$listing->id}/price", ['price' => 100])
+        ->assertSessionHasErrors(['price' => 'Цену «Договорная» и «Бесплатно» меняйте в форме «Изменить».']);
+})->with([[null], [0]]);
 
 it('серийный номер без ключа не меняется, с ключом — заменяется', function () {
     $owner = User::factory()->create();
@@ -156,7 +192,7 @@ it('окно «Снизить цену»: не ниже текущей, не б�
     $this->actingAs($owner)->patch("/listings/{$listing->id}/price", ['price' => 184_500])->assertSessionHasErrors('price');
     $this->actingAs($owner)->patch("/listings/{$listing->id}/price", ['price' => 200_000])->assertSessionHasErrors('price');
     $this->actingAs($owner)->patch("/listings/{$listing->id}/price", ['price' => 0])->assertSessionHasErrors('price');
-    $this->actingAs(User::factory()->create())->patch("/listings/{$listing->id}/price", ['price' => 1000])->assertForbidden();
+    $this->actingAs(User::factory()->create())->patch("/listings/{$listing->id}/price", ['price' => 1000])->assertNotFound();
     $this->actingAs($owner)->patch("/listings/{$pending->id}/price", ['price' => 1000])->assertForbidden();
 
     expect($listing->fresh()?->price)->toBe(184_500);

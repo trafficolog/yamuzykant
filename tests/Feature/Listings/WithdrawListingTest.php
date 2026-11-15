@@ -74,7 +74,7 @@ it('чужое объявление снять нельзя; уже снятое
     $owner = User::factory()->create();
     $listing = MyListingFixtures::listing($owner);
 
-    $this->actingAs(User::factory()->create())->post("/listings/{$listing->id}/withdraw", ['reason' => 'changed_mind'])->assertForbidden();
+    $this->actingAs(User::factory()->create())->post("/listings/{$listing->id}/withdraw", ['reason' => 'changed_mind'])->assertNotFound();
     $this->actingAs($owner)->post("/listings/{$listing->id}/withdraw", ['reason' => 'changed_mind']);
     $this->actingAs($owner)->post("/listings/{$listing->id}/withdraw", ['reason' => 'changed_mind'])->assertForbidden();
 });
@@ -120,5 +120,6 @@ it('вернуть и продлить может только владелец 
 
     $this->actingAs($owner)->post("/listings/{$published->id}/relist")->assertForbidden();
     $this->actingAs($owner)->post("/listings/{$withdrawn->id}/renew")->assertForbidden();
-    $this->actingAs(User::factory()->create())->post("/listings/{$withdrawn->id}/relist")->assertForbidden();
+    $this->actingAs(User::factory()->create())->post("/listings/{$withdrawn->id}/relist")->assertNotFound();
+    $this->actingAs(User::factory()->create())->post("/listings/{$withdrawn->id}/withdraw", ['reason' => 'changed_mind'])->assertNotFound();
 });

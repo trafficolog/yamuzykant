@@ -89,11 +89,15 @@ it('итоговая цена продажи на фронт не уходит',
     expect($content)->not->toContain('170000')->and($content)->not->toContain('final_price');
 });
 
-it('просмотр страницы объявления гостем увеличивает счётчик, владельцем — нет', function () {
+it('просмотр страницы: один на сессию и объявление; владельцем — не считается', function () {
     $owner = User::factory()->create();
     $listing = MyListingFixtures::listing($owner);
 
     $this->get("/listings/{$listing->id}")->assertOk();
+    $this->get("/listings/{$listing->id}")->assertOk();
+    expect($listing->fresh()?->views_count)->toBe(1);
+
+    $this->flushSession();
     $this->get("/listings/{$listing->id}")->assertOk();
     $this->actingAs($owner)->get("/listings/{$listing->id}")->assertOk();
 
