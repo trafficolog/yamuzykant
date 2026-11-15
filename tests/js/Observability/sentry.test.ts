@@ -52,7 +52,12 @@ describe('Sentry на фронте', () => {
     it('с requestId события несут тег request_id', () => {
         const init = vi.fn();
 
-        initSentry({ dsn: 'https://key@sentry.example/1', release: 'abc', requestId: 'req-1', init });
+        initSentry({
+            dsn: 'https://key@sentry.example/1',
+            release: 'abc',
+            requestId: 'req-1',
+            init,
+        });
 
         expect(init).toHaveBeenCalledWith(
             expect.objectContaining({ initialScope: { tags: { request_id: 'req-1' } } }),

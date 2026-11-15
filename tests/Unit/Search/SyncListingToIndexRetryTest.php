@@ -11,7 +11,7 @@ it('SyncListingToIndex повторяется до retryUntil (60 с), а не �
     $job = new SyncListingToIndex('listing-id');
 
     // Занятый замок WithoutOverlapping считает release() как попытку: при $tries событие терялось бы до ночной сверки.
-    expect($job->tries ?? null)->toBeNull();
+    expect((new ReflectionClass($job))->hasProperty('tries'))->toBeFalse();
     expect($job->retryUntil()->getTimestamp())
         ->toBeGreaterThanOrEqual(now()->addSeconds(59)->getTimestamp())
         ->toBeLessThanOrEqual(now()->addSeconds(61)->getTimestamp());

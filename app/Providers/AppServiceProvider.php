@@ -27,11 +27,13 @@ use App\Domain\Search\Console\ReconcileListingIndexCommand;
 use App\Domain\Search\Console\SeedLoadListingsCommand;
 use App\Domain\Search\Listeners\QueueListingIndexSync;
 use App\Support\Flags\FeatureFlag;
+use App\Support\Observability\TagSentryWithRequestId;
 use App\Support\YandexId\YandexOAuth;
 use Illuminate\Auth\Events\Login;
 use Illuminate\Contracts\Foundation\Application;
 use Illuminate\Filesystem\AwsS3V3Adapter;
 use Illuminate\Http\Request;
+use Illuminate\Queue\Events\JobProcessing;
 use Illuminate\Support\Facades\Config;
 use Illuminate\Support\Facades\Event;
 use Illuminate\Support\Facades\Gate;
@@ -77,6 +79,9 @@ class AppServiceProvider extends ServiceProvider
 
         // Время постановки задания в очередь: по нему /health считает возраст старейшего задания в Redis.
         Queue::createPayloadUsing(static fn (): array => ['pushed_at' => time()]);
+
+        // Событие Sentry из задания несёт request_id запроса, который его поставил (0.1.14).
+        Event::listen(JobProcessing::class, TagSentryWithRequestId::class);
 
         // Поисковый индекс объявлений: любое событие машины статусов → job SyncListingToIndex.
         Event::listen('App\Domain\Listings\Events\*', QueueListingIndexSync::class);

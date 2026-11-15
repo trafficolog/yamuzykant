@@ -6,6 +6,7 @@ namespace App\Domain\Search\Jobs;
 
 use App\Domain\Listings\Models\Listing;
 use App\Domain\Search\ListingDocument;
+use DateTimeInterface;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Foundation\Bus\Dispatchable;
@@ -22,10 +23,16 @@ final class SyncListingToIndex implements ShouldQueue
     use Dispatchable;
     use Queueable;
 
-    /** Попытки укладываются в минуту: паузы 2 + 5 + 10 + 20 с. */
-    public int $tries = 5;
-
     public function __construct(public readonly string $listingId) {}
+
+    /**
+     * Повторы ограничены временем, а не числом попыток: release() занятого замка WithoutOverlapping
+     * считается попыткой, и при $tries событие терялось бы до ночной сверки. Окно — 60 с (ARCHITECTURE §5).
+     */
+    public function retryUntil(): DateTimeInterface
+    {
+        return now()->addSeconds(60);
+    }
 
     /** @return list<int> */
     public function backoff(): array

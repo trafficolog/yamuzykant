@@ -10,6 +10,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Config;
 use Symfony\Component\HttpFoundation\Response;
+use Throwable;
 
 /**
  * Лимит запросов к /health по адресу клиента. Счётчики — в хранилище `health.throttle_store`
@@ -19,15 +20,19 @@ final class ThrottleHealth
 {
     public function handle(Request $request, Closure $next): Response
     {
-        $limiter = new RateLimiter(Cache::store(Config::string('health.throttle_store')));
-        $key = 'health:'.(string) $request->server->get('REMOTE_ADDR', '');
-        $max = Config::integer('health.throttle_per_minute');
+        try {
+            $limiter = new RateLimiter(Cache::store(Config::string('health.throttle_store')));
+            $key = 'health:'.(string) $request->server->get('REMOTE_ADDR', '');
 
-        if ($limiter->tooManyAttempts($key, $max)) {
-            return response()->json(['status' => 'throttled'], 429, ['Retry-After' => (string) $limiter->availableIn($key)]);
+            if ($limiter->tooManyAttempts($key, Config::integer('health.throttle_per_minute'))) {
+                return response()->json(['status' => 'throttled'], 429, ['Retry-After' => (string) $limiter->availableIn($key)]);
+            }
+
+            $limiter->hit($key, 60);
+        } catch (Throwable $e) {
+            // Хранилище счётчиков недоступно (диск, права): проверка живости важнее лимита, пропускаем без него.
+            report($e);
         }
-
-        $limiter->hit($key, 60);
 
         return $next($request);
     }
