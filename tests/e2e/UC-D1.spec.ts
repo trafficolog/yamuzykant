@@ -1,6 +1,7 @@
 import AxeBuilder from '@axe-core/playwright';
 import { expect, test, type Page } from '@playwright/test';
-import { hydrated, post, sellerListingId, signedInPage, startConversation } from './_messaging';
+import { hydrated } from './_hydrated';
+import { post, sellerListingId, signedInPage, startConversation } from './_messaging';
 
 // UC-D1 «Написать продавцу» (4.1.2): экран сообщений. Покупатель открывает «Написать» по объявлению,
 // первое сообщение создаёт беседу; продавец видит её в списке с непрочитанным, ответ доходит до второй

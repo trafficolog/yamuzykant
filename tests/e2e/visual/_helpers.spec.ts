@@ -1,6 +1,6 @@
-import { readdirSync } from 'node:fs';
-import { expect, test } from '@playwright/test';
-import { expectMatchesReference, openPrototype } from './_helpers';
+import { readdirSync, readFileSync } from 'node:fs';
+import { expect, test, type Page } from '@playwright/test';
+import { expectMatchesReference, openPrototype, STRICT_RATIO } from './_helpers';
 
 // Каркас визуальных тестов (0.2.3): хелпер сверяет страницу с эталоном design/screens по manifest.
 // Самосравнение: прототип «Подвал» против эталона footer, снятого с него же.
@@ -124,5 +124,54 @@ test.describe('@visual хелпер сверки с эталоном', () => {
             /manifest/,
         );
         await expect(expectMatchesReference(page, 'footer', '768')).rejects.toThrow(/viewport/);
+    });
+
+    // 0.2.9: эталон состояния снят с реализации, порог строгий. Фикстура: страница — сам эталон home--r1@1440
+    // (картинка), к ней добавляется блок ≈ 1,5 % площади. Под порогом 5 % сверки с прототипом такое проходило.
+    test.describe('строгий порог эталонов состояния', () => {
+        const IMAGE = `data:image/png;base64,${readFileSync('design/screens/home--r1@1440.png').toString('base64')}`;
+
+        const fixture = async (page: Page, overlayPercent: number) => {
+            await page.setViewportSize({ width: 1440, height: 900 });
+            await page.setContent(
+                `<body style="margin:0"><img id="shot" src="${IMAGE}" style="display:block;width:1440px"></body>`,
+            );
+            const height = await page
+                .locator('#shot')
+                .evaluate((img: HTMLImageElement) => img.decode().then(() => img.clientHeight));
+            if (overlayPercent === 0) return;
+            await page.evaluate(
+                (px) => {
+                    const div = document.createElement('div');
+                    div.style.cssText = `position:absolute;top:0;left:0;width:1440px;height:${px}px;background:#f0f`;
+                    document.body.append(div);
+                },
+                Math.round((height * overlayPercent) / 100),
+            );
+        };
+
+        test('порог по умолчанию — 0,5 %', () => {
+            expect(STRICT_RATIO).toBe(0.005);
+        });
+
+        test('точная копия эталона проходит', async ({ page }) => {
+            await fixture(page, 0);
+            await expectMatchesReference(page, 'home', '1440', { state: 'r1' });
+        });
+
+        test('отличие ≈ 1,5 % площади роняет сверку по умолчанию', async ({ page }) => {
+            await fixture(page, 1.5);
+            await expect(
+                expectMatchesReference(page, 'home', '1440', { state: 'r1' }),
+            ).rejects.toThrow();
+        });
+
+        test('ослабление возможно только явным maxDiffPixelRatio', async ({ page }) => {
+            await fixture(page, 1.5);
+            await expectMatchesReference(page, 'home', '1440', {
+                state: 'r1',
+                maxDiffPixelRatio: 0.02,
+            });
+        });
     });
 });

@@ -43,12 +43,6 @@ export async function sellerListingId(seller: Page): Promise<string> {
     return seller.getByTestId('listing-id').innerText();
 }
 
-/** Страница загружена и гидратирована: до этого клавиши и клики ничего не сделают. */
-export async function hydrated(page: Page, url: string): Promise<void> {
-    await page.goto(url);
-    await page.locator('html[data-hydrated="true"]').waitFor({ state: 'attached' });
-}
-
 /** Беседа покупателя по объявлению через JSON-эндпоинт 4.1.1; возвращает id беседы. */
 export async function startConversation(
     buyer: Page,

@@ -1,6 +1,7 @@
 import AxeBuilder from '@axe-core/playwright';
 import { expect, test, type Page } from '@playwright/test';
-import { FAKE_CODE, freshEmail, open, requestCode } from './_auth';
+import { FAKE_CODE, freshEmail, requestCode } from './_auth';
+import { hydrated } from './_hydrated';
 import { forgetYandexTestUser } from './_environment';
 
 // UC-A1 «Войти» (SPEC §4): окно входа в шапке — «Войти с Яндекс ID» и код из письма, первый вход
@@ -27,7 +28,7 @@ test.describe('UC-A1: окно входа', () => {
     test('вход по почте: код, первый вход с согласием, возврат на ту же страницу без перезагрузки', async ({
         page,
     }) => {
-        await open(page, '/?from=listing');
+        await hydrated(page, '/?from=listing');
         const dialog = await openDialog(page);
         await expect(dialog.getByLabel('Почта')).toBeFocused();
 
@@ -75,7 +76,7 @@ test.describe('UC-A1: окно входа', () => {
     test('повтор кода: до истечения 60 с кнопки нет, виден обратный отсчёт; «Изменить почту» возвращает на первый шаг', async ({
         page,
     }) => {
-        await open(page, '/');
+        await hydrated(page, '/');
         await openDialog(page);
         const email = freshEmail();
         await requestCode(page, email);
@@ -91,7 +92,7 @@ test.describe('UC-A1: окно входа', () => {
     test('Esc закрывает окно, фокус возвращается на кнопку «Войти»; Tab не уходит за окно', async ({
         page,
     }) => {
-        await open(page, '/');
+        await hydrated(page, '/');
         const opener = page.getByRole('banner').getByRole('button', { name: 'Войти' });
         await opener.focus();
         await page.keyboard.press('Enter');
@@ -114,7 +115,7 @@ test.describe('UC-A1: окно входа', () => {
         page,
     }) => {
         forgetYandexTestUser();
-        await open(page, '/?from=yandex');
+        await hydrated(page, '/?from=yandex');
         const dialog = await openDialog(page);
 
         await dialog.getByRole('link', { name: 'Войти с Яндекс ID' }).click();
@@ -142,7 +143,7 @@ test.describe('UC-A1: окно входа', () => {
                 headers: { ...response.headers(), location: target.toString() },
             });
         });
-        await open(page, '/');
+        await hydrated(page, '/');
         const dialog = await openDialog(page);
 
         await dialog.getByRole('link', { name: 'Войти с Яндекс ID' }).click();
@@ -156,7 +157,7 @@ test.describe('UC-A1: окно входа', () => {
     test('перехват 419: окно входа открывается, после входа страница обновляется на месте', async ({
         page,
     }) => {
-        await open(page, '/?from=action');
+        await hydrated(page, '/?from=action');
         const header = page.getByRole('banner');
         let expired = true;
         await page.route('**/city', (route) => {
@@ -193,7 +194,7 @@ test.describe('UC-A1: окно входа', () => {
 
 test.describe('UC-A1: доступность окна входа (axe)', () => {
     test('десктоп: шаги «Способ», «Код», «Первый вход»', async ({ page }) => {
-        await open(page, '/');
+        await hydrated(page, '/');
         const dialog = await openDialog(page);
         expect(await seriousOrCritical(page)).toEqual([]);
 
@@ -206,7 +207,7 @@ test.describe('UC-A1: доступность окна входа (axe)', () => {
     });
 
     test('ошибка и блок: axe чистый', async ({ page }) => {
-        await open(page, '/');
+        await hydrated(page, '/');
         const dialog = await openDialog(page);
         await requestCode(page, freshEmail());
         await dialog.getByLabel('Код из письма').fill('000000');
@@ -222,7 +223,7 @@ test.describe('UC-A1: окно входа на телефоне', () => {
             page,
         }) => {
             await page.setViewportSize({ width, height: 740 });
-            await open(page, '/');
+            await hydrated(page, '/');
 
             await page
                 .getByRole('navigation', { name: 'Нижнее меню' })

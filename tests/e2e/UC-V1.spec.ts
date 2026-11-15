@@ -1,6 +1,6 @@
 import AxeBuilder from '@axe-core/playwright';
 import { expect, test, type Page } from '@playwright/test';
-import { hydrated } from './_messaging';
+import { hydrated } from './_hydrated';
 
 // UC-V1 «Посмотреть лот» и вход UC-D1 «Написать продавцу» (3.1.5). Данные — LotDemoSeeder (global-setup.lot.ts,
 // один раз на прогон): лот из прототипа (Fender American Vintage ’57 Stratocaster, 184 500 ₽), пять похожих, одно снятое.

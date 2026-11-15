@@ -9,12 +9,6 @@ let counter = 0;
 export const freshEmail = (prefix = 'uc-a1') =>
     `${prefix}-${Date.now()}-${(counter += 1)}@example.com`;
 
-/** Страница загружена и гидратирована (`html[data-hydrated]`, ставит каркас): клик до этого ничего не откроет. */
-export const open = async (page: Page, url: string) => {
-    await page.goto(url);
-    await page.locator('html[data-hydrated="true"]').waitFor({ state: 'attached' });
-};
-
 export const requestCode = async (page: Page, email: string) => {
     const dialog = page.getByRole('dialog');
     await dialog.getByLabel('Почта').fill(email);

@@ -3,7 +3,7 @@ id: "0.2.9"
 phase: "0"
 epic: "0.2"
 title: "Визуальные тесты: строгий порог для эталонов R1"
-status: in_progress
+status: done
 gate: G1
 risk: low
 model_impl: sonnet
@@ -14,7 +14,7 @@ uc: []
 prototype: ""
 screens: []
 issue: 131
-sync_state: drifted
+sync_state: aligned
 escalations: []
 ---
 

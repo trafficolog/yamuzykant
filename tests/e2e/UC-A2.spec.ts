@@ -1,6 +1,7 @@
 import AxeBuilder from '@axe-core/playwright';
 import { expect, test, type Page } from '@playwright/test';
-import { hydrated, signedInPage } from './_messaging';
+import { hydrated } from './_hydrated';
+import { signedInPage } from './_messaging';
 import { forbiddenIn, collectCopy } from './_copy';
 
 // UC-A2 «Указать имя и город, настроить уведомления» (1.1.3): Кабинет → Профиль.
