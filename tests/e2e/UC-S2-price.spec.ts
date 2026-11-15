@@ -1,5 +1,6 @@
 import { expect, test, type Locator } from '@playwright/test';
 
+import { hydrated } from './_hydrated';
 // UC-S2, BR-11 (карточка 3.1.9): подпись «Договорная» и «Бесплатно» на карточке Барахолки видна
 // до гидратации и без JS. Данные — LotDemoSeeder: два таких лота в Санкт-Петербурге.
 
@@ -12,7 +13,7 @@ test('«Договорная» и «Бесплатно» видны на кар�
     page,
     browser,
 }) => {
-    await page.goto('/baraholka');
+    await hydrated(page, '/baraholka');
     await page.getByRole('banner').getByRole('button', { name: 'Москва' }).click();
     const panel = page.getByRole('dialog', { name: 'Выбор города' });
     await panel.getByRole('searchbox', { name: 'Поиск города' }).fill('Санкт');
