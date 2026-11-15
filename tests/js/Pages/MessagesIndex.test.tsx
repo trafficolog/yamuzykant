@@ -92,7 +92,7 @@ describe('Messages/Index', () => {
         expect(current).toHaveAttribute('aria-current', 'true');
     });
 
-    it('клик по строке открывает беседу частичным переходом: состояние списка сохраняется, данные списка свежие', () => {
+    it('клик по строке открывает беседу частичным переходом: состояние списка сохраняется, список в запрос не входит', () => {
         view();
 
         fireEvent.click(
@@ -104,7 +104,7 @@ describe('Messages/Index', () => {
         expect(visit).toHaveBeenCalledWith(
             '/messages/c2',
             expect.objectContaining({
-                only: ['active', 'compose', 'conversations', 'messages'],
+                only: ['active', 'compose'],
                 preserveState: true,
                 preserveScroll: true,
             }),
@@ -121,7 +121,7 @@ describe('Messages/Index', () => {
         expect(visit).toHaveBeenCalledWith(
             '/messages',
             expect.objectContaining({
-                only: ['active', 'compose', 'conversations', 'messages'],
+                only: ['active', 'compose'],
                 preserveState: true,
             }),
         );
@@ -145,6 +145,23 @@ describe('Messages/Index', () => {
         expect(reload).toHaveBeenCalledWith(
             expect.objectContaining({ only: ['conversations', 'messages'] }),
         );
+    });
+
+    // 0.2.9: переход панели несёт только панель; запрос списка, поданный до перехода, не теряется.
+    it('событие счётчика до перехода панели: список обновляется один раз после его конца', () => {
+        view({
+            active: { conversation: conversation({ id: 'c1' }), messages: [], has_more: false },
+        });
+        fireEvent.click(screen.getByRole('button', { name: 'Закрыть чат' }));
+        const first = visit.mock.calls.at(-1)?.[1] as { onFinish: () => void };
+        act(() => fake.emit('.unread.changed', { unread: 4 }));
+
+        fireEvent.click(screen.getByRole('button', { name: 'Закрыть чат' }));
+        act(() => first.onFinish());
+        expect(reload).not.toHaveBeenCalled();
+        act(() => (visit.mock.calls.at(-1)?.[1] as { onFinish: () => void }).onFinish());
+
+        expect(reload).toHaveBeenCalledTimes(1);
     });
 
     it('переход панели без событий: лишнего обновления списка после него нет', () => {
