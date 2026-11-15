@@ -147,8 +147,39 @@ describe('Messages/Index', () => {
         );
     });
 
-    // 0.2.9: переход панели несёт только панель; запрос списка, поданный до перехода, не теряется.
-    it('событие счётчика до перехода панели: список обновляется один раз после его конца', () => {
+    // 0.2.9: переход панели несёт только панель, поэтому запрос списка, ушедший ДО клика, отменяется визитом
+    // (Inertia отменяет запрос в полёте) и должен повториться после перехода.
+    it('reload списка в полёте, клик по панели: после конца перехода reload повторяется', () => {
+        view({
+            active: { conversation: conversation({ id: 'c1' }), messages: [], has_more: false },
+        });
+        act(() => fake.emit('.unread.changed', { unread: 4 }));
+        expect(reload).toHaveBeenCalledTimes(1);
+        (reload.mock.calls[0]?.[0] as { onStart: () => void }).onStart();
+
+        fireEvent.click(screen.getByRole('button', { name: 'Закрыть чат' }));
+        expect(reload).toHaveBeenCalledTimes(1);
+        act(() => (visit.mock.calls.at(-1)?.[1] as { onFinish: () => void }).onFinish());
+
+        expect(reload).toHaveBeenCalledTimes(2);
+    });
+
+    it('reload списка завершился до клика по панели: после перехода повтора нет', () => {
+        view({
+            active: { conversation: conversation({ id: 'c1' }), messages: [], has_more: false },
+        });
+        act(() => fake.emit('.unread.changed', { unread: 4 }));
+        const options = reload.mock.calls[0]?.[0] as { onStart: () => void; onFinish: () => void };
+        options.onStart();
+        options.onFinish();
+
+        fireEvent.click(screen.getByRole('button', { name: 'Закрыть чат' }));
+        act(() => (visit.mock.calls.at(-1)?.[1] as { onFinish: () => void }).onFinish());
+
+        expect(reload).toHaveBeenCalledTimes(1);
+    });
+
+    it('два перехода подряд, событие во время первого: один reload после обоих', () => {
         view({
             active: { conversation: conversation({ id: 'c1' }), messages: [], has_more: false },
         });
