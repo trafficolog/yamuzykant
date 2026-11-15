@@ -942,11 +942,11 @@
 
 /* FilterChip ДС, выбранный: счётчик с opacity .75 и hover со светлым фоном под светлым текстом не проходят
    контраст WCAG AA (4.5:1). Общее правило для всех чипов фильтров (кабинет, Барахолка) до правки в ДС. */
-.ym-chip[aria-checked='true'] .ym-chip__count {
+.ym-chip:is([aria-pressed='true'], [aria-checked='true']) .ym-chip__count {
     opacity: 1;
 }
 @media (hover: hover) {
-    .ym-chip[aria-checked='true']:hover:not([disabled]) {
+    .ym-chip:is([aria-pressed='true'], [aria-checked='true']):hover:not([disabled]) {
         background: var(--inverse);
     }
 }

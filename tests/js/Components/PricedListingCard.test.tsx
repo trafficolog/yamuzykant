@@ -107,7 +107,7 @@ describe('CSS: подпись цены и токены (3.1.10)', () => {
         expect(readFile('../../../resources/js/ds/components/forms/FilterChip.jsx')).toContain(
             "a['aria-pressed']",
         );
-        expect(site).toContain("[aria-pressed='true']");
+        expect(site).toContain("[aria-pressed='true'], [aria-checked='true']");
     });
 
     it('в sell.css токенов --lad* нет', () => {

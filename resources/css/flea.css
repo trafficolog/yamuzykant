@@ -169,7 +169,6 @@ a.ym-pagination__item:hover {
     white-space: nowrap;
 }
 .ym-flea__reset:hover {
-    color: var(--accent-text);
     text-decoration: underline;
 }
 .ym-flea__reset:focus-visible,
