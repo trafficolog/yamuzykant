@@ -1,4 +1,5 @@
 // @vitest-environment node
+import { createHash } from 'node:crypto';
 import { existsSync, readFileSync, statSync } from 'node:fs';
 import { describe, expect, it } from 'vitest';
 
@@ -11,6 +12,7 @@ interface Viewport {
 interface Screen {
     id: string;
     block?: string;
+    stateReferences?: { state: string; viewports: string[] }[];
     viewports: string[];
 }
 interface Manifest {
@@ -79,5 +81,35 @@ describe('эталоны design/screens', () => {
         } else {
             expect(height).toBeGreaterThan(MIN_HEIGHT);
         }
+    });
+});
+
+// 0.2.9: эталон состояния (`{id}--r1@{vp}.png`) снят с реализации. Копия прототипа `{id}@{vp}.png` под его
+// именем пропускала чужой экран целиком (ревью PR #128): байты эталона состояния не должны совпадать с прототипом.
+const sha256 = (file: string) => createHash('sha256').update(readFileSync(file)).digest('hex');
+
+const prototypes = manifest.screens.flatMap((screen) =>
+    screen.viewports.map((vp) => `${manifest.outDir}/${screen.id}@${vp}.png`).filter(existsSync),
+);
+const prototypeHashes = new Map(prototypes.map((file) => [sha256(file), file]));
+
+const stateCases = manifest.screens.flatMap((screen) =>
+    (screen.stateReferences ?? []).flatMap(({ state, viewports }) =>
+        viewports.map((vp) => ({
+            name: `${screen.id}--${state}@${vp}`,
+            reference: `${manifest.outDir}/${screen.id}--${state}@${vp}.png`,
+        })),
+    ),
+);
+
+describe('эталоны состояний, снятые с реализации', () => {
+    it('есть что проверять', () => {
+        expect(stateCases.length).toBeGreaterThan(0);
+        expect(prototypeHashes.size).toBeGreaterThan(0);
+    });
+
+    it.each(stateCases)('$name: не копия ни одного эталона прототипа (sha256)', (c) => {
+        expect(existsSync(c.reference)).toBe(true);
+        expect(prototypeHashes.get(sha256(c.reference))).toBeUndefined();
     });
 });

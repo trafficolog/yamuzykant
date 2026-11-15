@@ -44,21 +44,27 @@ type PageProps = { realtime?: RealtimeConfig | null };
 const t = ru.messages;
 
 /**
- * Страница выбирает панель частичным переходом: состояние списка сохраняется, а его данные приходят свежими
- * вместе с панелью — обновление списка, прерванное переходом, не теряется (3.1.11).
+ * Страница выбирает панель частичным переходом: состояние списка сохраняется, в запрос входит только панель.
+ * Список обновляется отдельным reload по событию — отложенным до конца перехода (3.1.11, 0.2.9).
  */
 const paneVisit = (onFinish: () => void) => ({
-    only: ['active', 'compose', 'conversations', 'messages'],
+    only: ['active', 'compose'],
     preserveState: true,
     preserveScroll: true,
     onFinish,
 });
 
 /** Обновить список и счётчик с сервера (превью, порядок, непрочитанные). */
-const listReload = () => ({
+const listReload = (inFlight: { current: number }) => ({
     only: ['conversations', 'messages'],
     preserveState: true,
     preserveScroll: true,
+    onStart: () => {
+        inFlight.current += 1;
+    },
+    onFinish: () => {
+        inFlight.current -= 1;
+    },
 });
 
 /** Минимальный промежуток между обновлениями списка, мс. */
@@ -119,6 +125,8 @@ export default function MessagesIndex({ conversations, active, compose }: Props)
     // адреса Inertia отбрасывает: обновление, запрошенное во время перехода, уходит после него (3.1.11).
     const panesInFlight = useRef(0);
     const refreshAfterPane = useRef(false);
+    // Reload списка в полёте: визит панели отменит его, и его надо повторить после перехода (0.2.9).
+    const listsInFlight = useRef(0);
 
     const reloadNow = useCallback(() => {
         if (panesInFlight.current > 0) {
@@ -126,7 +134,7 @@ export default function MessagesIndex({ conversations, active, compose }: Props)
             return;
         }
         lastReload.current = Date.now();
-        router.reload(listReload());
+        router.reload(listReload(listsInFlight));
     }, []);
 
     // Обновления списка идут сразу, но не чаще раза в 300 мс: лишний вызов откладывается в один повтор.
@@ -147,8 +155,7 @@ export default function MessagesIndex({ conversations, active, compose }: Props)
     const visitPane = useCallback(
         (url: string) => {
             panesInFlight.current += 1;
-            // Ответ перехода сам несёт свежий список: прежняя просьба об обновлении им закрыта.
-            refreshAfterPane.current = false;
+            if (listsInFlight.current > 0) refreshAfterPane.current = true;
             router.visit(
                 url,
                 paneVisit(() => {
