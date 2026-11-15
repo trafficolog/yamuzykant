@@ -33,7 +33,7 @@ test.describe('UC-L3: мои объявления — изменить и сни
         expect(
             axe.violations
                 .filter((v) => v.impact === 'serious' || v.impact === 'critical')
-                .map((v) => v.id),
+                .map((v) => `${v.id}: ${v.nodes.map((n) => n.target).join(' | ')}`),
         ).toEqual([]);
     });
 
