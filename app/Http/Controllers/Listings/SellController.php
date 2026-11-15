@@ -11,15 +11,13 @@ use App\Domain\Listings\Actions\AutosaveListingDraft;
 use App\Domain\Listings\Actions\FindOrCreateDraft;
 use App\Domain\Listings\Actions\PublishListing;
 use App\Domain\Listings\Enums\ListingStatus;
-use App\Domain\Listings\Enums\PriceMode;
 use App\Domain\Listings\Exceptions\ListingLimitReached;
 use App\Domain\Listings\Exceptions\PhotoRequirementsNotMet;
 use App\Domain\Listings\Models\Listing;
-use App\Domain\Listings\Models\ListingPhoto;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Listings\SaveDraftRequest;
 use App\Http\Requests\Listings\StoreListingRequest;
-use App\Http\Resources\Listings\ListingPhotoResource;
+use App\Http\Resources\Listings\ListingFormProps;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -42,16 +40,11 @@ final class SellController extends Controller
 
         $draft = $findOrCreate($user);
         $place = $currentCity->for($request);
-        $photos = ListingPhoto::query()
-            ->where('listing_id', $draft->id)
-            ->orderByDesc('is_serial')
-            ->orderBy('position')
-            ->get();
 
         return Inertia::render('Sell/Create', [
             'listingId' => $draft->id,
-            'photos' => ListingPhotoResource::collection($photos)->resolve($request),
-            'draft' => $this->draftProps($draft),
+            'photos' => ListingFormProps::photos($draft, $request),
+            'draft' => ListingFormProps::for($draft),
             // «Встреча в г. Москва»: тип населённого пункта и название города шапки, без склонения (решение OWNER 08.11.2026).
             'place' => $place === null ? null : ['type' => $place->settlement_type, 'name' => $place->name],
         ]);
@@ -104,40 +97,5 @@ final class SellController extends Controller
             ],
             'days' => (int) config('listings.expire_after_days'),
         ]);
-    }
-
-    /**
-     * Черновик для восстановления формы. null — форма ещё ни разу не сохранялась (режим цены не записан): страница
-     * остаётся с настройками по умолчанию. Серийный номер целиком на фронт не уходит (AGENTS.md §4) — только маска.
-     *
-     * @return array<string, mixed>|null
-     */
-    private function draftProps(Listing $draft): ?array
-    {
-        // Черновики 2.1.3 заполнены без draft_price_mode: режим выводится из price (BR-11), как при записи формы.
-        $priceMode = $draft->draft_price_mode ?? match (true) {
-            $draft->title === null => null,
-            $draft->price === null => PriceMode::Negotiable->value,
-            $draft->price === 0 => PriceMode::Free->value,
-            default => PriceMode::Amount->value,
-        };
-        if ($priceMode === null) {
-            return null;
-        }
-
-        return [
-            'kind_id' => $draft->category_id,
-            'title' => $draft->title,
-            'model_id' => $draft->model_id,
-            'year' => $draft->year,
-            'serial_masked' => $draft->serialMasked(),
-            'condition' => $draft->condition?->value,
-            'description' => $draft->description,
-            'price_mode' => $priceMode,
-            'price' => $draft->price,
-            'negotiable' => $draft->negotiable,
-            'meet' => $draft->meet,
-            'ship' => $draft->ship,
-        ];
     }
 }

@@ -67,6 +67,8 @@ final class LotDemoSeeder extends Seeder
             ['email' => self::SELLER_EMAIL],
             ['name' => 'Гитарный угол', 'city_id' => $city->id],
         );
+        // Дата регистрации фиксирована: подпись «На ЯМузыканте с марта 2026» не должна менять снимок от месяца к месяцу.
+        $seller->forceFill(['created_at' => '2026-03-05 09:00:00'])->saveQuietly();
 
         $lot = $this->listing($machine, self::LOT, $seller, $city, $category, $model, [
             'title' => 'Fender American Vintage ’57 Stratocaster 2009, Sunburst',

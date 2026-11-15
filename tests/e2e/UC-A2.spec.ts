@@ -117,7 +117,7 @@ test.describe('UC-A2: профиль', () => {
             tabs(page)
                 .getByRole('link')
                 .evaluateAll((links) => links.map((l) => l.textContent?.trim())),
-        ).resolves.toEqual(['Обзор', 'Сообщения', 'Профиль']);
+        ).resolves.toEqual(['Обзор', 'Объявления', 'Сообщения', 'Профиль']);
         await page.context().close();
     });
 
