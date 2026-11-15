@@ -76,7 +76,7 @@ it('карточка в продаже — тот же белый список, 
     sellerListing($seller, ListingStatus::Published, ['price' => null]);
 
     $this->get("/sellers/{$seller->id}")->assertInertia(fn (Assert $page) => $page
-        ->has('listings.0', fn (Assert $card) => $card->hasAll(['id', 'title', 'price', 'condition', 'city', 'ship', 'negotiable', 'posted', 'image']))
+        ->has('listings.0', fn (Assert $card) => $card->hasAll(['id', 'title', 'price', 'condition', 'city', 'ship', 'negotiable', 'posted', 'image', 'favorite']))
         ->where('listings.0.price', null)
         ->etc());
 });

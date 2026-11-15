@@ -91,7 +91,7 @@ it('карточки рельсов — белый список полей: бе
     $rails = $response->viewData('page')['props']['rails'];
 
     expect(array_keys($rails['fresh'][0]))
-        ->toEqualCanonicalizing(['id', 'title', 'price', 'condition', 'city', 'ship', 'negotiable', 'posted'])
+        ->toEqualCanonicalizing(['id', 'title', 'price', 'condition', 'city', 'ship', 'negotiable', 'posted', 'favorite'])
         ->and((string) json_encode($rails))->not->toContain('V091234');
     expect((string) json_encode($rails))->not->toContain('Секретное описание');
 });

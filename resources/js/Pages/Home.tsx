@@ -58,6 +58,8 @@ function Rail({ title, cards, allLabel, allHref }: RailProps) {
                         key={card.id}
                         title={card.title}
                         href={lotPath(card.id)}
+                        listingId={card.id}
+                        favorite={card.favorite}
                         price={card.price}
                         condition={(card.condition ?? undefined) as Condition | undefined}
                         city={card.city}

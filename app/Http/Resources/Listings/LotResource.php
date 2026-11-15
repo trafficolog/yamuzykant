@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Http\Resources\Listings;
 
 use App\Domain\Catalog\Models\Category;
+use App\Domain\Favorites\Queries\FavoriteListingIds;
 use App\Domain\Listings\Enums\ListingStatus;
 use App\Domain\Listings\Models\Listing;
 use App\Support\MemberSince;
@@ -73,8 +74,9 @@ final class LotResource extends JsonResource
             'viewer' => [
                 'authenticated' => $viewer !== null,
                 'is_owner' => $viewer !== null && $viewer->id === $listing->user_id,
+                'favorite' => isset(FavoriteListingIds::among($viewer, [$listing->id])[$listing->id]),
             ],
-            'similar' => $this->similar->map(fn (Listing $similar): array => (new ListingCardResource($similar))->resolve($request))->all(),
+            'similar' => ListingCardResource::cards($this->similar, $request),
         ];
     }
 

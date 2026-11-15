@@ -50,6 +50,7 @@ it('отдаёт ровно поля карточки', function () {
         'ship' => true,
         'negotiable' => true,
         'posted' => '2 ч назад',
+        'favorite' => false,
     ]);
 
     Carbon::setTestNow();
@@ -79,5 +80,12 @@ it('неполный документ даёт пустые, а не отсут�
         'ship' => false,
         'negotiable' => false,
         'posted' => null,
+        'favorite' => false,
     ]);
+});
+
+it('favorite — признак избранного у зрителя (4.3.1)', function () {
+    $card = (new FleaListingResource(rawHit(), 'Москва', favorite: true))->resolve(Request::create('/baraholka'));
+
+    expect($card['favorite'])->toBeTrue();
 });

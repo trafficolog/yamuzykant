@@ -41,6 +41,7 @@ const card = (n: number, extra: Partial<Card> = {}): Card => ({
     ship: false,
     negotiable: true,
     posted: '2 ч назад',
+    favorite: false,
     ...extra,
 });
 
@@ -167,7 +168,9 @@ describe('Home', () => {
         // Подпись задаёт CSS из --price-label на обёртке карточки (3.1.9), в DOM текста цены нет.
         const [negotiable, free] = screen.getAllByRole('article') as HTMLElement[];
         const labelOf = (article?: HTMLElement) =>
-            article?.parentElement?.style.getPropertyValue('--price-label');
+            article
+                ?.closest<HTMLElement>('.ym-flea__card')
+                ?.style.getPropertyValue('--price-label');
         expect(labelOf(negotiable)).toBe('"Договорная"');
         expect(labelOf(free)).toBe('"Бесплатно"');
         expect(document.body.textContent).not.toMatch(/0\s*₽/);

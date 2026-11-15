@@ -34,6 +34,12 @@ final class ListingPolicy
             || ($user !== null && $this->staff->isStaff($user));
     }
 
+    /** В избранное добавляют только опубликованное (UC-S5); остальным — 404, как у отсутствующего (SPEC §6.1). */
+    public function favorite(User $user, Listing $listing): Response
+    {
+        return $listing->status === ListingStatus::Published ? Response::allow() : Response::denyAsNotFound();
+    }
+
     public function create(User $user): bool
     {
         return true;

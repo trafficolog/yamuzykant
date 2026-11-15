@@ -7,11 +7,13 @@ namespace App\Http\Controllers\Account;
 use App\Domain\Accounts\Actions\UpdateProfile;
 use App\Domain\Accounts\Models\User;
 use App\Domain\Accounts\Queries\CabinetOverview;
+use App\Domain\Favorites\Queries\UserFavorites;
 use App\Domain\Listings\Queries\MyListings;
 use App\Domain\Notifications\NotificationPreferences;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Account\UpdateNotificationsRequest;
 use App\Http\Requests\Account\UpdateProfileRequest;
+use App\Http\Resources\Favorites\FavoriteCardResource;
 use App\Http\Resources\Listings\MyListingResource;
 use App\Support\MemberSince;
 use Illuminate\Http\RedirectResponse;
@@ -20,7 +22,7 @@ use Inertia\Inertia;
 use Inertia\Response;
 
 /**
- * Кабинет (UC-A2, 1.1.3): «Обзор» и «Профиль». Вход — middleware `auth` на маршрутах.
+ * Кабинет (UC-A2, 1.1.3): «Обзор», «Избранное» (4.3.1) и «Профиль». Вход — middleware `auth` на маршрутах.
  * Почта уходит на фронт только здесь и только её владельцу (BR-04): в общих props её нет.
  */
 final class AccountController extends Controller
@@ -32,6 +34,17 @@ final class AccountController extends Controller
         return Inertia::render('Account/Overview', [
             'buying' => $overview->buying($user),
             'selling' => $overview->selling($user),
+        ]);
+    }
+
+    /** «Избранное» (UC-S5, 4.3.1): снятое с публикации показывается как недоступное. */
+    public function favorites(Request $request, UserFavorites $favorites): Response
+    {
+        $page = $favorites->page($this->user($request));
+
+        return Inertia::render('Account/Favorites', [
+            'favorites' => FavoriteCardResource::collection($page->getCollection())->resolve($request),
+            'pagination' => ['page' => $page->currentPage(), 'pages' => max(1, $page->lastPage())],
         ]);
     }
 
