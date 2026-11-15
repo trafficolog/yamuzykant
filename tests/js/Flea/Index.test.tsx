@@ -446,7 +446,7 @@ describe('Flea/Index: страницы', () => {
         expect(url).toBe('/baraholka');
         expect(data).toEqual({ page: 2 });
         expect(options).toMatchObject({
-            only: ['listings', 'pagination'],
+            only: ['listings', 'pagination', 'searchError'],
             preserveScroll: true,
             preserveState: true,
             replace: true,
@@ -613,6 +613,14 @@ describe('Flea/Index: ошибка поиска (3.1.3)', () => {
 
         fireEvent.click(screen.getByRole('button', { name: 'Повторить' }));
         expect(reload).toHaveBeenCalledTimes(1);
+    });
+
+    it('сбой «Показать ещё»: загруженные карточки остаются, под ними Alert с повтором', () => {
+        render(<FleaIndex {...props({ searchError: true })} />);
+
+        expect(screen.getAllByRole('article')).toHaveLength(3);
+        expect(screen.getByRole('alert')).toBeInTheDocument();
+        expect(screen.getByRole('button', { name: 'Повторить' })).toBeInTheDocument();
     });
 
     it('без ошибки Alert нет', () => {

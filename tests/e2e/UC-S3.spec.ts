@@ -179,41 +179,59 @@ test.describe('UC-S3: пусто, загрузка, ошибка', () => {
         await expect(page.getByRole('article').first()).toBeVisible();
     });
 
-    test('загрузка: пока идёт запрос, на месте карточек скелетоны', async ({ page }) => {
+    test('загрузка: скелетоны на месте карточек, CLS при смене выдачи ≤ 0,05', async ({ page }) => {
+        await page.addInitScript(() => {
+            const w = window as unknown as { __cls: number };
+            w.__cls = 0;
+            new PerformanceObserver((list) => {
+                for (const entry of list.getEntries() as unknown as {
+                    value: number;
+                    hadRecentInput: boolean;
+                }[]) {
+                    if (!entry.hadRecentInput) w.__cls += entry.value;
+                }
+            }).observe({ type: 'layout-shift', buffered: true });
+        });
         await page.goto('/baraholka');
         await expect(page.getByRole('article')).toHaveCount(24);
+        const before = await page.evaluate(() => (window as unknown as { __cls: number }).__cls);
 
-        // Задерживаем ответ на смену фильтра, чтобы поймать состояние загрузки.
-        await page.route(/\/baraholka\?.*ship=1/, async (route) => {
+        // Задерживаем ответ на смену сортировки (те же 24 карточки), чтобы поймать состояние загрузки.
+        await page.route(/\/baraholka\?.*sort=cheap/, async (route) => {
             await new Promise((resolve) => setTimeout(resolve, 1000));
             await route.continue();
         });
-        await aside(page).getByRole('button', { name: 'Доставка' }).click();
+        await page.getByLabel('Сортировка').selectOption('cheap');
 
-        await expect(page.locator('.ym-flea__skeleton').first()).toBeVisible();
+        await expect(page.locator('.ym-flea__skeleton')).toHaveCount(24);
         await expect(page.locator('.ym-flea__skeleton')).toHaveCount(0);
-        await expect(page.getByRole('article').first()).toBeVisible();
+        await expect(page.getByRole('article')).toHaveCount(24);
+        await page.waitForTimeout(500);
+
+        const after = await page.evaluate(() => (window as unknown as { __cls: number }).__cls);
+        expect(after - before).toBeLessThanOrEqual(0.05);
     });
 
     test('ошибка поиска: Alert с повтором, «Повторить» возвращает выдачу', async ({ page }) => {
-        // Первый ответ подменяем: как будто поиск не ответил (searchError с пустой выдачей).
+        await page.goto('/baraholka');
+        await expect(page.getByRole('article')).toHaveCount(24);
+
+        // Первый Inertia-ответ подменяем: как будто поиск не ответил.
         let failed = false;
-        await page.route(/\/baraholka(\?|$)/, async (route) => {
-            if (failed || route.request().resourceType() !== 'document') {
+        await page.route(/\/baraholka\?/, async (route) => {
+            if (failed || route.request().headers()['x-inertia'] === undefined) {
                 await route.continue();
                 return;
             }
             failed = true;
             const response = await route.fetch();
-            const body = (await response.text()).replace(
-                '&quot;searchError&quot;:false',
-                '&quot;searchError&quot;:true',
-            );
-            expect(body).toContain('&quot;searchError&quot;:true');
-            await route.fulfill({ response, body });
+            const json = (await response.json()) as { props: Record<string, unknown> };
+            json.props.searchError = true;
+            json.props.listings = [];
+            await route.fulfill({ response, json });
         });
+        await page.getByLabel('Сортировка').selectOption('cheap');
 
-        await page.goto('/baraholka');
         await expect(page.getByRole('alert')).toContainText('Не удалось загрузить объявления');
         await expect(page.getByRole('article')).toHaveCount(0);
 
