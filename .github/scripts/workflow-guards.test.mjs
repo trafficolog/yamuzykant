@@ -735,6 +735,53 @@ for (const file of ['deploy.yml', 'provision.yml']) {
     });
 }
 
+// Задача 0.1.12: ключ сервера — только из секрета, без доверия первому подключению.
+for (const file of DEPLOY_WORKFLOWS) {
+    test(`${file}: StrictHostKeyChecking не отключён, нет ssh-keyscan и своего known_hosts`, () => {
+        const src = readFileSync(join(WORKFLOWS, file), 'utf8').replace(/^\s*#.*$/gm, '');
+        assert.doesNotMatch(src, /ssh-keyscan/);
+        assert.doesNotMatch(src, /StrictHostKeyChecking[= ]+(no|accept-new|off)/i);
+        assert.doesNotMatch(src, /UserKnownHostsFile|\.ssh\/known_hosts/);
+        for (const step of Object.values(load(file).jobs).flatMap((j) => j.steps ?? [])) {
+            assert.ok(!/known_hosts/.test(String(step.with?.['known-hosts'] ?? '')));
+        }
+    });
+}
+
+for (const file of ['deploy.yml', 'provision.yml']) {
+    test(`${file}: проверка ключа — понятная ошибка про DEPLOY_SSH_KEY, без set -x`, () => {
+        const wf = load(file);
+        for (const name of deployJobs(wf)) {
+            const step = wf.jobs[name].steps.find((s) => KEY_CHECK.test(String(s.run ?? '')));
+            assert.match(String(step.run), /::error::DEPLOY_SSH_KEY[^\n]*exit 1/);
+            assert.doesNotMatch(String(step.run), /set -x|printenv|\benv\b/);
+        }
+    });
+}
+
+// Выкатка ждёт блокировку сервера (DEPLOY_LOCK_WAIT) и потом собирает релиз: timeout-minutes job
+// должен покрывать и ожидание, и сборку, иначе GitHub оборвёт SSH посреди сборки (ревью PR #96).
+const BUILD_BUDGET_MIN = { 'deploy.yml': 20, 'provision.yml': 5 };
+for (const [file, budget] of Object.entries(BUILD_BUDGET_MIN)) {
+    test(`${file}: timeout-minutes ≥ DEPLOY_LOCK_WAIT + ${budget} мин на работу`, () => {
+        const wf = load(file);
+        const steps = Object.entries(wf.jobs).flatMap(([name, job]) =>
+            (job.steps ?? [])
+                .filter((s) => /\.\/deploy\/deploy\.sh /.test(String(s.run ?? '')))
+                .map((s) => [job, s, name]),
+        );
+        assert.ok(steps.length > 0);
+        for (const [job, step, name] of steps) {
+            const wait = String(step.env?.DEPLOY_LOCK_WAIT ?? '');
+            assert.match(wait, /^[1-9]\d*$/, `${name}: DEPLOY_LOCK_WAIT задан числом в env шага`);
+            assert.ok(
+                Number(job['timeout-minutes']) * 60 >= Number(wait) + budget * 60,
+                `${name}: timeout-minutes ${job['timeout-minutes']} < ${wait} с + ${budget} мин`,
+            );
+        }
+    });
+}
+
 test('deploy.yml: до STAGE_DEPLOY_LIVE=true — dry-run без SSH, после — выкатка и /health', () => {
     const wf = load('deploy.yml');
     const steps = wf.jobs.deploy.steps;

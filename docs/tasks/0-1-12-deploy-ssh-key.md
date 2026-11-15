@@ -36,7 +36,7 @@ escalations: []
 ## Критерии приёмки
 - [ ] Выкатка на stage из `deploy.yml` проходит по ключу (run)
 - [ ] Вход на сервер по паролю отклоняется (`ssh -o PubkeyAuthentication=no` → Permission denied; вывод в PR)
-- [ ] Секрет `DEPLOY_SSH_KEY` содержит ключ, а не пароль (проверка в workflow: формат `-----BEGIN OPENSSH PRIVATE KEY-----`, без печати значения)
+- [x] Секрет `DEPLOY_SSH_KEY` содержит ключ, а не пароль (проверка в workflow: формат `-----BEGIN OPENSSH PRIVATE KEY-----`, без печати значения)
 - [ ] Мерж в main → stage обновлён, `/health` 200 (перенесено из 0.1.4: без сервера не проверить)
 - [ ] Definition of Done — AGENTS.md §3
 

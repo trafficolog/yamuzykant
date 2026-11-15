@@ -351,9 +351,8 @@ test('SSH: ключ сервера только из DEPLOY_KNOWN_HOSTS — бе
     assert.match(lib, /-o PasswordAuthentication=no/);
 });
 
-test('provision.sh не меняет sshd (это задача 0.1.12) и не даёт пользователю деплоя полный sudo', () => {
+test('provision.sh не даёт пользователю деплоя полный sudo (только перезапуск своих сервисов)', () => {
     const src = read(DEPLOY, 'provision.sh');
-    assert.doesNotMatch(src, /sshd_config|PermitRootLogin|systemctl (reload|restart) ssh/);
     const sudoers = [...src.matchAll(/^\$\{DEPLOY_USER\} ALL=\(root\) NOPASSWD: (.+)$/gm)].map(
         (m) => m[1],
     );
@@ -403,6 +402,8 @@ const fakeRepo = () => {
 };
 
 // Каталог заглушек команд; каждая пишет вызов в $STUB_LOG.
+// Публичный ключ из ssh-agent раннера (ssh-add -L) — его provision.sh кладёт пользователю деплоя.
+const AGENT_KEY = 'ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIAgentKeyForTests ymuzykant-deploy';
 const stubBin = () => {
     const bin = mkdtempSync(join(tmpdir(), 'ym-bin-'));
     const stub = (name, body) => {
@@ -446,7 +447,18 @@ if [[ "$*" == "-n supervisorctl status ymuzykant:*" ]]; then
 fi
 exit 0`,
     );
-    stub('ssh', 'cat > /dev/null; exit 0');
+    // STUB_SSH_FAIL_USER — вход этим пользователем не проходит (нет ключа на сервере).
+    stub(
+        'ssh',
+        `[[ -n \${STUB_SSH_FAIL_USER:-} && "$*" == *" \${STUB_SSH_FAIL_USER}@"* ]] && { echo "Permission denied (publickey)." >&2; exit 255; }
+cat > /dev/null; exit 0`,
+    );
+    stub(
+        'ssh-add',
+        `[[ "$1" == -L ]] || exit 2
+[[ -n \${STUB_AGENT_KEY-x} ]] || { echo "The agent has no identities." >&2; exit 1; }
+printf '%s\n' "\${STUB_AGENT_KEY-${AGENT_KEY}}"`,
+    );
     return bin;
 };
 
@@ -880,8 +892,12 @@ test('provision.sh remote: пакет по SSH с known_hosts, значения 
     const ssh = calls(bin)
         .split('\n')
         .filter((l) => l.startsWith('ssh '));
-    assert.equal(ssh.length, 1);
-    assert.match(ssh[0], /-o StrictHostKeyChecking=yes/);
+    assert.equal(ssh.length, 3, 'apply, проверка входа по ключу, sshd');
+    for (const line of ssh) {
+        assert.match(line, /-o StrictHostKeyChecking=yes/);
+        assert.match(line, /-o PasswordAuthentication=no/);
+        assert.match(line, /-o BatchMode=yes/);
+    }
     assert.match(ssh[0], / root@stage\.example\.test /, 'provisioning — от root (PROVISION_USER)');
     assert.match(ssh[0], /provision\.sh" apply "\$d\/provision\.env"/);
     assertNoSecrets(calls(bin));
@@ -890,6 +906,164 @@ test('provision.sh remote: пакет по SSH с known_hosts, значения 
         env: provisionEnv(bin, { PROVISION_DRY_RUN: '0', DEPLOY_KNOWN_HOSTS: '' }),
     });
     assert.equal(noHosts.status, 1, noHosts.out);
+});
+
+// ---------- SSH-ключ деплоя и sshd (задача 0.1.12) ----------
+
+test('sshd: вход только по ключу — пароль и keyboard-interactive выключены, root только по ключу', () => {
+    const conf = read(DEPLOY, 'ssh', '00-ymuzykant.conf');
+    const lines = conf
+        .split('\n')
+        .map((l) => l.replace(/#.*/, '').trim())
+        .filter(Boolean);
+    assert.deepEqual(lines, [
+        'PasswordAuthentication no',
+        'KbdInteractiveAuthentication no',
+        'PermitRootLogin prohibit-password',
+        'PubkeyAuthentication yes',
+        'PermitEmptyPasswords no',
+    ]);
+});
+
+test(
+    'provision.sh remote: sshd меняется только после проверки входа по ключу пользователем деплоя',
+    bashOnly,
+    () => {
+        const bin = stubBin();
+        const r = bash(['deploy/provision.sh', 'remote'], {
+            env: provisionEnv(bin, { PROVISION_DRY_RUN: '0' }),
+        });
+        assert.equal(r.status, 0, r.out);
+        const ssh = calls(bin)
+            .split('\n')
+            .filter((l) => l.startsWith('ssh '));
+        assert.match(ssh[1], / ymdeploy@stage\.example\.test true$/, 'проверка входа по ключу');
+        assert.match(ssh[2], / root@stage\.example\.test /);
+        assert.match(ssh[2], /provision\.sh" sshd "\$d\/provision\.env"/);
+        assert.ok(calls(bin).includes('ssh-add -L'), 'публичный ключ — из ssh-agent');
+        assert.ok(!calls(bin).includes('AgentKeyForTests'), 'ключ — в пакете, не в аргументах ssh');
+    },
+);
+
+test(
+    'provision.sh remote: вход по ключу не прошёл — sshd не меняется, понятная ошибка',
+    bashOnly,
+    () => {
+        const bin = stubBin();
+        const r = bash(['deploy/provision.sh', 'remote'], {
+            env: provisionEnv(bin, { PROVISION_DRY_RUN: '0', STUB_SSH_FAIL_USER: 'ymdeploy' }),
+        });
+        assert.equal(r.status, 1, r.out);
+        assert.match(r.out, /вход по ключу пользователем ymdeploy не работает/);
+        assert.match(r.out, /sshd не изменён/);
+        assert.doesNotMatch(calls(bin), /provision\.sh" sshd/);
+    },
+);
+
+test('provision.sh remote: в ssh-agent нет ключа — отказ до SSH', bashOnly, () => {
+    const bin = stubBin();
+    const r = bash(['deploy/provision.sh', 'remote'], {
+        env: provisionEnv(bin, { PROVISION_DRY_RUN: '0', STUB_AGENT_KEY: '' }),
+    });
+    assert.equal(r.status, 1, r.out);
+    assert.match(r.out, /DEPLOY_SSH_KEY/);
+    assert.doesNotMatch(calls(bin), /^ssh /m);
+});
+
+test(
+    'provision.sh apply (dry-run): публичный ключ раннера — в authorized_keys пользователя деплоя',
+    bashOnly,
+    () => {
+        const bin = stubBin();
+        const r = bash(['deploy/provision.sh', 'apply'], {
+            env: provisionEnv(bin, { DEPLOY_AUTHORIZED_KEY: AGENT_KEY }),
+        });
+        assert.equal(r.status, 0, r.out);
+        assert.match(r.out, /runuser -u ymdeploy -- .*\/home\/ymdeploy\/\.ssh\/authorized_keys/);
+        const bad = bash(['deploy/provision.sh', 'apply'], {
+            env: provisionEnv(bin, { DEPLOY_AUTHORIZED_KEY: 'ssh-ed25519 AAAA; rm -rf /' }),
+        });
+        assert.equal(bad.status, 1, bad.out);
+        assert.match(bad.out, /DEPLOY_AUTHORIZED_KEY/);
+    },
+);
+
+// Песочница для проверок authorized_keys: PROVISION_FS_ROOT подменяет корень (/root, /home).
+const keysRoot = ({ root = true, deploy = true } = {}) => {
+    const fs = mkdtempSync(join(tmpdir(), 'ym-fs-'));
+    for (const [dir, ok] of [
+        ['root', root],
+        ['home/ymdeploy', deploy],
+    ]) {
+        mkdirSync(join(fs, dir, '.ssh'), { recursive: true });
+        if (ok) writeFileSync(join(fs, dir, '.ssh', 'authorized_keys'), `${AGENT_KEY}\n`);
+    }
+    return fs;
+};
+
+test(
+    'provision.sh sshd (dry-run): конфиг в sshd_config.d, sshd -t, сверка sshd -T, перезагрузка',
+    bashOnly,
+    () => {
+        const bin = stubBin();
+        const r = bash(['deploy/provision.sh', 'sshd'], {
+            env: provisionEnv(bin, { PROVISION_FS_ROOT: keysRoot() }),
+        });
+        assert.equal(r.status, 0, r.out);
+        for (const step of [
+            /write \/etc\/ssh\/sshd_config\.d\/00-ymuzykant\.conf \(0644/,
+            /\+ sshd -t/,
+            /\+ sshd -T/,
+            /\+ systemctl reload-or-restart ssh/,
+        ]) {
+            assert.match(r.out, step);
+        }
+        assertNoSecrets(r.out);
+        assert.equal(calls(bin), '', 'dry-run ничего не запускает');
+    },
+);
+
+for (const [label, opts, who] of [
+    ['у root', { root: false }, /root/],
+    ['у пользователя деплоя', { deploy: false }, /ymdeploy/],
+]) {
+    test(`provision.sh sshd: нет ключа ${label} — sshd не меняется`, bashOnly, () => {
+        const bin = stubBin();
+        const r = bash(['deploy/provision.sh', 'sshd'], {
+            env: provisionEnv(bin, { PROVISION_FS_ROOT: keysRoot(opts) }),
+        });
+        assert.equal(r.status, 1, r.out);
+        assert.match(r.out, /нет ключа в authorized_keys/);
+        assert.match(r.out, who);
+        assert.match(r.out, /sshd не изменён/);
+        assert.doesNotMatch(r.out, /sshd_config\.d/);
+    });
+}
+
+test('deploy.sh: ожидание блокировки на сервере — из DEPLOY_LOCK_WAIT раннера', bashOnly, () => {
+    const { dir, sha } = fakeRepo();
+    const bin = stubBin();
+    const r = bash(['deploy/deploy.sh', 'stage', sha], {
+        cwd: dir,
+        env: runnerEnv(bin, { DEPLOY_LOCK_WAIT: '600' }),
+    });
+    assert.equal(r.status, 0, r.out);
+    assert.match(
+        calls(bin),
+        /^ssh .* DEPLOY_LOCK_WAIT=600 bash \S+\/deploy\/deploy\.sh server-release /m,
+    );
+    const rb = bash(['deploy/deploy.sh', 'rollback', 'stage'], {
+        cwd: dir,
+        env: runnerEnv(bin, { DEPLOY_LOCK_WAIT: '600' }),
+    });
+    assert.equal(rb.status, 0, rb.out);
+    assert.match(calls(bin), /^ssh .* DEPLOY_LOCK_WAIT=600 bash \S+\/deploy\.sh rollback$/m);
+    const bad = bash(['deploy/deploy.sh', 'stage', sha], {
+        cwd: dir,
+        env: runnerEnv(bin, { DEPLOY_LOCK_WAIT: '9; id' }),
+    });
+    assert.equal(bad.status, 1, bad.out);
+    assert.match(bad.out, /DEPLOY_LOCK_WAIT/);
 });
 
 // ---------- ревью PR #96, круг 1 ----------
