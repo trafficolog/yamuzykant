@@ -72,6 +72,11 @@ ssh_setup() {
     fi
 }
 
+# Строка — публичный ключ OpenSSH: «тип base64 [комментарий из печатных символов]».
+valid_pubkey() {
+    [[ $1 =~ ^(ssh-ed25519|ssh-rsa|ecdsa-sha2-nistp(256|384|521)|sk-ssh-ed25519@openssh\.com|sk-ecdsa-sha2-nistp256@openssh\.com)\ [A-Za-z0-9+/]+={0,3}(\ [[:print:]]*)?$ ]]
+}
+
 # Адресат ssh из секретов: имя пользователя Linux и хост или IP. Значение с пробелом, «-» в начале
 # или «@» иначе стало бы опцией ssh (-oProxyCommand=…) или другим адресатом.
 check_ssh_target() {

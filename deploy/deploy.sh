@@ -16,7 +16,7 @@
 #
 # Переменные раннера: DEPLOY_HOST, DEPLOY_USER, DEPLOY_KNOWN_HOSTS, [DEPLOY_PORT], APP_URL и секреты
 # для .env (render_env ниже). DEPLOY_DRY_RUN=1 — проверить вход, собрать архив и .env, ничего не
-# отправляя на сервер (до задачи 0.1.12, пока в DEPLOY_SSH_KEY нет ключа).
+# отправляя на сервер (пока OWNER не задал STAGE_DEPLOY_LIVE=true, CI-CD.md §5).
 set -Eeuo pipefail
 
 HERE=$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)
@@ -27,7 +27,10 @@ APP_ROOT=${DEPLOY_APP_ROOT:-$YM_DEFAULT_APP_ROOT}
 KEEP_RELEASES=${DEPLOY_KEEP_RELEASES:-5}
 SETTLE_SECONDS=${DEPLOY_SETTLE_SECONDS:-5}
 HEALTH_RETRIES=${DEPLOY_HEALTH_RETRIES:-10}
+# Ожидание блокировки выкатки на сервере. Раннер передаёт своё значение в команду ssh: workflow
+# держит timeout-minutes ≥ DEPLOY_LOCK_WAIT + время сборки (workflow-guards.test.mjs).
 LOCK_WAIT=${DEPLOY_LOCK_WAIT:-900}
+[[ $LOCK_WAIT =~ ^[0-9]+$ ]] || die "DEPLOY_LOCK_WAIT — число секунд"
 FAILED_MARK=.deploy-failed
 PHP_FPM_SERVICE=${DEPLOY_PHP_FPM_SERVICE:-php8.3-fpm}
 RELEASE_ID_RE='^[0-9]{14}-[0-9a-f]{12}$'
@@ -185,7 +188,7 @@ runner_deploy() {
     log "Обновление shared/.env"
     remote "set -e; umask 077; cat > ${root}/shared/.env.next; mv -f ${root}/shared/.env.next ${root}/shared/.env" <"$tmp/env"
     log "Сборка и переключение на сервере"
-    remote "bash ${rel}/deploy/deploy.sh server-release $(printf '%q' "$id")"
+    remote "DEPLOY_LOCK_WAIT=${LOCK_WAIT} bash ${rel}/deploy/deploy.sh server-release $(printf '%q' "$id")"
 }
 
 runner_rollback() {
@@ -197,7 +200,7 @@ runner_rollback() {
     # shellcheck disable=SC2064
     trap "rm -rf '$tmp'" EXIT
     ssh_setup "$tmp"
-    remote "bash $(printf '%q' "$APP_ROOT/current/deploy/deploy.sh") rollback"
+    remote "DEPLOY_LOCK_WAIT=${LOCK_WAIT} bash $(printf '%q' "$APP_ROOT/current/deploy/deploy.sh") rollback"
 }
 
 # ---------- сервер ----------

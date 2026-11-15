@@ -3,15 +3,17 @@
 # Идемпотентно: повторный запуск приводит сервер к тому же состоянию и ничего не ломает.
 #
 #   deploy/provision.sh remote          с раннера (provision.yml): упаковать deploy/ и значения,
-#                                       передать по SSH (stdin) и выполнить `apply` от root
+#                                       передать по SSH (stdin), выполнить `apply` от root, проверить
+#                                       вход по ключу пользователем деплоя и только тогда `sshd`
 #   deploy/provision.sh apply [ENV]     на сервере от root; ENV — файл со значениями (удаляется после)
+#   deploy/provision.sh sshd [ENV]      на сервере от root: вход только по ключу (задача 0.1.12)
 #   PROVISION_DRY_RUN=1                 показать план без изменений (и без SSH в режиме remote)
 #
 # Ставит: Nginx (HTTPS через certbot, Cache-Control для /build и /fonts, basic-auth stage),
 # PHP 8.3-FPM, PostgreSQL 16, Redis 7, Node 22, Composer, Supervisor (очередь high,default — Horizon,
 # Reverb, SSR, планировщик), в Docker на 127.0.0.1 — Meilisearch, Mailpit (за паролем), MinIO;
-# пользователь деплоя без root с sudo только на перезапуск своих процессов; firewall (22, 80, 443).
-# sshd не трогает: ключи и отключение входа по паролю — задача 0.1.12.
+# пользователь деплоя без root (ключ — публичная часть DEPLOY_SSH_KEY) с sudo только на перезапуск
+# своих процессов; firewall (22, 80, 443); sshd без входа по паролю (deploy/ssh/00-ymuzykant.conf).
 set -Eeuo pipefail
 
 HERE=$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)
@@ -27,7 +29,7 @@ CONF_DIR=/etc/ymuzykant
 
 # Значения, которые раннер передаёт на сервер (секреты окружения stage и переменные).
 PROVISION_VARS=(
-    APP_URL DEPLOY_USER DEPLOY_PORT CERTBOT_EMAIL
+    APP_URL DEPLOY_USER DEPLOY_PORT DEPLOY_AUTHORIZED_KEY CERTBOT_EMAIL
     DB_PASSWORD MEILISEARCH_KEY
     MINIO_ROOT_USER MINIO_ROOT_PASSWORD AWS_ACCESS_KEY_ID AWS_SECRET_ACCESS_KEY AWS_BUCKET
     STAGE_BASIC_AUTH_USER STAGE_BASIC_AUTH_PASSWORD MAILPIT_UI_USER MAILPIT_UI_PASSWORD
@@ -47,6 +49,12 @@ provision_remote() {
     tmp=$(mktemp -d)
     # shellcheck disable=SC2064
     trap "rm -rf '$tmp'" EXIT
+    if [[ $DRY_RUN != 1 ]]; then
+        # Публичная часть DEPLOY_SSH_KEY из ssh-agent раннера: её получает пользователь деплоя.
+        DEPLOY_AUTHORIZED_KEY=$(ssh-add -L 2>/dev/null | head -n 1) || true
+        valid_pubkey "${DEPLOY_AUTHORIZED_KEY:-}" ||
+            die "в ssh-agent нет ключа: проверьте секрет DEPLOY_SSH_KEY и шаг webfactory/ssh-agent"
+    fi
     (
         umask 077
         for name in "${PROVISION_VARS[@]}"; do
@@ -56,18 +64,36 @@ provision_remote() {
     tar -czf "$tmp/bundle.tar.gz" -C "$HERE/.." deploy -C "$tmp" provision.env
     if [[ $DRY_RUN == 1 ]]; then
         log "DRY-RUN: пакет $(wc -c <"$tmp/bundle.tar.gz") байт, значения: ${PROVISION_VARS[*]}"
-        log "DRY-RUN: на сервер ничего не отправлено (ssh ${user}@<DEPLOY_HOST>, provision.sh apply)"
+        log "DRY-RUN: на сервер ничего не отправлено: ssh ${user}@<DEPLOY_HOST> provision.sh apply,"
+        log "DRY-RUN: ssh ${DEPLOY_USER}@<DEPLOY_HOST> true (вход по ключу), ssh ${user}@<DEPLOY_HOST> provision.sh sshd"
         return 0
     fi
     require_vars DEPLOY_HOST
     # shellcheck disable=SC2153 # DEPLOY_HOST проверен require_vars
     check_ssh_target "$user" "$DEPLOY_HOST"
+    check_ssh_target "$DEPLOY_USER" "$DEPLOY_HOST"
     ssh_setup "$tmp"
-    # Пакет — во временном каталоге 0700 на сервере, удаляется в любом случае.
+    remote_provision "$user" apply "$tmp/bundle.tar.gz"
+    # sshd меняется, только если пользователь деплоя уже входит по ключу (BatchMode, без пароля):
+    # иначе после отключения пароля на сервер было бы не попасть.
+    log "Проверка входа по ключу пользователем ${DEPLOY_USER}"
+    # shellcheck disable=SC2153 # DEPLOY_HOST проверен require_vars
+    if ! ssh "${SSH_OPTS[@]}" "${DEPLOY_USER}@${DEPLOY_HOST}" true </dev/null; then
+        die "вход по ключу пользователем ${DEPLOY_USER} не работает — sshd не изменён, вход по паролю оставлен"
+    fi
+    log "Вход на сервер только по ключу (sshd)"
+    remote_provision "$user" sshd "$tmp/bundle.tar.gz"
+}
+
+# Выполнить provision.sh <apply|sshd> на сервере. Пакет — во временном каталоге 0700, удаляется
+# в любом случае.
+remote_provision() {
+    local user=$1 command=$2 bundle=$3
+    [[ $command == apply || $command == sshd ]] || die "remote_provision: неизвестная команда"
     # shellcheck disable=SC2153 # DEPLOY_HOST проверен require_vars
     ssh "${SSH_OPTS[@]}" "${user}@${DEPLOY_HOST}" \
-        'set -e; d=$(mktemp -d); trap "rm -rf \"$d\"" EXIT; tar -xzf - -C "$d"; bash "$d/deploy/provision.sh" apply "$d/provision.env"' \
-        <"$tmp/bundle.tar.gz"
+        'set -e; d=$(mktemp -d); trap "rm -rf \"$d\"" EXIT; tar -xzf - -C "$d"; bash "$d/deploy/provision.sh" '"$command"' "$d/provision.env"' \
+        <"$bundle"
 }
 
 # ---------- сервер: примитивы с dry-run ----------
@@ -195,8 +221,15 @@ setup_user() {
     as_deploy install -d -m 0755 "$APP_ROOT/shared"
     as_deploy install -d -m 0775 "$APP_ROOT/shared/storage"
     as_deploy install -d -m 0775 "$APP_ROOT/shared/storage/logs"
-    # Каталог ключей; authorized_keys кладёт OWNER (задача 0.1.12), скрипт его не меняет.
+    # Ключ раннера (публичная часть DEPLOY_SSH_KEY) дописывается в authorized_keys, если его там нет;
+    # другие ключи не трогаются. Пишет сам пользователь деплоя (симлинк в ~/.ssh не даст прав root).
     as_deploy install -d -m 0700 "/home/$DEPLOY_USER/.ssh"
+    if [[ -n ${DEPLOY_AUTHORIZED_KEY:-} ]]; then
+        valid_pubkey "$DEPLOY_AUTHORIZED_KEY" || die "DEPLOY_AUTHORIZED_KEY — не публичный ключ OpenSSH"
+        # shellcheck disable=SC2016 # переменные раскрывает bash внутри runuser
+        as_deploy bash -c 'umask 077; grep -qxF -- "$1" "$2" 2>/dev/null || printf "%s\n" "$1" >>"$2"' \
+            _ "$DEPLOY_AUTHORIZED_KEY" "/home/$DEPLOY_USER/.ssh/authorized_keys"
+    fi
     run install -d -m 0755 /var/www/letsencrypt
     # Журналы программ Supervisor: пишет supervisord от root, пользователю деплоя каталог недоступен.
     run install -d -m 0750 -o root -g adm /var/log/ymuzykant
@@ -339,14 +372,70 @@ provision_apply() {
     setup_nginx
     log "Firewall"
     setup_firewall
-    log "Сервер готов. Дальше — выкатка deploy.yml (shared/.env пишет deploy.sh)"
+    log "Сервер готов. Дальше — проверка входа по ключу и sshd (provision.sh remote делает это сам)"
+}
+
+# ---------- сервер: вход только по ключу (задача 0.1.12) ----------
+
+# В authorized_keys есть хотя бы один публичный ключ OpenSSH.
+has_authorized_key() {
+    local file=$1 line
+    [[ -f $file && ! -L $file ]] || return 1
+    while IFS= read -r line || [[ -n $line ]]; do
+        valid_pubkey "$line" && return 0
+    done <"$file"
+    return 1
+}
+
+SSHD_CONF=/etc/ssh/sshd_config.d/00-ymuzykant.conf
+
+# Вызывает provision.sh remote после того, как раннер вошёл пользователем деплоя по ключу.
+# Сам ещё раз проверяет ключи root и пользователя деплоя: без них sshd не меняется.
+provision_sshd() {
+    local env_file=${1:-} fs=${PROVISION_FS_ROOT:-} home want
+    if [[ -n $env_file ]]; then
+        set -a
+        # shellcheck disable=SC1090
+        source "$env_file"
+        set +a
+    fi
+    require_vars DEPLOY_USER
+    [[ $DEPLOY_USER =~ ^[a-z_][a-z0-9_-]{0,31}$ && $DEPLOY_USER != root ]] || die "DEPLOY_USER — имя пользователя Linux, не root"
+    check_os
+    for home in "$fs/root" "$fs/home/$DEPLOY_USER"; do
+        has_authorized_key "$home/.ssh/authorized_keys" ||
+            die "нет ключа в authorized_keys ${home#"$fs"} — sshd не изменён, вход по паролю оставлен"
+    done
+    put_file "$SSHD_CONF" 0644 <"$HERE/ssh/00-ymuzykant.conf"
+    if ! run sshd -t; then
+        run rm -f "$SSHD_CONF"
+        die "sshd -t не принял конфигурацию — файл удалён, sshd не изменён"
+    fi
+    # Итоговые значения (sshd -T) — те, что в нашем файле: его не перекрыл другой конфиг и Include есть.
+    if [[ $DRY_RUN == 1 ]]; then
+        run sshd -T
+    else
+        local effective
+        effective=$(sshd -T 2>/dev/null)
+        # prohibit-password sshd -T печатает и как without-password (старое имя).
+        for want in 'passwordauthentication no' 'kbdinteractiveauthentication no' \
+            'permitrootlogin (prohibit-password|without-password)' 'pubkeyauthentication yes'; do
+            grep -qxE "$want" <<<"$effective" || {
+                rm -f "$SSHD_CONF"
+                die "sshd -T: нет «${want}» (конфигурацию перекрывает другой файл) — файл удалён, sshd не изменён"
+            }
+        done
+    fi
+    run systemctl reload-or-restart ssh
+    log "Вход по паролю выключен; root — только по ключу"
 }
 
 case ${1:-} in
 remote) provision_remote ;;
 apply) provision_apply "${2:-}" ;;
+sshd) provision_sshd "${2:-}" ;;
 *)
-    sed -n '2,9p' "${BASH_SOURCE[0]}" >&2
+    sed -n '2,10p' "${BASH_SOURCE[0]}" >&2
     exit 2
     ;;
 esac

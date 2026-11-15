@@ -1,9 +1,11 @@
 name: Provision stage
 # Подготовка сервера stage и откат выкатки (задача 0.1.4). Только ручной запуск OWNER из main:
-#   provision — deploy/provision.sh: пакеты, сервисы, Nginx и HTTPS, пользователь деплоя, firewall
-#               (идемпотентно, от PROVISION_USER — по умолчанию root, по SSH-ключу DEPLOY_SSH_KEY);
+#   provision — deploy/provision.sh: пакеты, сервисы, Nginx и HTTPS, пользователь деплоя с ключом,
+#               firewall, затем — после проверки входа по ключу — sshd без пароля (идемпотентно,
+#               от PROVISION_USER — по умолчанию root, по SSH-ключу DEPLOY_SSH_KEY);
 #   rollback  — deploy/deploy.sh rollback stage: вернуть предыдущий релиз (≤ 1 мин).
-# Пока в DEPLOY_SSH_KEY пароль (до 0.1.12), job падает на проверке формата ключа, ничего не делая.
+# В DEPLOY_SSH_KEY не ключ OpenSSH — job падает на проверке формата, ничего не делая.
+# Ключ сервера — только из секрета DEPLOY_KNOWN_HOSTS (StrictHostKeyChecking yes, deploy/lib.sh).
 # Условия проверяет .github/scripts/workflow-guards.test.mjs в job docs.
 on:
   workflow_dispatch:
@@ -40,7 +42,7 @@ jobs:
         run: |
           case "$KEY" in
             "-----BEGIN OPENSSH PRIVATE KEY-----"*) echo "формат ключа верный" ;;
-            *) echo "::error::DEPLOY_SSH_KEY — не приватный ключ OpenSSH (задача 0.1.12)"; exit 1 ;;
+            *) echo "::error::DEPLOY_SSH_KEY — не приватный ключ OpenSSH: вставьте файл ключа целиком, от -----BEGIN OPENSSH PRIVATE KEY----- до END (не пароль и не .pub), задача 0.1.12"; exit 1 ;;
           esac
       - uses: webfactory/ssh-agent@dc588b651fe13675774614f8e6a936a468676387 # v0.9.0
         with:
@@ -70,6 +72,7 @@ jobs:
         if: inputs.command == 'rollback'
         run: ./deploy/deploy.sh rollback stage
         env:
+          DEPLOY_LOCK_WAIT: '900'
           DEPLOY_HOST: ${{ secrets.DEPLOY_HOST }}
           DEPLOY_USER: ${{ secrets.DEPLOY_USER }}
           DEPLOY_PORT: ${{ vars.DEPLOY_PORT }}
