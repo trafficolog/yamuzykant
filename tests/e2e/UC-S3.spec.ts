@@ -92,13 +92,13 @@ test.describe('UC-S3: фильтры и сортировка', () => {
         await expect(page.getByText('Найдено 27 лотов')).toBeVisible();
     });
 
-    test('фильтры без результата — пустое состояние со сбросом', async ({ page }) => {
+    test('фильтры без результата — пустое состояние со снятием фильтра', async ({ page }) => {
         await page.goto('/baraholka?price_from=9000000');
 
         await expect(
             page.getByText('По этим фильтрам лотов нет. Уберите часть фильтров.'),
         ).toBeVisible();
-        await page.getByRole('button', { name: 'Сбросить фильтры' }).click();
+        await page.getByRole('button', { name: /^Снять фильтр/ }).click();
         await expect(page.getByText('Найдено 27 лотов')).toBeVisible();
     });
 
