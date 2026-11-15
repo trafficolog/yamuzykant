@@ -426,6 +426,9 @@ exit 0`,
         `[[ "$*" == *"/health"* && "$*" == *"--resolve"* && \${STUB_FAIL:-} == *health* ]] && exit 22
 [[ "$*" == *"13714/health"* && \${STUB_FAIL:-} == *ssr* ]] && exit 7
 [[ "$*" == *"127.0.0.1:8080/up"* && \${STUB_FAIL:-} == *reverb* ]] && exit 7
+if [[ "$*" == *"127.0.0.1:8080/up"* && -n \${STUB_REVERB_FAIL_FIRST:-} ]]; then
+  n=$(grep -c '127.0.0.1:8080/up' "$STUB_LOG"); ((n <= STUB_REVERB_FAIL_FIRST)) && exit 7
+fi
 if [[ "$*" == *"/app/"* ]]; then
   printf 'HTTP/1.1 %s\\r\\n\\r\\n%s\\n' "\${STUB_WS_STATUS:-101 Switching Protocols}" "\${STUB_WS_BODY-pusher:connection_established}"
   exit 28
@@ -1174,6 +1177,16 @@ test('server-release: вещание reverb, а Reverb не отвечает —
     assert.notEqual(r.status, 0, r.out);
     assert.match(r.out, /Reverb не отвечает/);
     assert.equal(current(root), RELEASES.at(-1), 'откат на прежний релиз');
+});
+
+test('server-release: Reverb стартует медленно (ответил со второй попытки) — отката нет', bashOnly, () => {
+    const root = sandbox();
+    withEnvFile(root, ENV_REVERB);
+    const bin = stubBin();
+    const r = serverRelease(root, bin, { STUB_REVERB_FAIL_FIRST: '1' });
+    assert.equal(r.status, 0, r.out);
+    assert.equal(current(root), NEW, 'релиз остался');
+    assert.equal(calls(bin).match(/127\.0\.0\.1:8080\/up/g).length, 2);
 });
 
 test('server-release: вещание не reverb — Reverb не проверяется и не блокирует выкатку', bashOnly, () => {
