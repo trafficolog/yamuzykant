@@ -31,10 +31,12 @@ final class LotController extends Controller
         return Inertia::render('Lot/Show', (new LotResource($listing, $similar->for($listing)))->resolve($request));
     }
 
-    /** Просмотр считается для опубликованного объявления и зрителя, не владельца: свои заходы счётчик не растят (2.1.5). */
+    /** Просмотр считается для опубликованного объявления и зрителя, не владельца, один раз на сессию (2.1.5). */
     private function countView(Request $request, Listing $listing): void
     {
-        if ($listing->status === ListingStatus::Published && $request->user()?->id !== $listing->user_id) {
+        $key = "viewed.{$listing->id}";
+        if ($listing->status === ListingStatus::Published && $request->user()?->id !== $listing->user_id && ! $request->session()->has($key)) {
+            $request->session()->put($key, true);
             Listing::query()->whereKey($listing->id)->increment('views_count');
         }
     }

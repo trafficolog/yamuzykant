@@ -96,7 +96,7 @@ Route::middleware('auth')->group(function (): void {
 });
 
 // Мои объявления (2.1.5, UC-L3, UC-L4): изменить той же формой, снизить цену, снять, вернуть в продажу, продлить.
-// Права — ListingPolicy (чужое — 403); правки — не чаще 30 в минуту.
+// Права — ListingPolicy (чужое — 404, своё в неподходящем статусе — 403); правки — не чаще 30 в минуту.
 Route::middleware(['auth', 'throttle:30,1'])->prefix('listings/{listing}')->whereUuid('listing')->name('listings.')->group(function (): void {
     Route::get('edit', [ManageListingController::class, 'edit'])->name('edit');
     Route::put('/', [ManageListingController::class, 'update'])->name('update');

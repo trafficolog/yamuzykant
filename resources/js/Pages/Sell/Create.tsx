@@ -175,13 +175,6 @@ export default function SellCreate({
     const [serialTouched, setSerialTouched] = useState(false);
     const serialMask = draft?.serial_masked ?? null;
     const [photos, setPhotos] = useState<ListingPhoto[]>(initialPhotos);
-    // Фото при изменении пишутся сразу, а не вместе с формой: набор отличается от исходного — правка существенная.
-    const photoIds = (list: readonly ListingPhoto[]) =>
-        list
-            .map((photo) => photo.id)
-            .sort()
-            .join(',');
-    const photosChanged = editing && photoIds(photos) !== photoIds(initialPhotos);
     const [condition, setCondition] = useState<Condition | null>(draft?.condition ?? null);
     const [description, setDescription] = useState(draft?.description ?? '');
     const [priceMode, setPriceMode] = useState<PriceMode>(draft?.price_mode ?? 'amount');
@@ -338,11 +331,7 @@ export default function SellCreate({
         };
 
         if (editing) {
-            router.put(
-                `/listings/${listingId}`,
-                { ...data, photos_changed: photosChanged },
-                options,
-            );
+            router.put(`/listings/${listingId}`, data, options);
         } else {
             router.post('/sell', data, options);
         }

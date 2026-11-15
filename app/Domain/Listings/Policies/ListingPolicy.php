@@ -45,12 +45,12 @@ final class ListingPolicy
     }
 
     /** Изменить опубликованное объявление (форма «Изменить», окно «Снизить цену»): машина правит только published. */
-    public function edit(User $user, Listing $listing): bool
+    public function edit(User $user, Listing $listing): Response|bool
     {
-        return $this->owns($user, $listing) && $listing->status === ListingStatus::Published;
+        return $this->ownerOnly($user, $listing) ?? $listing->status === ListingStatus::Published;
     }
 
-    public function publish(User $user, Listing $listing): bool
+    public function publish(User $user, Listing $listing): Response|bool
     {
         return $this->ownerMay($user, $listing, ListingEvent::Publish);
     }
@@ -63,22 +63,22 @@ final class ListingPolicy
             : Response::denyAsNotFound();
     }
 
-    public function resubmit(User $user, Listing $listing): bool
+    public function resubmit(User $user, Listing $listing): Response|bool
     {
         return $this->ownerMay($user, $listing, ListingEvent::Resubmit);
     }
 
-    public function withdraw(User $user, Listing $listing): bool
+    public function withdraw(User $user, Listing $listing): Response|bool
     {
         return $this->ownerMay($user, $listing, ListingEvent::Withdraw);
     }
 
-    public function renew(User $user, Listing $listing): bool
+    public function renew(User $user, Listing $listing): Response|bool
     {
         return $this->ownerMay($user, $listing, ListingEvent::Renew);
     }
 
-    public function relist(User $user, Listing $listing): bool
+    public function relist(User $user, Listing $listing): Response|bool
     {
         return $this->ownerMay($user, $listing, ListingEvent::Relist);
     }
@@ -103,9 +103,15 @@ final class ListingPolicy
         return $user !== null && $user->id === $listing->user_id;
     }
 
-    private function ownerMay(User $user, Listing $listing, ListingEvent $event): bool
+    private function ownerMay(User $user, Listing $listing, ListingEvent $event): Response|bool
     {
         // Флаг на допустимость события продавца не влияет: меняется только цель перехода.
-        return $this->owns($user, $listing) && ListingStateMachine::allows($listing->status, $event, true);
+        return $this->ownerOnly($user, $listing) ?? ListingStateMachine::allows($listing->status, $event, true);
+    }
+
+    /** Чужому объявление «не существует» (404, как у отсутствующего); владельцу — null: решает статус. */
+    private function ownerOnly(User $user, Listing $listing): ?Response
+    {
+        return $this->owns($user, $listing) ? null : Response::denyAsNotFound();
     }
 }

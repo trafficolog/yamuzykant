@@ -17,8 +17,10 @@ final class LowerPriceRequest extends FormRequest
     public function authorize(): bool
     {
         $listing = $this->route('listing');
+        abort_unless($listing instanceof Listing, 404);
+        Gate::forUser($this->user())->authorize('edit', $listing);
 
-        return $listing instanceof Listing && Gate::forUser($this->user())->allows('edit', $listing);
+        return true;
     }
 
     /** @return array<string, array<int, mixed>> */
@@ -35,12 +37,16 @@ final class LowerPriceRequest extends FormRequest
     {
         $listing = $this->route('listing');
         $current = $listing instanceof Listing ? (int) $listing->price : 0;
+        // «Договорная» (null) и «Бесплатно» (0): снижать нечего, «0 ₽» в тексте не показываем (BR-11).
+        $lower = $current > 0
+            ? (string) __('listings.manage.messages.price.lower', ['current' => number_format($current, 0, '', "\u{00A0}")])
+            : (string) __('listings.manage.messages.price.not_amount');
 
         return [
             'price.required' => (string) __('listings.manage.messages.price.required'),
             'price.integer' => (string) __('listings.manage.messages.price.required'),
-            'price.min' => (string) __('listings.manage.messages.price.lower', ['current' => number_format($current, 0, '', "\u{00A0}")]),
-            'price.max' => (string) __('listings.manage.messages.price.lower', ['current' => number_format($current, 0, '', "\u{00A0}")]),
+            'price.min' => $lower,
+            'price.max' => $lower,
         ];
     }
 

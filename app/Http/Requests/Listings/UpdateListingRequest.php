@@ -11,15 +11,17 @@ use Illuminate\Support\Facades\Gate;
 /**
  * Форма «Изменить» опубликованного объявления (UC-L3, 2.1.5): те же правила и тексты, что у публикации
  * (StoreListingRequest), объявление — из адреса, а не из тела. Изменяет только владелец опубликованного объявления.
- * `photos_changed` — форма сообщает, что фото менялись (они пишутся сразу, а не вместе с формой): это существенная правка.
+ * Фото пишутся сразу через ListingPhotoController, и существенной правкой их делает сервер (машина статусов), а не форма.
  */
 final class UpdateListingRequest extends StoreListingRequest
 {
     public function authorize(): bool
     {
         $listing = $this->route('listing');
+        abort_unless($listing instanceof Listing, 404);
+        Gate::forUser($this->user())->authorize('edit', $listing);
 
-        return $listing instanceof Listing && Gate::forUser($this->user())->allows('edit', $listing);
+        return true;
     }
 
     protected function prepareForValidation(): void
@@ -31,16 +33,5 @@ final class UpdateListingRequest extends StoreListingRequest
     protected function listingStatus(): ListingStatus
     {
         return ListingStatus::Published;
-    }
-
-    /** @return array<string, array<int, mixed>> */
-    public function rules(): array
-    {
-        return [...parent::rules(), 'photos_changed' => ['sometimes', 'boolean']];
-    }
-
-    public function photosChanged(): bool
-    {
-        return $this->boolean('photos_changed');
     }
 }

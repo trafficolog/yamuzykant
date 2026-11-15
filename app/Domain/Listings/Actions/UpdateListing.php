@@ -12,7 +12,7 @@ use Illuminate\Validation\ValidationException;
 /**
  * «Изменить» опубликованное объявление (UC-L3): содержимое формы → модель → правка через ListingStateMachine::edit().
  * Вид правки (существенная — на проверку при включённой премодерации, цена и прочее — без неё) определяет машина,
- * история цены пишется там же. Город объявления при изменении не меняется: он взят из шапки при публикации (BR-01).
+ * история цены пишется там же. Фото при изменении правит PhotoUploader сразу, и существенной правкой их делают действия с фото. Город объявления при изменении не меняется: он взят из шапки при публикации (BR-01).
  */
 final class UpdateListing
 {
@@ -27,7 +27,7 @@ final class UpdateListing
      * @throws SuggestionLimitReached суточный лимит предложений моделей исчерпан
      * @throws ValidationException контакты в названии или описании
      */
-    public function __invoke(Listing $listing, array $content, bool $photosChanged): Listing
+    public function __invoke(Listing $listing, array $content): Listing
     {
         $description = trim((string) ($content['description'] ?? ''));
         $attributes = [
@@ -47,6 +47,6 @@ final class UpdateListing
             $attributes['serial_enc'] = $serial === '' ? null : $serial;
         }
 
-        return $this->machine->edit($listing, $attributes, $photosChanged);
+        return $this->machine->edit($listing, $attributes);
     }
 }

@@ -22,8 +22,10 @@ final class WithdrawListingRequest extends FormRequest
     public function authorize(): bool
     {
         $listing = $this->route('listing');
+        abort_unless($listing instanceof Listing, 404);
+        Gate::forUser($this->user())->authorize('withdraw', $listing);
 
-        return $listing instanceof Listing && Gate::forUser($this->user())->allows('withdraw', $listing);
+        return true;
     }
 
     /** @return array<string, array<int, mixed>> */

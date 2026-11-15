@@ -25,7 +25,7 @@ use InvalidArgumentException;
 
 /**
  * Управление своим объявлением из кабинета (UC-L3, UC-L4, 2.1.5): изменить той же формой, снизить цену,
- * снять с продажи, вернуть в продажу, продлить. Вход — middleware `auth`; права — ListingPolicy (чужое — 403).
+ * снять с продажи, вернуть в продажу, продлить. Вход — middleware `auth`; права — ListingPolicy (чужое — 404, своё в неподходящем статусе — 403).
  * Статус меняет только ListingStateMachine.
  */
 final class ManageListingController extends Controller
@@ -48,7 +48,7 @@ final class ManageListingController extends Controller
     public function update(UpdateListingRequest $request, Listing $listing, UpdateListing $update): RedirectResponse
     {
         try {
-            $update($listing, $request->content(), $request->photosChanged());
+            $update($listing, $request->content());
         } catch (SuggestionLimitReached $e) {
             return back()->withErrors(['title' => $e->getMessage()]);
         } catch (IllegalTransition) {

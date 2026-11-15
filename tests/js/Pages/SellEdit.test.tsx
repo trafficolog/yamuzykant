@@ -94,7 +94,7 @@ describe('Sell/Create в режиме «Изменить»', () => {
         expect(screen.getByText(/V09\*\*\*\*/)).toBeInTheDocument();
     });
 
-    it('сохранение отправляет PUT на объявление; серийный номер нетронутый не уходит, фото не менялись', () => {
+    it('сохранение отправляет PUT на объявление; серийный номер нетронутый не уходит, признака фото нет', () => {
         view();
 
         fireEvent.click(screen.getByRole('button', { name: 'Сохранить изменения' }));
@@ -108,9 +108,9 @@ describe('Sell/Create в режиме «Изменить»', () => {
             model_id: 7,
             price_mode: 'amount',
             price: 184_500,
-            photos_changed: false,
         });
         expect(data).not.toHaveProperty('serial');
+        expect(data).not.toHaveProperty('photos_changed');
     });
 
     it('автосохранение черновика не запускается', () => {
