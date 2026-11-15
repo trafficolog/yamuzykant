@@ -2,7 +2,7 @@
 id: "4.4"
 phase: "4"
 title: "Письма и уведомления"
-status: todo
+status: in_progress
 gate: G2
 ---
 
@@ -16,6 +16,6 @@ gate: G2
 <!-- docs:ops:begin tasks -->
 | Задача | Статус | Риск | Исполнитель → Ревьюер |
 |---|---|---|---|
-| [4.4.1 Письма: шаблон, код входа, новое сообщение](../tasks/4-4-1-emails.md) | todo | low | haiku → sonnet |
+| [4.4.1 Письма: шаблон, код входа, новое сообщение](../tasks/4-4-1-emails.md) | done | low | haiku → sonnet |
 | [4.4.2 Центр уведомлений в шапке](../tasks/4-4-2-notification-center.md) | todo | low | haiku → sonnet |
 <!-- docs:ops:end -->
