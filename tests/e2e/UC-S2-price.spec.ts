@@ -36,11 +36,11 @@ test('«Договорная» и «Бесплатно» видны на кар�
     expect(await generated(caption(bareCards, 'Fender Japan ST62'))).toContain('"Договорная"');
     expect(await generated(caption(bareCards, 'Fender Vintera'))).toContain('"Бесплатно"');
     // 3.1.10: слово лежит в DOM текстом (поиск по странице, скринридеры), а не только в CSS.
-    await expect(bare.getByRole('article').filter({ hasText: 'Fender Japan ST62' })).toContainText(
-        'Договорная',
-    );
-    await expect(bare.getByRole('article').filter({ hasText: 'Fender Vintera' })).toContainText(
-        'Бесплатно',
-    );
+    await expect(
+        bare.locator('.ym-priced-card').filter({ hasText: 'Fender Japan ST62' }),
+    ).toContainText('Договорная');
+    await expect(
+        bare.locator('.ym-priced-card').filter({ hasText: 'Fender Vintera' }),
+    ).toContainText('Бесплатно');
     await context.close();
 });
