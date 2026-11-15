@@ -27,5 +27,5 @@ gate: G1
 | [3.1.9 Барахолка: подпись цены без JS, e2e цены, позиция прокрутки](../tasks/3-1-9-flea-polish.md) | done | low | sonnet → sonnet |
 | [3.1.10 Общая подпись цены «Договорная»/«Бесплатно» для карточек Барахолки и лота](../tasks/3-1-10-price-label-shared.md) | done | low | sonnet → sonnet |
 | [3.1.11 fix(ci): нестабильные e2e страницы лота и сообщений на main](../tasks/3-1-11-lot-e2e-stability.md) | done | high | sonnet → opus |
-| [3.1.12 fix(ci): нестабильные e2e — смена города в шапке, превью списка бесед](../tasks/3-1-12-e2e-city-realtime.md) | in_progress | high | opus → opus |
+| [3.1.12 fix(ci): нестабильные e2e — смена города в шапке, превью списка бесед](../tasks/3-1-12-e2e-city-realtime.md) | done | high | opus → opus |
 <!-- docs:ops:end -->

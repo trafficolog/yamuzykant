@@ -3,7 +3,7 @@ id: "3.1.12"
 phase: "3"
 epic: "3.1"
 title: "fix(ci): нестабильные e2e — смена города в шапке, превью списка бесед"
-status: in_progress
+status: done
 gate: G1
 risk: high
 model_impl: opus
