@@ -2,6 +2,7 @@ import { act, fireEvent, render, screen, waitFor, within } from '@testing-librar
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 import CitySelect from '@/Components/CitySelect';
+import { closeLogin, openLogin } from '@/Hooks/loginDialog';
 import { ru } from '@/lang/ru';
 
 const { post } = vi.hoisted(() => ({ post: vi.fn() }));
@@ -47,6 +48,7 @@ beforeEach(() => {
 });
 
 afterEach(() => {
+    closeLogin();
     vi.unstubAllGlobals();
 });
 
@@ -230,6 +232,33 @@ describe('CitySelect: клавиатура и закрытие кнопкой', 
 
         expect(panel()).toBeNull();
         expect(trigger()).toHaveFocus();
+    });
+});
+
+describe('CitySelect: окно входа', () => {
+    it('при открытии окна входа панель закрывается без возврата фокуса и сбрасывает сбой', async () => {
+        post.mockImplementation(
+            (_url: string, _data: unknown, options: { onError: () => void }) => {
+                options.onError();
+            },
+        );
+        render(<CitySelect city={moscow} />);
+        await open();
+        fireEvent.click(within(panelOrFail()).getByRole('button', { name: 'Санкт-Петербург' }));
+        expect(await screen.findByText(ru.city.saveError)).toBeInTheDocument();
+
+        act(() => openLogin({ returnTo: '/' }));
+
+        expect(panel()).toBeNull();
+        expect(trigger()).toHaveAttribute('aria-expanded', 'false');
+        expect(trigger()).not.toHaveFocus();
+
+        act(() => closeLogin());
+
+        expect(panel()).toBeNull();
+        fireEvent.click(trigger());
+        expect(panelOrFail()).toBeInTheDocument();
+        expect(screen.queryByText(ru.city.saveError)).toBeNull();
     });
 });
 

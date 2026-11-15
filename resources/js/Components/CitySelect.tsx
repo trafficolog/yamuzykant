@@ -3,6 +3,7 @@ import { router } from '@inertiajs/react';
 import { useCallback, useEffect, useRef, useState } from 'react';
 
 import CityPicker, { type CityOption } from '@/Components/CityPicker';
+import { useLoginRequest } from '@/Hooks/loginDialog';
 import { ru } from '@/lang/ru';
 
 export type { CityOption };
@@ -10,7 +11,9 @@ export type { CityOption };
 /** Адрес смены города (POST, CSRF по группе web). */
 const CHANGE_URL = '/city';
 
-const TOGGLE_ID = 'site-city-toggle';
+/** Кнопка города в шапке: с неё открывается окно выбора (и с главной, при пустом городе). */
+export const CITY_TOGGLE_ID = 'site-city-toggle';
+const TOGGLE_ID = CITY_TOGGLE_ID;
 const PANEL_ID = 'site-city-panel';
 const SEARCH_ID = 'site-city-search';
 
@@ -34,6 +37,15 @@ export default function CitySelect({ city }: CitySelectProps) {
         setSaveFailed(false);
         if (restoreFocus) document.getElementById(TOGGLE_ID)?.focus();
     }, []);
+
+    // Окно входа (кнопка «Войти», перехват 401/419 при смене города) модальное: окно города под ним закрывается.
+    const loginRequest = useLoginRequest();
+    useEffect(() => {
+        if (loginRequest !== null) {
+            setOpen(false);
+            setSaveFailed(false);
+        }
+    }, [loginRequest]);
 
     // При открытии фокус в поле поиска.
     useEffect(() => {

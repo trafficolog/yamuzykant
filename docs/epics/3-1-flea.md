@@ -19,7 +19,7 @@ gate: G1
 | [3.1.1 Поисковый индекс объявлений](../tasks/3-1-1-search-index.md) | done | medium | sonnet → sonnet |
 | [3.1.2 Барахолка: выдача и фильтры](../tasks/3-1-2-flea-page.md) | done | medium | sonnet → sonnet |
 | [3.1.3 Барахолка: пусто, загрузка, ошибка](../tasks/3-1-3-flea-states.md) | in_progress | low | haiku → sonnet |
-| [3.1.4 Главная](../tasks/3-1-4-home.md) | in_progress | medium | sonnet → sonnet |
+| [3.1.4 Главная](../tasks/3-1-4-home.md) | done | medium | sonnet → sonnet |
 | [3.1.5 Страница объявления](../tasks/3-1-5-lot-page.md) | done | medium | sonnet → sonnet |
 | [3.1.6 Страница продавца](../tasks/3-1-6-seller-page.md) | done | low | haiku → sonnet |
 | [3.1.7 SEO: SSR, разметка, sitemap](../tasks/3-1-7-seo.md) | todo | low | haiku → sonnet |

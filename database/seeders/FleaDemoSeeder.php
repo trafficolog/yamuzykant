@@ -14,6 +14,7 @@ use App\Domain\Listings\StateMachines\ListingStateMachine;
 use App\Domain\Search\Jobs\SyncListingToIndex;
 use App\Domain\Search\ListingIndex;
 use Illuminate\Database\Seeder;
+use Illuminate\Support\Carbon;
 use Meilisearch\Contracts\TasksQuery;
 use RuntimeException;
 
@@ -73,10 +74,22 @@ class FleaDemoSeeder extends Seeder
             $lots[] = [sprintf('Гитара демо %02d', $i), 10_000 + $i * 1_000, self::FILLER_CONDITIONS[$i % 5], false];
         }
 
-        foreach ($lots as $index => [$title, $price, $condition, $ship]) {
-            $this->publish($category, $model, $moscow, $title, $price, $condition, $ship, $index);
+        // Публикации разнесены по секундам, первая строка списка — самая свежая: порядок «сначала свежие» определён,
+        // выдача и главная не зависят от гонки (3.1.4). Давность 2,5 ч — середина окна «2 ч назад» (2–3 ч): подпись карточек не меняется ±30 мин после посева.
+        $start = now()->subMinutes(150);
+        $count = count($lots);
+        $frozen = Carbon::hasTestNow() ? Carbon::getTestNow() : null;
+        try {
+            foreach ($lots as $index => [$title, $price, $condition, $ship]) {
+                Carbon::setTestNow($start->copy()->addSeconds($count - $index));
+                $this->publish($category, $model, $moscow, $title, $price, $condition, $ship, $index);
+            }
+            Carbon::setTestNow($start);
+            $this->publish($category, $model, $kazan, 'Gibson Les Paul Казань', 120_000, 'good', true, 99);
+        } finally {
+            // Возвращаем чужое замороженное время (тест), а не сбрасываем его.
+            Carbon::setTestNow($frozen);
         }
-        $this->publish($category, $model, $kazan, 'Gibson Les Paul Казань', 120_000, 'good', true, 99);
 
         $this->waitForIndex();
     }

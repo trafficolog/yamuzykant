@@ -5,7 +5,11 @@ import { expect, test, type Page } from '@playwright/test';
 // разделов только «Барахолка». Окружение: см. playwright.config.ts (сервер, SSR, прототипы).
 
 const seriousOrCritical = async (page: Page) => {
-    const result = await new AxeBuilder({ page }).withTags(['wcag2a', 'wcag2aa']).analyze();
+    const result = await new AxeBuilder({ page })
+        .withTags(['wcag2a', 'wcag2aa'])
+        // Заглушка «Фото» карточек рельсов главной: контраст токена ДС (G1.md, 07.11.2026); убрать после ds:sync.
+        .exclude('.ym-placeholder')
+        .analyze();
     return result.violations
         .filter((violation) => violation.impact === 'serious' || violation.impact === 'critical')
         .map((violation) => `${violation.id}: ${violation.nodes.map((n) => n.target).join(' | ')}`);

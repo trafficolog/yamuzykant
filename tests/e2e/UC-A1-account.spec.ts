@@ -6,7 +6,11 @@ import { open, signInByEmail } from './_auth';
 // Нужны LOGIN_CODE_FAKE=123456 (окружение e2e, CI).
 
 const seriousOrCritical = async (page: Page) => {
-    const result = await new AxeBuilder({ page }).withTags(['wcag2a', 'wcag2aa']).analyze();
+    const result = await new AxeBuilder({ page })
+        .withTags(['wcag2a', 'wcag2aa'])
+        // Заглушка «Фото» карточек рельсов главной: контраст токена ДС (G1.md, 07.11.2026); убрать после ds:sync.
+        .exclude('.ym-placeholder')
+        .analyze();
     return result.violations
         .filter((violation) => violation.impact === 'serious' || violation.impact === 'critical')
         .map((violation) => `${violation.id}: ${violation.nodes.map((n) => n.target).join(' | ')}`);
