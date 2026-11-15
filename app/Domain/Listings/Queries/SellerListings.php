@@ -25,7 +25,8 @@ final class SellerListings
         return Listing::query()
             ->where('user_id', $seller->id)
             ->where('status', ListingStatus::Published->value)
-            ->orderByDesc('published_at');
+            ->orderByDesc('published_at')
+            ->orderBy('id');
     }
 
     /** @return Builder<Listing> */
@@ -40,6 +41,7 @@ final class SellerListings
             ->where('user_id', $seller->id)
             ->where('status', ListingStatus::Withdrawn->value)
             ->whereHas('saleRecord', fn (Builder $record) => $record->whereIn('reason', $reasons))
-            ->orderByDesc('unpublished_at');
+            ->orderByDesc('unpublished_at')
+            ->orderBy('id');
     }
 }

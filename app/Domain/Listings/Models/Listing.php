@@ -10,6 +10,7 @@ use App\Domain\Catalog\Models\City;
 use App\Domain\Catalog\Models\InstrumentModel;
 use App\Domain\Listings\Enums\Condition;
 use App\Domain\Listings\Enums\ListingStatus;
+use App\Domain\Messaging\Models\Conversation;
 use App\Domain\Moderation\Models\ModerationDecision;
 use App\Domain\Search\ListingDocument;
 use Closure;
@@ -44,6 +45,7 @@ use LogicException;
  * @property int|null $price
  * @property string|null $draft_price_mode Режим цены в форме черновика (amount|negotiable|free); у опубликованного null
  * @property bool $negotiable
+ * @property int $views_count Просмотры страницы объявления (не владельцем)
  * @property bool $meet
  * @property bool $ship
  * @property int|null $city_id
@@ -139,6 +141,7 @@ class Listing extends Model
             'model_id' => 'integer',
             'city_id' => 'integer',
             'year' => 'integer',
+            'views_count' => 'integer',
             'price' => 'integer',
             'negotiable' => 'boolean',
             'meet' => 'boolean',
@@ -308,6 +311,12 @@ class Listing extends Model
     public function saleRecord(): HasOne
     {
         return $this->hasOne(SaleRecord::class);
+    }
+
+    /** @return HasMany<Conversation, $this> */
+    public function conversations(): HasMany
+    {
+        return $this->hasMany(Conversation::class);
     }
 
     /** @return HasMany<ModerationDecision, $this> */

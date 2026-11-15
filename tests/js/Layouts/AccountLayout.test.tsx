@@ -57,13 +57,14 @@ describe('AccountLayout', () => {
         expect(main).toContainElement(nav());
     });
 
-    it('вкладки по готовым задачам: Обзор, Избранное, Сообщения, Профиль; выбранная — aria-current', () => {
+    it('вкладки по готовым задачам: Обзор, Избранное, Объявления, Сообщения, Профиль; выбранная — aria-current', () => {
         render(<AccountLayout active="profile">{null}</AccountLayout>);
 
         const links = within(nav()).getAllByRole('link');
         expect(links.map((link) => [link.textContent?.trim(), link.getAttribute('href')])).toEqual([
             ['Обзор', '/account'],
             ['Избранное', '/account/favorites'],
+            ['Объявления', '/account/listings'],
             ['Сообщения', '/messages'],
             ['Профиль', '/account/profile'],
         ]);
@@ -76,7 +77,7 @@ describe('AccountLayout', () => {
         );
     });
 
-    it('«Избранное» стоит в группе «Покупаю»; группы «Продаю» без готовых разделов нет', () => {
+    it('«Избранное» — в группе «Покупаю», «Объявления» — в группе «Продаю»', () => {
         render(<AccountLayout active="favorites">{null}</AccountLayout>);
 
         const buy = within(nav()).getByRole('list', { name: 'Покупаю' });
@@ -84,7 +85,8 @@ describe('AccountLayout', () => {
             'aria-current',
             'page',
         );
-        expect(within(nav()).queryByText('Продаю')).toBeNull();
+        const sell = within(nav()).getByRole('list', { name: 'Продаю' });
+        expect(within(sell).getByRole('link', { name: 'Объявления' })).toBeInTheDocument();
     });
 
     it('когда разделы групп готовы, группы подписаны и содержат свои вкладки', () => {

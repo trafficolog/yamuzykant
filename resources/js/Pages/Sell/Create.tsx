@@ -56,6 +56,8 @@ interface SellDraft {
 }
 
 interface SellCreateProps {
+    /** `edit` — изменение опубликованного объявления той же формой (2.1.5): без черновика и автосохранения. */
+    mode?: 'create' | 'edit';
     /** Черновик продавца: к нему привязываются фото. */
     listingId: string;
     photos: ListingPhoto[];
@@ -146,12 +148,14 @@ function Step({
  * форма восстанавливается из черновика.
  */
 export default function SellCreate({
+    mode = 'create',
     listingId,
     photos: initialPhotos,
     draft = null,
     place = null,
     priceGuide = null,
 }: SellCreateProps) {
+    const editing = mode === 'edit';
     const { props } = usePage<SharedProps>();
     const categories = useMemo(() => props.categories ?? [], [props.categories]);
     const cityName = props.city?.name ?? null;
@@ -229,22 +233,25 @@ export default function SellCreate({
         latest.current = { payload: draftPayload, signature };
     });
 
-    const flush = useCallback(async (keepalive: boolean, force = false): Promise<void> => {
-        const { payload, signature: current } = latest.current;
-        if (publishing.current || inFlight.current) return;
-        if (!force && current === savedSignature.current) return;
+    const flush = useCallback(
+        async (keepalive: boolean, force = false): Promise<void> => {
+            const { payload, signature: current } = latest.current;
+            if (editing || publishing.current || inFlight.current) return;
+            if (!force && current === savedSignature.current) return;
 
-        inFlight.current = true;
-        const result = await saveDraft(payload, keepalive);
-        inFlight.current = false;
+            inFlight.current = true;
+            const result = await saveDraft(payload, keepalive);
+            inFlight.current = false;
 
-        if (result.ok) {
-            savedSignature.current = current;
-            setDraftStatus({ kind: 'saved', time: timeLabel(result.savedAt) });
-        } else {
-            setDraftStatus({ kind: 'failed', message: result.message });
-        }
-    }, []);
+            if (result.ok) {
+                savedSignature.current = current;
+                setDraftStatus({ kind: 'saved', time: timeLabel(result.savedAt) });
+            } else {
+                setDraftStatus({ kind: 'failed', message: result.message });
+            }
+        },
+        [editing],
+    );
 
     useEffect(() => {
         const timer = window.setInterval(() => void flush(false), AUTOSAVE_MS);
@@ -298,33 +305,36 @@ export default function SellCreate({
 
         publishing.current = true;
         setSending(true);
-        router.post(
-            '/sell',
-            {
-                listing_id: listingId,
-                category_id: kindId,
-                title: title.trim(),
-                model_id: modelId,
-                year: year === '' ? null : Number(year),
-                ...(serialKept ? {} : { serial: serial.trim() === '' ? null : serial.trim() }),
-                condition,
-                description: description.trim() === '' ? null : description.trim(),
-                price_mode: priceMode,
-                price: amountMode ? price : null,
-                negotiable: amountMode && negotiable,
-                meet,
-                ship,
+        const data = {
+            listing_id: listingId,
+            category_id: kindId,
+            title: title.trim(),
+            model_id: modelId,
+            year: year === '' ? null : Number(year),
+            ...(serialKept ? {} : { serial: serial.trim() === '' ? null : serial.trim() }),
+            condition,
+            description: description.trim() === '' ? null : description.trim(),
+            price_mode: priceMode,
+            price: amountMode ? price : null,
+            negotiable: amountMode && negotiable,
+            meet,
+            ship,
+        };
+        const options = {
+            preserveScroll: true,
+            preserveState: true,
+            onFinish: () => setSending(false),
+            onError: (serverErrors: Record<string, string>) => {
+                publishing.current = false;
+                focusProblem(serverErrors);
             },
-            {
-                preserveScroll: true,
-                preserveState: true,
-                onFinish: () => setSending(false),
-                onError: (serverErrors) => {
-                    publishing.current = false;
-                    focusProblem(serverErrors);
-                },
-            },
-        );
+        };
+
+        if (editing) {
+            router.put(`/listings/${listingId}`, data, options);
+        } else {
+            router.post('/sell', data, options);
+        }
     };
 
     const otherErrors = Object.entries(errors)
@@ -343,13 +353,17 @@ export default function SellCreate({
                     <Icon name="chevron-right" size={14} />
                 </span>
                 <span aria-current="page" className="type-body-s ym-sell__crumb-current">
-                    {ru.sell.title}
+                    {editing ? ru.sell.edit.title : ru.sell.title}
                 </span>
             </nav>
 
             <div className="ym-sell__head">
-                <h1 className="type-h1 ym-sell__title">{ru.sell.title}</h1>
-                <p className="type-body-s ym-sell__lead">{ru.sell.lead}</p>
+                <h1 className="type-h1 ym-sell__title">
+                    {editing ? ru.sell.edit.title : ru.sell.title}
+                </h1>
+                <p className="type-body-s ym-sell__lead">
+                    {editing ? ru.sell.edit.lead : ru.sell.lead}
+                </p>
             </div>
 
             <div className="ym-sell__layout">
@@ -547,17 +561,19 @@ export default function SellCreate({
                                 disabled={missing.length > 0 || Object.keys(limits).length > 0}
                                 loading={sending}
                             >
-                                {ru.sell.publish}
+                                {editing ? ru.sell.edit.save : ru.sell.publish}
                             </Button>
-                            <Button
-                                variant="ghost"
-                                size="l"
-                                type="button"
-                                disabled={sending}
-                                onClick={() => void flush(false, true)}
-                            >
-                                {ru.sell.saveDraft}
-                            </Button>
+                            {editing ? null : (
+                                <Button
+                                    variant="ghost"
+                                    size="l"
+                                    type="button"
+                                    disabled={sending}
+                                    onClick={() => void flush(false, true)}
+                                >
+                                    {ru.sell.saveDraft}
+                                </Button>
+                            )}
                         </div>
                         {draftStatus.kind === 'saved' ? (
                             <p role="status" className="type-body-s ym-sell__draft-status">

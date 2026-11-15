@@ -1,7 +1,7 @@
 ---
 id: "2"
 title: "Объявления"
-status: in_progress
+status: done
 gate: G1
 ---
 
@@ -13,5 +13,5 @@ gate: G1
 <!-- docs:ops:begin epics -->
 | Эпик | Задач | Готово |
 |---|---|---|
-| [2.1 Объявление](../epics/2-1-listing.md) | 9 | 8 |
+| [2.1 Объявление](../epics/2-1-listing.md) | 9 | 9 |
 <!-- docs:ops:end -->

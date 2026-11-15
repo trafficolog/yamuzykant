@@ -23,7 +23,7 @@ export const fleaPath = (categoryPath?: string | null): string =>
 
 /**
  * Адреса разделов кабинета, которых ещё нет: заглушка `#` (DEVIATIONS: «ссылки на ещё не сделанные
- * разделы»). Подставят задачи 2.1.3 (продажа), 2.1.5 (объявления).
+ * разделы»). Подставят задачи 2.1.3 (продажа) и 4.2.x (уведомления).
  */
 export const HREF_SOON = '#';
 
@@ -33,6 +33,9 @@ export const PROFILE_PATH = '/account/profile';
 
 /** «Избранное» кабинета (4.3.1, UC-S5): шапка, меню кабинета, вкладка «Покупаю». */
 export const FAVORITES_PATH = '/account/favorites';
+
+/** «Объявления» кабинета (2.1.5). */
+export const LISTINGS_PATH = '/account/listings';
 
 /** Экран сообщений (4.1.2): шапка, меню кабинета, вкладка нижней панели. */
 export const MESSAGES_PATH = '/messages';

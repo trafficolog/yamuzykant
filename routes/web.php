@@ -19,6 +19,7 @@ use App\Http\Controllers\HomeController;
 use App\Http\Controllers\Listings\ListingPhotoController;
 use App\Http\Controllers\Listings\LocalPhotoUploadController;
 use App\Http\Controllers\Listings\LotController;
+use App\Http\Controllers\Listings\ManageListingController;
 use App\Http\Controllers\Listings\PhotoMediaController;
 use App\Http\Controllers\Listings\SellController;
 use App\Http\Controllers\Listings\SellerController;
@@ -90,6 +91,7 @@ Route::get('/sellers/{seller}', SellerController::class)->where('seller', '[1-9]
 Route::middleware('auth')->prefix('account')->name('account.')->group(function (): void {
     Route::get('/', [AccountController::class, 'overview'])->name('overview');
     Route::get('favorites', [AccountController::class, 'favorites'])->name('favorites');
+    Route::get('listings', [AccountController::class, 'listings'])->name('listings');
     Route::get('profile', [AccountController::class, 'profile'])->name('profile');
     Route::patch('profile', [AccountController::class, 'updateProfile'])->middleware('throttle:30,1')->name('profile.update');
     Route::put('notifications', [AccountController::class, 'updateNotifications'])->middleware('throttle:30,1')->name('notifications.update');
@@ -108,6 +110,17 @@ Route::middleware('auth')->group(function (): void {
     Route::post('/sell', [SellController::class, 'store'])->middleware('throttle:60,1')->name('sell.store');
     Route::put('/sell/draft', [SellController::class, 'saveDraft'])->middleware('throttle:120,1')->name('sell.draft');
     Route::get('/sell/{listing}/done', [SellController::class, 'done'])->whereUuid('listing')->name('sell.done');
+});
+
+// Мои объявления (2.1.5, UC-L3, UC-L4): изменить той же формой, снизить цену, снять, вернуть в продажу, продлить.
+// Права — ListingPolicy (чужое — 404, своё в неподходящем статусе — 403); правки — не чаще 30 в минуту.
+Route::middleware(['auth', 'throttle:30,1'])->prefix('listings/{listing}')->whereUuid('listing')->name('listings.')->group(function (): void {
+    Route::get('edit', [ManageListingController::class, 'edit'])->name('edit');
+    Route::put('/', [ManageListingController::class, 'update'])->name('update');
+    Route::patch('price', [ManageListingController::class, 'lowerPrice'])->name('price');
+    Route::post('withdraw', [ManageListingController::class, 'withdraw'])->name('withdraw');
+    Route::post('relist', [ManageListingController::class, 'relist'])->name('relist');
+    Route::post('renew', [ManageListingController::class, 'renew'])->name('renew');
 });
 
 // Фото объявления (2.1.2): URL загрузки, подтверждение, порядок, удаление — для владельца (ListingPolicy::update).

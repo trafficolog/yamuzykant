@@ -1,7 +1,13 @@
 import { describe, expect, it } from 'vitest';
 
 import { accountNav, memberSince } from '@/lib/account';
-import { ACCOUNT_PATH, FAVORITES_PATH, MESSAGES_PATH, PROFILE_PATH } from '@/lib/paths';
+import {
+    ACCOUNT_PATH,
+    FAVORITES_PATH,
+    LISTINGS_PATH,
+    MESSAGES_PATH,
+    PROFILE_PATH,
+} from '@/lib/paths';
 
 // 1.1.3: адреса кабинета, состав вкладок («Покупаю» / «Продаю», DEVIATIONS «account») и подпись продавца.
 
@@ -14,12 +20,13 @@ describe('адреса кабинета', () => {
 });
 
 describe('accountNav', () => {
-    it('готовы обзор, избранное, сообщения и профиль: вкладок ещё не сделанных задач нет', () => {
+    it('готовы обзор, избранное, объявления, сообщения и профиль; «Поиски» ещё нет', () => {
         const nav = accountNav();
 
         expect(nav.map((item) => [item.key, item.href, item.group])).toEqual([
             ['overview', ACCOUNT_PATH, null],
             ['favorites', FAVORITES_PATH, 'buy'],
+            ['listings', LISTINGS_PATH, 'sell'],
             ['messages', MESSAGES_PATH, null],
             ['profile', PROFILE_PATH, null],
         ]);

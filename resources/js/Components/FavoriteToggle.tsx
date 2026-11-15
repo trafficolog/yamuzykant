@@ -11,7 +11,7 @@ export interface FavoriteToggleProps {
 
 /**
  * Сердце «В избранное» (UC-S5): FavoriteButton ДС в управляемом режиме. Меняется сразу, при ошибке возвращается,
- * об ошибке сообщает скринридеру через `role="status"`. Гостю открывает вход (useFavorite → useRequireAuth).
+ * об ошибке сообщает скринридеру через `role="status"`. Гостю открывает вход (useFavorite → openLogin).
  */
 export default function FavoriteToggle({ listingId, favorite }: FavoriteToggleProps) {
     const { active, failed, toggle } = useFavorite(listingId, favorite);

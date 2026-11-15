@@ -4,9 +4,7 @@ declare(strict_types=1);
 
 namespace App\Domain\Listings\Actions;
 
-use App\Domain\Catalog\Actions\SuggestInstrumentModel;
 use App\Domain\Catalog\Exceptions\SuggestionLimitReached;
-use App\Domain\Catalog\Models\InstrumentModel;
 use App\Domain\Listings\Enums\ListingStatus;
 use App\Domain\Listings\Enums\PriceMode;
 use App\Domain\Listings\Models\Listing;
@@ -21,7 +19,7 @@ use LogicException;
  */
 final class SaveListingDraft
 {
-    public function __construct(private readonly SuggestInstrumentModel $suggest) {}
+    public function __construct(private readonly ResolveListingModel $resolveModel) {}
 
     /**
      * @param  array{category_id: int, title: string, model_id?: int|null, year?: int|null, serial?: string|null, condition: string, description?: string|null, price: int|null, negotiable: bool, meet: bool, ship: bool}  $data  без ключа `serial` серийный номер не меняется
@@ -37,7 +35,7 @@ final class SaveListingDraft
                 throw new LogicException('Форма записывает только черновик.');
             }
 
-            $modelId = $data['model_id'] ?? $this->suggestedModelId($fresh, $data);
+            $modelId = $data['model_id'] ?? $this->resolveModel->resolve($fresh, $data['title'], $data['category_id']);
             $description = trim((string) ($data['description'] ?? ''));
 
             $fresh->fill([
@@ -67,22 +65,5 @@ final class SaveListingDraft
 
             return $fresh;
         });
-    }
-
-    /**
-     * Модель для названия без выбора из подсказки: уже привязанная к черновику, если это она же, иначе предложенная.
-     *
-     * @param  array{category_id: int, title: string}  $data
-     */
-    private function suggestedModelId(Listing $listing, array $data): int
-    {
-        if ($listing->model_id !== null) {
-            $current = InstrumentModel::query()->find($listing->model_id);
-            if ($current !== null && SuggestInstrumentModel::isSame($current, $data['title'])) {
-                return $current->id;
-            }
-        }
-
-        return $this->suggest->forUser($listing->user_id, $data['title'], $data['category_id'])->id;
     }
 }
