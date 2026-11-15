@@ -115,4 +115,12 @@ return [
         'name' => env('MAIL_FROM_NAME', 'Example'),
     ],
 
+    // Тема Markdown-писем: resources/views/vendor/mail/html/themes/ym.css (ДС, 4.4.1).
+    'markdown' => [
+        'theme' => 'ym',
+        'paths' => [
+            resource_path('views/vendor/mail'),
+        ],
+    ],
+
 ];

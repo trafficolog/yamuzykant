@@ -15,9 +15,11 @@ use App\Domain\Listings\Photos\PhotoUploads;
 use App\Domain\Listings\Photos\S3PresignedUploads;
 use App\Domain\Listings\Photos\SignedRouteUploads;
 use App\Domain\Listings\Policies\ListingPolicy;
+use App\Domain\Messaging\Events\MessageSent;
 use App\Domain\Messaging\Models\Conversation;
 use App\Domain\Messaging\Policies\ConversationPolicy;
 use App\Domain\Moderation\Listeners\QueueListingRiskAssessment;
+use App\Domain\Notifications\Listeners\SendNewMessageEmail;
 use App\Domain\Search\Console\BenchmarkSearchCommand;
 use App\Domain\Search\Console\ReconcileListingIndexCommand;
 use App\Domain\Search\Console\SeedLoadListingsCommand;
@@ -79,6 +81,9 @@ class AppServiceProvider extends ServiceProvider
 
         // Автопроверки (UC-O1): публикация, существенная правка и повторная отправка → job AssessListingRisk.
         Event::listen('App\Domain\Listings\Events\*', QueueListingRiskAssessment::class);
+
+        // Письмо о новом сообщении (4.4.1): слушатель в очереди, после commit сообщения.
+        Event::listen(MessageSent::class, SendNewMessageEmail::class);
 
         if ($this->app->runningInConsole()) {
             $this->commands([
