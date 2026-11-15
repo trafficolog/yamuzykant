@@ -95,7 +95,7 @@ it('очередь Redis: имена очередей берутся из кон
 
 it('сбой хранилища лимита пишется в журнал, но не чаще раза за интервал', function () {
     ThrottleHealth::resetFailureLog();
-    Log::spy();
+    $log = Log::spy();
     Cache::extend('exploding', fn () => throw new RuntimeException('store down'));
     config(['cache.stores.exploding' => ['driver' => 'exploding'], 'health.throttle_store' => 'exploding']);
     $client = $this->withServerVariables(['REMOTE_ADDR' => '203.0.113.9']);
@@ -104,7 +104,7 @@ it('сбой хранилища лимита пишется в журнал, н�
         $client->getJson('/health')->assertOk();
     }
 
-    Log::shouldHaveReceived('warning')->once();
+    $log->shouldHaveReceived('warning')->once();
 });
 
 it('X-Forwarded-For: 127.0.0.1 снаружи не открывает подробности', function () {

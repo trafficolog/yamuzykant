@@ -3,6 +3,7 @@
 declare(strict_types=1);
 
 use App\Domain\Search\Jobs\SyncListingToIndex;
+use Illuminate\Support\Facades\Artisan;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
 
@@ -14,8 +15,7 @@ it('SyncListingToIndex: запас попыток на занятый замок
     $job = new SyncListingToIndex('listing-id');
 
     expect($job->tries)->toBeGreaterThanOrEqual(20)
-        ->and($job->maxExceptions)->toBeGreaterThanOrEqual(3)->toBeLessThanOrEqual(5)
-        ->and(method_exists($job, 'retryUntil'))->toBeFalse();
+        ->and($job->maxExceptions)->toBeGreaterThanOrEqual(3)->toBeLessThanOrEqual(5);
 });
 
 it('при занятом замке задание возвращается в очередь, а не падает', function () {

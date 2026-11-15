@@ -21,12 +21,13 @@ final class TagSentryWithRequestId
     {
         $id = Context::get('request_id');
 
-        if (! is_string($id) || $id === '') {
-            return;
-        }
-
+        // Задание без request_id (расписание, ручной запуск) не должно унаследовать тег предыдущего.
         configureScope(static function (Scope $scope) use ($id): void {
-            $scope->setTag('request_id', $id);
+            if (is_string($id) && $id !== '') {
+                $scope->setTag('request_id', $id);
+            } else {
+                $scope->removeTag('request_id');
+            }
         });
     }
 }
