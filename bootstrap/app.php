@@ -21,6 +21,7 @@ use App\Http\Middleware\EnsureE2eEnvironment;
 use App\Http\Middleware\EnsureSessionIsCurrent;
 use App\Http\Middleware\HandleInertiaRequests;
 use App\Http\Middleware\ThrottleHealth;
+use App\Http\Middleware\TrackPresence;
 use Illuminate\Contracts\Auth\Middleware\AuthenticatesRequests;
 use Illuminate\Foundation\Application;
 use Illuminate\Foundation\Configuration\Exceptions;
@@ -49,6 +50,7 @@ return Application::configure(basePath: dirname(__DIR__))
         $middleware->web(append: [
             EnsureSessionIsCurrent::class,
             HandleInertiaRequests::class,
+            TrackPresence::class,
         ]);
 
         // Устаревшая сессия завершается раньше, чем `auth` решит, что пользователь вошёл.

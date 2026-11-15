@@ -23,6 +23,7 @@ use App\Http\Controllers\Listings\SellController;
 use App\Http\Controllers\Listings\SellerController;
 use App\Http\Controllers\Messaging\ConversationController;
 use App\Http\Controllers\Messaging\MessagesPageController;
+use App\Http\Controllers\Notifications\UnsubscribeController;
 use App\Http\Middleware\EnsureE2eEnvironment;
 use App\Http\Middleware\ThrottleMessages;
 use Illuminate\Foundation\Http\Middleware\ValidateCsrfToken;
@@ -68,6 +69,14 @@ Route::prefix('auth')->name('auth.')->group(function (): void {
         Route::post('logout', [LogoutController::class, 'logout'])->name('logout');
         Route::post('logout-everywhere', [LogoutController::class, 'everywhere'])->name('logout-everywhere');
     });
+});
+
+// Отписка из письма (4.4.1): подписанная ссылка, без входа. GET — страница подтверждения (состояние не меняет:
+// почтовые сканеры открывают ссылки), POST — отписка; тот же POST шлёт «в один клик» почтовый клиент (RFC 8058).
+Route::middleware(['signed', 'throttle:30,1'])->group(function (): void {
+    Route::get('/notifications/unsubscribe/{user}/{kind}', [UnsubscribeController::class, 'confirm'])->name('notifications.unsubscribe');
+    Route::post('/notifications/unsubscribe/{user}/{kind}', [UnsubscribeController::class, 'unsubscribe'])
+        ->withoutMiddleware(ValidateCsrfToken::class);
 });
 
 // Страница объявления (3.1.5, UC-V1): открыта всем; не опубликованное — только владельцу и сотрудникам, остальным 404.
