@@ -17,7 +17,7 @@ use Illuminate\Support\Facades\Mail;
 
 /**
  * Письмо о новом сообщении (4.4.1, UC-N1). Идёт в очереди после commit сообщения (MessageSent — after commit).
- * Не шлётся, если: получатель выключил письма (NotificationPreferences), он «в сети» (Presence), сообщение уже прочитано,
+ * Не шлётся, если: получатель выключил письма (NotificationPreferences), он «в сети» (Presence)
  * или в этот чат ему уже писали письмо в последние `notifications.new_message_mail_interval_minutes` минут.
  */
 final class SendNewMessageEmail implements ShouldQueue
@@ -34,7 +34,6 @@ final class SendNewMessageEmail implements ShouldQueue
         $recipient = $recipientId === null ? null : User::query()->find($recipientId);
 
         if ($recipient === null
-            || $message->read_at !== null
             || ! NotificationPreferences::allows($recipient, NotificationKind::NewMessage)
             || Presence::isOnline($recipient)) {
             return;

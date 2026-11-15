@@ -10,17 +10,25 @@ use App\Domain\Notifications\NotificationPreferences;
 use Illuminate\Contracts\View\View;
 
 /**
- * Отписка из письма в один клик (4.4.1): подписанная ссылка, вход не нужен. GET — переход по ссылке,
- * POST — «отписаться» в самом почтовом клиенте (RFC 8058, без CSRF-токена). Подпись проверяет middleware `signed`.
+ * Отписка из письма (4.4.1): подписанная ссылка, вход не нужен, подпись проверяет middleware `signed`.
+ * GET — страница с кнопкой, состояние не меняет (почтовые сканеры открывают ссылки); POST — отписывает:
+ * его шлёт кнопка страницы и почтовый клиент «в один клик» (RFC 8058, без CSRF-токена).
  */
 final class UnsubscribeController
 {
-    public function __invoke(User $user, string $kind): View
+    public function confirm(User $user, string $kind): View
+    {
+        $kind = NotificationKind::tryFrom($kind) ?? abort(404);
+
+        return view('notifications.unsubscribed', ['kind' => $kind->value, 'done' => false]);
+    }
+
+    public function unsubscribe(User $user, string $kind): View
     {
         $kind = NotificationKind::tryFrom($kind) ?? abort(404);
 
         NotificationPreferences::update($user, [$kind->value => false]);
 
-        return view('notifications.unsubscribed', ['kind' => $kind->value]);
+        return view('notifications.unsubscribed', ['kind' => $kind->value, 'done' => true]);
     }
 }

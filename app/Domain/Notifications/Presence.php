@@ -14,9 +14,19 @@ use Illuminate\Support\Facades\Config;
  */
 final class Presence
 {
+    private const REFRESH_SECONDS = 60;
+
+    /** Не чаще раза в минуту: в кеше метка со временем записи, свежую не перезаписываем. */
     public static function touch(User $user): void
     {
-        Cache::put(self::key($user), true, now()->addMinutes(Config::integer('notifications.online_minutes')));
+        $now = now()->getTimestamp();
+        $seen = Cache::get(self::key($user));
+
+        if (is_int($seen) && $now - $seen < self::REFRESH_SECONDS) {
+            return;
+        }
+
+        Cache::put(self::key($user), $now, now()->addMinutes(Config::integer('notifications.online_minutes')));
     }
 
     public static function isOnline(User $user): bool
