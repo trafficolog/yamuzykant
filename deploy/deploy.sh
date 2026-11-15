@@ -302,10 +302,18 @@ verify() {
     fi
     # Вещание reverb без слушающего процесса роняло бы задания трансляции в failed_jobs. Достаточно
     # любого HTTP-ответа: важно, что порт открыт.
-    if grep -qE "^BROADCAST_CONNECTION=['\"]?reverb['\"]?$" "$APP_ROOT/shared/.env" &&
-        ! curl -sS --max-time 5 -o /dev/null http://127.0.0.1:8080/up; then
-        printf '::error::Reverb не отвечает на 127.0.0.1:8080, а BROADCAST_CONNECTION=reverb\n' >&2
-        failed=1
+    # Повторяем, как /health: после restart Reverb поднимается не мгновенно.
+    if grep -qE "^BROADCAST_CONNECTION=['\"]?reverb['\"]?$" "$APP_ROOT/shared/.env"; then
+        for ((i = 1; i <= HEALTH_RETRIES; i++)); do
+            if curl -sS --max-time 5 -o /dev/null http://127.0.0.1:8080/up; then
+                break
+            fi
+            if ((i == HEALTH_RETRIES)); then
+                printf '::error::Reverb не отвечает на 127.0.0.1:8080, а BROADCAST_CONNECTION=reverb\n' >&2
+                failed=1
+            fi
+            sleep 2
+        done
     fi
     return "$failed"
 }
