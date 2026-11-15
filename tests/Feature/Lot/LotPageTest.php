@@ -9,6 +9,7 @@ use App\Domain\Listings\Enums\WithdrawReason;
 use App\Domain\Listings\Models\Listing;
 use App\Domain\Listings\Models\ListingPhoto;
 use App\Domain\Listings\StateMachines\ListingStateMachine;
+use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
 use Inertia\Testing\AssertableInertia as Assert;
@@ -254,6 +255,23 @@ it('похожих не больше пяти', function () {
     MeilisearchIndex::waitForTasks();
 
     $this->get("/listings/{$listing->id}")->assertInertia(fn (Assert $page) => $page->has('similar', 5)->etc());
+});
+
+it('похожие с одинаковой датой публикации идут в постоянном порядке: по id, новые первыми (3.1.12)', function () {
+    // published_at в индексе — секунды: лоты одной секунды без второго ключа сортировки шли в любом порядке.
+    Carbon::setTestNow('2026-11-15 12:00:00');
+    $city = ListingFixtures::city('Москва');
+    $listing = ListingFixtures::published([], $city);
+    $ids = [];
+    foreach (range(1, 7) as $i) {
+        $ids[] = ListingFixtures::published(['title' => "Гитара {$i}"], $city)->id;
+    }
+    MeilisearchIndex::waitForTasks();
+    rsort($ids);
+
+    $this->get("/listings/{$listing->id}")->assertInertia(fn (Assert $page) => $page
+        ->where('similar', fn ($similar) => collect($similar)->pluck('id')->all() === array_slice($ids, 0, 5))
+        ->etc());
 });
 
 it('недоступный поиск не роняет страницу: похожие пусты', function () {

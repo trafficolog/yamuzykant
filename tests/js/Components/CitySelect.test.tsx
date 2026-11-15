@@ -1,8 +1,9 @@
 import { act, fireEvent, render, screen, waitFor, within } from '@testing-library/react';
+import { useLayoutEffect } from 'react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 import CitySelect from '@/Components/CitySelect';
-import { closeLogin, openLogin } from '@/Hooks/loginDialog';
+import { closeLogin, openLogin, useLoginRequest } from '@/Hooks/loginDialog';
 import { ru } from '@/lang/ru';
 
 const { post } = vi.hoisted(() => ({ post: vi.fn() }));
@@ -259,6 +260,31 @@ describe('CitySelect: окно входа', () => {
         fireEvent.click(trigger());
         expect(panelOrFail()).toBeInTheDocument();
         expect(screen.queryByText(ru.city.saveError)).toBeNull();
+    });
+
+    it('панель исчезает в том же кадре, где открылось окно входа: два окна сразу не видны (3.1.12)', async () => {
+        // Проба смотрит в DOM на коммите, где появилось окно входа, — до пассивных эффектов.
+        const seen: boolean[] = [];
+        function Probe() {
+            const request = useLoginRequest();
+            useLayoutEffect(() => {
+                if (request === null) return;
+                seen.push(document.getElementById('site-city-panel') !== null);
+            }, [request]);
+            return null;
+        }
+        render(
+            <>
+                <CitySelect city={moscow} />
+                <Probe />
+            </>,
+        );
+        await open();
+
+        act(() => openLogin({ returnTo: '/' }));
+        act(() => closeLogin());
+
+        expect(seen).toEqual([false]);
     });
 });
 

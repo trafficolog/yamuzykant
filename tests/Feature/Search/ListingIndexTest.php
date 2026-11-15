@@ -114,7 +114,7 @@ it('настройки индекса: фильтры, сортировки, п�
         ->and($settings['filterableAttributes'])->toEqualCanonicalizing([
             'category_path', 'condition', 'price', 'city_id', 'ship', 'negotiable',
         ])
-        ->and($settings['sortableAttributes'])->toEqualCanonicalizing(['published_at', 'price'])
+        ->and($settings['sortableAttributes'])->toEqualCanonicalizing(['published_at', 'price', 'id'])
         ->and($settings['rankingRules'])->toBe(['words', 'sort', 'typo', 'proximity', 'attribute', 'exactness'])
         ->and($settings['stopWords'])->toContain('для', 'на')
         ->and($settings['typoTolerance']['enabled'])->toBeTrue();
