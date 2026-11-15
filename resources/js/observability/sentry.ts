@@ -114,10 +114,21 @@ export function scrubEvent<T extends ScrubbableEvent>(event: T): T {
     return scrubbed as T;
 }
 
+/** request_id ответа сервера: AssignRequestId кладёт его в <meta name="request-id">. */
+export function readRequestId(): string | undefined {
+    const content = document
+        .querySelector('meta[name="request-id"]')
+        ?.getAttribute('content')
+        ?.trim();
+
+    return content === undefined || content === '' ? undefined : content;
+}
+
 export interface SentryInitOptions {
     dsn: string | undefined;
     release: string | undefined;
     environment?: string;
+    requestId?: string;
     init?: (options: Sentry.BrowserOptions) => void;
 }
 
@@ -128,6 +139,7 @@ export function initSentry({
     dsn,
     release,
     environment,
+    requestId,
     init = Sentry.init,
 }: SentryInitOptions): boolean {
     if (dsn === undefined || dsn === '') {
@@ -138,6 +150,7 @@ export function initSentry({
         dsn,
         release,
         environment,
+        ...(requestId === undefined ? {} : { initialScope: { tags: { request_id: requestId } } }),
         beforeSend: scrubEvent as unknown as NonNullable<Sentry.BrowserOptions['beforeSend']>,
     });
 

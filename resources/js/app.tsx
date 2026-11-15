@@ -5,7 +5,7 @@ import { createRoot, hydrateRoot } from 'react-dom/client';
 import HydrationMarker from '@/Components/HydrationMarker';
 import { installLoginInterceptor } from '@/Hooks/loginDialog';
 import { ru } from '@/lang/ru';
-import { initSentry } from '@/observability/sentry';
+import { initSentry, readRequestId } from '@/observability/sentry';
 
 // Стили каркаса PublicLayout: после токенов ДС из resources/css/app.css.
 import '../css/site.css';
@@ -22,6 +22,7 @@ initSentry({
     dsn: import.meta.env.VITE_SENTRY_DSN as string | undefined,
     release: import.meta.env.VITE_SENTRY_RELEASE as string | undefined,
     environment: import.meta.env.VITE_SENTRY_ENVIRONMENT as string | undefined,
+    requestId: readRequestId(),
 });
 
 // 401 и 419 в переходах Inertia открывают окно входа (1.1.2).

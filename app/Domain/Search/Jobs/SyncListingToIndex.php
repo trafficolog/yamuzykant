@@ -22,10 +22,17 @@ final class SyncListingToIndex implements ShouldQueue
     use Dispatchable;
     use Queueable;
 
-    /** Попытки укладываются в минуту: паузы 2 + 5 + 10 + 20 с. */
-    public int $tries = 5;
-
     public function __construct(public readonly string $listingId) {}
+
+    /**
+     * release() занятого замка WithoutOverlapping (пауза 2 с) считается попыткой, поэтому попыток с запасом,
+     * чтобы событие не терялось до ночной сверки. Время (retryUntil) для этого не годится: оно считается от
+     * постановки в очередь, и задание, простоявшее больше минуты, упало бы без единой попытки.
+     */
+    public int $tries = 30;
+
+    /** Падения по исключениям (не по замку) ограничены отдельно; паузы между ними — backoff(). */
+    public int $maxExceptions = 4;
 
     /** @return list<int> */
     public function backoff(): array
