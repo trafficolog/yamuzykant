@@ -1,6 +1,6 @@
 import { describe, expect, it, vi } from 'vitest';
 
-import { initSentry, scrubEvent } from '@/observability/sentry';
+import { initSentry, readRequestId, scrubEvent } from '@/observability/sentry';
 
 describe('Sentry на фронте', () => {
     it('без DSN Sentry не инициализируется', () => {
@@ -47,5 +47,23 @@ describe('Sentry на фронте', () => {
         expect(dump).not.toContain('203.0.113.5');
         expect(dump).not.toContain('ym_session');
         expect(dump).toContain('"id":"42"');
+    });
+
+    it('с requestId события несут тег request_id', () => {
+        const init = vi.fn();
+
+        initSentry({ dsn: 'https://key@sentry.example/1', release: 'abc', requestId: 'req-1', init });
+
+        expect(init).toHaveBeenCalledWith(
+            expect.objectContaining({ initialScope: { tags: { request_id: 'req-1' } } }),
+        );
+    });
+
+    it('requestId берётся из meta[name=request-id]', () => {
+        document.head.innerHTML = '<meta name="request-id" content="req-meta-1">';
+        expect(readRequestId()).toBe('req-meta-1');
+
+        document.head.innerHTML = '';
+        expect(readRequestId()).toBeUndefined();
     });
 });

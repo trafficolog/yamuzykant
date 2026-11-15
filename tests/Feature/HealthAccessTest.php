@@ -2,7 +2,10 @@
 
 declare(strict_types=1);
 
+use App\Providers\TrustedProxiesServiceProvider;
 use Illuminate\Contracts\Redis\Factory as RedisFactory;
+use Illuminate\Http\Middleware\TrustProxies;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Http;
 use Tests\Support\FakeRedisConnection;
@@ -86,4 +89,42 @@ it('очередь Redis: имена очередей берутся из кон
 
     expect(FakeRedisConnection::$listKeys)->toContain('queues:mail-x', 'queues:q-main');
     expect(FakeRedisConnection::$listKeys)->not->toContain('queues:high');
+});
+
+it('X-Forwarded-For: 127.0.0.1 снаружи не открывает подробности', function () {
+    $this->withServerVariables(['REMOTE_ADDR' => '203.0.113.9'])
+        ->withHeader('X-Forwarded-For', '127.0.0.1')
+        ->withHeader('X-Real-IP', '127.0.0.1')
+        ->getJson('/health')
+        ->assertOk()
+        ->assertExactJson(['status' => 'ok']);
+});
+
+it('X-Forwarded-For: 127.0.0.1 не открывает подробности и при доверии любому прокси', function () {
+    TrustProxies::at('*');
+
+    try {
+        $this->withServerVariables(['REMOTE_ADDR' => '203.0.113.9'])
+            ->withHeader('X-Forwarded-For', '127.0.0.1')
+            ->getJson('/health')
+            ->assertExactJson(['status' => 'ok']);
+    } finally {
+        TrustProxies::at(TrustedProxiesServiceProvider::PROXIES);
+    }
+});
+
+it('/health не открывает сессию: в ответе нет Set-Cookie', function () {
+    $response = $this->withServerVariables(['REMOTE_ADDR' => '203.0.113.9'])->getJson('/health')->assertOk();
+
+    expect($response->headers->getCookies())->toBe([]);
+    expect($response->headers->has('Set-Cookie'))->toBeFalse();
+});
+
+it('при недоступном хранилище лимита запрос пропускается без лимита, а не 500', function () {
+    Cache::extend('exploding', fn () => throw new RuntimeException('store down'));
+    config(['cache.stores.exploding' => ['driver' => 'exploding'], 'health.throttle_store' => 'exploding']);
+
+    $this->withServerVariables(['REMOTE_ADDR' => '203.0.113.9'])->getJson('/health')
+        ->assertOk()
+        ->assertExactJson(['status' => 'ok']);
 });

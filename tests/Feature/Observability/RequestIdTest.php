@@ -45,6 +45,24 @@ it('каждая запись журнала запроса содержит req
     expect(json_encode($record))->toContain('req-log-0001');
 });
 
+it('в событиях из задания очереди есть тег Sentry request_id из Context', function () {
+    config(['queue.default' => 'database']);
+    Context::add('request_id', 'req-tag-0001');
+    dispatch(new RequestIdProbeJob);
+
+    Context::flush();
+    RequestIdProbeJob::$seen = null;
+    RequestIdProbeJob::$sentryTag = null;
+    Artisan::call('queue:work', ['--once' => true, '--stop-when-empty' => true]);
+
+    expect(RequestIdProbeJob::$sentryTag)->toBe('req-tag-0001');
+});
+
+it('страница отдаёт request_id в meta для событий Sentry в браузере', function () {
+    $this->withHeader('X-Request-Id', 'req-meta-0001')->get('/')
+        ->assertSee('<meta name="request-id" content="req-meta-0001">', false);
+});
+
 it('request_id пробрасывается в задание очереди и виден в его контексте', function () {
     config(['queue.default' => 'database']);
     Context::add('request_id', 'req-job-0001');
