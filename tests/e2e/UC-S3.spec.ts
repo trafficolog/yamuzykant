@@ -92,13 +92,13 @@ test.describe('UC-S3: фильтры и сортировка', () => {
         await expect(page.getByText('Найдено 27 лотов')).toBeVisible();
     });
 
-    test('фильтры без результата — пустое состояние со сбросом', async ({ page }) => {
+    test('фильтры без результата — пустое состояние со снятием фильтра', async ({ page }) => {
         await page.goto('/baraholka?price_from=9000000');
 
         await expect(
             page.getByText('По этим фильтрам лотов нет. Уберите часть фильтров.'),
         ).toBeVisible();
-        await page.getByRole('button', { name: 'Сбросить фильтры' }).click();
+        await page.getByRole('button', { name: /^Снять фильтр/ }).click();
         await expect(page.getByText('Найдено 27 лотов')).toBeVisible();
     });
 
@@ -139,6 +139,13 @@ test.describe('UC-S3: фильтры и сортировка', () => {
         await next.scrollIntoViewIfNeeded();
         const y = await page.evaluate(() => window.scrollY);
         expect(y).toBeGreaterThan(500);
+        // Inertia сохраняет позицию документа в history.state с задержкой 100 мс после последнего
+        // scroll-события. Клик раньше этого уходит на страницу 2 со сбросом прокрутки, и запись
+        // страницы 1 остаётся нулевой: «Назад» вернул бы наверх. Живой пользователь так быстро не
+        // кликает, поэтому тест ждёт сохранения, как это делает пауза человека.
+        await expect
+            .poll(() => page.evaluate(() => history.state?.documentScrollPosition?.top ?? 0))
+            .toBeGreaterThan(y - 200);
 
         await next.click();
         await expect(page).toHaveURL(/page=2/);
@@ -164,5 +171,80 @@ test.describe('UC-S3: фильтры и сортировка', () => {
 
         await expect(page.getByRole('article')).toHaveCount(24);
         await expect.poll(() => page.evaluate(() => window.scrollY)).toBeGreaterThan(y - 200);
+    });
+});
+
+// Карточка 3.1.3: пусто, загрузка, ошибка поиска.
+test.describe('UC-S3: пусто, загрузка, ошибка', () => {
+    test('пусто: кнопка снимает самый узкий фильтр и выдача возвращается', async ({ page }) => {
+        await page.goto('/baraholka?price_from=99999999');
+        await expect(page.getByText('По этим фильтрам лотов нет')).toBeVisible();
+
+        await page.getByRole('button', { name: /^Снять фильтр/ }).click();
+
+        await expect(page).not.toHaveURL(/price_from/);
+        await expect(page.getByRole('article').first()).toBeVisible();
+    });
+
+    test('загрузка: скелетоны на месте карточек, CLS при смене выдачи ≤ 0,05', async ({ page }) => {
+        await page.addInitScript(() => {
+            const w = window as unknown as { __cls: number };
+            w.__cls = 0;
+            new PerformanceObserver((list) => {
+                for (const entry of list.getEntries() as unknown as {
+                    value: number;
+                    hadRecentInput: boolean;
+                }[]) {
+                    if (!entry.hadRecentInput) w.__cls += entry.value;
+                }
+            }).observe({ type: 'layout-shift', buffered: true });
+        });
+        await page.goto('/baraholka');
+        await expect(page.getByRole('article')).toHaveCount(24);
+        const before = await page.evaluate(() => (window as unknown as { __cls: number }).__cls);
+
+        // Задерживаем ответ на смену сортировки (те же 24 карточки), чтобы поймать состояние загрузки.
+        await page.route(/\/baraholka\?.*sort=cheap/, async (route) => {
+            await new Promise((resolve) => setTimeout(resolve, 1000));
+            await route.continue();
+        });
+        await page.getByLabel('Сортировка').selectOption('cheap');
+
+        await expect(page.locator('.ym-flea__skeleton')).toHaveCount(24);
+        await expect(page.locator('.ym-flea__skeleton')).toHaveCount(0);
+        await expect(page.getByRole('article')).toHaveCount(24);
+        await page.waitForTimeout(500);
+
+        const after = await page.evaluate(() => (window as unknown as { __cls: number }).__cls);
+        expect(after - before).toBeLessThanOrEqual(0.05);
+    });
+
+    test('ошибка поиска: Alert с повтором, «Повторить» возвращает выдачу', async ({ page }) => {
+        await page.goto('/baraholka');
+        await expect(page.getByRole('article')).toHaveCount(24);
+
+        // Первый Inertia-ответ подменяем: как будто поиск не ответил.
+        let failed = false;
+        await page.route(/\/baraholka\?/, async (route) => {
+            if (failed || route.request().headers()['x-inertia'] === undefined) {
+                await route.continue();
+                return;
+            }
+            failed = true;
+            const response = await route.fetch();
+            const json = (await response.json()) as { props: Record<string, unknown> };
+            json.props.searchError = true;
+            json.props.listings = [];
+            await route.fulfill({ response, json });
+        });
+        await page.getByLabel('Сортировка').selectOption('cheap');
+
+        await expect(page.getByRole('alert')).toContainText('Не удалось загрузить объявления');
+        await expect(page.getByRole('article')).toHaveCount(0);
+
+        await page.getByRole('button', { name: 'Повторить' }).click();
+
+        await expect(page.getByRole('alert')).toHaveCount(0);
+        await expect(page.getByRole('article')).toHaveCount(24);
     });
 });

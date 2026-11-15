@@ -3,7 +3,7 @@ id: "4.3.1"
 phase: "4"
 epic: "4.3"
 title: "Избранное"
-status: in_progress
+status: review
 gate: G1
 risk: low
 model_impl: haiku
