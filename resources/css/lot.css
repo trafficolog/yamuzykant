@@ -94,7 +94,7 @@
     box-sizing: border-box;
 }
 .ym-lot__thumb[aria-pressed='true'] {
-    border-color: var(--lad);
+    border-color: var(--accent);
 }
 .ym-lot__thumb img {
     display: block;
@@ -223,7 +223,7 @@
     color: var(--ink-muted);
 }
 .ym-lot__way-icon.is-accent {
-    color: var(--lad);
+    color: var(--accent-text);
 }
 .ym-lot__way-text {
     display: flex;
@@ -313,7 +313,7 @@
     margin: 0;
 }
 .ym-lot__similar-all {
-    color: var(--lad);
+    color: var(--accent-text);
     white-space: nowrap;
 }
 .ym-lot__grid {

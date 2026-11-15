@@ -89,7 +89,7 @@
     max-width: 720px;
     padding: var(--space-8);
     border-radius: var(--radius-lg);
-    background: var(--lad-soft);
+    background: var(--accent-soft);
     box-sizing: border-box;
 }
 .ym-sell__done-icon {
@@ -100,7 +100,7 @@
     height: 64px;
     border-radius: var(--radius-full);
     background: var(--surface-raised);
-    color: var(--lad);
+    color: var(--accent-text);
 }
 .ym-sell__done-title,
 .ym-sell__done-text {

@@ -4,7 +4,7 @@ import type { ReactNode } from 'react';
 
 import Breadcrumbs from '@/Components/Breadcrumbs';
 import EmptyState from '@/Components/EmptyState';
-import LotListingCard from '@/Components/LotListingCard';
+import PricedListingCard from '@/Components/PricedListingCard';
 import Pagination from '@/Components/Pagination';
 import PublicLayout from '@/Layouts/PublicLayout';
 import { ru } from '@/lang/ru';
@@ -120,7 +120,7 @@ export default function SellerShow({
                         >
                             {listings.map((lot) => (
                                 <li key={lot.id}>
-                                    <LotListingCard
+                                    <PricedListingCard
                                         listingId={lot.id}
                                         favorite={lot.favorite}
                                         title={lot.title}
