@@ -3,7 +3,7 @@ id: "0.1.14"
 phase: "0"
 epic: "0.1"
 title: "Наблюдаемость: доработки после ревью и проверка на stage"
-status: todo
+status: in_progress
 gate: G1
 risk: low
 model_impl: sonnet
