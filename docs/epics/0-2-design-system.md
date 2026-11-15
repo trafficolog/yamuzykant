@@ -24,5 +24,5 @@ gate: G0
 | [0.2.6 Визуальные и текстовые проверки: укрепление после ревью](../tasks/0-2-6-visual-copy-hardening.md) | done | low | sonnet → sonnet |
 | [0.2.7 Меню категорий: доступность, высота подвала, скрытие доставки](../tasks/0-2-7-category-menu-a11y.md) | done | low | haiku → sonnet |
 | [0.2.8 Самохостинг шрифтов ДС](../tasks/0-2-8-self-hosted-fonts.md) | done | medium | sonnet → sonnet |
-| [0.2.9 Визуальные тесты: строгий порог для эталонов R1](../tasks/0-2-9-visual-threshold.md) | in_progress | low | sonnet → sonnet |
+| [0.2.9 Визуальные тесты: строгий порог для эталонов R1](../tasks/0-2-9-visual-threshold.md) | done | low | sonnet → sonnet |
 <!-- docs:ops:end -->
