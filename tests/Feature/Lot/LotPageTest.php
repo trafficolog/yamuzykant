@@ -10,6 +10,7 @@ use App\Domain\Listings\Models\Listing;
 use App\Domain\Listings\Models\ListingPhoto;
 use App\Domain\Listings\StateMachines\ListingStateMachine;
 use Illuminate\Support\Carbon;
+use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
 use Inertia\Testing\AssertableInertia as Assert;
@@ -268,10 +269,10 @@ it('похожие с одинаковой датой публикации ид�
     }
     MeilisearchIndex::waitForTasks();
     rsort($ids);
+    /** @param  Collection<int, array{id: string}>  $similar */
+    $order = fn (Collection $similar): bool => $similar->pluck('id')->all() === array_slice($ids, 0, 5);
 
-    $this->get("/listings/{$listing->id}")->assertInertia(fn (Assert $page) => $page
-        ->where('similar', fn ($similar) => collect($similar)->pluck('id')->all() === array_slice($ids, 0, 5))
-        ->etc());
+    $this->get("/listings/{$listing->id}")->assertInertia(fn (Assert $page) => $page->where('similar', $order)->etc());
 });
 
 it('недоступный поиск не роняет страницу: похожие пусты', function () {
