@@ -16,5 +16,5 @@ gate: G2
 | [4.1 Сообщения](../epics/4-1-messaging.md) | 6 | 5 |
 | [4.2 Предложение цены](../epics/4-2-offers.md) | 2 | 0 |
 | [4.3 Избранное и поиски](../epics/4-3-favorites.md) | 2 | 0 |
-| [4.4 Письма и уведомления](../epics/4-4-notifications.md) | 2 | 0 |
+| [4.4 Письма и уведомления](../epics/4-4-notifications.md) | 2 | 1 |
 <!-- docs:ops:end -->
