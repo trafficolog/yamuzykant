@@ -3,7 +3,7 @@ id: "2.1.5"
 phase: "2"
 epic: "2.1"
 title: "Мои объявления: изменить, снизить цену, снять"
-status: in_progress
+status: review
 gate: G1
 risk: medium
 model_impl: sonnet

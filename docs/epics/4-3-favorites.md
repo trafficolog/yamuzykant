@@ -16,6 +16,6 @@ gate: G2
 <!-- docs:ops:begin tasks -->
 | Задача | Статус | Риск | Исполнитель → Ревьюер |
 |---|---|---|---|
-| [4.3.1 Избранное](../tasks/4-3-1-favorites.md) | in_progress | low | haiku → sonnet |
+| [4.3.1 Избранное](../tasks/4-3-1-favorites.md) | review | low | haiku → sonnet |
 | [4.3.2 Сохранённые поиски](../tasks/4-3-2-saved-searches.md) | todo | medium | sonnet → sonnet |
 <!-- docs:ops:end -->

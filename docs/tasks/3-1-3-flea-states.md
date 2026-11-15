@@ -3,7 +3,7 @@ id: "3.1.3"
 phase: "3"
 epic: "3.1"
 title: "Барахолка: пусто, загрузка, ошибка"
-status: in_progress
+status: review
 gate: G1
 risk: low
 model_impl: haiku
