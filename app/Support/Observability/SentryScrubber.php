@@ -34,7 +34,7 @@ final class SentryScrubber
             foreach ($exception->getStacktrace()?->getFrames() ?? [] as $frame) {
                 /** @var array<string, mixed> $vars */
                 $vars = $masker->maskValue($frame->getVars());
-                $frame->setVars($vars);
+                $frame->setVars($frame->isInApp() ? self::whitelistVars($vars) : $vars);
             }
         }
 
@@ -66,6 +66,48 @@ final class SentryScrubber
         $event->setBreadcrumb($breadcrumbs);
 
         return $event;
+    }
+
+    /**
+     * Аргументы кадров приложения: числа, bool и null остаются; строка остаётся, только если это uuid/ulid
+     * или полное имя класса; любой другой текст — например имя, описание,
+     * телефон — заменяется на «[string:длина]». Кадры вендора эту проверку не проходят: там пользовательского текста нет.
+     *
+     * @param  array<array-key, mixed>  $vars
+     * @return array<array-key, mixed>
+     */
+    private static function whitelistVars(array $vars): array
+    {
+        $safe = [];
+
+        foreach ($vars as $key => $value) {
+            // Ключ массива тоже может быть данными (почта, имя): оставляем только имена-идентификаторы.
+            if (is_string($key) && preg_match('/^[A-Za-z_][A-Za-z0-9_]{0,63}$/', $key) !== 1) {
+                $key = '[key:'.strlen($key).']#'.count($safe);
+            }
+
+            if (is_array($value)) {
+                $safe[$key] = self::whitelistVars($value);
+            } elseif (is_string($value)) {
+                $safe[$key] = self::isSafeString($value) ? $value : '[string:'.strlen($value).']';
+            } elseif (is_int($value) || is_float($value) || is_bool($value) || $value === null) {
+                $safe[$key] = $value;
+            } else {
+                // Объекты и прочее: только тип.
+                $safe[$key] = '['.get_debug_type($value).']';
+            }
+        }
+
+        return $safe;
+    }
+
+    private static function isSafeString(string $value): bool
+    {
+        return in_array($value, [LogMasker::MASK, LogMasker::MASKED_EMAIL], true)
+            || preg_match('/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i', $value) === 1
+            || preg_match('/^[0-9A-HJKMNP-TV-Z]{26}$/', $value) === 1
+            // полное имя класса
+            || preg_match('/^(?:[A-Z][A-Za-z0-9_]*\\\\)+[A-Z][A-Za-z0-9_]*$/', $value) === 1;
     }
 
     /**
