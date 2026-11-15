@@ -98,13 +98,13 @@ it('карточка в props — белый список полей: без с�
         ->not()->toContain('test@example.com');
 });
 
-it('карточка содержит ровно восемь полей', function () {
+it('карточка содержит ровно девять полей (с favorite, 4.3.1)', function () {
     fleaListing();
 
     $card = fleaGet('/baraholka')->inertiaProps('listings.0');
 
     expect(array_keys((array) $card))->toBe([
-        'id', 'title', 'price', 'condition', 'city', 'ship', 'negotiable', 'posted',
+        'id', 'title', 'price', 'condition', 'city', 'ship', 'negotiable', 'posted', 'favorite',
     ]);
 });
 
