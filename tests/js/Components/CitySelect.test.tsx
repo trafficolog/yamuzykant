@@ -15,10 +15,10 @@ const { post, listeners } = vi.hoisted(() => ({
 vi.mock('@inertiajs/react', () => ({
     router: {
         post,
-        on: (name: 'invalid', listener: (event: InvalidEvent) => void) => {
-            listeners[name] = listener;
+        on: (_name: 'invalid', listener: (event: InvalidEvent) => void) => {
+            listeners.invalid = listener;
             return () => {
-                delete listeners[name];
+                delete listeners.invalid;
             };
         },
     },
