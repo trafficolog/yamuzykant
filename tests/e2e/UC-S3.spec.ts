@@ -139,6 +139,13 @@ test.describe('UC-S3: фильтры и сортировка', () => {
         await next.scrollIntoViewIfNeeded();
         const y = await page.evaluate(() => window.scrollY);
         expect(y).toBeGreaterThan(500);
+        // Inertia сохраняет позицию документа в history.state с задержкой 100 мс после последнего
+        // scroll-события. Клик раньше этого уходит на страницу 2 со сбросом прокрутки, и запись
+        // страницы 1 остаётся нулевой: «Назад» вернул бы наверх. Живой пользователь так быстро не
+        // кликает, поэтому тест ждёт сохранения, как это делает пауза человека.
+        await expect
+            .poll(() => page.evaluate(() => history.state?.documentScrollPosition?.top ?? 0))
+            .toBeGreaterThan(y - 200);
 
         await next.click();
         await expect(page).toHaveURL(/page=2/);
