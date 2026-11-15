@@ -390,3 +390,24 @@ it('снятое объявление в выдачу не попадает', fu
 
     fleaGet('/baraholka')->assertInertia(fn (Assert $page) => $page->has('listings', 0));
 });
+
+// Карточка 3.1.3: ошибка поиска — страница открывается, выдача пуста, фронт показывает Alert с повтором.
+it('поиск недоступен — страница 200 с searchError и пустой выдачей, фильтры сохраняются', function () {
+    config(['scout.meilisearch.host' => 'http://127.0.0.1:9']);
+
+    $this->get('/baraholka?ship=1')
+        ->assertOk()
+        ->assertInertia(fn (Assert $page) => $page
+            ->component('Flea/Index')
+            ->where('searchError', true)
+            ->has('listings', 0)
+            ->where('pagination.total', 0)
+            ->where('filters.ship', true));
+});
+
+it('поиск работает — searchError false', function () {
+    fleaListing();
+
+    fleaGet('/baraholka')
+        ->assertInertia(fn (Assert $page) => $page->where('searchError', false));
+});
