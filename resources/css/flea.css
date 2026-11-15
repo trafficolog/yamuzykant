@@ -138,7 +138,7 @@ a.ym-pagination__item:hover {
     min-width: 0;
     padding-bottom: var(--space-16);
 }
-.ym-flea__results[aria-busy='true'] .ym-flea__grid {
+.ym-flea__results[aria-busy='true'] .ym-flea__grid:not(.ym-flea__grid--loading) {
     opacity: 0.6;
     transition: opacity var(--ym-dur-micro) var(--ym-ease-out);
 }
@@ -288,15 +288,16 @@ a.ym-pagination__item:hover {
     gap: var(--space-4);
 }
 
-/* Скелетон карточки: высота блока текста как у карточки (цена, две строки названия, мета) */
-.ym-flea__skeleton .ym-card__body {
-    gap: var(--space-2);
-}
+/* Скелетон карточки: полоски по высоте строк реальной карточки ДС (цена, две строки названия, мета) */
 .ym-flea__skeleton-price {
-    height: 24px;
+    height: calc(var(--text-2xl) * 1.2);
 }
 .ym-flea__skeleton-title {
-    height: 38px;
+    height: calc(var(--text-s) * 1.38 * 2);
+}
+.ym-flea__skeleton-meta {
+    height: 16px;
+    margin-top: 2px;
 }
 .ym-flea__more {
     display: flex;

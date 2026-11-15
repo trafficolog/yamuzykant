@@ -19,7 +19,10 @@ use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Log;
 use Inertia\Inertia;
 use Inertia\Response;
-use Throwable;
+use Meilisearch\Exceptions\ApiException;
+use Meilisearch\Exceptions\CommunicationException;
+use Meilisearch\Exceptions\TimeOutException;
+use Psr\Http\Client\ClientExceptionInterface;
 
 /**
  * Выдача Барахолки (UC-S2, UC-S3): `/baraholka` и `/baraholka/{категория}`. Город — из шапки (BR-01),
@@ -36,19 +39,19 @@ final class FleaController extends Controller
         $emptyResult = new ListingSearchResult([], [], 0, $filters->page, FleaFilters::PER_PAGE, ['condition' => [], 'category_path' => []], 0);
         $searchError = false;
 
-        try {
-            $result = $city === null
-                ? $emptyResult
-                : $this->search(ListingSearch::inCity($city), $category, $filters)->get($filters->page, FleaFilters::PER_PAGE);
+        $main = $city === null ? null : $this->search(ListingSearch::inCity($city), $category, $filters);
+        // Счётчики чипов состояния не зависят от выбранного состояния: иначе у остальных ступеней был бы нуль.
+        $withoutConditions = $city === null || $filters->conditions === []
+            ? null
+            : $this->search(ListingSearch::inCity($city), $category, $filters->withoutConditions());
 
-            // Счётчики чипов состояния не зависят от выбранного состояния: иначе у остальных ступеней был бы нуль.
-            $conditionCounts = $filters->conditions === [] || $city === null
-                ? $result->facets['condition']
-                : $this->search(ListingSearch::inCity($city), $category, $filters->withoutConditions())
-                    ->get(1, 1)->facets['condition'];
-        } catch (Throwable $exception) {
+        try {
+            $result = $main?->get($filters->page, FleaFilters::PER_PAGE) ?? $emptyResult;
+            $conditionCounts = $withoutConditions?->get(1, 1)->facets['condition'] ?? $result->facets['condition'];
+        } catch (ApiException|CommunicationException|TimeOutException|ClientExceptionInterface $exception) {
             // Поиск не ответил: страница открывается с пустой выдачей, фронт показывает Alert с повтором.
-            Log::warning('Выдача Барахолки недоступна: поиск не ответил.', ['error' => $exception->getMessage()]);
+            // Остальные исключения (ошибки кода) не глотаем. В лог — только класс и код, без текста запроса.
+            Log::warning('Выдача Барахолки недоступна: поиск не ответил.', ['exception' => $exception::class, 'code' => $exception->getCode()]);
             $searchError = true;
             $result = $emptyResult;
             $conditionCounts = [];

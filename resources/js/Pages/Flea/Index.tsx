@@ -120,7 +120,7 @@ export default function FleaIndex({
             base,
             { ...toQuery(filters, pagination.page + 1) },
             {
-                only: ['listings', 'pagination'],
+                only: ['listings', 'pagination', 'searchError'],
                 preserveScroll: true,
                 preserveState: true,
                 replace: true,
@@ -195,6 +195,17 @@ export default function FleaIndex({
           ? { label: t.empty.reset, onClick: () => visit(EMPTY_FILTERS) }
           : undefined;
     const loading = busy && !loadingMore;
+    // Повтор после сбоя «Показать ещё» перезапрашивает текущую страницу: уже загруженные карточки остаются сверху.
+    const errorBlock = (
+        <div className="ym-flea__error">
+            <Alert tone="danger" title={t.error.title}>
+                {t.error.text}
+            </Alert>
+            <Button variant="outline" onClick={() => router.reload()}>
+                {t.error.retry}
+            </Button>
+        </div>
+    );
     const title = category?.name ?? t.title;
 
     return (
@@ -279,7 +290,7 @@ export default function FleaIndex({
                     </div>
 
                     {loading ? (
-                        <div className="ym-flea__grid">
+                        <div className="ym-flea__grid ym-flea__grid--loading">
                             {Array.from(
                                 { length: listings.length || SKELETONS_BY_DEFAULT },
                                 (_, i) => (
@@ -287,37 +298,35 @@ export default function FleaIndex({
                                 ),
                             )}
                         </div>
-                    ) : searchError ? (
-                        <div className="ym-flea__error">
-                            <Alert tone="danger" title={t.error.title}>
-                                {t.error.text}
-                            </Alert>
-                            <Button variant="outline" onClick={() => router.reload()}>
-                                {t.error.retry}
-                            </Button>
-                        </div>
                     ) : listings.length === 0 ? (
-                        <EmptyState icon={'search' satisfies IconName} action={emptyAction}>
-                            {filtered ? t.empty.filtered : t.empty.city}
-                        </EmptyState>
+                        searchError ? (
+                            errorBlock
+                        ) : (
+                            <EmptyState icon={'search' satisfies IconName} action={emptyAction}>
+                                {filtered ? t.empty.filtered : t.empty.city}
+                            </EmptyState>
+                        )
                     ) : (
-                        <div className="ym-flea__grid">
-                            {listings.map((card) => (
-                                <FleaListingCard
-                                    key={card.id}
-                                    title={card.title}
-                                    href={lotPath(card.id)}
-                                    price={card.price}
-                                    condition={
-                                        (card.condition ?? undefined) as Condition | undefined
-                                    }
-                                    city={card.city}
-                                    posted={card.posted ?? undefined}
-                                    delivery={card.ship ? t.shipping : undefined}
-                                    safe={false}
-                                />
-                            ))}
-                        </div>
+                        <>
+                            {searchError ? errorBlock : null}
+                            <div className="ym-flea__grid">
+                                {listings.map((card) => (
+                                    <FleaListingCard
+                                        key={card.id}
+                                        title={card.title}
+                                        href={lotPath(card.id)}
+                                        price={card.price}
+                                        condition={
+                                            (card.condition ?? undefined) as Condition | undefined
+                                        }
+                                        city={card.city}
+                                        posted={card.posted ?? undefined}
+                                        delivery={card.ship ? t.shipping : undefined}
+                                        safe={false}
+                                    />
+                                ))}
+                            </div>
+                        </>
                     )}
 
                     {pagination.page < pagination.pages ? (

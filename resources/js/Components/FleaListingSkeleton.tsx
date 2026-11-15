@@ -9,7 +9,7 @@ export default function FleaListingSkeleton() {
             <div className="ym-card__body">
                 <span className="ym-skel ym-skel--w60 ym-flea__skeleton-price" />
                 <span className="ym-skel ym-flea__skeleton-title" />
-                <span className="ym-skel ym-skel--w40" />
+                <span className="ym-skel ym-skel--w40 ym-flea__skeleton-meta" />
             </div>
         </div>
     );
