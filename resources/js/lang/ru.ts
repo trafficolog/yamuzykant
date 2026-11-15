@@ -219,6 +219,8 @@ export const ru = {
             activeListings: 'Активные объявления',
             activeHint: 'опубликованы сейчас',
             sellHint: 'по вашим объявлениям',
+            favorites: 'Избранное',
+            favoritesHint: 'сохранённых объявлений',
         },
         profilePage: {
             personal: 'Личные данные',
@@ -240,6 +242,7 @@ export const ru = {
             notificationsHint: 'Код для входа придёт в любом случае.',
             notificationKinds: {
                 new_message: 'Письма о новых сообщениях',
+                price_drop: 'Письма о снижении цен в избранном',
             } as Record<string, string>,
             notificationsSaved: 'Настройки сохранены',
             notificationsFailed: 'Не удалось сохранить настройку. Попробуйте ещё раз',
@@ -288,6 +291,12 @@ export const ru = {
     price: {
         negotiable: 'Договорная',
         free: 'Бесплатно',
+    },
+    /** «В избранное» (4.3.1, UC-S5): сердце на карточках и лоте, вкладка «Избранное» кабинета. */
+    favorites: {
+        failed: 'Не удалось обновить избранное. Попробуйте ещё раз',
+        empty: 'В избранном пока ничего нет. Нажмите на сердце у объявления, чтобы вернуться к нему позже.',
+        toFlea: 'Перейти в Барахолку',
     },
     breadcrumbs: {
         label: 'Хлебные крошки',

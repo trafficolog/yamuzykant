@@ -7,6 +7,7 @@ namespace App\Providers;
 use App\Domain\Accounts\Listeners\RememberSessionVersion;
 use App\Domain\Accounts\Staff\NoStaff;
 use App\Domain\Accounts\Staff\StaffDirectory;
+use App\Domain\Listings\Events\ListingPriceDropped;
 use App\Domain\Listings\Models\Listing;
 use App\Domain\Listings\Photos\HeicConverter;
 use App\Domain\Listings\Photos\ImagickHeicConverter;
@@ -20,6 +21,7 @@ use App\Domain\Messaging\Models\Conversation;
 use App\Domain\Messaging\Policies\ConversationPolicy;
 use App\Domain\Moderation\Listeners\QueueListingRiskAssessment;
 use App\Domain\Notifications\Listeners\SendNewMessageEmail;
+use App\Domain\Notifications\Listeners\SendPriceDropEmails;
 use App\Domain\Search\Console\BenchmarkSearchCommand;
 use App\Domain\Search\Console\ReconcileListingIndexCommand;
 use App\Domain\Search\Console\SeedLoadListingsCommand;
@@ -82,8 +84,9 @@ class AppServiceProvider extends ServiceProvider
         // Автопроверки (UC-O1): публикация, существенная правка и повторная отправка → job AssessListingRisk.
         Event::listen('App\Domain\Listings\Events\*', QueueListingRiskAssessment::class);
 
-        // Письмо о новом сообщении (4.4.1): слушатель в очереди, после commit сообщения.
+        // Письма в очереди после commit: о новом сообщении (4.4.1) и о снижении цены в избранном (4.3.1).
         Event::listen(MessageSent::class, SendNewMessageEmail::class);
+        Event::listen(ListingPriceDropped::class, SendPriceDropEmails::class);
 
         if ($this->app->runningInConsole()) {
             $this->commands([

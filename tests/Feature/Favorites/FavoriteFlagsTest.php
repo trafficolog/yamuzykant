@@ -31,15 +31,20 @@ it('лот: viewer.favorite — у гостя false, у вошедшего по 
 
 it('страница продавца: у карточек favorite по избранному зрителя', function () {
     $seller = User::factory()->create();
-    $mine = Listing::factory()->inStatus(ListingStatus::Published)->for($seller)->create(['title' => 'В избранном']);
-    Listing::factory()->inStatus(ListingStatus::Published)->for($seller)->create(['title' => 'Не в избранном']);
+    // Свежие первыми: избранное опубликовано позже.
+    $mine = Listing::factory()->inStatus(ListingStatus::Published)->for($seller)->create(['title' => 'В избранном', 'published_at' => now()->subDay()]);
+    Listing::factory()->inStatus(ListingStatus::Published)->for($seller)->create(['title' => 'Не в избранном', 'published_at' => now()->subDays(2)]);
     $viewer = User::factory()->create();
     Favorite::query()->create(['user_id' => $viewer->id, 'listing_id' => $mine->id, 'price_at_save' => $mine->price]);
 
-    $this->actingAs($viewer)->get("/sellers/{$seller->id}")->assertInertia(fn (Assert $page) => $page
-        ->where('listings', fn ($cards) => collect($cards)->pluck('favorite', 'title')->all() === ['В избранном' => true, 'Не в избранном' => false])
-        ->etc());
+    // Гость — до actingAs: вошедший пользователь остаётся в тесте для следующих запросов.
     $this->get("/sellers/{$seller->id}")->assertInertia(fn (Assert $page) => $page
-        ->where('listings', fn ($cards) => collect($cards)->every(fn ($card) => $card['favorite'] === false))
+        ->where('listings.0.favorite', false)
+        ->where('listings.1.favorite', false)
+        ->etc());
+    $this->actingAs($viewer)->get("/sellers/{$seller->id}")->assertInertia(fn (Assert $page) => $page
+        ->where('listings.0.title', 'В избранном')
+        ->where('listings.0.favorite', true)
+        ->where('listings.1.favorite', false)
         ->etc());
 });

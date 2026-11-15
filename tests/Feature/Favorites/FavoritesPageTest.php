@@ -108,7 +108,7 @@ it('снятое с продажи: недоступно, только id, на�
 
     $props = json_encode($response->viewData('page')['props'], JSON_THROW_ON_ERROR);
     expect($props)->not->toContain('media\/photos')->and($props)->not->toContain('Секретное описание');
-})->with([ListingStatus::Withdrawn, ListingStatus::Expired, ListingStatus::Rejected, ListingStatus::Pending]);
+})->with(['снято' => [ListingStatus::Withdrawn], 'истекло' => [ListingStatus::Expired], 'отклонено' => [ListingStatus::Rejected], 'на проверке' => [ListingStatus::Pending]]);
 
 it('обложка доступного объявления — как в остальных карточках', function () {
     $user = User::factory()->create();

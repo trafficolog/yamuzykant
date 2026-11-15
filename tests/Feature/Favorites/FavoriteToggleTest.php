@@ -74,7 +74,7 @@ it('цена «Договорная» и «Бесплатно» сохраняе
     $this->actingAs($user)->putJson("/listings/{$listing->id}/favorite")->assertOk();
 
     expect(Favorite::query()->sole()->price_at_save)->toBe($price);
-})->with([null, 0]);
+})->with(['договорная' => [null], 'бесплатно' => [0]]);
 
 it('DELETE снимает отметку и идемпотентен', function () {
     $user = User::factory()->create();
@@ -103,7 +103,7 @@ it('не опубликованное в избранное не добавит�
     $this->actingAs(User::factory()->create())->putJson("/listings/{$listing->id}/favorite")->assertNotFound();
 
     expect(Favorite::query()->count())->toBe(0);
-})->with([ListingStatus::Draft, ListingStatus::Pending, ListingStatus::Withdrawn, ListingStatus::Expired, ListingStatus::Rejected]);
+})->with(['черновик' => [ListingStatus::Draft], 'на проверке' => [ListingStatus::Pending], 'снято' => [ListingStatus::Withdrawn], 'истекло' => [ListingStatus::Expired], 'отклонено' => [ListingStatus::Rejected]]);
 
 it('снятое с публикации из избранного убрать можно', function () {
     $user = User::factory()->create();

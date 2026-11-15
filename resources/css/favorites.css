@@ -1,0 +1,84 @@
+/*
+ * «В избранное» (задача 4.3.1): сердце поверх карточки и плитка недоступного объявления во вкладке «Избранное».
+ * Подключается из resources/js/app.tsx. Только токены var(--*) и классы ym-*.
+ * Сердце карточки ДС не умеет сообщать о клике, поэтому его скрываем, а на его месте — управляемое FavoriteToggle
+ * (Components/FavoriteCardFrame.tsx); положение и вид повторяют `.ym-card__fav` из ДС.
+ */
+
+.ym-fav-card {
+    position: relative;
+}
+.ym-fav-card .ym-card__fav {
+    display: none;
+}
+.ym-fav-card__btn {
+    position: absolute;
+    top: var(--space-1);
+    right: var(--space-1);
+}
+.ym-fav-card--photo .ym-fav-card__btn .ym-fav {
+    position: relative;
+    min-width: 36px;
+    height: 36px;
+    margin: var(--space-1);
+    padding: 0;
+    border-radius: var(--radius-full);
+    background: var(--surface-raised);
+    box-shadow: var(--shadow-1);
+}
+.ym-fav-card--photo .ym-fav-card__btn .ym-fav::after {
+    content: '';
+    position: absolute;
+    inset: -4px;
+}
+
+/* Вкладка «Избранное» кабинета */
+.ym-account-favorites {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-6);
+}
+.ym-account-favorites__grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(var(--card-min), 1fr));
+    gap: var(--space-6);
+    margin: 0;
+    padding: 0;
+    list-style: none;
+}
+@media (max-width: 639px) {
+    .ym-account-favorites__grid {
+        grid-template-columns: repeat(auto-fill, minmax(var(--card-min-compact), 1fr));
+        gap: var(--space-4);
+    }
+}
+
+/* Недоступное объявление: без фото и ссылки, приглушённое */
+.ym-fav-gone {
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-2);
+    box-sizing: border-box;
+    height: 100%;
+    padding: var(--space-4);
+    border-radius: var(--radius-lg);
+    background: var(--surface-recessed);
+    color: var(--ink-muted);
+}
+.ym-fav-gone__badge {
+    align-self: flex-start;
+}
+.ym-fav-gone__title {
+    margin: 0;
+    padding-right: var(--space-8);
+    overflow-wrap: anywhere;
+}
+.ym-fav-gone__price {
+    font-variant-numeric: tabular-nums;
+}
+.ym-fav-gone__btn {
+    position: absolute;
+    top: var(--space-1);
+    right: var(--space-1);
+}

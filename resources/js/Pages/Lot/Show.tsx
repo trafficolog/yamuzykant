@@ -3,6 +3,7 @@ import { Head, Link } from '@inertiajs/react';
 import { useState, type ReactNode } from 'react';
 
 import Breadcrumbs, { type Crumb } from '@/Components/Breadcrumbs';
+import FavoriteToggle from '@/Components/FavoriteToggle';
 import LotGallery, { type LotPhoto } from '@/Components/LotGallery';
 import LotListingCard from '@/Components/LotListingCard';
 import LotPrice from '@/Components/LotPrice';
@@ -51,6 +52,8 @@ export interface LotSimilar {
     negotiable: boolean;
     posted: string | null;
     image: string | null;
+    /** Объявление в избранном у зрителя (4.3.1). */
+    favorite: boolean;
 }
 
 export interface LotShowProps {
@@ -59,7 +62,8 @@ export interface LotShowProps {
     photos: LotPhoto[];
     /** `since` — `ГГГГ-ММ` (MemberSince). */
     seller: { id: number; name: string; city: string | null; since: string | null };
-    viewer: { authenticated: boolean; is_owner: boolean };
+    /** `favorite` — лот в избранном у зрителя (4.3.1). */
+    viewer: { authenticated: boolean; is_owner: boolean; favorite: boolean };
     similar: LotSimilar[];
 }
 
@@ -232,9 +236,17 @@ export default function LotShow({
 
                     <section aria-labelledby="lot-title" className="ym-lot__buy">
                         <div className="ym-lot__head">
-                            <h1 id="lot-title" className="h2 ym-lot__title">
-                                {listing.title}
-                            </h1>
+                            <div className="ym-lot__title-row">
+                                <h1 id="lot-title" className="h2 ym-lot__title">
+                                    {listing.title}
+                                </h1>
+                                {published ? (
+                                    <FavoriteToggle
+                                        listingId={listing.id}
+                                        favorite={viewer.favorite}
+                                    />
+                                ) : null}
+                            </div>
                             <div className="ym-lot__badges">
                                 {listing.condition !== null ? (
                                     <ConditionBadge
@@ -360,6 +372,8 @@ export default function LotShow({
                             {similar.map((lot) => (
                                 <LotListingCard
                                     key={lot.id}
+                                    listingId={lot.id}
+                                    favorite={lot.favorite}
                                     title={lot.title}
                                     price={lot.price}
                                     href={lotPath(lot.id)}

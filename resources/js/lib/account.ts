@@ -1,7 +1,7 @@
 import type { IconName } from '@ds';
 
 import { ru } from '@/lang/ru';
-import { ACCOUNT_PATH, MESSAGES_PATH, PROFILE_PATH } from '@/lib/paths';
+import { ACCOUNT_PATH, FAVORITES_PATH, MESSAGES_PATH, PROFILE_PATH } from '@/lib/paths';
 
 export type AccountSection =
     'overview' | 'favorites' | 'searches' | 'listings' | 'messages' | 'profile';
@@ -19,12 +19,12 @@ export interface AccountNavItem {
 
 /**
  * Адреса разделов кабинета. `null` — задача раздела ещё не сделана или раздел вне G1: вкладка не выводится.
- * Когда задача появляется, она ставит сюда свой адрес: 2.1.5 — `listings`, 4.3.1 — `favorites`,
+ * Когда задача появляется, она ставит сюда свой адрес: 2.1.5 — `listings`,
  * 4.3.2 (с G2) — `searches`.
  */
 export const SECTION_PATHS: Readonly<Record<AccountSection, string | null>> = {
     overview: ACCOUNT_PATH,
-    favorites: null,
+    favorites: FAVORITES_PATH,
     searches: null,
     listings: null,
     messages: MESSAGES_PATH,

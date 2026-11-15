@@ -155,7 +155,12 @@ describe('Lot/Show: кнопки действий', () => {
 
     it('вошедший: появляется поле сообщения, отправка — POST по объявлению', async () => {
         postJson.mockResolvedValue({ status: 201, body: { conversation: { id: 7 } } });
-        render(<LotShow {...base} viewer={{ authenticated: true, is_owner: false, favorite: false }} />);
+        render(
+            <LotShow
+                {...base}
+                viewer={{ authenticated: true, is_owner: false, favorite: false }}
+            />,
+        );
 
         fireEvent.click(screen.getByRole('button', { name: 'Написать продавцу' }));
         expect(openLogin).not.toHaveBeenCalled();
@@ -173,7 +178,12 @@ describe('Lot/Show: кнопки действий', () => {
     });
 
     it('пустое сообщение не отправляется', () => {
-        render(<LotShow {...base} viewer={{ authenticated: true, is_owner: false, favorite: false }} />);
+        render(
+            <LotShow
+                {...base}
+                viewer={{ authenticated: true, is_owner: false, favorite: false }}
+            />,
+        );
 
         fireEvent.click(screen.getByRole('button', { name: 'Написать продавцу' }));
 
@@ -182,7 +192,12 @@ describe('Lot/Show: кнопки действий', () => {
 
     it('ошибка сервера показывается и не теряет текст', async () => {
         postJson.mockResolvedValue({ status: 429, body: {} });
-        render(<LotShow {...base} viewer={{ authenticated: true, is_owner: false, favorite: false }} />);
+        render(
+            <LotShow
+                {...base}
+                viewer={{ authenticated: true, is_owner: false, favorite: false }}
+            />,
+        );
 
         fireEvent.click(screen.getByRole('button', { name: 'Написать продавцу' }));
         fireEvent.change(screen.getByRole('textbox', { name: /Сообщение/ }), {
@@ -195,7 +210,9 @@ describe('Lot/Show: кнопки действий', () => {
     });
 
     it('своё объявление: вместо «Написать» — пометка владельца', () => {
-        render(<LotShow {...base} viewer={{ authenticated: true, is_owner: true, favorite: false }} />);
+        render(
+            <LotShow {...base} viewer={{ authenticated: true, is_owner: true, favorite: false }} />,
+        );
 
         expect(screen.queryByRole('button', { name: 'Написать продавцу' })).toBeNull();
         expect(screen.getByText('Это ваше объявление')).toBeInTheDocument();
@@ -217,7 +234,10 @@ describe('Lot/Show: плашки статуса (видны только вла�
         [{ status: 'expired' as const, sold: false }, 'Срок публикации истёк'],
     ])('%j — «%s», кнопки «Написать» нет', (patch, label) => {
         render(
-            <LotShow {...withListing(patch)} viewer={{ authenticated: true, is_owner: true, favorite: false }} />,
+            <LotShow
+                {...withListing(patch)}
+                viewer={{ authenticated: true, is_owner: true, favorite: false }}
+            />,
         );
 
         expect(screen.getByTestId('lot-status')).toHaveTextContent(label);
@@ -403,8 +423,9 @@ describe('Lot/Show: SSR', () => {
 });
 
 describe('Lot/Show: «В избранное» (4.3.1)', () => {
+    // Сердце карточки ДС скрыто CSS (favorites.css), в jsdom стилей нет: считаем только наши управляемые сердца.
     const hearts = () =>
-        screen.getAllByRole('button', { name: /В избранное|Убрать из избранного/ });
+        Array.from(document.querySelectorAll('.ym-lot__head .ym-fav, .ym-fav-card__btn .ym-fav'));
     const head = () => document.querySelector('.ym-lot__head') as HTMLElement;
 
     it('сердце рядом с заголовком: состояние из viewer.favorite', () => {

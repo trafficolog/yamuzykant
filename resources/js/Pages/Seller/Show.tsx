@@ -121,6 +121,8 @@ export default function SellerShow({
                             {listings.map((lot) => (
                                 <li key={lot.id}>
                                     <LotListingCard
+                                        listingId={lot.id}
+                                        favorite={lot.favorite}
                                         title={lot.title}
                                         price={lot.price}
                                         href={lotPath(lot.id)}

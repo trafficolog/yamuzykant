@@ -152,7 +152,8 @@ describe('Seller/Show', () => {
     it('«В избранное» (4.3.1): у каждой карточки «В продаже» сердце по favorite', () => {
         render(<SellerShow {...base} />);
 
-        const hearts = screen.getAllByRole('button', { name: /В избранное|Убрать из избранного/ });
+        // Сердце карточки ДС скрыто CSS (favorites.css), в jsdom стилей нет: берём наши управляемые сердца.
+        const hearts = Array.from(document.querySelectorAll('.ym-fav-card__btn .ym-fav'));
         expect(hearts.map((heart) => heart.getAttribute('aria-pressed'))).toEqual([
             'false',
             'true',

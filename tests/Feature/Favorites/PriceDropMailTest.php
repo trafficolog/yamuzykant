@@ -26,6 +26,7 @@ function dropPrice(Listing $listing, int $to): void
     event(new ListingPriceDropped($listing, ListingStatus::Published, ListingStatus::Published, ListingEvent::PriceDrop));
 }
 
+/** @param  array<string, mixed>  $attributes */
 function watcher(Listing $listing, ?int $savedPrice = null, array $attributes = []): User
 {
     $user = User::factory()->create($attributes);

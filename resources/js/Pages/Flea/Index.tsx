@@ -34,6 +34,8 @@ export interface FleaCard {
     ship: boolean;
     negotiable: boolean;
     posted: string | null;
+    /** Объявление в избранном у зрителя (4.3.1). */
+    favorite: boolean;
 }
 
 export interface FleaCategory {
@@ -274,6 +276,8 @@ export default function FleaIndex({
                                     key={card.id}
                                     title={card.title}
                                     href={lotPath(card.id)}
+                                    listingId={card.id}
+                                    favorite={card.favorite}
                                     price={card.price}
                                     condition={
                                         (card.condition ?? undefined) as Condition | undefined

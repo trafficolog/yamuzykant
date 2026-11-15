@@ -3,6 +3,7 @@
 declare(strict_types=1);
 
 use App\Domain\Accounts\Models\User;
+use App\Domain\Catalog\Models\City;
 use App\Domain\Favorites\Models\Favorite;
 use Database\Seeders\CitySeeder;
 use Inertia\Testing\AssertableInertia as Assert;
@@ -17,17 +18,21 @@ beforeEach(function () {
 });
 
 it('Барахолка: favorite у карточек вошедшего зрителя', function () {
-    $moscow = App\Domain\Catalog\Models\City::query()->where('name', 'Москва')->firstOrFail();
+    $moscow = City::query()->where('name', 'Москва')->firstOrFail();
     $liked = ListingFixtures::published(['title' => 'В избранном'], $moscow);
-    ListingFixtures::published(['title' => 'Не в избранном'], $moscow);
     $viewer = User::factory()->create();
     Favorite::query()->create(['user_id' => $viewer->id, 'listing_id' => $liked->id, 'price_at_save' => $liked->price]);
     MeilisearchIndex::waitForTasks();
 
-    $this->actingAs($viewer)->get('/baraholka')->assertInertia(fn (Assert $page) => $page
-        ->where('listings', fn ($cards) => collect($cards)->pluck('favorite', 'title')->all() === ['В избранном' => true, 'Не в избранном' => false])
-        ->etc());
+    // Гость — до actingAs: вошедший пользователь остаётся в тесте для следующих запросов.
     $this->get('/baraholka')->assertInertia(fn (Assert $page) => $page
-        ->where('listings', fn ($cards) => collect($cards)->every(fn ($card) => $card['favorite'] === false))
+        ->where('listings.0.favorite', false)
+        ->etc());
+    $this->actingAs(User::factory()->create())->get('/baraholka')->assertInertia(fn (Assert $page) => $page
+        ->where('listings.0.favorite', false)
+        ->etc());
+    $this->actingAs($viewer)->get('/baraholka')->assertInertia(fn (Assert $page) => $page
+        ->where('listings.0.id', $liked->id)
+        ->where('listings.0.favorite', true)
         ->etc());
 });

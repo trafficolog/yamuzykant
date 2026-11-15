@@ -11,13 +11,17 @@ function xsrfToken(): string | null {
 }
 
 /**
- * POST JSON с CSRF-токеном сессии (JSON-эндпоинты окна входа). Любой ответ сервера — не исключение:
+ * JSON-запрос с CSRF-токеном сессии (JSON-эндпоинты окна входа, избранное). Любой ответ сервера — не исключение:
  * решает вызывающий по `status`. Исключение — только когда ответа нет вовсе (сеть, обрыв).
  */
-export async function postJson(url: string, data: Record<string, unknown>): Promise<JsonResult> {
+export async function sendJson(
+    method: 'POST' | 'PUT' | 'DELETE',
+    url: string,
+    data?: Record<string, unknown>,
+): Promise<JsonResult> {
     const token = xsrfToken();
     const response = await fetch(url, {
-        method: 'POST',
+        method,
         credentials: 'same-origin',
         headers: {
             Accept: 'application/json',
@@ -36,3 +40,7 @@ export async function postJson(url: string, data: Record<string, unknown>): Prom
 
     return { status: response.status, body };
 }
+
+/** POST JSON: `sendJson('POST', …)`. */
+export const postJson = (url: string, data: Record<string, unknown>): Promise<JsonResult> =>
+    sendJson('POST', url, data);

@@ -23,7 +23,9 @@ vi.mock('@inertiajs/react', () => ({
 
 vi.mock('@/lib/favoritesApi', () => ({ setFavorite: vi.fn().mockResolvedValue(200) }));
 
-const available = (patch: Partial<Extract<FavoriteItem, { available: true }>> = {}): FavoriteItem => ({
+const available = (
+    patch: Partial<Extract<FavoriteItem, { available: true }>> = {},
+): FavoriteItem => ({
     id: 'a1',
     title: 'Gibson Les Paul Studio 2014',
     price: 149_000,
@@ -65,9 +67,10 @@ describe('Account/Favorites', () => {
         const list = screen.getByRole('list', { name: 'Избранное' });
         const link = within(list).getByRole('link', { name: 'Gibson Les Paul Studio 2014' });
         expect(link).toHaveAttribute('href', '/listings/a1');
-        expect(
-            within(list).getByRole('button', { name: 'Убрать из избранного' }),
-        ).toHaveAttribute('aria-pressed', 'true');
+        // Сердце самой карточки ДС скрыто CSS (favorites.css), в jsdom стилей нет: берём управляемое.
+        const heart = list.querySelector('.ym-fav-card__btn .ym-fav');
+        expect(heart).toHaveAttribute('aria-pressed', 'true');
+        expect(heart).toHaveAccessibleName('Убрать из избранного');
     });
 
     it('цена снизилась: прежняя цена и значок скидки', () => {

@@ -404,7 +404,9 @@ describe('Flea/Index: сортировка', () => {
         expect(sum?.textContent).toContain('184 500');
         // Подпись задаёт CSS из --price-label на обёртке карточки (3.1.9), в DOM текста цены нет.
         const labelOf = (article?: HTMLElement) =>
-            article?.parentElement?.style.getPropertyValue('--price-label');
+            article
+                ?.closest<HTMLElement>('.ym-flea__card')
+                ?.style.getPropertyValue('--price-label');
         expect(labelOf(negotiable)).toBe('"Договорная"');
         expect(labelOf(free)).toBe('"Бесплатно"');
         for (const article of screen.getAllByRole('article')) {
