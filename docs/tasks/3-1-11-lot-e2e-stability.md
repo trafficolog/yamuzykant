@@ -11,7 +11,7 @@ model_review: opus
 roles: ["FRONT", "QA"]
 depends_on: []
 uc: ["V1", "D1"]
-issue: 
+issue: 151
 sync_state: aligned
 escalations: []
 ---
