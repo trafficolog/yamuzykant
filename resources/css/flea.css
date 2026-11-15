@@ -288,6 +288,10 @@ a.ym-pagination__item:hover {
     gap: var(--space-4);
 }
 
+/* `.ym-skel` ДС задаёт height 12px и ломал бы квадрат фото: возвращаем высоту по aspect-ratio карточки. */
+.ym-flea__skeleton .ym-card__media {
+    height: auto;
+}
 /* Скелетон карточки: полоски по высоте строк реальной карточки ДС (цена, две строки названия, мета) */
 .ym-flea__skeleton-price {
     height: calc(var(--text-2xl) * 1.2);
