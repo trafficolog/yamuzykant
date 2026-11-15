@@ -23,12 +23,17 @@ final class ListingAutoChecks
     /** @var list<AutoCheck> */
     private readonly array $checks;
 
+    /** Подсказка продавцу, не признак риска: только в validate(), в assess() не участвует. */
+    private readonly SerialNumberCheck $serialNumber;
+
     public function __construct(
         ContactsCheck $contacts,
+        SerialNumberCheck $serialNumber,
         StopWordsCheck $stopWords,
         DuplicatePhotoCheck $duplicatePhoto,
         LowPriceCheck $lowPrice,
     ) {
+        $this->serialNumber = $serialNumber;
         $this->checks = [$contacts, $stopWords, $duplicatePhoto, $lowPrice];
     }
 
@@ -41,7 +46,7 @@ final class ListingAutoChecks
     public function validate(Listing $listing): AutoCheckReport
     {
         $findings = [];
-        foreach ($this->checks as $check) {
+        foreach ([...$this->checks, $this->serialNumber] as $check) {
             if ($check->blocking()) {
                 array_push($findings, ...$check->inspect($listing));
             }

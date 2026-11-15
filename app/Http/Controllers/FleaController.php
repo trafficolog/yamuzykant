@@ -38,7 +38,9 @@ final class FleaController extends Controller
         // Страница за последней при непустой выдаче: на последнюю, фильтры сохраняются.
         $pages = (int) ceil($result->total / $result->perPage);
         if ($result->total > 0 && $filters->page > $pages) {
-            return redirect($request->url().'?'.http_build_query($filters->withPage($pages)->toQuery()));
+            $query = http_build_query($filters->withPage($pages)->toQuery());
+
+            return redirect($request->url().($query === '' ? '' : '?'.$query));
         }
 
         // Счётчики чипов состояния не зависят от выбранного состояния: иначе у остальных ступеней был бы нуль.

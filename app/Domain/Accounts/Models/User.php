@@ -28,6 +28,8 @@ use Illuminate\Support\Carbon;
  * @property Carbon|null $consented_at
  * @property Carbon|null $last_login_at
  * @property int $session_version
+ * @property Carbon|null $blocked_at
+ * @property Carbon|null $created_at
  * @property-read City|null $city
  */
 #[UseFactory(UserFactory::class)]
@@ -74,8 +76,15 @@ class User extends Authenticatable
             'notification_prefs' => 'array',
             'consented_at' => 'datetime',
             'last_login_at' => 'datetime',
+            'blocked_at' => 'datetime',
             'session_version' => 'integer',
         ];
+    }
+
+    /** Заблокирован мерой SPEC §6.4: его страницу и объявления не показываем. */
+    public function isBlocked(): bool
+    {
+        return $this->blocked_at !== null;
     }
 
     /** @return Attribute<string, string> */

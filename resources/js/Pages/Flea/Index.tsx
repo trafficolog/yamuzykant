@@ -10,6 +10,7 @@ import FleaFilterPanel, {
     type ConditionOption,
 } from '@/Components/FleaFilterPanel';
 import Pagination from '@/Components/Pagination';
+import useScrollRestore from '@/Hooks/useScrollRestore';
 import PublicLayout from '@/Layouts/PublicLayout';
 import { ru } from '@/lang/ru';
 import { lotPath } from '@/lib/paths';
@@ -81,6 +82,7 @@ export default function FleaIndex({
     const [filtersOpen, setFiltersOpen] = useState(false);
     const [busy, setBusy] = useState(false);
     const [loadingMore, setLoadingMore] = useState(false);
+    useScrollRestore();
 
     const base = category === null ? FLEA_PATH : `${FLEA_PATH}/${category.path}`;
     const categoryPath = category?.path ?? null;

@@ -7,8 +7,6 @@ namespace App\Http\Resources\Listings;
 use App\Domain\Catalog\Models\Category;
 use App\Domain\Listings\Enums\ListingStatus;
 use App\Domain\Listings\Models\Listing;
-use App\Domain\Listings\Models\ListingPhoto;
-use App\Domain\Listings\Photos\PhotoVisibility;
 use App\Support\MemberSince;
 use App\Support\PostedAgo;
 use Illuminate\Http\Request;
@@ -16,8 +14,9 @@ use Illuminate\Http\Resources\Json\JsonResource;
 use Illuminate\Support\Collection;
 
 /**
- * Страница объявления (UC-V1): явный список полей. Почта и yandex_id продавца, полный серийный номер, user_id,
- * итоговая цена и пути хранилища наружу не уходят (BR-04, AGENTS §4). Цена — как в БД: `null` — «Договорная»,
+ * Страница объявления (UC-V1): явный список полей. Почта и yandex_id продавца, полный серийный номер, user_id
+ * объявления, итоговая цена и пути хранилища наружу не уходят (BR-04, AGENTS §4); id продавца — только для адреса
+ * его страницы (3.1.6). Цена — как в БД: `null` — «Договорная»,
  * `0` — «Бесплатно» (BR-11), подпись выбирает фронт; «Готов к торгу» — только при сумме.
  *
  * @mixin Listing
@@ -66,6 +65,7 @@ final class LotResource extends JsonResource
             'crumbs' => $this->crumbs($listing->category),
             'photos' => $this->photos($listing, $request),
             'seller' => [
+                'id' => $seller->id,
                 'name' => $seller->name,
                 'city' => $seller->city?->name,
                 'since' => MemberSince::month($seller->created_at),
@@ -74,7 +74,7 @@ final class LotResource extends JsonResource
                 'authenticated' => $viewer !== null,
                 'is_owner' => $viewer !== null && $viewer->id === $listing->user_id,
             ],
-            'similar' => $this->similar->map(fn (Listing $similar): array => $this->card($similar))->all(),
+            'similar' => $this->similar->map(fn (Listing $similar): array => (new ListingCardResource($similar))->resolve($request))->all(),
         ];
     }
 
@@ -119,43 +119,5 @@ final class LotResource extends JsonResource
         }
 
         return $photos;
-    }
-
-    /** @return array<string, mixed> */
-    private function card(Listing $similar): array
-    {
-        $price = $similar->price;
-
-        return [
-            'id' => $similar->id,
-            'title' => (string) $similar->title,
-            'price' => $price,
-            'condition' => $similar->condition?->value,
-            'city' => $similar->city?->name,
-            'ship' => $similar->ship,
-            'negotiable' => $price !== null && $price > 0 && $similar->negotiable,
-            'posted' => $similar->published_at === null ? null : PostedAgo::format($similar->published_at),
-            'image' => $this->cover($similar),
-        ];
-    }
-
-    /** Обложка карточки: первое публичное фото (не серийный номер), версия 1:1. */
-    private function cover(Listing $similar): ?string
-    {
-        $photo = $similar->photos->first(fn (ListingPhoto $photo): bool => ! $photo->is_serial && $photo->isReady());
-        if ($photo === null) {
-            return null;
-        }
-        $photo->setRelation('listing', $similar);
-        if (! PhotoVisibility::isPublic($photo)) {
-            return null;
-        }
-
-        return route('photos.media', [
-            'photo' => $photo->id,
-            'variant' => 'square',
-            'format' => 'webp',
-            'v' => $photo->processed_at?->getTimestamp(),
-        ], absolute: false);
     }
 }

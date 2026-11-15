@@ -55,6 +55,6 @@ final readonly class Contact
     {
         $text = (string) preg_replace('/\s+/u', '', $text);
 
-        return (string) preg_replace('~^(?:[a-z][a-z0-9+.\-]*://)?([^/?#]*).*$~isu', '$1', $text);
+        return (string) preg_replace('~^(?:[a-z][a-z0-9+.\-]*://)?(?:[^/?\#]*@)?([^/?\#]*).*$~isu', '$1', $text);
     }
 }

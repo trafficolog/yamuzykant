@@ -36,6 +36,11 @@
     color: var(--ink-faint);
 }
 
+/* Цена по BR-11 без JS: «Договорная» и «Бесплатно» (FleaListingCard кладёт строку в --price-label) */
+.ym-flea__card .ym-price__now:empty::after {
+    content: var(--price-label);
+}
+
 /* Пагинация: номера — ссылки для поисковиков */
 .ym-pagination {
     display: flex;

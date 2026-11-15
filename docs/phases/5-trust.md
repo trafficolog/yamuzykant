@@ -13,7 +13,7 @@ gate: G2
 <!-- docs:ops:begin epics -->
 | Эпик | Задач | Готово |
 |---|---|---|
-| [5.1 Модерация](../epics/5-1-moderation.md) | 4 | 1 |
+| [5.1 Модерация](../epics/5-1-moderation.md) | 4 | 2 |
 | [5.2 Жалобы и поддержка](../epics/5-2-support.md) | 3 | 0 |
 | [5.3 Консоль сотрудников](../epics/5-3-console.md) | 5 | 0 |
 <!-- docs:ops:end -->
