@@ -43,8 +43,10 @@ Route::post('/api/models/suggestions', SuggestModelController::class)
     ->name('api.models.suggest');
 
 // Город шапки (UC-S1): смена — 30 запросов в минуту с одного адреса; справочник для окна выбора — 60 в минуту.
-Route::post('/city', [CityController::class, 'update'])->middleware('throttle:30,1')->name('city.update');
-Route::get('/cities', [CityController::class, 'search'])->middleware('throttle:60,1')->name('cities.search');
+// Третий параметр throttle — свой счётчик: без него все throttle:N,M гостя делят один счётчик по IP, и набор в
+// поиске города (GET /cities на каждую букву) съедал лимит смены — выбор города падал с 429 (3.1.12).
+Route::post('/city', [CityController::class, 'update'])->middleware('throttle:30,1,city')->name('city.update');
+Route::get('/cities', [CityController::class, 'search'])->middleware('throttle:60,1,cities')->name('cities.search');
 
 // Витрина дизайн-системы: контроллер отвечает 404 вне окружений local и stage.
 Route::get('/_ds', DsShowcaseController::class)->name('ds.showcase');
