@@ -26,7 +26,7 @@ escalations: []
 ## Что сделать
 - Вынести подпись цены (`priceLabel` + CSS без привязки к `.ym-flea__card`) в одно место и использовать в `FleaListingCard` и `LotListingCard`; портал удалить
 - Подпись — текстом в DOM (видна в SSR, Ctrl+F, поисковикам, скринридерам) или с `aria-label`; результат ручной проверки NVDA/VoiceOver — в PR
-- `useScrollRestore` (ревью PR #140): восстанавливать один раз и удалять запись после чтения; запись также на `visibilitychange` → `hidden`
+- `useScrollRestore` (ревью PR #140 круг 2): отменять повторные scrollTo при пользовательском скролле (одноразовые wheel, touchstart, keydown); тесты на cleanup и отмену повторов; проверить работу в StrictMode
 - SSR-тест проверяет слово «Договорная»/«Бесплатно» в HTML, а не строку переменной
 - Заменить токены совместимости прототипа `--lad`, `--lad-strong`, `--lad-soft` (их нет в ДС) на токены ДС в `resources/css/flea.css` и `resources/css/lot.css`, как сделано в `home.css` (ревью PR #133); при смене вида — переснять эталоны flea/lot
 - Подготовить запрос в репозиторий ДС: `ListingCard` с `price: null | 0` и текстом в DOM; после его выполнения убрать обёртку
