@@ -2,7 +2,7 @@ import { router } from '@inertiajs/react';
 import type { ReactNode } from 'react';
 
 import EmptyState from '@/Components/EmptyState';
-import FleaListingCard from '@/Components/FleaListingCard';
+import PricedListingCard from '@/Components/PricedListingCard';
 import Pagination from '@/Components/Pagination';
 import UnavailableFavoriteCard from '@/Components/UnavailableFavoriteCard';
 import AccountLayout from '@/Layouts/AccountLayout';
@@ -62,7 +62,7 @@ export default function AccountFavorites({ favorites, pagination }: Props) {
                 {favorites.map((item) => (
                     <li key={item.id}>
                         {item.available ? (
-                            <FleaListingCard
+                            <PricedListingCard
                                 listingId={item.id}
                                 favorite={item.favorite}
                                 title={item.title}

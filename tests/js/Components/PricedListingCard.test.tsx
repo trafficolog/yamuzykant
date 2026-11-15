@@ -58,7 +58,9 @@ describe('PricedListingCard: подпись цены (BR-11)', () => {
 
     it('одна реализация: портала и отдельных карточек Барахолки и лота нет', () => {
         expect(existsSync(path('../../../resources/js/Components/LotListingCard.tsx'))).toBe(false);
-        expect(existsSync(path('../../../resources/js/Components/FleaListingCard.tsx'))).toBe(false);
+        expect(existsSync(path('../../../resources/js/Components/FleaListingCard.tsx'))).toBe(
+            false,
+        );
         expect(readFile('../../../resources/js/Components/PricedListingCard.tsx')).not.toContain(
             'createPortal',
         );

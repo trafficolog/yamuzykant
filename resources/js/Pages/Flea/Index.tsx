@@ -4,7 +4,7 @@ import { useEffect, useState, type ReactNode } from 'react';
 
 import Breadcrumbs, { type Crumb } from '@/Components/Breadcrumbs';
 import EmptyState from '@/Components/EmptyState';
-import FleaListingCard from '@/Components/FleaListingCard';
+import PricedListingCard from '@/Components/PricedListingCard';
 import FleaListingSkeleton from '@/Components/FleaListingSkeleton';
 import FleaFilterPanel, {
     type CategoryOption,
@@ -313,7 +313,7 @@ export default function FleaIndex({
                             <div className="ym-flea__stack">
                                 <div className="ym-flea__grid" aria-hidden={loading || undefined}>
                                     {listings.map((card) => (
-                                        <FleaListingCard
+                                        <PricedListingCard
                                             key={card.id}
                                             title={card.title}
                                             href={lotPath(card.id)}

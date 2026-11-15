@@ -5,6 +5,9 @@ const key = (): string => `ym-scroll:${window.location.pathname}${window.locatio
 /** Гидратация и загрузка шрифтов и фото могут сбросить прокрутку после первой попытки: повторяем. */
 const RETRY_MS = [0, 100, 300, 800];
 
+/** Пользователь начал прокручивать сам: дальнейшие повторы только мешали бы ему. */
+const USER_SCROLL = ['wheel', 'touchstart', 'keydown'] as const;
+
 /**
  * «Назад» после полной перезагрузки страницы (без bfcache): прокрутка возвращается на прежнюю позицию.
  * Позиция пишется в sessionStorage по адресу, когда страница уходит или вкладка скрывается, а читается
@@ -13,6 +16,7 @@ const RETRY_MS = [0, 100, 300, 800];
 export default function useScrollRestore(): void {
     useEffect(() => {
         const timers: number[] = [];
+        const cancelRetries = () => timers.forEach((timer) => window.clearTimeout(timer));
         const nav = performance.getEntriesByType('navigation')[0] as
             PerformanceNavigationTiming | undefined;
 
@@ -40,10 +44,14 @@ export default function useScrollRestore(): void {
         const saveWhenHidden = () => {
             if (document.visibilityState === 'hidden') save();
         };
+        for (const type of USER_SCROLL) {
+            window.addEventListener(type, cancelRetries, { once: true, passive: true });
+        }
         window.addEventListener('pagehide', save);
         document.addEventListener('visibilitychange', saveWhenHidden);
         return () => {
-            timers.forEach((timer) => window.clearTimeout(timer));
+            cancelRetries();
+            for (const type of USER_SCROLL) window.removeEventListener(type, cancelRetries);
             window.removeEventListener('pagehide', save);
             document.removeEventListener('visibilitychange', saveWhenHidden);
         };

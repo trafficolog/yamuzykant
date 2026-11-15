@@ -100,7 +100,9 @@ describe('useScrollRestore', () => {
 
         expect(scrollTo).not.toHaveBeenCalled();
         const removed = removeWindow.mock.calls.map(([type]) => type);
-        expect(removed).toEqual(expect.arrayContaining(['pagehide', 'wheel', 'touchstart', 'keydown']));
+        expect(removed).toEqual(
+            expect.arrayContaining(['pagehide', 'wheel', 'touchstart', 'keydown']),
+        );
         expect(removeDocument.mock.calls.map(([type]) => type)).toContain('visibilitychange');
         window.dispatchEvent(new Event('pagehide'));
         expect(sessionStorage.getItem(KEY)).toBeNull();
