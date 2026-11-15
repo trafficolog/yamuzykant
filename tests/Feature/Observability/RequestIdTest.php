@@ -58,6 +58,23 @@ it('в событиях из задания очереди есть тег Sentr
     expect(RequestIdProbeJob::$sentryTag)->toBe('req-tag-0001');
 });
 
+it('тег request_id не переходит в следующее задание без request_id', function () {
+    config(['queue.default' => 'database']);
+    Context::add('request_id', 'req-first-0001');
+    dispatch(new RequestIdProbeJob);
+    Context::flush();
+    dispatch(new RequestIdProbeJob);
+
+    $tags = [];
+    foreach ([1, 2] as $_) {
+        RequestIdProbeJob::$sentryTag = 'unset';
+        Artisan::call('queue:work', ['--once' => true, '--stop-when-empty' => true]);
+        $tags[] = RequestIdProbeJob::$sentryTag;
+    }
+
+    expect($tags)->toBe(['req-first-0001', null]);
+});
+
 it('страница отдаёт request_id в meta для событий Sentry в браузере', function () {
     $this->withHeader('X-Request-Id', 'req-meta-0001')->get('/')
         ->assertSee('<meta name="request-id" content="req-meta-0001">', false);

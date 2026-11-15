@@ -2,12 +2,14 @@
 
 declare(strict_types=1);
 
+use App\Http\Middleware\ThrottleHealth;
 use App\Providers\TrustedProxiesServiceProvider;
 use Illuminate\Contracts\Redis\Factory as RedisFactory;
 use Illuminate\Http\Middleware\TrustProxies;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Http;
+use Illuminate\Support\Facades\Log;
 use Tests\Support\FakeRedisConnection;
 use Tests\Support\FakeRedisFactory;
 use Tests\TestCase;
@@ -89,6 +91,20 @@ it('очередь Redis: имена очередей берутся из кон
 
     expect(FakeRedisConnection::$listKeys)->toContain('queues:mail-x', 'queues:q-main');
     expect(FakeRedisConnection::$listKeys)->not->toContain('queues:high');
+});
+
+it('сбой хранилища лимита пишется в журнал, но не чаще раза за интервал', function () {
+    ThrottleHealth::resetFailureLog();
+    Log::spy();
+    Cache::extend('exploding', fn () => throw new RuntimeException('store down'));
+    config(['cache.stores.exploding' => ['driver' => 'exploding'], 'health.throttle_store' => 'exploding']);
+    $client = $this->withServerVariables(['REMOTE_ADDR' => '203.0.113.9']);
+
+    foreach (range(1, 3) as $_) {
+        $client->getJson('/health')->assertOk();
+    }
+
+    Log::shouldHaveReceived('warning')->once();
 });
 
 it('X-Forwarded-For: 127.0.0.1 снаружи не открывает подробности', function () {
