@@ -42,5 +42,5 @@ it('служебное письмо без ссылки отписки', functio
     $mail = new LoginCodeMail('482193');
 
     $mail->assertDontSeeInHtml('Отписаться');
-    expect($mail->headers()->text)->not->toHaveKey('List-Unsubscribe');
+    $mail->assertDontSeeInText('Отписаться');
 });

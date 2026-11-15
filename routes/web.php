@@ -22,6 +22,7 @@ use App\Http\Controllers\Listings\PhotoMediaController;
 use App\Http\Controllers\Listings\SellController;
 use App\Http\Controllers\Messaging\ConversationController;
 use App\Http\Controllers\Messaging\MessagesPageController;
+use App\Http\Controllers\Notifications\UnsubscribeController;
 use App\Http\Middleware\EnsureE2eEnvironment;
 use App\Http\Middleware\ThrottleMessages;
 use Illuminate\Foundation\Http\Middleware\ValidateCsrfToken;
@@ -68,6 +69,12 @@ Route::prefix('auth')->name('auth.')->group(function (): void {
         Route::post('logout-everywhere', [LogoutController::class, 'everywhere'])->name('logout-everywhere');
     });
 });
+
+// Отписка из письма (4.4.1): подписанная ссылка, без входа. POST — «в один клик» из почтового клиента (RFC 8058).
+Route::match(['get', 'post'], '/notifications/unsubscribe/{user}/{kind}', UnsubscribeController::class)
+    ->middleware(['signed', 'throttle:30,1'])
+    ->withoutMiddleware(ValidateCsrfToken::class)
+    ->name('notifications.unsubscribe');
 
 // Страница объявления (3.1.5, UC-V1): открыта всем; не опубликованное — только владельцу и сотрудникам, остальным 404.
 Route::get('/listings/{listing}', LotController::class)->whereUuid('listing')->name('lot.show');
