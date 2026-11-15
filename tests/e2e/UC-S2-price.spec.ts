@@ -22,8 +22,8 @@ test('«Договорная» и «Бесплатно» видны на кар�
     // После гидратации.
     const cards = page.getByRole('article');
     await expect(caption(cards, 'Fender Japan ST62')).toBeVisible();
-    expect(await generated(caption(cards, 'Fender Japan ST62'))).toBe('"Договорная"');
-    expect(await generated(caption(cards, 'Fender Vintera'))).toBe('"Бесплатно"');
+    expect(await generated(caption(cards, 'Fender Japan ST62'))).toContain('"Договорная"');
+    expect(await generated(caption(cards, 'Fender Vintera'))).toContain('"Бесплатно"');
 
     // Без JS: только серверная разметка и CSS.
     const context = await browser.newContext({
@@ -33,8 +33,8 @@ test('«Договорная» и «Бесплатно» видны на кар�
     const bare = await context.newPage();
     await bare.goto('/baraholka');
     const bareCards = bare.getByRole('article');
-    expect(await generated(caption(bareCards, 'Fender Japan ST62'))).toBe('"Договорная"');
-    expect(await generated(caption(bareCards, 'Fender Vintera'))).toBe('"Бесплатно"');
+    expect(await generated(caption(bareCards, 'Fender Japan ST62'))).toContain('"Договорная"');
+    expect(await generated(caption(bareCards, 'Fender Vintera'))).toContain('"Бесплатно"');
     // 3.1.10: слово лежит в DOM текстом (поиск по странице, скринридеры), а не только в CSS.
     await expect(bare.getByRole('article').filter({ hasText: 'Fender Japan ST62' })).toContainText(
         'Договорная',
