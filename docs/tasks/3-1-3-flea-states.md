@@ -3,7 +3,7 @@ id: "3.1.3"
 phase: "3"
 epic: "3.1"
 title: "Барахолка: пусто, загрузка, ошибка"
-status: review
+status: done
 gate: G1
 risk: low
 model_impl: haiku
@@ -14,7 +14,7 @@ uc: ["S3"]
 prototype: "Десктоп - Каталог.dc.html"
 screens: ["flea-empty"]
 issue: 28
-sync_state: drifted
+sync_state: aligned
 escalations: []
 ---
 
