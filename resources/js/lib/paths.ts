@@ -8,6 +8,15 @@ import { router } from '@inertiajs/react';
 /** Страница объявления (3.1.5). */
 export const lotPath = (id: string): string => `/listings/${id}`;
 
+/** Страница продавца (3.1.6); вкладка «Продано» — `?tab=sold`, страница списка — `page`. */
+export const sellerPath = (id: number, query: { tab?: 'sold'; page?: number } = {}): string => {
+    const params = new URLSearchParams();
+    if (query.tab !== undefined) params.set('tab', query.tab);
+    if (query.page !== undefined && query.page > 1) params.set('page', String(query.page));
+    const search = params.toString();
+    return search === '' ? `/sellers/${id}` : `/sellers/${id}?${search}`;
+};
+
 /** Выдача Барахолки (3.1.2); `categoryPath` — путь из слагов (`gitary/elektrogitary`). */
 export const fleaPath = (categoryPath?: string | null): string =>
     categoryPath ? `/baraholka/${categoryPath}` : '/baraholka';
