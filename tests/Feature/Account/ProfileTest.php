@@ -22,7 +22,7 @@ it('гостя с любой страницы кабинета отправля�
     $this->get('/account')->assertRedirect('/');
     $this->get('/account/profile')->assertRedirect('/');
     $this->patch('/account/profile', ['name' => 'Анна'])->assertRedirect('/');
-    $this->put('/account/notifications', ['new_message' => false])->assertRedirect('/');
+    $this->put('/account/notifications', ['new_message' => false, 'price_drop' => false])->assertRedirect('/');
 });
 
 it('профиль: имя, город с типом населённого пункта, почта входа, Яндекс ID, «с какого месяца» и уведомления', function () {
@@ -44,7 +44,7 @@ it('профиль: имя, город с типом населённого пу
             ->where('profile.city', ['id' => $moscow->id, 'name' => 'Москва', 'type' => 'г.'])
             ->where('profile.yandex_connected', true)
             ->where('profile.since', '2026-03')
-            ->where('notifications', [['key' => 'new_message', 'enabled' => true]]));
+            ->where('notifications', [['key' => 'new_message', 'enabled' => true], ['key' => 'price_drop', 'enabled' => true]]));
 });
 
 it('профиль без города и без Яндекс ID', function () {
@@ -134,25 +134,25 @@ it('сообщения об ошибках — по-русски, из lang/ru',
 it('уведомления: выключение сохраняется и отражается в профиле', function () {
     $user = User::factory()->create();
 
-    $this->actingAs($user)->put('/account/notifications', ['new_message' => false])
+    $this->actingAs($user)->put('/account/notifications', ['new_message' => false, 'price_drop' => false])
         ->assertRedirect()
         ->assertSessionHasNoErrors();
 
     $this->actingAs($user->refresh())->get('/account/profile')->assertInertia(fn (Assert $page) => $page
-        ->where('notifications', [['key' => 'new_message', 'enabled' => false]]));
+        ->where('notifications', [['key' => 'new_message', 'enabled' => false], ['key' => 'price_drop', 'enabled' => false]]));
 
-    $this->actingAs($user->refresh())->put('/account/notifications', ['new_message' => true]);
-    expect($user->refresh()->notification_prefs)->toBe(['new_message' => true]);
+    $this->actingAs($user->refresh())->put('/account/notifications', ['new_message' => true, 'price_drop' => true]);
+    expect($user->refresh()->notification_prefs)->toEqual(['new_message' => true, 'price_drop' => true]);
 });
 
 it('уведомления: значение обязательно и логическое, чужие ключи игнорируются', function () {
     $user = User::factory()->create();
 
-    $this->actingAs($user)->put('/account/notifications', [])->assertSessionHasErrors('new_message');
-    $this->actingAs($user)->put('/account/notifications', ['new_message' => 'может'])->assertSessionHasErrors('new_message');
+    $this->actingAs($user)->put('/account/notifications', [])->assertSessionHasErrors(['new_message', 'price_drop']);
+    $this->actingAs($user)->put('/account/notifications', ['new_message' => 'может', 'price_drop' => true])->assertSessionHasErrors('new_message');
 
-    $this->actingAs($user)->put('/account/notifications', ['new_message' => false, 'is_staff' => true, 'mystery' => false]);
-    expect($user->refresh()->notification_prefs)->toBe(['new_message' => false]);
+    $this->actingAs($user)->put('/account/notifications', ['new_message' => false, 'price_drop' => false, 'is_staff' => true, 'mystery' => false]);
+    expect($user->refresh()->notification_prefs)->toEqual(['new_message' => false, 'price_drop' => false]);
 });
 
 it('изменения — не чаще 30 раз в минуту', function () {

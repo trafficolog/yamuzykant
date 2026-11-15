@@ -17,7 +17,7 @@ type Props = React.ComponentProps<typeof AccountOverview>;
 const view = (props: Partial<Props> = {}) =>
     render(
         <AccountOverview
-            buying={{ unread_chats: 2 }}
+            buying={{ unread_chats: 2, favorites: 4 }}
             selling={{ active_listings: 3, unread_chats: 1 }}
             {...props}
         />,
@@ -55,10 +55,18 @@ describe('Account/Overview', () => {
         expect(within(block).getByText('по вашим объявлениям')).toBeInTheDocument();
     });
 
-    it('избранного и сохранённых поисков пока нет: плиток для них нет', () => {
+    it('блок «Покупаю»: плитка «Избранное» (4.3.1) — число и ссылка на вкладку', () => {
         view();
 
-        expect(screen.queryByText('Избранное')).toBeNull();
+        const block = screen.getByRole('region', { name: 'Покупаю' });
+        const link = within(block).getByRole('link', { name: /Избранное/ });
+        expect(link).toHaveAttribute('href', '/account/favorites');
+        expect(link).toHaveTextContent('4');
+    });
+
+    it('сохранённых поисков пока нет: плитки для них нет', () => {
+        view();
+
         expect(screen.queryByText('Сохранённые поиски')).toBeNull();
     });
 });

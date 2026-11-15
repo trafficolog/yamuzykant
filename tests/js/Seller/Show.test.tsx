@@ -17,6 +17,8 @@ vi.mock('@inertiajs/react', () => ({
     usePage: () => ({ props: {} }),
 }));
 
+vi.mock('@/lib/favoritesApi', () => ({ setFavorite: vi.fn().mockResolvedValue(200) }));
+
 const base: SellerShowProps = {
     seller: {
         id: 7,
@@ -37,6 +39,7 @@ const base: SellerShowProps = {
             negotiable: true,
             posted: '3 дня назад',
             image: null,
+            favorite: false,
         },
         {
             id: 'lot-2',
@@ -48,6 +51,7 @@ const base: SellerShowProps = {
             negotiable: false,
             posted: 'вчера',
             image: null,
+            favorite: true,
         },
     ],
     sold: [],
@@ -143,5 +147,16 @@ describe('Seller/Show', () => {
         render(<SellerShow {...base} />);
 
         expect(screen.queryByText('Пожаловаться')).toBeNull();
+    });
+
+    it('«В избранное» (4.3.1): у каждой карточки «В продаже» сердце по favorite', () => {
+        render(<SellerShow {...base} />);
+
+        // Сердце карточки ДС скрыто CSS (favorites.css), в jsdom стилей нет: берём наши управляемые сердца.
+        const hearts = Array.from(document.querySelectorAll('.ym-fav-card__btn .ym-fav'));
+        expect(hearts.map((heart) => heart.getAttribute('aria-pressed'))).toEqual([
+            'false',
+            'true',
+        ]);
     });
 });

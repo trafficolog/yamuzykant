@@ -1,0 +1,38 @@
+<?php
+
+declare(strict_types=1);
+
+use App\Domain\Accounts\Models\User;
+use App\Domain\Catalog\Models\City;
+use App\Domain\Favorites\Models\Favorite;
+use Database\Seeders\CitySeeder;
+use Inertia\Testing\AssertableInertia as Assert;
+use Tests\Support\ListingFixtures;
+use Tests\Support\MeilisearchIndex;
+
+// 4.3.1: у карточек Барахолки — favorite по избранному зрителя (гость — всегда false). Meilisearch настоящий.
+
+beforeEach(function () {
+    $this->seed(CitySeeder::class);
+    MeilisearchIndex::resetListings();
+});
+
+it('Барахолка: favorite у карточек вошедшего зрителя', function () {
+    $moscow = City::query()->where('name', 'Москва')->firstOrFail();
+    $liked = ListingFixtures::published(['title' => 'В избранном'], $moscow);
+    $viewer = User::factory()->create();
+    Favorite::query()->create(['user_id' => $viewer->id, 'listing_id' => $liked->id, 'price_at_save' => $liked->price]);
+    MeilisearchIndex::waitForTasks();
+
+    // Гость — до actingAs: вошедший пользователь остаётся в тесте для следующих запросов.
+    $this->get('/baraholka')->assertInertia(fn (Assert $page) => $page
+        ->where('listings.0.favorite', false)
+        ->etc());
+    $this->actingAs(User::factory()->create())->get('/baraholka')->assertInertia(fn (Assert $page) => $page
+        ->where('listings.0.favorite', false)
+        ->etc());
+    $this->actingAs($viewer)->get('/baraholka')->assertInertia(fn (Assert $page) => $page
+        ->where('listings.0.id', $liked->id)
+        ->where('listings.0.favorite', true)
+        ->etc());
+});

@@ -7,6 +7,7 @@ namespace App\Domain\Notifications\Mail;
 use App\Domain\Accounts\Models\User;
 use App\Domain\Messaging\Models\Message;
 use App\Domain\Notifications\Enums\NotificationKind;
+use App\Support\Rubles;
 use Illuminate\Mail\Mailable;
 use Illuminate\Mail\Mailables\Content;
 use Illuminate\Mail\Mailables\Envelope;
@@ -38,9 +39,7 @@ final class NewMessageMail extends Mailable
             with: [
                 'senderName' => $this->senderName(),
                 'listingTitle' => $listing->title,
-                'price' => $listing->price === null
-                    ? null
-                    : Lang::get('mail.new_message.price', ['price' => number_format($listing->price, 0, '', "\u{00A0}")]),
+                'price' => $listing->price === null ? null : Rubles::format($listing->price),
                 'chatUrl' => route('messages.show', $conversation),
                 'reason' => Lang::get('mail.reasons.new_message', ['minutes' => Config::integer('notifications.new_message_mail_interval_minutes')]),
                 'unsubscribeUrl' => NotificationKind::NewMessage->unsubscribeUrl($this->recipient),

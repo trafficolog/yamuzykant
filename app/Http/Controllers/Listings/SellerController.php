@@ -40,7 +40,7 @@ final class SellerController extends Controller
                 'sale' => $isSold ? $listings->onSale($seller)->count() : $page->total(),
                 'sold' => $isSold ? $page->total() : $listings->sold($seller)->count(),
             ],
-            'listings' => $isSold ? [] : $items->map(fn (Listing $listing): array => (new ListingCardResource($listing))->resolve($request))->all(),
+            'listings' => $isSold ? [] : ListingCardResource::cards($items, $request),
             'sold' => $isSold ? $items->map(fn (Listing $listing): array => (new SoldListingResource($listing))->resolve($request))->all() : [],
             'pagination' => ['page' => $page->currentPage(), 'pages' => max(1, $page->lastPage())],
         ]);

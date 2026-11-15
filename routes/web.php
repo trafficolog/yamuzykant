@@ -13,6 +13,7 @@ use App\Http\Controllers\CityController;
 use App\Http\Controllers\Dev\MessagingPlaygroundController;
 use App\Http\Controllers\Dev\PhotoUploaderPlaygroundController;
 use App\Http\Controllers\DsShowcaseController;
+use App\Http\Controllers\Favorites\FavoriteController;
 use App\Http\Controllers\FleaController;
 use App\Http\Controllers\HomeController;
 use App\Http\Controllers\Listings\ListingPhotoController;
@@ -91,10 +92,17 @@ Route::get('/sellers/{seller}', SellerController::class)->where('seller', '[1-9]
 // Кабинет (1.1.3, UC-A2): «Обзор» и «Профиль»; правки профиля и писем — не чаще 30 в минуту. Гость — на главную.
 Route::middleware('auth')->prefix('account')->name('account.')->group(function (): void {
     Route::get('/', [AccountController::class, 'overview'])->name('overview');
+    Route::get('favorites', [AccountController::class, 'favorites'])->name('favorites');
     Route::get('listings', [AccountController::class, 'listings'])->name('listings');
     Route::get('profile', [AccountController::class, 'profile'])->name('profile');
     Route::patch('profile', [AccountController::class, 'updateProfile'])->middleware('throttle:30,1')->name('profile.update');
     Route::put('notifications', [AccountController::class, 'updateNotifications'])->middleware('throttle:30,1')->name('notifications.update');
+});
+
+// «В избранное» (4.3.1, UC-S5): JSON для сердца. PUT выставляет состояние (идемпотентно); переключения — не чаще 60 в минуту.
+Route::middleware(['auth', 'throttle:60,1'])->group(function (): void {
+    Route::put('/listings/{listing}/favorite', [FavoriteController::class, 'store'])->whereUuid('listing')->name('favorites.store');
+    Route::delete('/listings/{listing}/favorite', [FavoriteController::class, 'destroy'])->whereUuid('listing')->name('favorites.destroy');
 });
 
 // Форма «Продать инструмент» (2.1.3, 2.1.4): страница с черновиком, публикация, автосохранение черновика (раз в 5 с,

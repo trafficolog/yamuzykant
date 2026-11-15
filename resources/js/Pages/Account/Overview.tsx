@@ -3,11 +3,11 @@ import type { ReactNode } from 'react';
 import { useAuthUser } from '@/Hooks/useAuthUser';
 import AccountLayout from '@/Layouts/AccountLayout';
 import { ru } from '@/lang/ru';
-import { MESSAGES_PATH } from '@/lib/paths';
+import { FAVORITES_PATH, MESSAGES_PATH } from '@/lib/paths';
 
 interface Props {
-    /** «Покупаю»: непрочитанные чаты по чужим объявлениям. */
-    buying: { unread_chats: number };
+    /** «Покупаю»: непрочитанные чаты по чужим объявлениям и число объявлений в избранном. */
+    buying: { unread_chats: number; favorites: number };
     /** «Продаю»: активные объявления и непрочитанные чаты по своим. */
     selling: { active_listings: number; unread_chats: number };
 }
@@ -43,8 +43,8 @@ function Tile({
 }
 
 /**
- * «Обзор» кабинета: блоки «Покупаю» и «Продаю» — тем, что уже есть (сообщения, объявления). Избранное
- * (4.3.1) и сохранённые поиски (4.3.2) добавят свои плитки, когда будут готовы.
+ * «Обзор» кабинета: блоки «Покупаю» и «Продаю» — тем, что уже есть (сообщения, избранное, объявления).
+ * Сохранённые поиски (4.3.2) добавят свою плитку, когда будут готовы.
  */
 export default function AccountOverview({ buying, selling }: Props) {
     const user = useAuthUser();
@@ -63,6 +63,12 @@ export default function AccountOverview({ buying, selling }: Props) {
                         value={buying.unread_chats}
                         hint={t.buyHint}
                         href={MESSAGES_PATH}
+                    />
+                    <Tile
+                        label={t.favorites}
+                        value={buying.favorites}
+                        hint={t.favoritesHint}
+                        href={FAVORITES_PATH}
                     />
                 </div>
             </section>

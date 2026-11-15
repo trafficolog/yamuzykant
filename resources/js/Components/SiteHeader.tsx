@@ -11,7 +11,7 @@ import { useFlag, type FlagName } from '@/Hooks/useFlag';
 import { useNarrow } from '@/Hooks/useNarrow';
 import { CATEGORY_TREE, type CategoryNode } from '@/lang/categories';
 import { ru } from '@/lang/ru';
-import { HREF_SOON, MESSAGES_PATH, SELL_PATH } from '@/lib/paths';
+import { FAVORITES_PATH, HREF_SOON, MESSAGES_PATH, SELL_PATH } from '@/lib/paths';
 
 /** Разделы строки над шапкой; `none` — страница не относится ни к одному разделу. */
 export type HeaderSection = 'catalog' | 'flea' | 'parts' | 'masters' | 'guide';
@@ -164,7 +164,7 @@ export default function SiteHeader({
                         <IconButton
                             icon="heart"
                             label={ru.header.favorites}
-                            href={HREF_SOON}
+                            href={FAVORITES_PATH}
                             showLabel={false}
                         />
                         <IconButton

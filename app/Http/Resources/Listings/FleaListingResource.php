@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Http\Resources\Listings;
 
+use App\Domain\Favorites\Queries\FavoriteListingIds;
 use App\Support\PostedAgo;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
@@ -18,19 +19,23 @@ use Illuminate\Support\Carbon;
 final class FleaListingResource extends JsonResource
 {
     /** @param  array<string, mixed>  $hit */
-    public function __construct(array $hit, private readonly string $city)
+    public function __construct(array $hit, private readonly string $city, private readonly bool $favorite = false)
     {
         parent::__construct($hit);
     }
 
     /**
+     * `favorite` у каждой карточки — по избранному зрителя (4.3.1), одним запросом на страницу.
+     *
      * @param  list<array<string, mixed>>  $hits
      * @return list<array<string, mixed>>
      */
     public static function cards(array $hits, string $city, Request $request): array
     {
+        $favorites = FavoriteListingIds::among($request->user(), array_map(fn (array $hit): string => (string) ($hit['id'] ?? ''), $hits));
+
         return array_map(
-            fn (array $hit): array => (new self($hit, $city))->resolve($request),
+            fn (array $hit): array => (new self($hit, $city, isset($favorites[(string) ($hit['id'] ?? '')])))->resolve($request),
             $hits,
         );
     }
@@ -52,6 +57,7 @@ final class FleaListingResource extends JsonResource
             'ship' => (bool) ($hit['ship'] ?? false),
             'negotiable' => (bool) ($hit['negotiable'] ?? false),
             'posted' => is_numeric($publishedAt) ? PostedAgo::format(Carbon::createFromTimestampUTC((int) $publishedAt)) : null,
+            'favorite' => $this->favorite,
         ];
     }
 }
