@@ -1,5 +1,6 @@
 import AxeBuilder from '@axe-core/playwright';
 import { expect, test, type Page } from '@playwright/test';
+import { hydrated } from './_hydrated';
 
 // UC-S1 «Выбрать город» (SPEC §4, BR-01): город в шапке, смена без перезагрузки страницы,
 // гостевой выбор сохраняется между визитами (cookie).
@@ -9,7 +10,7 @@ test.describe('UC-S1: выбор города гостем', () => {
     test('смена города через поиск в шапке обновляет кнопку без перезагрузки и сохраняется после F5', async ({
         page,
     }) => {
-        await page.goto('/');
+        await hydrated(page, '/');
         const header = page.getByRole('banner');
         await expect(header.getByRole('button', { name: 'Москва' })).toBeVisible();
 

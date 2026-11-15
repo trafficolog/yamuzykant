@@ -118,7 +118,8 @@ final class ListingSearch
         ];
         $sort = $this->sortExpression();
         if ($sort !== null) {
-            $options['sort'] = [$sort];
+            // Второй ключ — id (UUIDv7, растёт со временем): у равных дат (секунды) и цен порядок постоянный (3.1.12).
+            $options['sort'] = [$sort, 'id:desc'];
         }
 
         $result = $this->index->index()->search($this->query, $options);

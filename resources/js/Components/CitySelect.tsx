@@ -28,22 +28,24 @@ export interface CitySelectProps {
  * Окно — не модальное: Esc и клик вне закрывают его, фокус возвращается на кнопку.
  */
 export default function CitySelect({ city }: CitySelectProps) {
-    const [open, setOpen] = useState(false);
-    const [saveFailed, setSaveFailed] = useState(false);
+    const [opened, setOpen] = useState(false);
+    const [notice, setNotice] = useState<string | null>(null);
     const wrapRef = useRef<HTMLDivElement>(null);
 
     const close = useCallback((restoreFocus: boolean) => {
         setOpen(false);
-        setSaveFailed(false);
+        setNotice(null);
         if (restoreFocus) document.getElementById(TOGGLE_ID)?.focus();
     }, []);
 
     // Окно входа (кнопка «Войти», перехват 401/419 при смене города) модальное: окно города под ним закрывается.
+    // Видимость выводится в том же рендере, что и окно входа: два окна не видны даже один кадр (3.1.12).
     const loginRequest = useLoginRequest();
+    const open = opened && loginRequest === null;
     useEffect(() => {
         if (loginRequest !== null) {
             setOpen(false);
-            setSaveFailed(false);
+            setNotice(null);
         }
     }, [loginRequest]);
 
@@ -75,14 +77,21 @@ export default function CitySelect({ city }: CitySelectProps) {
     }, [open, close]);
 
     const choose = (item: CityOption) => {
-        setSaveFailed(false);
+        setNotice(null);
+        // 429 — не Inertia-ответ: без перехвата Inertia показала бы страницу ошибки поверх сайта.
+        const stopLimitWatch = router.on('invalid', (event) => {
+            if (event.detail.response.status !== 429) return;
+            event.preventDefault();
+            setNotice(ru.city.rateLimited);
+        });
         router.post(
             CHANGE_URL,
             { city_id: item.id },
             {
                 preserveScroll: true,
                 onSuccess: () => close(true),
-                onError: () => setSaveFailed(true),
+                onError: () => setNotice(ru.city.saveError),
+                onFinish: stopLimitWatch,
             },
         );
     };
@@ -122,7 +131,7 @@ export default function CitySelect({ city }: CitySelectProps) {
                         searchId={SEARCH_ID}
                         selectedId={city?.id}
                         onChoose={choose}
-                        notice={saveFailed ? ru.city.saveError : null}
+                        notice={notice}
                     />
                 </div>
             ) : null}

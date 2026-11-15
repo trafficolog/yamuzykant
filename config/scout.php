@@ -36,7 +36,7 @@ return [
             'listings' => [
                 'searchableAttributes' => ['title', 'model', 'brand', 'aliases', 'description'],
                 'filterableAttributes' => ['category_path', 'condition', 'price', 'city_id', 'ship', 'negotiable'],
-                'sortableAttributes' => ['published_at', 'price'],
+                'sortableAttributes' => ['published_at', 'price', 'id'],
                 // `words` первым: сортировка по цене и дате действует среди совпавших по всем словам запроса,
                 // а не ставит выше случайное объявление, где совпало одно слово из трёх.
                 'rankingRules' => ['words', 'sort', 'typo', 'proximity', 'attribute', 'exactness'],

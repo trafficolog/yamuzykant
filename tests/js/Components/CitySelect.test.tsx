@@ -1,14 +1,27 @@
 import { act, fireEvent, render, screen, waitFor, within } from '@testing-library/react';
+import { useLayoutEffect } from 'react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 import CitySelect from '@/Components/CitySelect';
-import { closeLogin, openLogin } from '@/Hooks/loginDialog';
+import { closeLogin, openLogin, useLoginRequest } from '@/Hooks/loginDialog';
 import { ru } from '@/lang/ru';
 
-const { post } = vi.hoisted(() => ({ post: vi.fn() }));
+type InvalidEvent = { detail: { response: { status: number } }; preventDefault: () => void };
+const { post, listeners } = vi.hoisted(() => ({
+    post: vi.fn(),
+    listeners: {} as { invalid?: (event: InvalidEvent) => void },
+}));
 
 vi.mock('@inertiajs/react', () => ({
-    router: { post },
+    router: {
+        post,
+        on: (_name: 'invalid', listener: (event: InvalidEvent) => void) => {
+            listeners.invalid = listener;
+            return () => {
+                delete listeners.invalid;
+            };
+        },
+    },
     usePage: () => ({ props: { flags: {} } }),
 }));
 
@@ -177,6 +190,25 @@ describe('CitySelect: выбор города', () => {
         expect(panel()).toBeInTheDocument();
         expect(await screen.findByText(ru.city.saveError)).toBeInTheDocument();
     });
+
+    it('429 при смене — понятное сообщение о лимите вместо окна с ответом сервера (3.1.12)', async () => {
+        const preventDefault = vi.fn();
+        post.mockImplementation(
+            (_url: string, _data: unknown, options: { onFinish: () => void }) => {
+                listeners.invalid?.({ detail: { response: { status: 429 } }, preventDefault });
+                options.onFinish();
+            },
+        );
+        render(<CitySelect city={moscow} />);
+        await open();
+
+        fireEvent.click(within(panelOrFail()).getByRole('button', { name: 'Санкт-Петербург' }));
+
+        expect(preventDefault).toHaveBeenCalled();
+        expect(panel()).toBeInTheDocument();
+        expect(await screen.findByText(ru.city.rateLimited)).toBeInTheDocument();
+        expect(listeners.invalid).toBeUndefined();
+    });
 });
 
 describe('CitySelect: закрытие', () => {
@@ -259,6 +291,31 @@ describe('CitySelect: окно входа', () => {
         fireEvent.click(trigger());
         expect(panelOrFail()).toBeInTheDocument();
         expect(screen.queryByText(ru.city.saveError)).toBeNull();
+    });
+
+    it('панель исчезает в том же кадре, где открылось окно входа: два окна сразу не видны (3.1.12)', async () => {
+        // Проба смотрит в DOM на коммите, где появилось окно входа, — до пассивных эффектов.
+        const seen: boolean[] = [];
+        function Probe() {
+            const request = useLoginRequest();
+            useLayoutEffect(() => {
+                if (request === null) return;
+                seen.push(document.getElementById('site-city-panel') !== null);
+            }, [request]);
+            return null;
+        }
+        render(
+            <>
+                <CitySelect city={moscow} />
+                <Probe />
+            </>,
+        );
+        await open();
+
+        act(() => openLogin({ returnTo: '/' }));
+        act(() => closeLogin());
+
+        expect(seen).toEqual([false]);
     });
 });
 

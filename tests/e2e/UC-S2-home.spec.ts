@@ -1,5 +1,6 @@
 import AxeBuilder from '@axe-core/playwright';
 import { expect, test, type Page } from '@playwright/test';
+import { hydrated } from './_hydrated';
 
 // UC-S2 «Найти объявление запросом или по категории», главная (карточка 3.1.4, BR-01): рельсы свежих
 // объявлений города шапки. Данные — FleaDemoSeeder (tests/e2e/global-setup.ts): 27 объявлений в Москве
@@ -70,7 +71,7 @@ test.describe('UC-S2: главная', () => {
     });
 
     test('смена города в шапке меняет рельсы', async ({ page }) => {
-        await page.goto('/');
+        await hydrated(page, '/');
         await chooseCity(page, 'Казан', 'Казань');
 
         const fresh = page.getByRole('region', { name: 'Новые в г. Казань' });
@@ -81,7 +82,7 @@ test.describe('UC-S2: главная', () => {
     test('город без объявлений: вместо рельсов сообщение и выбор другого города', async ({
         page,
     }) => {
-        await page.goto('/');
+        await hydrated(page, '/');
         await chooseCity(page, 'Самар', 'Самара');
 
         await expect(page.getByText('В г. Самара пока нет объявлений.')).toBeVisible();
