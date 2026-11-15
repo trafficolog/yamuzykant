@@ -164,6 +164,15 @@ describe('SiteHeader: состав шапки', () => {
         expect(screen.getByRole('link', { name: 'Уведомления' })).toBeInTheDocument();
     });
 
+    it('иконка избранного ведёт на вкладку «Избранное» кабинета (4.3.1)', () => {
+        render(<SiteHeader messages={0} />);
+
+        expect(screen.getByRole('link', { name: 'Избранное' })).toHaveAttribute(
+            'href',
+            '/account/favorites',
+        );
+    });
+
     it('иконка сообщений ведёт на экран сообщений (4.1.2)', () => {
         render(<SiteHeader messages={3} />);
 

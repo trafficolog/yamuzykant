@@ -1,23 +1,25 @@
 import { describe, expect, it } from 'vitest';
 
 import { accountNav, memberSince } from '@/lib/account';
-import { ACCOUNT_PATH, MESSAGES_PATH, PROFILE_PATH } from '@/lib/paths';
+import { ACCOUNT_PATH, FAVORITES_PATH, MESSAGES_PATH, PROFILE_PATH } from '@/lib/paths';
 
 // 1.1.3: адреса кабинета, состав вкладок («Покупаю» / «Продаю», DEVIATIONS «account») и подпись продавца.
 
 describe('адреса кабинета', () => {
-    it('обзор и профиль', () => {
+    it('обзор, избранное (4.3.1) и профиль', () => {
         expect(ACCOUNT_PATH).toBe('/account');
+        expect(FAVORITES_PATH).toBe('/account/favorites');
         expect(PROFILE_PATH).toBe('/account/profile');
     });
 });
 
 describe('accountNav', () => {
-    it('пока готовы только обзор, сообщения и профиль: вкладок ещё не сделанных задач нет, групп нет', () => {
+    it('готовы обзор, избранное, сообщения и профиль: вкладок ещё не сделанных задач нет', () => {
         const nav = accountNav();
 
         expect(nav.map((item) => [item.key, item.href, item.group])).toEqual([
             ['overview', ACCOUNT_PATH, null],
+            ['favorites', FAVORITES_PATH, 'buy'],
             ['messages', MESSAGES_PATH, null],
             ['profile', PROFILE_PATH, null],
         ]);

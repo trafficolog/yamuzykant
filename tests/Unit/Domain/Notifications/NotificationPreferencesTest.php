@@ -13,7 +13,7 @@ it('по умолчанию всё включено', function () {
     $user = User::factory()->create(['notification_prefs' => null]);
 
     expect(NotificationPreferences::allows($user, NotificationKind::NewMessage))->toBeTrue()
-        ->and(NotificationPreferences::for($user))->toBe(['new_message' => true]);
+        ->and(NotificationPreferences::for($user))->toBe(['new_message' => true, 'price_drop' => true]);
 });
 
 it('выключенное уведомление не разрешает письмо', function () {
@@ -26,7 +26,7 @@ it('мусор в сохранённых настройках не ломает 
     $user = User::factory()->create(['notification_prefs' => ['new_message' => 'нет', 'old_kind' => false]]);
 
     expect(NotificationPreferences::allows($user, NotificationKind::NewMessage))->toBeTrue()
-        ->and(NotificationPreferences::for($user))->toBe(['new_message' => true]);
+        ->and(NotificationPreferences::for($user))->toBe(['new_message' => true, 'price_drop' => true]);
 });
 
 it('сохраняет только известные виды', function () {
@@ -34,7 +34,7 @@ it('сохраняет только известные виды', function () {
 
     NotificationPreferences::update($user, ['new_message' => false, 'bogus' => true]);
 
-    expect($user->refresh()->notification_prefs)->toBe(['new_message' => false]);
+    expect($user->refresh()->notification_prefs)->toBe(['new_message' => false, 'price_drop' => true]);
 });
 
 it('каждый вид имеет ключ и значение по умолчанию «включено»', function () {

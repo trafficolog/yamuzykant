@@ -33,7 +33,7 @@ it('кнопка подтверждения (POST) выключает письм
         ->assertSee('Вы отписались от писем о новых сообщениях')
         ->assertSee('Настроить уведомления');
 
-    expect($user->refresh()->notification_prefs)->toBe(['new_message' => false]);
+    expect($user->refresh()->notification_prefs)->toBe(['new_message' => false, 'price_drop' => true]);
 });
 
 it('POST «в один клик» почтового клиента (RFC 8058) отписывает сразу и без CSRF-токена', function () {
@@ -41,7 +41,7 @@ it('POST «в один клик» почтового клиента (RFC 8058) �
 
     $this->post(unsubscribeUrl($user), ['List-Unsubscribe' => 'One-Click'])->assertOk();
 
-    expect($user->refresh()->notification_prefs)->toBe(['new_message' => false]);
+    expect($user->refresh()->notification_prefs)->toBe(['new_message' => false, 'price_drop' => true]);
 });
 
 it('без подписи или с чужой подписью — 403, настройки не меняются', function () {

@@ -32,6 +32,7 @@ const card = (
     ship: false,
     negotiable: true,
     posted: '2 ч назад',
+    favorite: false,
     ...extra,
 });
 

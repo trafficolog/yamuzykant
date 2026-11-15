@@ -72,7 +72,10 @@ describe('шапка: вошедший', () => {
         const menu = screen.getByRole('group', { name: 'Кабинет' });
         expect(within(menu).getByText('Покупаю')).toBeInTheDocument();
         expect(within(menu).getByText('Продаю')).toBeInTheDocument();
-        expect(within(menu).getByRole('link', { name: 'Избранное' })).toBeInTheDocument();
+        expect(within(menu).getByRole('link', { name: 'Избранное' })).toHaveAttribute(
+            'href',
+            '/account/favorites',
+        );
         expect(within(menu).getByRole('link', { name: 'Объявления' })).toBeInTheDocument();
         expect(within(menu).getByRole('link', { name: 'Сообщения' })).toHaveAttribute(
             'href',

@@ -20,6 +20,8 @@ vi.mock('@inertiajs/react', () => ({
 const openLogin = vi.fn();
 vi.mock('@/Hooks/loginDialog', () => ({ openLogin: (input: unknown) => openLogin(input) }));
 
+vi.mock('@/lib/favoritesApi', () => ({ setFavorite: vi.fn().mockResolvedValue(200) }));
+
 const postJson = vi.fn();
 vi.mock('@/lib/postJson', () => ({
     postJson: (url: string, data: Record<string, unknown>) => postJson(url, data),
@@ -59,7 +61,7 @@ const base: LotShowProps = {
         { id: 3, is_serial: true, urls: urls(3) },
     ],
     seller: { id: 7, name: 'Гитарный угол', city: 'Москва', since: '2025-03' },
-    viewer: { authenticated: false, is_owner: false },
+    viewer: { authenticated: false, is_owner: false, favorite: false },
     similar: [
         {
             id: 's1',
@@ -71,6 +73,7 @@ const base: LotShowProps = {
             negotiable: false,
             posted: 'вчера',
             image: null,
+            favorite: false,
         },
         {
             id: 's2',
@@ -82,6 +85,7 @@ const base: LotShowProps = {
             negotiable: false,
             posted: '2 дня назад',
             image: null,
+            favorite: true,
         },
     ],
 };
@@ -151,7 +155,7 @@ describe('Lot/Show: кнопки действий', () => {
 
     it('вошедший: появляется поле сообщения, отправка — POST по объявлению', async () => {
         postJson.mockResolvedValue({ status: 201, body: { conversation: { id: 7 } } });
-        render(<LotShow {...base} viewer={{ authenticated: true, is_owner: false }} />);
+        render(<LotShow {...base} viewer={{ authenticated: true, is_owner: false, favorite: false }} />);
 
         fireEvent.click(screen.getByRole('button', { name: 'Написать продавцу' }));
         expect(openLogin).not.toHaveBeenCalled();
@@ -169,7 +173,7 @@ describe('Lot/Show: кнопки действий', () => {
     });
 
     it('пустое сообщение не отправляется', () => {
-        render(<LotShow {...base} viewer={{ authenticated: true, is_owner: false }} />);
+        render(<LotShow {...base} viewer={{ authenticated: true, is_owner: false, favorite: false }} />);
 
         fireEvent.click(screen.getByRole('button', { name: 'Написать продавцу' }));
 
@@ -178,7 +182,7 @@ describe('Lot/Show: кнопки действий', () => {
 
     it('ошибка сервера показывается и не теряет текст', async () => {
         postJson.mockResolvedValue({ status: 429, body: {} });
-        render(<LotShow {...base} viewer={{ authenticated: true, is_owner: false }} />);
+        render(<LotShow {...base} viewer={{ authenticated: true, is_owner: false, favorite: false }} />);
 
         fireEvent.click(screen.getByRole('button', { name: 'Написать продавцу' }));
         fireEvent.change(screen.getByRole('textbox', { name: /Сообщение/ }), {
@@ -191,7 +195,7 @@ describe('Lot/Show: кнопки действий', () => {
     });
 
     it('своё объявление: вместо «Написать» — пометка владельца', () => {
-        render(<LotShow {...base} viewer={{ authenticated: true, is_owner: true }} />);
+        render(<LotShow {...base} viewer={{ authenticated: true, is_owner: true, favorite: false }} />);
 
         expect(screen.queryByRole('button', { name: 'Написать продавцу' })).toBeNull();
         expect(screen.getByText('Это ваше объявление')).toBeInTheDocument();
@@ -213,7 +217,7 @@ describe('Lot/Show: плашки статуса (видны только вла�
         [{ status: 'expired' as const, sold: false }, 'Срок публикации истёк'],
     ])('%j — «%s», кнопки «Написать» нет', (patch, label) => {
         render(
-            <LotShow {...withListing(patch)} viewer={{ authenticated: true, is_owner: true }} />,
+            <LotShow {...withListing(patch)} viewer={{ authenticated: true, is_owner: true, favorite: false }} />,
         );
 
         expect(screen.getByTestId('lot-status')).toHaveTextContent(label);
@@ -224,7 +228,7 @@ describe('Lot/Show: плашки статуса (видны только вла�
         render(
             <LotShow
                 {...withListing({ status: 'pending' })}
-                viewer={{ authenticated: true, is_owner: false }}
+                viewer={{ authenticated: true, is_owner: false, favorite: false }}
             />,
         );
 
@@ -395,5 +399,49 @@ describe('Lot/Show: SSR', () => {
         expect(html).toContain('Stratocaster 2009');
         expect(html).toMatch(/184\s500\s₽/);
         expect(html).toContain('V09****');
+    });
+});
+
+describe('Lot/Show: «В избранное» (4.3.1)', () => {
+    const hearts = () =>
+        screen.getAllByRole('button', { name: /В избранное|Убрать из избранного/ });
+    const head = () => document.querySelector('.ym-lot__head') as HTMLElement;
+
+    it('сердце рядом с заголовком: состояние из viewer.favorite', () => {
+        const { unmount } = render(<LotShow {...base} />);
+        expect(within(head()).getByRole('button', { name: 'В избранное' })).toHaveAttribute(
+            'aria-pressed',
+            'false',
+        );
+        unmount();
+
+        render(
+            <LotShow {...base} viewer={{ authenticated: true, is_owner: false, favorite: true }} />,
+        );
+        expect(
+            within(head()).getByRole('button', { name: 'Убрать из избранного' }),
+        ).toHaveAttribute('aria-pressed', 'true');
+    });
+
+    it('не опубликованное в избранное не добавить: сердца у лота нет', () => {
+        render(
+            <LotShow
+                {...withListing({ status: 'withdrawn' })}
+                viewer={{ authenticated: true, is_owner: true, favorite: false }}
+            />,
+        );
+
+        expect(within(head()).queryByRole('button', { name: /избранн/i })).toBeNull();
+    });
+
+    it('у карточек «Похожие» своё сердце по favorite', () => {
+        render(<LotShow {...base} />);
+
+        // Лот и две карточки; у второй карточки объявление уже в избранном.
+        expect(hearts().map((heart) => heart.getAttribute('aria-pressed'))).toEqual([
+            'false',
+            'false',
+            'true',
+        ]);
     });
 });
