@@ -1,6 +1,7 @@
 import AxeBuilder from '@axe-core/playwright';
 import { expect, test, type Page } from '@playwright/test';
-import { FAKE_CODE, freshEmail, open, requestCode, signInByEmail } from './_auth';
+import { FAKE_CODE, freshEmail, requestCode, signInByEmail } from './_auth';
+import { hydrated } from './_hydrated';
 
 // UC-S5 «Добавить в избранное» (4.3.1). Данные — LotDemoSeeder (global-setup.lot.ts): лот из прототипа.
 // Гость → окно входа → после входа объявление в избранном (1.1.2); вкладка «Избранное» кабинета; откат при ошибке.
@@ -17,7 +18,7 @@ test.describe('UC-S5: избранное', () => {
     test('гость: сердце открывает вход, после входа лот в избранном и виден во вкладке кабинета', async ({
         page,
     }) => {
-        await open(page, `/listings/${LOT}`);
+        await hydrated(page, `/listings/${LOT}`);
 
         await heart(page, false).click();
         await expect(page.getByRole('dialog', { name: 'Вход', exact: true })).toBeVisible();
@@ -33,7 +34,7 @@ test.describe('UC-S5: избранное', () => {
 
         await expect(heart(page, true)).toBeVisible();
 
-        await open(page, '/account/favorites');
+        await hydrated(page, '/account/favorites');
         const list = page.getByRole('list', { name: 'Избранное' });
         await expect(list.getByRole('link', { name: LOT_TITLE })).toBeVisible();
         await expect(page.getByRole('navigation', { name: 'Разделы кабинета' })).toContainText(
@@ -44,9 +45,9 @@ test.describe('UC-S5: избранное', () => {
     test('вошедший: сердце меняется сразу; при ошибке сервера возвращается назад', async ({
         page,
     }) => {
-        await open(page, '/');
+        await hydrated(page, '/');
         await signInByEmail(page);
-        await open(page, `/listings/${LOT}`);
+        await hydrated(page, `/listings/${LOT}`);
 
         await page.route('**/favorite', (route) => route.fulfill({ status: 500, body: '{}' }));
         await heart(page, false).click();
@@ -67,9 +68,9 @@ test.describe('UC-S5: избранное', () => {
     });
 
     test('пустая вкладка «Избранное» и axe без serious и critical', async ({ page }) => {
-        await open(page, '/');
+        await hydrated(page, '/');
         await signInByEmail(page);
-        await open(page, '/account/favorites');
+        await hydrated(page, '/account/favorites');
 
         await expect(page.getByText(/пока ничего нет/i)).toBeVisible();
         const results = await new AxeBuilder({ page }).analyze();
