@@ -166,3 +166,60 @@ test.describe('UC-S3: фильтры и сортировка', () => {
         await expect.poll(() => page.evaluate(() => window.scrollY)).toBeGreaterThan(y - 200);
     });
 });
+
+// Карточка 3.1.3: пусто, загрузка, ошибка поиска.
+test.describe('UC-S3: пусто, загрузка, ошибка', () => {
+    test('пусто: кнопка снимает самый узкий фильтр и выдача возвращается', async ({ page }) => {
+        await page.goto('/baraholka?price_from=99999999');
+        await expect(page.getByText('По этим фильтрам лотов нет')).toBeVisible();
+
+        await page.getByRole('button', { name: /^Снять фильтр/ }).click();
+
+        await expect(page).not.toHaveURL(/price_from/);
+        await expect(page.getByRole('article').first()).toBeVisible();
+    });
+
+    test('загрузка: пока идёт запрос, на месте карточек скелетоны', async ({ page }) => {
+        await page.goto('/baraholka');
+        await expect(page.getByRole('article')).toHaveCount(24);
+
+        // Задерживаем ответ на смену фильтра, чтобы поймать состояние загрузки.
+        await page.route(/\/baraholka\?.*ship=1/, async (route) => {
+            await new Promise((resolve) => setTimeout(resolve, 1000));
+            await route.continue();
+        });
+        await aside(page).getByRole('button', { name: 'Доставка' }).click();
+
+        await expect(page.locator('.ym-flea__skeleton').first()).toBeVisible();
+        await expect(page.locator('.ym-flea__skeleton')).toHaveCount(0);
+        await expect(page.getByRole('article').first()).toBeVisible();
+    });
+
+    test('ошибка поиска: Alert с повтором, «Повторить» возвращает выдачу', async ({ page }) => {
+        // Первый ответ подменяем: как будто поиск не ответил (searchError с пустой выдачей).
+        let failed = false;
+        await page.route(/\/baraholka(\?|$)/, async (route) => {
+            if (failed || route.request().resourceType() !== 'document') {
+                await route.continue();
+                return;
+            }
+            failed = true;
+            const response = await route.fetch();
+            const body = (await response.text()).replace(
+                '&quot;searchError&quot;:false',
+                '&quot;searchError&quot;:true',
+            );
+            expect(body).toContain('&quot;searchError&quot;:true');
+            await route.fulfill({ response, body });
+        });
+
+        await page.goto('/baraholka');
+        await expect(page.getByRole('alert')).toContainText('Не удалось загрузить объявления');
+        await expect(page.getByRole('article')).toHaveCount(0);
+
+        await page.getByRole('button', { name: 'Повторить' }).click();
+
+        await expect(page.getByRole('alert')).toHaveCount(0);
+        await expect(page.getByRole('article')).toHaveCount(24);
+    });
+});
