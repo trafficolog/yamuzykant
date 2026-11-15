@@ -3,7 +3,7 @@ id: "3.1.6"
 phase: "3"
 epic: "3.1"
 title: "Страница продавца"
-status: review
+status: done
 gate: G1
 risk: low
 model_impl: haiku
@@ -14,7 +14,7 @@ uc: ["V2"]
 prototype: "Десктоп - Продавец.dc.html"
 screens: ["seller"]
 issue: 31
-sync_state: drifted
+sync_state: aligned
 escalations: []
 ---
 

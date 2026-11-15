@@ -3,7 +3,7 @@ id: "4.4.1"
 phase: "4"
 epic: "4.4"
 title: "Письма: шаблон, код входа, новое сообщение"
-status: todo
+status: done
 gate: G1
 risk: low
 model_impl: haiku
@@ -14,7 +14,7 @@ uc: ["N1"]
 prototype: "Письма и уведомления.dc.html"
 screens: ["emails"]
 issue: 40
-sync_state: drifted
+sync_state: aligned
 escalations: []
 ---
 

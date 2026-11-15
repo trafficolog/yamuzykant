@@ -1,0 +1,141 @@
+/*
+ * Страница продавца (задача 3.1.6). Подключается из resources/js/app.tsx после lot.css (сетка карточек — `ym-lot__grid`).
+ * Только токены var(--*) и классы ym-*. Раскладка — по прототипу design/prototypes/Десктоп - Продавец.dc.html:
+ * шапка (аватар 96 px, имя, факты), вкладки с подчёркиванием активной, сетка карточек; < 640 px — по чек-листу
+ * SCREENS §3: аватар меньше, вкладки и факты переносятся.
+ */
+
+.ym-seller-page {
+    max-width: var(--content-max);
+    margin: 0 auto;
+    padding: var(--space-6) var(--space-10) var(--space-16);
+    box-sizing: border-box;
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-8);
+}
+.ym-seller-page .ym-crumbs {
+    margin-bottom: 0;
+}
+
+/* Шапка */
+.ym-seller-page__head {
+    display: flex;
+    gap: var(--space-6);
+    align-items: flex-start;
+    padding-bottom: var(--space-8);
+    border-bottom: 1px solid var(--line);
+    min-width: 0;
+}
+.ym-seller-page__avatar {
+    flex: none;
+    width: 96px;
+    height: 96px;
+    border-radius: var(--radius-full);
+    background: var(--parts-soft);
+    color: var(--parts);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font: 600 var(--text-2xl) / 1 var(--font-text);
+}
+.ym-seller-page__who {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-3);
+    min-width: 0;
+}
+.ym-seller-page__name {
+    margin: 0;
+    overflow-wrap: anywhere;
+}
+.ym-seller-page__facts {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: var(--space-2) var(--space-5);
+}
+.ym-seller-page__fact {
+    display: flex;
+    align-items: center;
+    gap: var(--space-1);
+    color: var(--ink-muted);
+    white-space: nowrap;
+}
+
+/* Вкладки: ссылки, активная подчёркнута */
+.ym-seller-page__tabs {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--space-6);
+    border-bottom: 1px solid var(--line);
+    margin-top: calc(-1 * var(--space-4));
+}
+.ym-seller-page__tab {
+    display: flex;
+    gap: var(--space-2);
+    min-height: 48px;
+    margin-bottom: -1px;
+    border-bottom: 2px solid transparent;
+    color: var(--ink-muted);
+    font: 600 var(--text-m) / 1.43 var(--font-text);
+    text-decoration: none;
+    align-items: center;
+}
+.ym-seller-page__tab:hover {
+    color: var(--ink);
+}
+.ym-seller-page__tab[aria-current='page'] {
+    color: var(--ink);
+    border-bottom-color: var(--accent);
+}
+.ym-seller-page__tab:focus-visible {
+    outline: 2px solid var(--focus-ring);
+    outline-offset: 2px;
+}
+.ym-seller-page__count {
+    color: var(--ink-muted);
+    font-weight: 400;
+}
+
+/* Списки */
+.ym-seller-page__list,
+.ym-seller-page__sold {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+}
+.ym-seller-page__sold {
+    display: flex;
+    flex-direction: column;
+    border-top: 1px solid var(--line);
+}
+.ym-seller-page__sold-item {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-1);
+    padding: var(--space-4) 0;
+    border-bottom: 1px solid var(--line);
+}
+.ym-seller-page__sold-meta {
+    color: var(--ink-muted);
+}
+
+@media (max-width: 639px) {
+    .ym-seller-page {
+        padding: var(--space-4) var(--space-4) var(--space-10);
+        gap: var(--space-6);
+    }
+    .ym-seller-page__head {
+        gap: var(--space-4);
+        padding-bottom: var(--space-6);
+    }
+    .ym-seller-page__avatar {
+        width: 64px;
+        height: 64px;
+        font-size: var(--text-xl);
+    }
+    .ym-seller-page__fact {
+        white-space: normal;
+    }
+}

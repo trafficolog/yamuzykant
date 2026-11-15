@@ -92,7 +92,7 @@ describe('Messages/Index', () => {
         expect(current).toHaveAttribute('aria-current', 'true');
     });
 
-    it('клик по строке открывает беседу частичным переходом: список не перезагружается', () => {
+    it('клик по строке открывает беседу частичным переходом: состояние списка сохраняется, данные списка свежие', () => {
         view();
 
         fireEvent.click(
@@ -104,7 +104,7 @@ describe('Messages/Index', () => {
         expect(visit).toHaveBeenCalledWith(
             '/messages/c2',
             expect.objectContaining({
-                only: ['active', 'compose'],
+                only: ['active', 'compose', 'conversations', 'messages'],
                 preserveState: true,
                 preserveScroll: true,
             }),
@@ -120,8 +120,42 @@ describe('Messages/Index', () => {
 
         expect(visit).toHaveBeenCalledWith(
             '/messages',
-            expect.objectContaining({ only: ['active', 'compose'], preserveState: true }),
+            expect.objectContaining({
+                only: ['active', 'compose', 'conversations', 'messages'],
+                preserveState: true,
+            }),
         );
+    });
+
+    // 3.1.11: обновление списка во время перехода панели шло с прежнего адреса — Inertia отбрасывает такой ответ,
+    // и превью в списке оставалось старым (UC-D1 на main). Обновление ждёт конца перехода и уходит после него.
+    it('событие счётчика во время перехода панели: список обновляется после перехода, а не с прежнего адреса', () => {
+        view({
+            active: { conversation: conversation({ id: 'c1' }), messages: [], has_more: false },
+        });
+
+        fireEvent.click(screen.getByRole('button', { name: 'Закрыть чат' }));
+        const options = visit.mock.calls.at(-1)?.[1] as { onFinish: () => void };
+
+        act(() => fake.emit('.unread.changed', { unread: 4 }));
+        expect(reload).not.toHaveBeenCalled();
+
+        act(() => options.onFinish());
+        expect(reload).toHaveBeenCalledTimes(1);
+        expect(reload).toHaveBeenCalledWith(
+            expect.objectContaining({ only: ['conversations', 'messages'] }),
+        );
+    });
+
+    it('переход панели без событий: лишнего обновления списка после него нет', () => {
+        view({
+            active: { conversation: conversation({ id: 'c1' }), messages: [], has_more: false },
+        });
+
+        fireEvent.click(screen.getByRole('button', { name: 'Закрыть чат' }));
+        act(() => (visit.mock.calls.at(-1)?.[1] as { onFinish: () => void }).onFinish());
+
+        expect(reload).not.toHaveBeenCalled();
     });
 
     it('после «Закрыть чат» фокус возвращается на строку закрытой беседы', () => {

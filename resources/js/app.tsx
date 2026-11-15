@@ -14,6 +14,7 @@ import '../css/flea.css';
 import '../css/messages.css';
 import '../css/lot.css';
 import '../css/account.css';
+import '../css/seller.css';
 
 // Ошибки браузера в Sentry: без VITE_SENTRY_DSN выключено (CI, локальная разработка).
 initSentry({

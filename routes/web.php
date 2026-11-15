@@ -20,8 +20,10 @@ use App\Http\Controllers\Listings\LocalPhotoUploadController;
 use App\Http\Controllers\Listings\LotController;
 use App\Http\Controllers\Listings\PhotoMediaController;
 use App\Http\Controllers\Listings\SellController;
+use App\Http\Controllers\Listings\SellerController;
 use App\Http\Controllers\Messaging\ConversationController;
 use App\Http\Controllers\Messaging\MessagesPageController;
+use App\Http\Controllers\Notifications\UnsubscribeController;
 use App\Http\Middleware\EnsureE2eEnvironment;
 use App\Http\Middleware\ThrottleMessages;
 use Illuminate\Foundation\Http\Middleware\ValidateCsrfToken;
@@ -69,8 +71,19 @@ Route::prefix('auth')->name('auth.')->group(function (): void {
     });
 });
 
+// Отписка из письма (4.4.1): подписанная ссылка, без входа. GET — страница подтверждения (состояние не меняет:
+// почтовые сканеры открывают ссылки), POST — отписка; тот же POST шлёт «в один клик» почтовый клиент (RFC 8058).
+Route::middleware(['signed', 'throttle:30,1'])->group(function (): void {
+    Route::get('/notifications/unsubscribe/{user}/{kind}', [UnsubscribeController::class, 'confirm'])->name('notifications.unsubscribe');
+    Route::post('/notifications/unsubscribe/{user}/{kind}', [UnsubscribeController::class, 'unsubscribe'])
+        ->withoutMiddleware(ValidateCsrfToken::class);
+});
+
 // Страница объявления (3.1.5, UC-V1): открыта всем; не опубликованное — только владельцу и сотрудникам, остальным 404.
 Route::get('/listings/{listing}', LotController::class)->whereUuid('listing')->name('lot.show');
+
+// Страница продавца (3.1.6, UC-V2): открыта всем; заблокированный продавец — 404.
+Route::get('/sellers/{seller}', SellerController::class)->where('seller', '[1-9][0-9]{0,17}')->name('seller.show');
 
 // Кабинет (1.1.3, UC-A2): «Обзор» и «Профиль»; правки профиля и писем — не чаще 30 в минуту. Гость — на главную.
 Route::middleware('auth')->prefix('account')->name('account.')->group(function (): void {
