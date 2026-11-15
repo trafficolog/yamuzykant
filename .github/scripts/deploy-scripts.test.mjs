@@ -34,7 +34,7 @@ const listFiles = (dir) =>
     readdirSync(dir, { withFileTypes: true }).flatMap((e) =>
         e.isDirectory() ? listFiles(join(dir, e.name)) : [join(dir, e.name)],
     );
-const SCRIPTS = ['deploy.sh', 'provision.sh', 'lib.sh', 'bin/worker.sh'];
+const SCRIPTS = ['deploy.sh', 'provision.sh', 'lib.sh', 'bin/worker.sh', 'bin/smoke-reverb.sh'];
 
 // Секреты-метки: ни одна не должна появиться в выводе скриптов.
 const SECRETS = {
@@ -90,7 +90,7 @@ test('скрипты deploy/ — LF, shebang bash, set -euo pipefail', () => {
 test('у исполняемых скриптов в git стоит бит +x', () => {
     const r = spawnSync('git', ['ls-files', '-s', 'deploy'], { cwd: ROOT, encoding: 'utf8' });
     assert.equal(r.status, 0, r.stderr);
-    for (const name of ['deploy.sh', 'provision.sh', 'bin/worker.sh']) {
+    for (const name of ['deploy.sh', 'provision.sh', 'bin/worker.sh', 'bin/smoke-reverb.sh']) {
         const line = r.stdout.split('\n').find((l) => l.endsWith(`\tdeploy/${name}`));
         assert.ok(line, `deploy/${name} не в git`);
         assert.match(
@@ -425,6 +425,14 @@ exit 0`,
         'curl',
         `[[ "$*" == *"/health"* && "$*" == *"--resolve"* && \${STUB_FAIL:-} == *health* ]] && exit 22
 [[ "$*" == *"13714/health"* && \${STUB_FAIL:-} == *ssr* ]] && exit 7
+[[ "$*" == *"127.0.0.1:8080/up"* && \${STUB_FAIL:-} == *reverb* ]] && exit 7
+if [[ "$*" == *"127.0.0.1:8080/up"* && -n \${STUB_REVERB_FAIL_FIRST:-} ]]; then
+  n=$(grep -c '127.0.0.1:8080/up' "$STUB_LOG"); ((n <= STUB_REVERB_FAIL_FIRST)) && exit 7
+fi
+if [[ "$*" == *"/app/"* ]]; then
+  printf 'HTTP/1.1 %s\\r\\n\\r\\n%s\\n' "\${STUB_WS_STATUS:-101 Switching Protocols}" "\${STUB_WS_BODY-pusher:connection_established}"
+  exit 28
+fi
 exit 0`,
     );
     stub(
@@ -1075,4 +1083,171 @@ test('deploy.sh: комментарий, почему .env пишется до �
         /# .*shared\/\.env[\s\S]{0,400}config:cache/,
         'обоснование рядом с записью .env',
     );
+});
+
+// ---------- Reverb на stage и production (задача 0.1.16) ----------
+
+// deploy.sh можно подключить через source: main запускается, только когда файл выполняют напрямую.
+const renderEnv = (env, overrides = {}) => {
+    const vars = Object.fromEntries(
+        Object.entries({ APP_URL: 'https://stage.example.test', ...SECRETS, ...overrides }).filter(
+            ([, v]) => v !== null,
+        ),
+    );
+    return bash(['-c', 'source deploy/deploy.sh; render_env "$1"', '_', env], { env: vars });
+};
+const envValue = (dotenv, key) => dotenv.match(new RegExp(`^${key}=['"](.*)['"]$`, 'm'))?.[1];
+
+test('.env с секретами Reverb: вещание reverb, браузер на wss://домен:443, origin — домен', bashOnly, () => {
+    const r = renderEnv('stage');
+    assert.equal(r.status, 0, r.out);
+    const env = r.stdout;
+    assert.equal(envValue(env, 'BROADCAST_CONNECTION'), 'reverb');
+    assert.equal(envValue(env, 'REVERB_HOST'), '127.0.0.1', 'приложение шлёт события локально');
+    assert.equal(envValue(env, 'REVERB_PORT'), '8080');
+    assert.equal(envValue(env, 'REVERB_SCHEME'), 'http');
+    assert.equal(envValue(env, 'REVERB_SERVER_HOST'), '127.0.0.1');
+    assert.equal(envValue(env, 'REVERB_SERVER_PORT'), '8080');
+    assert.equal(envValue(env, 'REVERB_PUBLIC_HOST'), 'stage.example.test');
+    assert.equal(envValue(env, 'REVERB_PUBLIC_PORT'), '443');
+    assert.equal(envValue(env, 'REVERB_PUBLIC_SCHEME'), 'https');
+    assert.equal(envValue(env, 'REVERB_ALLOWED_ORIGINS'), 'stage.example.test');
+    assert.equal(envValue(env, 'REVERB_APP_KEY'), SECRETS.REVERB_APP_KEY);
+    assert.doesNotMatch(env, /^VITE_REVERB/m, 'фронт читает shared prop realtime, а не VITE_*');
+});
+
+test('.env без секрета Reverb: вещание null (не log: текст сообщений не в журнал), REVERB_* нет', bashOnly, () => {
+    const r = renderEnv('production', { REVERB_APP_SECRET: null });
+    assert.equal(r.status, 0, r.out);
+    assert.equal(envValue(r.stdout, 'BROADCAST_CONNECTION'), 'null');
+    assert.doesNotMatch(r.stdout, /^REVERB_/m);
+});
+
+test('.env: секрет Reverb есть, а ключа нет — отказ без печати значений', bashOnly, () => {
+    const r = renderEnv('stage', { REVERB_APP_KEY: null });
+    assert.equal(r.status, 1);
+    assert.match(r.out, /REVERB_APP_KEY/);
+    // stdout — недописанный .env (в песочнице теста), в сообщении об ошибке секретов нет.
+    assertNoSecrets(r.out.replace(r.stdout, ''));
+});
+
+test('Nginx: /app/ — wss через Upgrade, длинные таймауты, без буферизации, только на 127.0.0.1:8080', () => {
+    const conf = read(DEPLOY, 'nginx', 'ymuzykant.conf');
+    const app = nginxLocation(conf, '/app/');
+    assert.match(app, /proxy_http_version 1\.1;/);
+    assert.match(app, /proxy_set_header Upgrade \$http_upgrade;/);
+    assert.match(app, /proxy_set_header Connection \$connection_upgrade;/);
+    assert.match(app, /proxy_set_header Host \$host;/);
+    assert.match(app, /proxy_set_header X-Forwarded-Proto \$scheme;/);
+    assert.match(app, /proxy_buffering off;/);
+    // Reverb шлёт ping раз в 60 с (REVERB_APP_PING_INTERVAL): таймауты строго больше.
+    for (const d of ['proxy_read_timeout', 'proxy_send_timeout']) {
+        const sec = Number(app.match(new RegExp(`${d} (\\d+)s;`))?.[1]);
+        assert.ok(sec >= 120, `${d} ≥ 120 с`);
+    }
+    assert.match(app, /proxy_pass http:\/\/127\.0\.0\.1:8080;/);
+    assert.doesNotMatch(conf, /location \/apps\//, 'HTTP API Reverb наружу не отдаём');
+    assert.match(conf, /map \$http_upgrade \$connection_upgrade/);
+});
+
+test('worker.sh reverb: поднимает лимит открытых файлов до запуска reverb:start', () => {
+    const worker = read(DEPLOY, 'bin', 'worker.sh');
+    const block = worker.split('\nreverb)')[1]?.split(';;')[0] ?? '';
+    assert.match(block, /ulimit -n /);
+    assert.ok(block.indexOf('ulimit -n') < block.indexOf('reverb:start'), 'ulimit раньше запуска');
+});
+
+const withEnvFile = (root, text) => writeFileSync(join(root, 'shared', '.env'), text);
+const ENV_REVERB = "APP_URL='https://stage.example.test'\nBROADCAST_CONNECTION='reverb'\n";
+
+test('server-release: вещание reverb — проверяется, что Reverb слушает 127.0.0.1:8080', bashOnly, () => {
+    const root = sandbox();
+    withEnvFile(root, ENV_REVERB);
+    const bin = stubBin();
+    const r = serverRelease(root, bin);
+    assert.equal(r.status, 0, r.out);
+    assert.match(calls(bin), /curl -sS --max-time 5 -o \/dev\/null http:\/\/127\.0\.0\.1:8080\/up/);
+});
+
+test('server-release: вещание reverb, а Reverb не отвечает — автооткат', bashOnly, () => {
+    const root = sandbox();
+    withEnvFile(root, ENV_REVERB);
+    const bin = stubBin();
+    const r = serverRelease(root, bin, { STUB_FAIL: 'reverb' });
+    assert.notEqual(r.status, 0, r.out);
+    assert.match(r.out, /Reverb не отвечает/);
+    assert.equal(current(root), RELEASES.at(-1), 'откат на прежний релиз');
+});
+
+test('server-release: Reverb стартует медленно (ответил со второй попытки) — отката нет', bashOnly, () => {
+    const root = sandbox();
+    withEnvFile(root, ENV_REVERB);
+    const bin = stubBin();
+    const r = serverRelease(root, bin, { STUB_REVERB_FAIL_FIRST: '1' });
+    assert.equal(r.status, 0, r.out);
+    assert.equal(current(root), NEW, 'релиз остался');
+    assert.equal(calls(bin).match(/127\.0\.0\.1:8080\/up/g).length, 2);
+});
+
+test('server-release: вещание не reverb — Reverb не проверяется и не блокирует выкатку', bashOnly, () => {
+    const root = sandbox();
+    withEnvFile(root, "APP_URL='https://stage.example.test'\nBROADCAST_CONNECTION='null'\n");
+    const bin = stubBin();
+    const r = serverRelease(root, bin, { STUB_FAIL: 'reverb' });
+    assert.equal(r.status, 0, r.out);
+    assert.doesNotMatch(calls(bin), /127\.0\.0\.1:8080/);
+});
+
+const smoke = (args, bin, extra = {}) =>
+    bash(['deploy/bin/smoke-reverb.sh', ...args], {
+        env: { PATH: `${bin}:${process.env.PATH}`, STUB_LOG: join(bin, 'calls.log'), ...extra },
+    });
+
+test('smoke-reverb.sh: рукопожатие wss даёт 101 и pusher:connection_established — успех', bashOnly, () => {
+    const bin = stubBin();
+    const r = smoke(['stage.example.test', 'reverb-public-key'], bin);
+    assert.equal(r.status, 0, r.out);
+    const log = calls(bin);
+    assert.match(log, /https:\/\/stage\.example\.test\/app\/reverb-public-key\?protocol=7/);
+    assert.match(log, /Upgrade: websocket/);
+    assert.match(log, /Origin: https:\/\/stage\.example\.test/);
+});
+
+test('smoke-reverb.sh: не 101 или нет connection_established — отказ; без аргументов — 2', bashOnly, () => {
+    const bin = stubBin();
+    assert.equal(
+        smoke(['stage.example.test', 'k'], bin, { STUB_WS_STATUS: '502 Bad Gateway' }).status,
+        1,
+    );
+    assert.equal(smoke(['stage.example.test', 'k'], bin, { STUB_WS_BODY: '{}' }).status, 1);
+    assert.equal(smoke([], bin).status, 2);
+    assert.equal(smoke(['bad host;', 'k'], bin).status, 2, 'домен проверяется');
+});
+
+test('smoke-reverb.sh: пароль stage — через stdin curl, не в аргументах', bashOnly, () => {
+    const bin = stubBin();
+    const r = smoke(['stage.example.test', 'k'], bin, {
+        SMOKE_BASIC_AUTH: 'stage:SECRET-basic-0007',
+    });
+    assert.equal(r.status, 0, r.out);
+    assert.ok(!calls(bin).includes('SECRET-basic-0007'), 'пароль в argv');
+    assertNoSecrets(r.out);
+});
+
+test('документы: переменные Reverb, чек-лист G1 и дымовой скрипт описаны', () => {
+    const arch = read(ROOT, 'docs', '01-architecture', 'ARCHITECTURE.md');
+    const cicd = read(ROOT, 'docs', '02-process', 'CI-CD.md');
+    const g1 = read(ROOT, 'docs', 'operations', 'gates', 'G1.md');
+    for (const name of ['REVERB_PUBLIC_HOST', 'REVERB_ALLOWED_ORIGINS', 'REVERB_APP_PING_INTERVAL']) {
+        assert.ok(arch.includes(name), `ARCHITECTURE §9: ${name}`);
+    }
+    for (const name of ['REVERB_APP_SECRET', 'BROADCAST_CONNECTION', 'smoke-reverb.sh', 'wss']) {
+        assert.ok(cicd.includes(name), `CI-CD: ${name}`);
+    }
+    assert.match(g1, /smoke-reverb\.sh/);
+    assert.match(g1, /0\.1\.12/);
+    const example = read(ROOT, '.env.example');
+    for (const name of ['REVERB_PUBLIC_HOST', 'REVERB_ALLOWED_ORIGINS']) {
+        assert.ok(example.includes(name), `.env.example: ${name}`);
+    }
 });

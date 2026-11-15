@@ -18,6 +18,8 @@ queue)
     exec php artisan queue:work redis --queue=high,default --sleep=1 --tries=3 --max-time=3600
     ;;
 reverb)
+    # Каждое соединение — дескриптор: поднимаем мягкий лимит до жёсткого (потолок задаёт supervisord/ОС).
+    ulimit -n "${REVERB_NOFILE:-10000}" 2>/dev/null || ulimit -n "$(ulimit -Hn)" 2>/dev/null || true
     if has_command reverb:start; then exec php artisan reverb:start --host=127.0.0.1 --port=8080; fi
     echo "Reverb не установлен — программа ждёт следующей выкатки"
     exec sleep infinity
