@@ -1086,8 +1086,11 @@ test('deploy.sh: комментарий, почему .env пишется до �
 
 // deploy.sh можно подключить через source: main запускается, только когда файл выполняют напрямую.
 const renderEnv = (env, overrides = {}) => {
-    const vars = { APP_URL: 'https://stage.example.test', ...SECRETS, ...overrides };
-    for (const [k, v] of Object.entries(vars)) if (v === null) delete vars[k];
+    const vars = Object.fromEntries(
+        Object.entries({ APP_URL: 'https://stage.example.test', ...SECRETS, ...overrides }).filter(
+            ([, v]) => v !== null,
+        ),
+    );
     return bash(['-c', 'source deploy/deploy.sh; render_env "$1"', '_', env], { env: vars });
 };
 const envValue = (dotenv, key) => dotenv.match(new RegExp(`^${key}=['"](.*)['"]$`, 'm'))?.[1];
