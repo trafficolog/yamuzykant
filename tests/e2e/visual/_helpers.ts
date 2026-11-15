@@ -103,6 +103,13 @@ export async function openPrototype(page: Page, id: string, viewportName: string
     }
 }
 
+/**
+ * Строгий порог для эталонов состояния (`{id}--{state}@{vp}.png`): они сняты с самой реализации, расхождение —
+ * дефект, а не законное отличие данных. Порог сверки с прототипом (manifest) пропускает чужой экран целиком (PR #128).
+ * Ослабить можно только явным `maxDiffPixelRatio` или `maxDiffPixels` в тесте с обоснованием в коде.
+ */
+export const STRICT_RATIO = 0.005;
+
 export type ReferenceOptions = Pick<
     PageAssertionsToHaveScreenshotOptions,
     'maxDiffPixelRatio' | 'maxDiffPixels' | 'threshold'
@@ -113,7 +120,8 @@ export type ReferenceOptions = Pick<
 
 /**
  * Сравнивает уже открытую страницу с эталоном `{id}@{viewportName}.png`: полный экран (или блок
- * `block` из manifest), маски `mask` экрана из manifest, порог `threshold` экрана. `options` переопределяет порог.
+ * `block` из manifest), маски `mask` экрана из manifest, порог: `threshold` экрана из manifest, для эталона состояния — STRICT_RATIO.
+ * `options` переопределяет порог.
  */
 export async function expectMatchesReference(
     page: Page,
@@ -145,12 +153,13 @@ export async function expectMatchesReference(
     await settle(page);
 
     const overridesRatio = options.maxDiffPixels !== undefined;
+    const defaultRatio = state ? STRICT_RATIO : thresholdOf(screen);
     const common: PageAssertionsToHaveScreenshotOptions = {
         animations: 'disabled',
         caret: 'hide',
         scale: 'css',
         mask: screen.mask.map((selector) => page.locator(selector)),
-        ...(overridesRatio ? {} : { maxDiffPixelRatio: thresholdOf(screen) }),
+        ...(overridesRatio ? {} : { maxDiffPixelRatio: defaultRatio }),
         ...options,
     };
     if (screen.block) {

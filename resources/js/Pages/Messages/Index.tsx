@@ -44,11 +44,11 @@ type PageProps = { realtime?: RealtimeConfig | null };
 const t = ru.messages;
 
 /**
- * Страница выбирает панель частичным переходом: состояние списка сохраняется, а его данные приходят свежими
- * вместе с панелью — обновление списка, прерванное переходом, не теряется (3.1.11).
+ * Страница выбирает панель частичным переходом: состояние списка сохраняется, в запрос входит только панель.
+ * Список обновляется отдельным reload по событию — отложенным до конца перехода (3.1.11, 0.2.9).
  */
 const paneVisit = (onFinish: () => void) => ({
-    only: ['active', 'compose', 'conversations', 'messages'],
+    only: ['active', 'compose'],
     preserveState: true,
     preserveScroll: true,
     onFinish,
@@ -147,8 +147,6 @@ export default function MessagesIndex({ conversations, active, compose }: Props)
     const visitPane = useCallback(
         (url: string) => {
             panesInFlight.current += 1;
-            // Ответ перехода сам несёт свежий список: прежняя просьба об обновлении им закрыта.
-            refreshAfterPane.current = false;
             router.visit(
                 url,
                 paneVisit(() => {

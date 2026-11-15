@@ -140,11 +140,14 @@ test.describe('@visual хелпер сверки с эталоном', () => {
                 .locator('#shot')
                 .evaluate((img: HTMLImageElement) => img.decode().then(() => img.clientHeight));
             if (overlayPercent === 0) return;
-            await page.evaluate((px) => {
-                const div = document.createElement('div');
-                div.style.cssText = `position:absolute;top:0;left:0;width:1440px;height:${px}px;background:#f0f`;
-                document.body.append(div);
-            }, Math.round((height * overlayPercent) / 100));
+            await page.evaluate(
+                (px) => {
+                    const div = document.createElement('div');
+                    div.style.cssText = `position:absolute;top:0;left:0;width:1440px;height:${px}px;background:#f0f`;
+                    document.body.append(div);
+                },
+                Math.round((height * overlayPercent) / 100),
+            );
         };
 
         test('порог по умолчанию — 0,5 %', () => {

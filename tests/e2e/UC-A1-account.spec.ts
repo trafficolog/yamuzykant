@@ -1,6 +1,7 @@
 import AxeBuilder from '@axe-core/playwright';
 import { expect, test, type Page } from '@playwright/test';
-import { open, signInByEmail } from './_auth';
+import { signInByEmail } from './_auth';
+import { awaitHydrated, hydrated } from './_hydrated';
 
 // UC-A1 «Войти», шапка вошедшего (1.1.6): после входа без перезагрузки — меню кабинета, выход на главную.
 // Нужны LOGIN_CODE_FAKE=123456 (окружение e2e, CI).
@@ -29,14 +30,14 @@ const logOut = async (page: Page) => {
         page.waitForEvent('load'),
         page.getByRole('button', { name: 'Выйти' }).click(),
     ]);
-    await page.locator('html[data-hydrated="true"]').waitFor({ state: 'attached' });
+    await awaitHydrated(page);
 };
 
 test.describe('UC-A1: шапка вошедшего', () => {
     test('после входа без перезагрузки шапка показывает меню кабинета; выход возвращает на главную', async ({
         page,
     }) => {
-        await open(page, '/?from=header');
+        await hydrated(page, '/?from=header');
         const header = page.getByRole('banner');
         await markNoReload(page);
 
@@ -70,7 +71,7 @@ test.describe('UC-A1: шапка вошедшего', () => {
     });
 
     test('после выхода повторный POST со старым токеном отклоняется (419)', async ({ page }) => {
-        await open(page, '/');
+        await hydrated(page, '/');
         await signInByEmail(page);
         const oldToken = await page.evaluate(() =>
             decodeURIComponent(document.cookie.match(/XSRF-TOKEN=([^;]*)/)?.[1] ?? ''),
@@ -87,7 +88,7 @@ test.describe('UC-A1: шапка вошедшего', () => {
     });
 
     test('меню закрывается по Esc, фокус возвращается на кнопку', async ({ page }) => {
-        await open(page, '/');
+        await hydrated(page, '/');
         await signInByEmail(page);
         const account = page.getByRole('banner').getByRole('button', { name: /Анна/ });
 
@@ -128,7 +129,7 @@ test.describe('UC-A1: шапка вошедшего на телефоне', () =
         page,
     }) => {
         await page.setViewportSize({ width: 390, height: 740 });
-        await open(page, '/');
+        await hydrated(page, '/');
         const bar = page.getByRole('navigation', { name: 'Нижнее меню' });
 
         // Шапки «Войти» на телефоне нет: окно открывает вкладка «Кабинет».
