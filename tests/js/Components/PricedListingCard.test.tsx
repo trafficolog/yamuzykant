@@ -81,9 +81,37 @@ describe('CSS: подпись цены и токены (3.1.10)', () => {
         }
     });
 
-    it('контраст выбранного FilterChip — одно общее правило, в account.css его нет', () => {
-        expect(site).toMatch(/\.ym-chip\[aria-checked='true'\] \.ym-chip__count/);
-        expect(readFile('../../../resources/css/account.css')).not.toMatch(/ym-chip__count/);
+    it.each(['aria-pressed', 'aria-checked'])(
+        'контраст выбранного FilterChip (%s): счётчик непрозрачный, правила нет в account.css',
+        (attribute) => {
+            const style = document.createElement('style');
+            style.textContent = readFile('../../../resources/js/ds/tokens/components.css') + site;
+            document.head.append(style);
+            document.body.innerHTML = `<button class="ym-chip" ${attribute}="true">Все<span class="ym-chip__count">3</span></button>`;
+
+            const count = document.querySelector('.ym-chip__count') as HTMLElement;
+            expect(getComputedStyle(count).opacity).toBe('1');
+
+            style.remove();
+            expect(readFile('../../../resources/css/account.css')).not.toMatch(/ym-chip__count/);
+        },
+    );
+
+    it('hover выбранного чипа покрывает оба атрибута', () => {
+        expect(site).toMatch(
+            /\.ym-chip:is\(\[aria-pressed='true'\], \[aria-checked='true'\]\):hover:not\(\[disabled\]\)/,
+        );
+    });
+
+    it('чипы Барахолки (FleaFilterPanel) — aria-pressed, их правило покрывает', () => {
+        expect(readFile('../../../resources/js/ds/components/forms/FilterChip.jsx')).toContain(
+            "a['aria-pressed']",
+        );
+        expect(site).toContain("[aria-pressed='true']");
+    });
+
+    it('в sell.css токенов --lad* нет', () => {
+        expect(readFile('../../../resources/css/sell.css')).not.toMatch(/--lad/);
     });
 });
 
