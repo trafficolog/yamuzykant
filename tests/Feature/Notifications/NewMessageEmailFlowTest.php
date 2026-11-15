@@ -94,3 +94,21 @@ it('запрос авторизованного пользователя отм�
 
     expect(Presence::isOnline($user))->toBeTrue();
 });
+
+it('метка пишется не чаще раза в минуту, но активный пользователь остаётся в сети', function () {
+    $user = User::factory()->create();
+    Presence::touch($user);
+
+    // Повторный touch в пределах минуты не продлевает метку: через 5 мин 10 с она истекает.
+    $this->travel(30)->seconds();
+    Presence::touch($user);
+    $this->travel(280)->seconds();
+    expect(Presence::isOnline($user))->toBeFalse();
+
+    // Touch старше минуты продлевает.
+    Presence::touch($user);
+    $this->travel(61)->seconds();
+    Presence::touch($user);
+    $this->travel(4)->minutes();
+    expect(Presence::isOnline($user))->toBeTrue();
+});

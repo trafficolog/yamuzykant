@@ -12,10 +12,23 @@ function unsubscribeUrl(User $user, string $kind = 'new_message'): string
     return URL::signedRoute('notifications.unsubscribe', ['user' => $user->id, 'kind' => $kind]);
 }
 
-it('переход по ссылке выключает письма этого вида', function () {
+it('переход по ссылке (GET) только показывает подтверждение: сканеры почты не отписывают', function () {
+    $user = User::factory()->create(['notification_prefs' => null]);
+    $url = unsubscribeUrl($user);
+
+    $this->get($url)
+        ->assertOk()
+        ->assertSee('Отписаться от писем о новых сообщениях?')
+        ->assertSee('method="POST"', false)
+        ->assertSee('action="'.e($url).'"', false);
+
+    expect($user->refresh()->notification_prefs)->toBeNull();
+});
+
+it('кнопка подтверждения (POST) выключает письма этого вида', function () {
     $user = User::factory()->create(['notification_prefs' => null]);
 
-    $this->get(unsubscribeUrl($user))
+    $this->post(unsubscribeUrl($user))
         ->assertOk()
         ->assertSee('Вы отписались от писем о новых сообщениях')
         ->assertSee('Настроить уведомления');
@@ -23,7 +36,7 @@ it('переход по ссылке выключает письма этого 
     expect($user->refresh()->notification_prefs)->toBe(['new_message' => false]);
 });
 
-it('POST «в один клик» почтового клиента (RFC 8058) работает без CSRF-токена', function () {
+it('POST «в один клик» почтового клиента (RFC 8058) отписывает сразу и без CSRF-токена', function () {
     $user = User::factory()->create();
 
     $this->post(unsubscribeUrl($user), ['List-Unsubscribe' => 'One-Click'])->assertOk();
