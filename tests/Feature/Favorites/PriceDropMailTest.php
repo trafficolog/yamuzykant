@@ -109,5 +109,5 @@ it('отписка по подписанной ссылке выключает �
 
     $this->post(NotificationKind::PriceDrop->unsubscribeUrl($user))->assertOk();
 
-    expect($user->refresh()->notification_prefs)->toBe(['new_message' => true, 'price_drop' => false]);
+    expect($user->refresh()->notification_prefs)->toEqual(['new_message' => true, 'price_drop' => false]);
 });

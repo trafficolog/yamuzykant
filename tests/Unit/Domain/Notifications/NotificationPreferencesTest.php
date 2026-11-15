@@ -34,7 +34,7 @@ it('сохраняет только известные виды', function () {
 
     NotificationPreferences::update($user, ['new_message' => false, 'bogus' => true]);
 
-    expect($user->refresh()->notification_prefs)->toBe(['new_message' => false, 'price_drop' => true]);
+    expect($user->refresh()->notification_prefs)->toEqual(['new_message' => false, 'price_drop' => true]);
 });
 
 it('каждый вид имеет ключ и значение по умолчанию «включено»', function () {

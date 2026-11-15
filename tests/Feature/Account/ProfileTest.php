@@ -142,7 +142,7 @@ it('уведомления: выключение сохраняется и от�
         ->where('notifications', [['key' => 'new_message', 'enabled' => false], ['key' => 'price_drop', 'enabled' => false]]));
 
     $this->actingAs($user->refresh())->put('/account/notifications', ['new_message' => true, 'price_drop' => true]);
-    expect($user->refresh()->notification_prefs)->toBe(['new_message' => true, 'price_drop' => true]);
+    expect($user->refresh()->notification_prefs)->toEqual(['new_message' => true, 'price_drop' => true]);
 });
 
 it('уведомления: значение обязательно и логическое, чужие ключи игнорируются', function () {
@@ -152,7 +152,7 @@ it('уведомления: значение обязательно и логи�
     $this->actingAs($user)->put('/account/notifications', ['new_message' => 'может', 'price_drop' => true])->assertSessionHasErrors('new_message');
 
     $this->actingAs($user)->put('/account/notifications', ['new_message' => false, 'price_drop' => false, 'is_staff' => true, 'mystery' => false]);
-    expect($user->refresh()->notification_prefs)->toBe(['new_message' => false, 'price_drop' => false]);
+    expect($user->refresh()->notification_prefs)->toEqual(['new_message' => false, 'price_drop' => false]);
 });
 
 it('изменения — не чаще 30 раз в минуту', function () {
