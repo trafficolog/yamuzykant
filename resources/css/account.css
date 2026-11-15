@@ -223,6 +223,12 @@
     /* ДС даёт счётчику выбранного чипа opacity .75 — контраст ниже 4.5:1 (WCAG AA). */
     opacity: 1;
 }
+@media (hover: hover) {
+    .ym-my-listings__filters .ym-chip[aria-checked='true']:hover:not([disabled]) {
+        /* Иначе hover ДС (фон --line) перебивает фон выбранного чипа: светлый текст на светлом, контраст < 4.5:1. */
+        background: var(--inverse);
+    }
+}
 .ym-my-listings__list {
     display: flex;
     flex-direction: column;
