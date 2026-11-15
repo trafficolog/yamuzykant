@@ -3,7 +3,7 @@ id: "0.1.12"
 phase: "0"
 epic: "0.1"
 title: "SSH-ключ деплоя и отключение входа по паролю на stage"
-status: todo
+status: in_progress
 gate: G1
 risk: high
 model_impl: opus
