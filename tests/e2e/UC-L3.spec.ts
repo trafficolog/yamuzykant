@@ -35,6 +35,16 @@ test.describe('UC-L3: мои объявления — изменить и сни
         await page.getByRole('radio', { name: /На проверке/ }).click();
         await expect(page).toHaveURL(/status=review/);
         await expect(page.getByText('Нет объявлений с таким статусом.')).toBeVisible();
+
+        // Выбранный чип со счётчиком — отдельное состояние: проверяем и его.
+        const axeSelected = await new AxeBuilder({ page })
+            .withTags(['wcag2a', 'wcag2aa'])
+            .analyze();
+        expect(
+            axeSelected.violations
+                .filter((v) => v.impact === 'serious' || v.impact === 'critical')
+                .map((v) => `${v.id}: ${v.nodes.map((n) => n.target).join(' | ')}`),
+        ).toEqual([]);
     });
 
     test('«Изменить»: та же форма с данными объявления; рост цены — без проверки', async ({
