@@ -43,11 +43,15 @@ type PageProps = { realtime?: RealtimeConfig | null };
 
 const t = ru.messages;
 
-/** Страница выбирает панель частичным переходом: список остаётся на месте, меняются только `active` и `compose`. */
-const paneVisit = () => ({
-    only: ['active', 'compose'],
+/**
+ * Страница выбирает панель частичным переходом: состояние списка сохраняется, а его данные приходят свежими
+ * вместе с панелью — обновление списка, прерванное переходом, не теряется (3.1.11).
+ */
+const paneVisit = (onFinish: () => void) => ({
+    only: ['active', 'compose', 'conversations', 'messages'],
     preserveState: true,
     preserveScroll: true,
+    onFinish,
 });
 
 /** Обновить список и счётчик с сервера (превью, порядок, непрочитанные). */
@@ -111,24 +115,52 @@ export default function MessagesIndex({ conversations, active, compose }: Props)
 
     useViewportHeight(rootRef);
 
+    // Идёт переход панели (открыть или закрыть чат). router.reload берёт текущий адрес, а ответ на запрос с прежнего
+    // адреса Inertia отбрасывает: обновление, запрошенное во время перехода, уходит после него (3.1.11).
+    const panesInFlight = useRef(0);
+    const refreshAfterPane = useRef(false);
+
+    const reloadNow = useCallback(() => {
+        if (panesInFlight.current > 0) {
+            refreshAfterPane.current = true;
+            return;
+        }
+        lastReload.current = Date.now();
+        router.reload(listReload());
+    }, []);
+
     // Обновления списка идут сразу, но не чаще раза в 300 мс: лишний вызов откладывается в один повтор.
-    // Новый запрос Inertia отменяет прежний, поэтому «зависшего» обновления быть не может.
     const refreshList = useCallback(() => {
-        const now = Date.now();
-        const wait = lastReload.current + RELOAD_GAP - now;
+        const wait = lastReload.current + RELOAD_GAP - Date.now();
         if (wait > 0) {
             if (timer.current === null) {
                 timer.current = setTimeout(() => {
                     timer.current = null;
-                    lastReload.current = Date.now();
-                    router.reload(listReload());
+                    reloadNow();
                 }, wait);
             }
             return;
         }
-        lastReload.current = now;
-        router.reload(listReload());
-    }, []);
+        reloadNow();
+    }, [reloadNow]);
+
+    const visitPane = useCallback(
+        (url: string) => {
+            panesInFlight.current += 1;
+            // Ответ перехода сам несёт свежий список: прежняя просьба об обновлении им закрыта.
+            refreshAfterPane.current = false;
+            router.visit(
+                url,
+                paneVisit(() => {
+                    panesInFlight.current -= 1;
+                    if (panesInFlight.current > 0 || !refreshAfterPane.current) return;
+                    refreshAfterPane.current = false;
+                    reloadNow();
+                }),
+            );
+        },
+        [reloadNow],
+    );
 
     useEffect(
         () => () => {
@@ -144,16 +176,19 @@ export default function MessagesIndex({ conversations, active, compose }: Props)
         refreshList();
     }, [unread, refreshList]);
 
-    const open = useCallback((conversationId: string) => {
-        setFocusOnOpen(true);
-        router.visit(conversationPath(conversationId), paneVisit());
-    }, []);
+    const open = useCallback(
+        (conversationId: string) => {
+            setFocusOnOpen(true);
+            visitPane(conversationPath(conversationId));
+        },
+        [visitPane],
+    );
 
     const activeId = active?.conversation.id ?? null;
     const close = useCallback(() => {
         returnFocusTo.current = activeId;
-        router.visit(MESSAGES_PATH, paneVisit());
-    }, [activeId]);
+        visitPane(MESSAGES_PATH);
+    }, [activeId, visitPane]);
 
     useEffect(() => {
         const id = returnFocusTo.current;
