@@ -1,7 +1,8 @@
+import { router } from '@inertiajs/react';
 import { useCallback, useEffect, useRef, useState } from 'react';
 
 import { openLogin } from '@/Hooks/loginDialog';
-import { useRequireAuth } from '@/Hooks/useAuthUser';
+import { useAuthUser } from '@/Hooks/useAuthUser';
 import { setFavorite } from '@/lib/favoritesApi';
 
 export interface FavoriteState {
@@ -19,7 +20,7 @@ export interface FavoriteState {
  * Новое значение `initial` с сервера (страница обновилась после входа) заменяет локальное.
  */
 export function useFavorite(listingId: string, initial: boolean): FavoriteState {
-    const requireAuth = useRequireAuth();
+    const user = useAuthUser();
     const [active, setActive] = useState(initial);
     const [failed, setFailed] = useState(false);
     const busy = useRef(false);
@@ -27,7 +28,7 @@ export function useFavorite(listingId: string, initial: boolean): FavoriteState 
     useEffect(() => setActive(initial), [initial]);
 
     const apply = useCallback(
-        async (next: boolean): Promise<void> => {
+        async (next: boolean, refresh = false): Promise<void> => {
             if (busy.current) return;
             busy.current = true;
             setFailed(false);
@@ -37,10 +38,13 @@ export function useFavorite(listingId: string, initial: boolean): FavoriteState 
                 const status = await setFavorite(listingId, next);
                 if (status === 401 || status === 419) {
                     setActive(!next);
-                    openLogin({ onAuthenticated: () => void apply(next) });
+                    openLogin({ onAuthenticated: () => void apply(next, true) });
                 } else if (status !== 200) {
                     setActive(!next);
                     setFailed(true);
+                } else if (refresh) {
+                    // После входа страница могла перемонтироваться со старым флагом: подтягиваем актуальный.
+                    router.reload();
                 }
             } catch {
                 setActive(!next);
@@ -53,8 +57,14 @@ export function useFavorite(listingId: string, initial: boolean): FavoriteState 
     );
 
     const toggle = useCallback(
-        (next: boolean) => requireAuth(() => void apply(next)),
-        [requireAuth, apply],
+        (next: boolean) => {
+            if (user) {
+                void apply(next);
+            } else {
+                openLogin({ onAuthenticated: () => void apply(next, true) });
+            }
+        },
+        [user, apply],
     );
 
     return { active, failed, toggle };

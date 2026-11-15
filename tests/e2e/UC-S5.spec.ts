@@ -52,7 +52,9 @@ test.describe('UC-S5: избранное', () => {
         await heart(page, false).click();
 
         await expect(heart(page, false)).toBeVisible();
-        await expect(page.getByRole('status')).toContainText('Не удалось обновить избранное');
+        await expect(page.locator('.ym-lot__head').getByRole('status')).toContainText(
+            'Не удалось обновить избранное',
+        );
 
         await page.unroute('**/favorite');
         await heart(page, false).click();

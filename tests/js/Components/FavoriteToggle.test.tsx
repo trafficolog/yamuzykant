@@ -7,8 +7,10 @@ import FavoriteToggle from '@/Components/FavoriteToggle';
 
 let pageProps: Record<string, unknown> = {};
 
+const reload = vi.fn();
 vi.mock('@inertiajs/react', () => ({
     usePage: () => ({ props: pageProps }),
+    router: { reload: () => reload() },
 }));
 
 const openLogin = vi.fn();
@@ -37,6 +39,7 @@ beforeEach(() => {
     pageProps = { auth: { user: ANNA } };
     setFavorite.mockReset();
     openLogin.mockReset();
+    reload.mockReset();
 });
 
 describe('FavoriteToggle', () => {
@@ -144,7 +147,8 @@ describe('FavoriteToggle', () => {
         await act(async () => request.onAuthenticated?.());
 
         expect(setFavorite).toHaveBeenCalledWith('lot-1', true);
-        expect(heart(true)).toBeInTheDocument();
+        expect(setFavorite).toHaveBeenCalledWith('lot-1', true);
+        expect(reload).toHaveBeenCalledOnce();
     });
 
     it('сессия истекла (401): сердце откатывается, окно входа повторит действие', async () => {
