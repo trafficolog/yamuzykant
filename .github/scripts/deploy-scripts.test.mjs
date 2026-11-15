@@ -1121,7 +1121,8 @@ test('.env: секрет Reverb есть, а ключа нет — отказ б
     const r = renderEnv('stage', { REVERB_APP_KEY: null });
     assert.equal(r.status, 1);
     assert.match(r.out, /REVERB_APP_KEY/);
-    assertNoSecrets(r.out);
+    // stdout — недописанный .env (в песочнице теста), в сообщении об ошибке секретов нет.
+    assertNoSecrets(r.out.replace(r.stdout, ''));
 });
 
 test('Nginx: /app/ — wss через Upgrade, длинные таймауты, без буферизации, только на 127.0.0.1:8080', () => {

@@ -62,8 +62,6 @@ render_env() {
     env_line SESSION_DRIVER redis
     env_line SESSION_LIFETIME 120
     env_line SESSION_SECURE_COOKIE true
-    # Reverb подключит задача realtime; до неё события вещания пишутся в журнал.
-    env_line BROADCAST_CONNECTION log
     env_line FILESYSTEM_DISK s3
     env_line QUEUE_CONNECTION redis
     env_line CACHE_STORE redis
@@ -95,20 +93,27 @@ render_env() {
     env_line INERTIA_SSR_URL http://127.0.0.1:13714
     env_line LOGIN_CODE_STORE redis
     env_line VITE_APP_NAME 'ЯМузыкант'
+    # Вещание включается только вместе с секретами Reverb: процесс reverb:start (Supervisor) и wss-прокси
+    # Nginx стоят с provision.sh. Без секретов — null: log писал бы текст сообщений в журнал (ревью PR #119).
     if [[ -n ${REVERB_APP_SECRET:-} ]]; then
         require_vars REVERB_APP_ID REVERB_APP_KEY
+        env_line BROADCAST_CONNECTION reverb
         env_line REVERB_APP_ID "$REVERB_APP_ID"
         env_line REVERB_APP_KEY "$REVERB_APP_KEY"
         env_line REVERB_APP_SECRET "$REVERB_APP_SECRET"
+        # Приложение шлёт события на Reverb локально, без прокси.
         env_line REVERB_HOST 127.0.0.1
         env_line REVERB_PORT 8080
         env_line REVERB_SCHEME http
         env_line REVERB_SERVER_HOST 127.0.0.1
         env_line REVERB_SERVER_PORT 8080
-        env_line VITE_REVERB_APP_KEY "$REVERB_APP_KEY"
-        env_line VITE_REVERB_HOST "$host"
-        env_line VITE_REVERB_PORT 443
-        env_line VITE_REVERB_SCHEME https
+        # Браузер подключается через Nginx по wss (shared prop realtime, config/broadcasting.php).
+        env_line REVERB_PUBLIC_HOST "$host"
+        env_line REVERB_PUBLIC_PORT 443
+        env_line REVERB_PUBLIC_SCHEME https
+        env_line REVERB_ALLOWED_ORIGINS "$host"
+    else
+        env_line BROADCAST_CONNECTION null
     fi
     if [[ -n ${YANDEX_CLIENT_ID:-} ]]; then
         env_line YANDEX_CLIENT_ID "$YANDEX_CLIENT_ID"
@@ -295,6 +300,13 @@ verify() {
         printf '::error::SSR не отвечает на 127.0.0.1:13714/health\n' >&2
         failed=1
     fi
+    # Вещание reverb без слушающего процесса роняло бы задания трансляции в failed_jobs. Достаточно
+    # любого HTTP-ответа: важно, что порт открыт.
+    if grep -qE "^BROADCAST_CONNECTION=['\"]?reverb['\"]?$" "$APP_ROOT/shared/.env" &&
+        ! curl -sS --max-time 5 -o /dev/null http://127.0.0.1:8080/up; then
+        printf '::error::Reverb не отвечает на 127.0.0.1:8080, а BROADCAST_CONNECTION=reverb\n' >&2
+        failed=1
+    fi
     return "$failed"
 }
 
@@ -439,4 +451,5 @@ main() {
     esac
 }
 
-main "$@"
+# Выполнение напрямую запускает main; через source (тесты render_env) — нет.
+[[ ${BASH_SOURCE[0]} != "$0" ]] || main "$@"
