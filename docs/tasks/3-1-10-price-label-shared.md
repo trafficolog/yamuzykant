@@ -3,7 +3,7 @@ id: "3.1.10"
 phase: "3"
 epic: "3.1"
 title: "Общая подпись цены «Договорная»/«Бесплатно» для карточек Барахолки и лота"
-status: todo
+status: in_progress
 gate: G1
 risk: low
 model_impl: sonnet

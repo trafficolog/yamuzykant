@@ -3,7 +3,7 @@ id: "4.3.1"
 phase: "4"
 epic: "4.3"
 title: "Избранное"
-status: review
+status: done
 gate: G1
 risk: low
 model_impl: haiku
@@ -14,7 +14,7 @@ uc: ["S5"]
 prototype: "Десктоп - Кабинет.dc.html"
 screens: ["account"]
 issue: 38
-sync_state: drifted
+sync_state: aligned
 escalations: []
 ---
 
