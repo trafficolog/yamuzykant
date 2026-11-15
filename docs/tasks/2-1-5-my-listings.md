@@ -3,7 +3,7 @@ id: "2.1.5"
 phase: "2"
 epic: "2.1"
 title: "Мои объявления: изменить, снизить цену, снять"
-status: review
+status: done
 gate: G1
 risk: medium
 model_impl: sonnet
@@ -14,7 +14,7 @@ uc: ["L3", "L4"]
 prototype: "Десктоп - Кабинет.dc.html"
 screens: ["account"]
 issue: 24
-sync_state: drifted
+sync_state: aligned
 escalations: []
 ---
 
