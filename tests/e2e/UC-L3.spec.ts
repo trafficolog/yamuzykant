@@ -37,20 +37,15 @@ test.describe('UC-L3: мои объявления — изменить и сни
         await expect(page.getByText('Нет объявлений с таким статусом.')).toBeVisible();
 
         // Выбранный чип со счётчиком — отдельное состояние: проверяем и его.
-        // Чип плавно меняет фон (transition ДС): axe, запущенный посреди перехода, видит промежуточные цвета.
-        // Ждём конечного цвета выбранного чипа (--inverse), затем проверяем контраст.
-        const inverse = await page.evaluate(() => {
-            const probe = document.createElement('i');
-            probe.style.color = 'var(--inverse)';
-            document.body.append(probe);
-            const color = getComputedStyle(probe).color;
-            probe.remove();
-            return color;
-        });
-        await expect(page.getByRole('radio', { name: /На проверке/ })).toHaveCSS(
-            'background-color',
-            inverse,
+        // Чип плавно меняет фон (transition ДС): axe посреди перехода видит промежуточные цвета.
+        // Проверяем состояние покоя: выбранный чип + отключённые переходы.
+        await expect(page.getByRole('radio', { name: /На проверке/ })).toHaveAttribute(
+            'aria-checked',
+            'true',
         );
+        await page.addStyleTag({
+            content: '*, *::before, *::after { transition: none !important; }',
+        });
         const axeSelected = await new AxeBuilder({ page })
             .withTags(['wcag2a', 'wcag2aa'])
             .analyze();
