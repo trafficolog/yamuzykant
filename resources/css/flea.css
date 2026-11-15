@@ -288,6 +288,19 @@ a.ym-pagination__item:hover {
     gap: var(--space-4);
 }
 
+/* Загрузка: скелетоны лежат поверх прежней выдачи и закрывают её, не меняя высоту блока */
+.ym-flea__stack {
+    position: relative;
+}
+.ym-flea__stack > [aria-hidden='true'] {
+    visibility: hidden;
+}
+.ym-flea__overlay {
+    position: absolute;
+    inset: 0;
+    align-content: start;
+    overflow: hidden;
+}
 /* `.ym-skel` ДС задаёт height 12px и ломал бы квадрат фото: возвращаем высоту по aspect-ratio карточки. */
 .ym-flea__skeleton .ym-card__media {
     height: auto;

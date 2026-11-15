@@ -195,6 +195,8 @@ export default function FleaIndex({
           ? { label: t.empty.reset, onClick: () => visit(EMPTY_FILTERS) }
           : undefined;
     const loading = busy && !loadingMore;
+    const skeletons = (count: number) =>
+        Array.from({ length: count }, (_, i) => <FleaListingSkeleton key={i} />);
     // Повтор после сбоя «Показать ещё» перезапрашивает текущую страницу: уже загруженные карточки остаются сверху.
     const errorBlock = (
         <div className="ym-flea__error">
@@ -289,17 +291,12 @@ export default function FleaIndex({
                         />
                     </div>
 
-                    {loading ? (
-                        <div className="ym-flea__grid ym-flea__grid--loading">
-                            {Array.from(
-                                { length: listings.length || SKELETONS_BY_DEFAULT },
-                                (_, i) => (
-                                    <FleaListingSkeleton key={i} />
-                                ),
-                            )}
-                        </div>
-                    ) : listings.length === 0 ? (
-                        searchError ? (
+                    {listings.length === 0 ? (
+                        loading ? (
+                            <div className="ym-flea__grid ym-flea__grid--loading">
+                                {skeletons(SKELETONS_BY_DEFAULT)}
+                            </div>
+                        ) : searchError ? (
                             errorBlock
                         ) : (
                             <EmptyState icon={'search' satisfies IconName} action={emptyAction}>
@@ -308,23 +305,33 @@ export default function FleaIndex({
                         )
                     ) : (
                         <>
-                            {searchError ? errorBlock : null}
-                            <div className="ym-flea__grid">
-                                {listings.map((card) => (
-                                    <FleaListingCard
-                                        key={card.id}
-                                        title={card.title}
-                                        href={lotPath(card.id)}
-                                        price={card.price}
-                                        condition={
-                                            (card.condition ?? undefined) as Condition | undefined
-                                        }
-                                        city={card.city}
-                                        posted={card.posted ?? undefined}
-                                        delivery={card.ship ? t.shipping : undefined}
-                                        safe={false}
-                                    />
-                                ))}
+                            {searchError && !loading ? errorBlock : null}
+                            {/* Загрузка: скелетоны поверх прежних карточек, чтобы высота страницы не менялась
+                                (иначе Inertia сохранит сбитую позицию прокрутки, а нижние блоки сдвинутся). */}
+                            <div className="ym-flea__stack">
+                                <div className="ym-flea__grid" aria-hidden={loading || undefined}>
+                                    {listings.map((card) => (
+                                        <FleaListingCard
+                                            key={card.id}
+                                            title={card.title}
+                                            href={lotPath(card.id)}
+                                            price={card.price}
+                                            condition={
+                                                (card.condition ?? undefined) as
+                                                    Condition | undefined
+                                            }
+                                            city={card.city}
+                                            posted={card.posted ?? undefined}
+                                            delivery={card.ship ? t.shipping : undefined}
+                                            safe={false}
+                                        />
+                                    ))}
+                                </div>
+                                {loading ? (
+                                    <div className="ym-flea__grid ym-flea__grid--loading ym-flea__overlay">
+                                        {skeletons(listings.length)}
+                                    </div>
+                                ) : null}
                             </div>
                         </>
                     )}
