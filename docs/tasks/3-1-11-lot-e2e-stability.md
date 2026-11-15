@@ -3,7 +3,7 @@ id: "3.1.11"
 phase: "3"
 epic: "3.1"
 title: "fix(ci): нестабильные e2e страницы лота и сообщений на main"
-status: in_progress
+status: done
 gate: G1
 risk: high
 model_impl: sonnet
