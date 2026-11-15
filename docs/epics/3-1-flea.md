@@ -25,7 +25,7 @@ gate: G1
 | [3.1.7 SEO: SSR, разметка, sitemap](../tasks/3-1-7-seo.md) | todo | low | haiku → sonnet |
 | [3.1.8 Поисковый индекс: доработки после ревью](../tasks/3-1-8-search-index-hardening.md) | done | low | sonnet → sonnet |
 | [3.1.9 Барахолка: подпись цены без JS, e2e цены, позиция прокрутки](../tasks/3-1-9-flea-polish.md) | done | low | sonnet → sonnet |
-| [3.1.10 Общая подпись цены «Договорная»/«Бесплатно» для карточек Барахолки и лота](../tasks/3-1-10-price-label-shared.md) | in_progress | low | sonnet → sonnet |
+| [3.1.10 Общая подпись цены «Договорная»/«Бесплатно» для карточек Барахолки и лота](../tasks/3-1-10-price-label-shared.md) | done | low | sonnet → sonnet |
 | [3.1.11 fix(ci): нестабильные e2e страницы лота и сообщений на main](../tasks/3-1-11-lot-e2e-stability.md) | done | high | sonnet → opus |
 | [3.1.12 fix(ci): нестабильные e2e — смена города в шапке, превью списка бесед](../tasks/3-1-12-e2e-city-realtime.md) | in_progress | high | opus → opus |
 <!-- docs:ops:end -->
