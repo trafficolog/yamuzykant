@@ -37,7 +37,9 @@ test.describe('UC-S2: выдача Барахолки', () => {
 
         // Смена сохранена (не 429 общего с поиском городов лимита — 3.1.12): окно закрылось, город в шапке новый.
         await expect(panel).toBeHidden();
-        await expect(page.getByRole('banner').getByRole('button', { name: 'Казань' })).toBeVisible();
+        await expect(
+            page.getByRole('banner').getByRole('button', { name: 'Казань' }),
+        ).toBeVisible();
         await expect(page.getByText('Найдено 1 лот')).toBeVisible();
         await expect(page.getByRole('article')).toHaveCount(1);
     });
