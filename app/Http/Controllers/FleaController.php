@@ -16,8 +16,10 @@ use App\Http\Resources\Listings\FleaListingResource;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Collection;
+use Illuminate\Support\Facades\Log;
 use Inertia\Inertia;
 use Inertia\Response;
+use Throwable;
 
 /**
  * Выдача Барахолки (UC-S2, UC-S3): `/baraholka` и `/baraholka/{категория}`. Город — из шапки (BR-01),
@@ -31,9 +33,26 @@ final class FleaController extends Controller
         $filters = FleaFilters::fromQuery($request->query());
         $city = (new CurrentCity)->for($request);
 
-        $result = $city === null
-            ? new ListingSearchResult([], [], 0, $filters->page, FleaFilters::PER_PAGE, ['condition' => [], 'category_path' => []], 0)
-            : $this->search(ListingSearch::inCity($city), $category, $filters)->get($filters->page, FleaFilters::PER_PAGE);
+        $emptyResult = new ListingSearchResult([], [], 0, $filters->page, FleaFilters::PER_PAGE, ['condition' => [], 'category_path' => []], 0);
+        $searchError = false;
+
+        try {
+            $result = $city === null
+                ? $emptyResult
+                : $this->search(ListingSearch::inCity($city), $category, $filters)->get($filters->page, FleaFilters::PER_PAGE);
+
+            // Счётчики чипов состояния не зависят от выбранного состояния: иначе у остальных ступеней был бы нуль.
+            $conditionCounts = $filters->conditions === [] || $city === null
+                ? $result->facets['condition']
+                : $this->search(ListingSearch::inCity($city), $category, $filters->withoutConditions())
+                    ->get(1, 1)->facets['condition'];
+        } catch (Throwable $exception) {
+            // Поиск не ответил: страница открывается с пустой выдачей, фронт показывает Alert с повтором.
+            Log::warning('Выдача Барахолки недоступна: поиск не ответил.', ['error' => $exception->getMessage()]);
+            $searchError = true;
+            $result = $emptyResult;
+            $conditionCounts = [];
+        }
 
         // Страница за последней при непустой выдаче: на последнюю, фильтры сохраняются.
         $pages = (int) ceil($result->total / $result->perPage);
@@ -42,12 +61,6 @@ final class FleaController extends Controller
 
             return redirect($request->url().($query === '' ? '' : '?'.$query));
         }
-
-        // Счётчики чипов состояния не зависят от выбранного состояния: иначе у остальных ступеней был бы нуль.
-        $conditionCounts = $filters->conditions === [] || $city === null
-            ? $result->facets['condition']
-            : $this->search(ListingSearch::inCity($city), $category, $filters->withoutConditions())
-                ->get(1, 1)->facets['condition'];
 
         return Inertia::render('Flea/Index', [
             // «Показать ещё» — частичный запрос: карточки дописываются к уже загруженным.
@@ -80,6 +93,7 @@ final class FleaController extends Controller
                 'crumbs' => $crumbs,
             ],
             'categoryCounts' => (object) $result->facets['category_path'],
+            'searchError' => $searchError,
         ]);
     }
 

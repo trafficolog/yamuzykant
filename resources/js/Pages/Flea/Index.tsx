@@ -1,10 +1,11 @@
-import { Button, FilterChip, Select, type IconName } from '@ds';
+import { Alert, Button, FilterChip, Select, type IconName } from '@ds';
 import { router, usePage } from '@inertiajs/react';
 import { useEffect, useState, type ReactNode } from 'react';
 
 import Breadcrumbs, { type Crumb } from '@/Components/Breadcrumbs';
 import EmptyState from '@/Components/EmptyState';
 import FleaListingCard from '@/Components/FleaListingCard';
+import FleaListingSkeleton from '@/Components/FleaListingSkeleton';
 import FleaFilterPanel, {
     type CategoryOption,
     type ConditionOption,
@@ -51,11 +52,19 @@ export interface FleaIndexProps {
     category: FleaCategory | null;
     categoryCounts: Record<string, number>;
     categories: CategoryOption[];
+    /** Поиск не ответил: выдача пуста не потому, что лотов нет. */
+    searchError: boolean;
 }
 
 type Condition = 'new' | 'mint' | 'excellent' | 'very-good' | 'good' | 'fair' | 'poor' | 'parts';
 
 const FILTERS_ID = 'flea-filters';
+
+/** Порядок, в котором предлагается снять фильтр в пустой выдаче: от самого сужающего. */
+const NARROWEST_FIRST = ['price', 'ship', 'negotiable', 'condition'];
+
+/** Сколько скелетонов, если карточек на экране не было. */
+const SKELETONS_BY_DEFAULT = 8;
 
 const t = ru.flea;
 
@@ -78,6 +87,7 @@ export default function FleaIndex({
     category,
     categoryCounts,
     categories,
+    searchError,
 }: FleaIndexProps) {
     const [filtersOpen, setFiltersOpen] = useState(false);
     const [busy, setBusy] = useState(false);
@@ -175,6 +185,16 @@ export default function FleaIndex({
               ];
 
     const filtered = hasActiveFilters(filters) || filters.q !== '';
+    // Пусто: предлагаем снять самый узкий фильтр; без фильтров, но с запросом, — сбросить запрос.
+    const narrowest = NARROWEST_FIRST.map((key) =>
+        active.find((chip) => chip.key === key || chip.key.startsWith(`${key}:`)),
+    ).find((chip) => chip !== undefined);
+    const emptyAction = narrowest
+        ? { label: t.empty.narrowest(narrowest.label), onClick: () => visit(narrowest.remove) }
+        : filtered
+          ? { label: t.empty.reset, onClick: () => visit(EMPTY_FILTERS) }
+          : undefined;
+    const loading = busy && !loadingMore;
     const title = category?.name ?? t.title;
 
     return (
@@ -232,9 +252,11 @@ export default function FleaIndex({
                                     ))}
                                 </div>
                             ) : null}
-                            <span className="body-s ym-flea__found">
-                                {t.found(pagination.total)}
-                            </span>
+                            {searchError ? null : (
+                                <span className="body-s ym-flea__found">
+                                    {t.found(pagination.total)}
+                                </span>
+                            )}
                         </div>
                         <Select
                             id="flea-sort"
@@ -256,15 +278,26 @@ export default function FleaIndex({
                         />
                     </div>
 
-                    {listings.length === 0 ? (
-                        <EmptyState
-                            icon={'search' satisfies IconName}
-                            action={
-                                filtered
-                                    ? { label: t.empty.reset, onClick: () => visit(EMPTY_FILTERS) }
-                                    : undefined
-                            }
-                        >
+                    {loading ? (
+                        <div className="ym-flea__grid">
+                            {Array.from(
+                                { length: listings.length || SKELETONS_BY_DEFAULT },
+                                (_, i) => (
+                                    <FleaListingSkeleton key={i} />
+                                ),
+                            )}
+                        </div>
+                    ) : searchError ? (
+                        <div className="ym-flea__error">
+                            <Alert tone="danger" title={t.error.title}>
+                                {t.error.text}
+                            </Alert>
+                            <Button variant="outline" onClick={() => router.reload()}>
+                                {t.error.retry}
+                            </Button>
+                        </div>
+                    ) : listings.length === 0 ? (
+                        <EmptyState icon={'search' satisfies IconName} action={emptyAction}>
                             {filtered ? t.empty.filtered : t.empty.city}
                         </EmptyState>
                     ) : (

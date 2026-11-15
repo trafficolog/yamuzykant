@@ -280,6 +280,24 @@ a.ym-pagination__item:hover {
     grid-template-columns: repeat(auto-fill, minmax(var(--card-min), 1fr));
     gap: var(--space-6);
 }
+/* Ошибка поиска: Alert и повтор */
+.ym-flea__error {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: var(--space-4);
+}
+
+/* Скелетон карточки: высота блока текста как у карточки (цена, две строки названия, мета) */
+.ym-flea__skeleton .ym-card__body {
+    gap: var(--space-2);
+}
+.ym-flea__skeleton-price {
+    height: 24px;
+}
+.ym-flea__skeleton-title {
+    height: 38px;
+}
 .ym-flea__more {
     display: flex;
     flex-direction: column;
