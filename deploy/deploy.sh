@@ -54,7 +54,7 @@ check_app_key() {
 render_env() {
     local env=$1 host
     require_vars "${ENV_REQUIRED[@]}"
-    [[ -z ${APP_KEY:-} ]] || check_app_key "$APP_KEY" # в dry-run без секретов — только предупреждение require_vars
+    check_app_key "$APP_KEY"
     host=$(url_host "$APP_URL")
     env_line APP_NAME 'ЯМузыкант'
     env_line APP_ENV "$env"
@@ -174,6 +174,7 @@ runner_deploy() {
             fi
         done
         [[ $APP_URL == dry-run-placeholder ]] && APP_URL=https://stage.invalid
+        [[ $APP_KEY == dry-run-placeholder ]] && APP_KEY="base64:$(printf "%032d" 0 | base64)"
         ((${#missing[@]} == 0)) || warn "DRY-RUN: не заданы ${missing[*]} — для настоящей выкатки их нужно завести"
     fi
     (umask 077 && render_env "$env" >"$tmp/env")
