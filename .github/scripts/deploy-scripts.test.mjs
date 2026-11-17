@@ -1425,3 +1425,31 @@ test('документы: переменные Reverb, чек-лист G1 и д�
         assert.ok(example.includes(name), `.env.example: ${name}`);
     }
 });
+
+// 0.1.12: provision упал на stage — встроенный python3 -c не компилировался (\" внутри одинарных кавычек bash).
+const hasPython = () => spawnSync('python3', ['--version']).status === 0;
+test(
+    'встроенные python3 -c в deploy/ компилируются',
+    { skip: hasPython() ? false : !process.env.CI && 'нет python3 (в CI обязателен)' },
+    () => {
+        const snippets = SCRIPTS.flatMap((s) =>
+            [...read(DEPLOY, s).matchAll(/python3 -c '([^']*)'/g)].map((m) => [s, m[1]]),
+        );
+        assert.ok(snippets.length > 0, 'ожидался хотя бы один python3 -c');
+        for (const [file, code] of snippets) {
+            const r = spawnSync('python3', ['-c', 'import sys; compile(sys.argv[1], "<inline>", "exec")', code], {
+                encoding: 'utf8',
+            });
+            assert.equal(r.status, 0, `${file}: ${r.stderr}`);
+        }
+    },
+);
+
+test('provision.sh: адрес MinIO для mc — логин и пароль в URL-кодировке', bashOnly, () => {
+    const line = read(DEPLOY, 'provision.sh').match(/mc_host=\$\((.*)\)$/m)[1];
+    const r = spawnSync('bash', ['-c', `MINIO_ROOT_USER='u@x' MINIO_ROOT_PASSWORD='p:/w#' ; printf %s "$(${line})"`], {
+        encoding: 'utf8',
+    });
+    assert.equal(r.status, 0, r.stderr);
+    assert.equal(r.stdout, 'http://u%40x:p%3A%2Fw%23@127.0.0.1:9000');
+});
