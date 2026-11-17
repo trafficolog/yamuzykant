@@ -54,7 +54,7 @@ check_app_key() {
 render_env() {
     local env=$1 host
     require_vars "${ENV_REQUIRED[@]}"
-    check_app_key "$APP_KEY"
+    [[ -z ${APP_KEY:-} ]] || check_app_key "$APP_KEY" # в dry-run без секретов — только предупреждение require_vars
     host=$(url_host "$APP_URL")
     env_line APP_NAME 'ЯМузыкант'
     env_line APP_ENV "$env"
