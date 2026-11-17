@@ -34,7 +34,7 @@ const listFiles = (dir) =>
     readdirSync(dir, { withFileTypes: true }).flatMap((e) =>
         e.isDirectory() ? listFiles(join(dir, e.name)) : [join(dir, e.name)],
     );
-const SCRIPTS = ['deploy.sh', 'provision.sh', 'lib.sh', 'bin/worker.sh', 'bin/smoke-reverb.sh'];
+const SCRIPTS = ['deploy.sh', 'provision.sh', 'lib.sh', 'diagnose.sh', 'bin/worker.sh', 'bin/smoke-reverb.sh'];
 
 // Секреты-метки: ни одна не должна появиться в выводе скриптов.
 const SECRETS = {
@@ -1459,4 +1459,19 @@ test('Nginx: конфиг совместим с nginx 1.24 (Ubuntu 24.04) — ht
     const conf = read(DEPLOY, 'nginx', 'ymuzykant.conf');
     assert.doesNotMatch(conf, /^\s*http2\s+on\s*;/m);
     assert.match(conf, /listen 443 ssl http2;/);
+});
+
+// 0.1.12: диагностика stage печатает в публичный журнал Actions — только безопасное, ничего не меняет.
+test('diagnose.sh: только чтение, ошибки — заголовки ≤ 300 символов, без стектрейса и .env', () => {
+    const remote = read(DEPLOY, 'diagnose.sh').split("<<'REMOTE'")[1].split('\nREMOTE\n')[0];
+    assert.match(remote, /cut -c1-300/);
+    const forbidden = [/\brm\b/, /\bmv\b/, /\bchmod\b/, /\bchown\b/, /\btee\b/, /systemctl (restart|reload|stop|start)/];
+    for (const re of [...forbidden, /supervisorctl (restart|stop|start)/]) {
+        assert.doesNotMatch(remote, re, `на сервере не должно быть ${re}`);
+    }
+    assert.doesNotMatch(remote, /cat [^\n]*\.env/, 'не печатать .env');
+    const wf = read(WORKFLOWS, 'provision.yml');
+    assert.match(wf, /options: \[provision, rollback, diagnose\]/);
+    const step = wf.slice(wf.indexOf('./deploy/diagnose.sh'));
+    assert.doesNotMatch(step, /PASSWORD|SECRET|APP_KEY/, 'диагностике не нужны пароли');
 });
