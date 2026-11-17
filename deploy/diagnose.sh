@@ -3,7 +3,8 @@
 # Репозиторий публичный, журнал Actions видят все — печатается только безопасное:
 # проверки /health (имена и статусы), по последним ошибкам Laravel — время, уровень, класс
 # исключения, код и file:line (текст сообщения НЕ печатается: в нём бывают данные SQL, URL
-# с токенами, ключи S3), права каталогов и состояние процессов. На сервере ничего не меняется.
+# с токенами, ключи S3), права каталогов и состояние процессов. На сервере ничего не меняется,
+# кроме побочных записей одного GET / внутри приложения (кэш, сессия) — как от обычного визита.
 set -euo pipefail
 
 # shellcheck source=deploy/lib.sh
@@ -14,8 +15,8 @@ APP_ROOT=${DEPLOY_APP_ROOT:-$YM_DEFAULT_APP_ROOT}
 # Строка журнала Laravel → «время уровень класс code=… file:line», без текста сообщения.
 error_summary() {
     sed -nE \
-        -e 's/^\[([^]]+)\] [a-z]+\.([A-Z]+): .*\[object\] \(([A-Za-z0-9_\]+)\(code: ([^)]{0,20})\).* at ([^ ]+:[0-9]+)\).*$/\1 \2 \3 code=\4 \5/p;t' \
-        -e 's/^\[([^]]+)\] [a-z]+\.([A-Z]+): .*$/\1 \2 (без исключения)/p' |
+        -e 's/^\[([^]]+)\] [A-Za-z0-9_-]+.([A-Z]+): .*\[object\] \(([A-Za-z0-9_\]+)\(code: ([^)]{0,20})\).* at ([^ ]+:[0-9]+)\).*$/\1 \2 \3 code=\4 \5/p;t' \
+        -e 's/^\[([^]]+)\] [A-Za-z0-9_-]+.([A-Z]+): .*$/\1 \2 (без исключения)/p' |
         cut -c1-300
 }
 
@@ -42,14 +43,27 @@ grep -h '^user\|^group' /etc/php/8.3/fpm/pool.d/ymuzykant.conf 2>/dev/null
 echo "== процессы"
 supervisorctl status 'ymuzykant:*' 2>&1 | cut -c1-120
 systemctl is-active php8.3-fpm nginx postgresql 2>&1 | paste -sd' '
+echo "== Meilisearch с сервера"
+printf 'health %s\n' "$(curl -s -o /dev/null -w '%{http_code}' --max-time 5 http://127.0.0.1:7700/health)"
+mkey=$(grep -m1 '^MEILISEARCH_KEY=' "$root/shared/.env" | sed -E "s/^MEILISEARCH_KEY=['\"]?([^'\"]*).*/\1/")
+printf 'ключ из .env: %s\n' "$(curl -s -o /dev/null -w '%{http_code}' --max-time 5 -H "Authorization: Bearer $mkey" http://127.0.0.1:7700/keys)"
+grep -m1 '^MEILISEARCH_HOST=' "$root/shared/.env"
+echo "== GET / внутри приложения (статус, класс исключения, file:line — без текста)"
+fpm_user=$(sed -nE 's/^user = (.+)/\1/p' /etc/php/8.3/fpm/pool.d/ymuzykant.conf)
+(cd "$root/current" && sudo -u "$fpm_user" php artisan tinker --no-ansi --execute '
+$r = app()->handle(Illuminate\Http\Request::create("/", "GET"));
+echo "status ", $r->getStatusCode(), PHP_EOL;
+for ($e = $r->exception ?? null; $e; $e = $e->getPrevious()) {
+    echo "exception ", get_class($e), " ", $e->getFile(), ":", $e->getLine(), PHP_EOL;
+}' 2>&1) | grep -E '^(status [0-9]{3}|exception [A-Za-z0-9_\]+ [^ ]+:[0-9]+)$' | cut -c1-300 || echo "(tinker не вывел статус)"
 echo "== журналы Laravel (владелец, права, размер)"
 stat -c '%U:%G %a %s %n' "$root"/shared/storage/logs/*.log 2>/dev/null | tail -3 || echo "(журналов нет)"
 log=$(ls -t "$root"/shared/storage/logs/*.log 2>/dev/null | head -1)
 if [ -n "$log" ]; then
     echo "== уровни записей в $(basename "$log")"
-    grep -oE '^\[[0-9-]+[ T][0-9:.+-]+\] [a-z]+\.[A-Z]+' "$log" | sed -E 's/.*\.//' | sort | uniq -c || true
+    grep -oE '^\[[^]]{10,40}\] [A-Za-z0-9_-]+\.[A-Z]+' "$log" | sed -E 's/.*\.//' | sort | uniq -c || true
     echo "== последние записи (время, уровень, класс, код, file:line — без текста)"
-    grep -E '^\[[0-9-]+[ T][0-9:.+-]+\] [a-z]+\.[A-Z]+:' "$log" | tail -5 | error_summary || true
+    grep -E '^\[[0-9-]+[ T][0-9:.+-]+] [A-Za-z0-9_-]+.[A-Z]+:' "$log" | tail -5 | error_summary || true
 fi
 echo "== php-fpm: последние предупреждения (без текста запросов)"
 grep -hoE '(WARNING|ERROR|NOTICE): \[pool [a-z0-9_-]+\] [a-z ]+' /var/log/php8.3-fpm.log 2>/dev/null | tail -5 || true
