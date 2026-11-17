@@ -152,12 +152,12 @@ test('Nginx: stage за паролем, /health и /up открыты, Mailpit �
     );
 });
 
-// Настоящий nginx:1.27 с конфигом stage и PHP-FPM-заглушкой: /health и /up открыты (в том числе
+// Настоящий nginx:1.24 с конфигом stage и PHP-FPM-заглушкой: /health и /up открыты (в том числе
 // после внутреннего редиректа try_files → /index.php), остальное — 401 (ревью PR #96, п. 1).
 const docker = (...args) => spawnSync('docker', args, { encoding: 'utf8' });
 const hasDocker = () => docker('version', '--format', '{{.Server.Version}}').status === 0;
 test(
-    'Nginx (nginx:1.27 в Docker): /health и /up — 200 без пароля, остальное — 401',
+    'Nginx (nginx:1.24 в Docker): /health и /up — 200 без пароля, остальное — 401',
     {
         skip: hasDocker() ? false : !process.env.CI && 'нет Docker (в CI обязателен)',
         timeout: 240_000,
@@ -217,7 +217,7 @@ test(
                 `${dir}:/t:ro`,
                 '-v',
                 `${pub}:${release}:ro`,
-                'nginx:1.27',
+                'nginx:1.24',
                 'bash',
                 '-c',
                 setup,
@@ -1452,4 +1452,11 @@ test('provision.sh: адрес MinIO для mc — логин и пароль в
     });
     assert.equal(r.status, 0, r.stderr);
     assert.equal(r.stdout, 'http://u%40x:p%3A%2Fw%23@127.0.0.1:9000');
+});
+
+// 0.1.12: на stage Ubuntu 24.04 ставит nginx 1.24 — директивы `http2 on;` там нет (появилась в 1.25.1).
+test('Nginx: конфиг совместим с nginx 1.24 (Ubuntu 24.04) — http2 в listen, без «http2 on;»', () => {
+    const conf = read(DEPLOY, 'nginx', 'ymuzykant.conf');
+    assert.doesNotMatch(conf, /^\s*http2\s+on\s*;/m);
+    assert.match(conf, /listen 443 ssl http2;/);
 });
