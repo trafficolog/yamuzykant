@@ -1492,7 +1492,7 @@ test('diagnose.sh: по ошибке Laravel — только время, уро
     assert.equal(r.status, 0, r.stderr);
     const out = r.stdout.trim().split('\n');
     assert.equal(out.length, 3);
-    assert.match(out[0], /^2026-11-17 19:40:01 ERROR Illuminate\+Database\+QueryException code=23505 \/var\/www\/.*Connection\.php:825$/);
+    assert.match(out[0], /^2026-11-17 19:40:01 ERROR Illuminate\\{1,2}Database\\{1,2}QueryException code=23505 \/var\/www\/.*Connection\.php:825$/);
     assert.equal(out[1], '2026-11-17 19:41:00 ERROR (без исключения)');
     assert.match(out[2], /S3Exception code=0 .*WrappedHttpHandler\.php:196$/);
     for (const secret of ['anna@example.ru', 'SECRETTOKEN', 'api_key', 'AKIA', 'userId', 'insert into']) {
