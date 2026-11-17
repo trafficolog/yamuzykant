@@ -51,6 +51,13 @@ grep -m1 '^MEILISEARCH_HOST=' "$root/shared/.env"
 echo "== Docker: контейнеры и порты"
 docker compose --env-file /etc/ymuzykant/services.env -f /etc/ymuzykant/services.compose.yaml ps --format '{{.Service}} {{.State}} {{.Status}} {{.Ports}}' 2>&1 | cut -c1-200
 ss -ltnH '( sport = :7700 or sport = :9000 or sport = :8025 )' 2>&1 | awk '{print $4}' | sort -u
+echo "== APP_KEY в shared/.env (только формат, без значения)"
+akey=$(grep -m1 '^APP_KEY=' "$root/shared/.env" | sed -E "s/^APP_KEY=['\"]?([^'\"]*).*/\1/")
+case $akey in base64:*) apfx=да ;; *) apfx=нет ;; esac
+printf 'префикс base64: %s, байт после декодирования: %s
+' "$apfx" "$(printf '%s' "${akey#base64:}" | base64 -d 2>/dev/null | wc -c)"
+grep -c '^APP_KEY=' "$root/shared/.env" | sed 's/^/строк APP_KEY: /'
+ls "$root"/current/bootstrap/cache/config.php >/dev/null 2>&1 && echo "config.php закэширован" || echo "config.php не закэширован"
 echo "== GET / внутри приложения (статус, класс исключения, file:line — без текста)"
 fpm_user=$(sed -nE 's/^user = (.+)/\1/p' /etc/php/8.3/fpm/pool.d/ymuzykant.conf)
 (cd "$root/current" && sudo -u "$fpm_user" php artisan tinker --no-ansi --execute '

@@ -41,9 +41,20 @@ PROGRAMS=(ymuzykant-queue ymuzykant-reverb ymuzykant-ssr ymuzykant-scheduler)
 # Печатает .env окружения $1 в stdout. Значения — только из переменных окружения процесса.
 ENV_REQUIRED=(APP_URL APP_KEY DB_PASSWORD MEILISEARCH_KEY AWS_ACCESS_KEY_ID AWS_SECRET_ACCESS_KEY)
 
+# APP_KEY Laravel: «base64:» и ровно 32 байта (AES-256-CBC), иначе любая страница падает
+# в Encrypter (задача 0.1.12). Значение не печатается.
+check_app_key() {
+    local key=$1 raw
+    [[ $key == base64:* ]] || die "APP_KEY должен начинаться с base64: — сгенерируйте: echo \"base64:\$(openssl rand -base64 32)\""
+    raw=${key#base64:}
+    [[ $raw =~ ^[A-Za-z0-9+/]+={0,2}$ ]] || die "APP_KEY: после base64: — не base64"
+    (($(printf '%s' "$raw" | base64 -d 2>/dev/null | wc -c) == 32)) || die "APP_KEY: нужно 32 байта после декодирования — сгенерируйте: echo \"base64:\$(openssl rand -base64 32)\""
+}
+
 render_env() {
     local env=$1 host
     require_vars "${ENV_REQUIRED[@]}"
+    check_app_key "$APP_KEY"
     host=$(url_host "$APP_URL")
     env_line APP_NAME 'ЯМузыкант'
     env_line APP_ENV "$env"

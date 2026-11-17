@@ -38,7 +38,7 @@ const SCRIPTS = ['deploy.sh', 'provision.sh', 'lib.sh', 'diagnose.sh', 'bin/work
 
 // Секреты-метки: ни одна не должна появиться в выводе скриптов.
 const SECRETS = {
-    APP_KEY: 'base64:SECRET-app-key-0001',
+    APP_KEY: 'base64:U0VDUkVULWFwcC1rZXktMDAwMS15bXV6eWthbnQtMzI=', // 32 байта: «SECRET-app-key-0001-ymuzykant-32»
     DB_PASSWORD: 'SECRET-db-0002',
     MEILISEARCH_KEY: 'SECRET-meili-0003',
     AWS_ACCESS_KEY_ID: 'ymapp',
