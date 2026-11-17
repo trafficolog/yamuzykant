@@ -803,12 +803,12 @@ test('deploy.yml: до STAGE_DEPLOY_LIVE=true — dry-run без SSH, после
 
 // ---------- provision.yml ----------
 
-test('provision.yml: только ручной запуск с выбором provision или rollback', () => {
+test('provision.yml: только ручной запуск с выбором provision, rollback или diagnose', () => {
     const wf = load('provision.yml');
     assert.deepEqual(Object.keys(wf.on), ['workflow_dispatch']);
     const input = wf.on.workflow_dispatch.inputs.command;
     assert.equal(input.type, 'choice');
-    assert.deepEqual(input.options, ['provision', 'rollback']);
+    assert.deepEqual(input.options, ['provision', 'rollback', 'diagnose']);
 });
 
 // Ожидающий run в группе concurrency заменяется следующим: ручной откат не должен молча

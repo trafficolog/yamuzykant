@@ -3,7 +3,8 @@ name: Provision stage
 #   provision — deploy/provision.sh: пакеты, сервисы, Nginx и HTTPS, пользователь деплоя с ключом,
 #               firewall, затем — после проверки входа по ключу — sshd без пароля (идемпотентно,
 #               от PROVISION_USER — по умолчанию root, по SSH-ключу DEPLOY_SSH_KEY);
-#   rollback  — deploy/deploy.sh rollback stage: вернуть предыдущий релиз (≤ 1 мин).
+#   rollback  — deploy/deploy.sh rollback stage: вернуть предыдущий релиз (≤ 1 мин);
+#   diagnose  — deploy/diagnose.sh: только чтение — проверки /health, заголовки ошибок, права, процессы.
 # В DEPLOY_SSH_KEY не ключ OpenSSH — job падает на проверке формата, ничего не делая.
 # Ключ сервера — только из секрета DEPLOY_KNOWN_HOSTS (StrictHostKeyChecking yes, deploy/lib.sh).
 # Условия проверяет .github/scripts/workflow-guards.test.mjs в job docs.
@@ -11,10 +12,10 @@ on:
   workflow_dispatch:
     inputs:
       command:
-        description: 'provision — подготовить сервер; rollback — вернуть предыдущий релиз'
+        description: 'provision — подготовить сервер; rollback — вернуть предыдущий релиз; diagnose — диагностика (только чтение)'
         required: true
         type: choice
-        options: [provision, rollback]
+        options: [provision, rollback, diagnose]
         default: provision
 
 permissions:
@@ -75,5 +76,13 @@ jobs:
           DEPLOY_LOCK_WAIT: '900'
           DEPLOY_HOST: ${{ secrets.DEPLOY_HOST }}
           DEPLOY_USER: ${{ secrets.DEPLOY_USER }}
+          DEPLOY_PORT: ${{ vars.DEPLOY_PORT }}
+          DEPLOY_KNOWN_HOSTS: ${{ secrets.DEPLOY_KNOWN_HOSTS }}
+      - name: Диагностика stage (deploy/diagnose.sh, только чтение)
+        if: inputs.command == 'diagnose'
+        run: ./deploy/diagnose.sh
+        env:
+          PROVISION_USER: ${{ vars.PROVISION_USER }}
+          DEPLOY_HOST: ${{ secrets.DEPLOY_HOST }}
           DEPLOY_PORT: ${{ vars.DEPLOY_PORT }}
           DEPLOY_KNOWN_HOSTS: ${{ secrets.DEPLOY_KNOWN_HOSTS }}
