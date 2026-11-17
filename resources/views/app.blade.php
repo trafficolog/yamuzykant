@@ -5,6 +5,9 @@
         <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
         {{-- request_id этого ответа: фронтовые события Sentry получают тот же тег, что и серверные (0.1.14). --}}
         <meta name="request-id" content="{{ request()->headers->get('X-Request-Id') }}">
+        @if (config('app.noindex'))
+            <meta name="robots" content="noindex, nofollow">
+        @endif
         <title inertia>{{ config('app.name') }}</title>
         {{-- Основное начертание: Onest (кириллица и латиница — цифры и пробел). Остальные подмножества грузятся по unicode-range. --}}
         <link rel="preload" href="/fonts/onest-cyrillic.woff2" as="font" type="font/woff2" crossorigin>

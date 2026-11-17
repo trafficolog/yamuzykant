@@ -40,6 +40,18 @@ return [
     |
     */
 
+    /*
+    |--------------------------------------------------------------------------
+    | Закрытие от индексации (stage)
+    |--------------------------------------------------------------------------
+    |
+    | APP_NOINDEX=true добавляет на все страницы <meta name="robots" content="noindex, nofollow">.
+    | Задаётся только на stage (deploy.sh); robots.txt и X-Robots-Tag отдаёт Nginx stage.
+    |
+    */
+
+    'noindex' => (bool) env('APP_NOINDEX', false),
+
     'ds_showcase' => (bool) env('DS_SHOWCASE', in_array(env('APP_ENV', 'production'), ['local', 'stage'], true)),
 
     /*

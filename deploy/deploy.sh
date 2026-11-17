@@ -50,6 +50,8 @@ render_env() {
     env_line APP_KEY "$APP_KEY"
     env_line APP_DEBUG false
     env_line APP_URL "${APP_URL%/}"
+    # stage закрыт от индексации (meta robots); production флаг не задаёт.
+    if [[ $env == stage ]]; then env_line APP_NOINDEX true; fi
     env_line APP_LOCALE ru
     env_line APP_FALLBACK_LOCALE ru
     env_line APP_FAKER_LOCALE ru_RU
