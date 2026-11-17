@@ -1539,3 +1539,18 @@ test('diagnose.sh: по ошибке Laravel — только время, уро
         assert.ok(!r.stdout.includes(secret), `в вывод попало «${secret}»`);
     }
 });
+
+// 0.1.12: на stage APP_KEY оказался неверной длины — Laravel падал на каждой странице (Encrypter:61).
+test('deploy.sh: APP_KEY — base64: и 32 байта, иначе отказ без печати значения', bashOnly, () => {
+    const check = (key) =>
+        spawnSync('bash', ['-c', `source ${JSON.stringify(join(DEPLOY, 'deploy.sh'))}; check_app_key "$1"`, '_', key], {
+            encoding: 'utf8',
+        });
+    assert.equal(check('base64:' + Buffer.alloc(32, 7).toString('base64')).status, 0);
+    for (const bad of ['base64:' + Buffer.alloc(16, 7).toString('base64'), Buffer.alloc(32, 7).toString('base64'), 'secret-value-123', 'base64:###']) {
+        const r = check(bad);
+        assert.notEqual(r.status, 0, `ключ должен быть отклонён: ${bad.length} символов`);
+        assert.ok(!(r.stdout + r.stderr).includes(bad), 'значение ключа не печатается');
+        assert.match(r.stderr, /APP_KEY/);
+    }
+});
