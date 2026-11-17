@@ -137,6 +137,19 @@ test('Nginx: /build — кэш на год с immutable, /fonts — на год 
         assert.match(block, /include \/etc\/nginx\/ymuzykant\/security-headers\.conf;/);
 });
 
+test('Nginx: stage закрыт от индексации — X-Robots-Tag везде, robots.txt без пароля', () => {
+    const conf = read(DEPLOY, 'nginx', 'ymuzykant.conf');
+    const tag = /add_header X-Robots-Tag "noindex, nofollow" always;/;
+    // add_header в location отменяет заголовки из server — тег есть и в server, и в каждом таком location.
+    assert.match(conf.slice(conf.indexOf('root __APP_ROOT__')), tag);
+    for (const path of ['/build/', '/fonts/', '= /robots.txt'])
+        assert.match(nginxLocation(conf, path), tag, path);
+    assert.ok(conf.includes('~^/(health|up|robots\\.txt)(\\?|$) off;'), 'robots.txt без basic-auth');
+    assert.ok(nginxLocation(conf, "= /robots.txt").includes(`return 200 "User-agent: *
+Disallow: /
+";`));
+});
+
 test('Nginx: stage за паролем, /health и /up открыты, Mailpit — свой пароль', () => {
     const conf = read(DEPLOY, 'nginx', 'ymuzykant.conf');
     assert.match(conf, /auth_basic_user_file \/etc\/nginx\/ymuzykant\/stage\.htpasswd;/);
@@ -262,6 +275,28 @@ test(
                 assert.equal(code(path), want, `${path}\n${logs()}`);
             }
             assert.equal(code('/', ['-u', 'stage:secret']), '200', 'с паролем stage открыт');
+            // Закрытие от индексации (0.1.12): X-Robots-Tag на всех ответах, включая 401 и статику.
+            const curl = (extra, path) =>
+                docker(
+                    'exec',
+                    `${id}-ngx`,
+                    'curl',
+                    '-sk',
+                    ...extra,
+                    '--resolve',
+                    'stage.example.test:443:127.0.0.1',
+                    `https://stage.example.test${path}`,
+                ).stdout;
+            const headers = (path, auth = []) => curl(['-D', '-', '-o', '/dev/null', ...auth], path);
+            for (const path of ['/', '/health', '/build/app.js', '/fonts/x.woff2', '/robots.txt'])
+                assert.match(headers(path), /^x-robots-tag: noindex, nofollow\r?$/im, path);
+            assert.match(
+                headers('/build/app.js', ['-u', 'stage:secret']),
+                /^x-robots-tag: noindex, nofollow\r?$/im,
+                '/build с паролем',
+            );
+            assert.equal(code('/robots.txt'), '200', 'robots.txt без пароля');
+            assert.equal(curl([], '/robots.txt'), 'User-agent: *\nDisallow: /\n');
         } finally {
             docker('rm', '-f', `${id}-ngx`, `${id}-php`);
             docker('network', 'rm', id);
@@ -1271,6 +1306,11 @@ const renderEnv = (env, overrides = {}) => {
     return bash(['-c', 'source deploy/deploy.sh; render_env "$1"', '_', env], { env: vars });
 };
 const envValue = (dotenv, key) => dotenv.match(new RegExp(`^${key}=['"](.*)['"]$`, 'm'))?.[1];
+
+test('.env stage и production: APP_NOINDEX=true только на stage', bashOnly, () => {
+    assert.equal(envValue(renderEnv('stage').stdout, 'APP_NOINDEX'), 'true');
+    assert.doesNotMatch(renderEnv('production').stdout, /^APP_NOINDEX=/m);
+});
 
 test('.env с секретами Reverb: вещание reverb, браузер на wss://домен:443, origin — домен', bashOnly, () => {
     const r = renderEnv('stage');
