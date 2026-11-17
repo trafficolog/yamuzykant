@@ -48,6 +48,9 @@ printf 'health %s\n' "$(curl -s -o /dev/null -w '%{http_code}' --max-time 5 http
 mkey=$(grep -m1 '^MEILISEARCH_KEY=' "$root/shared/.env" | sed -E "s/^MEILISEARCH_KEY=['\"]?([^'\"]*).*/\1/")
 printf 'ключ из .env: %s\n' "$(curl -s -o /dev/null -w '%{http_code}' --max-time 5 -H "Authorization: Bearer $mkey" http://127.0.0.1:7700/keys)"
 grep -m1 '^MEILISEARCH_HOST=' "$root/shared/.env"
+echo "== Docker: контейнеры и порты"
+docker compose --env-file /etc/ymuzykant/services.env -f /etc/ymuzykant/services.compose.yaml ps --format '{{.Service}} {{.State}} {{.Status}} {{.Ports}}' 2>&1 | cut -c1-200
+ss -ltnH '( sport = :7700 or sport = :9000 or sport = :8025 )' 2>&1 | awk '{print $4}' | sort -u
 echo "== GET / внутри приложения (статус, класс исключения, file:line — без текста)"
 fpm_user=$(sed -nE 's/^user = (.+)/\1/p' /etc/php/8.3/fpm/pool.d/ymuzykant.conf)
 (cd "$root/current" && sudo -u "$fpm_user" php artisan tinker --no-ansi --execute '
