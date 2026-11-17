@@ -1462,10 +1462,13 @@ test('Nginx: конфиг совместим с nginx 1.24 (Ubuntu 24.04) — ht
 });
 
 // 0.1.12: диагностика stage печатает в публичный журнал Actions — только безопасное, ничего не меняет.
-test('diagnose.sh: только чтение, ошибки — заголовки ≤ 300 символов, без стектрейса и .env', () => {
-    const remote = read(DEPLOY, 'diagnose.sh').split("<<'REMOTE'")[1].split('\nREMOTE\n')[0];
+test('diagnose.sh: на сервере только чтение, без текста ошибок и .env', () => {
+    // Всё, что уходит на сервер: error_summary и тексты heredoc REMOTE (main с rm -rf $tmp — на раннере).
+    const src = read(DEPLOY, 'diagnose.sh');
+    const remote = src.slice(0, src.indexOf('\nmain() {'));
+    assert.match(remote, /error_summary/);
     assert.match(remote, /cut -c1-300/);
-    const forbidden = [/\brm\b/, /\bmv\b/, /\bchmod\b/, /\bchown\b/, /\btee\b/, /systemctl (restart|reload|stop|start)/];
+    const forbidden = [/\bsed -i\b/, /\brm\b/, /\bmv\b/, /\bchmod\b/, /\bchown\b/, /\btee\b/, /systemctl (restart|reload|stop|start)/];
     for (const re of [...forbidden, /supervisorctl (restart|stop|start)/]) {
         assert.doesNotMatch(remote, re, `на сервере не должно быть ${re}`);
     }
@@ -1474,4 +1477,25 @@ test('diagnose.sh: только чтение, ошибки — заголовк�
     assert.match(wf, /options: \[provision, rollback, diagnose\]/);
     const step = wf.slice(wf.indexOf('./deploy/diagnose.sh'));
     assert.doesNotMatch(step, /PASSWORD|SECRET|APP_KEY/, 'диагностике не нужны пароли');
+});
+
+test('diagnose.sh: по ошибке Laravel — только время, уровень, класс, код и file:line', bashOnly, () => {
+    const lines = [
+        '[2026-11-17 19:40:01] production.ERROR: SQLSTATE[23505]: insert into users (email) values (anna@example.ru) {"userId":7,"exception":"[object] (Illuminate\\Database\\QueryException(code: 23505): SQLSTATE anna@example.ru at /var/www/ymuzykant/releases/r1/vendor/laravel/framework/src/Illuminate/Database/Connection.php:825)"}',
+        '[2026-11-17 19:41:00] production.ERROR: GET https://api.telegram.org/bot123:SECRETTOKEN/x?api_key=K1 {"userId":5}',
+        '[2026-11-17 19:42:00] production.CRITICAL: AccessKeyId AKIAABCDEFGHIJKLMNOP {"exception":"[object] (Aws\\S3\\Exception\\S3Exception(code: 0): StringToSign AKIAABCDEFGHIJKLMNOP at /var/www/ymuzykant/releases/r1/vendor/aws/aws-sdk-php/src/WrappedHttpHandler.php:196)"}',
+    ];
+    const r = spawnSync('bash', ['-c', `source ${JSON.stringify(join(DEPLOY, 'diagnose.sh'))}; error_summary`], {
+        input: lines.join('\n') + '\n',
+        encoding: 'utf8',
+    });
+    assert.equal(r.status, 0, r.stderr);
+    const out = r.stdout.trim().split('\n');
+    assert.equal(out.length, 3);
+    assert.match(out[0], /^2026-11-17 19:40:01 ERROR Illuminate\+Database\+QueryException code=23505 \/var\/www\/.*Connection\.php:825$/);
+    assert.equal(out[1], '2026-11-17 19:41:00 ERROR (без исключения)');
+    assert.match(out[2], /S3Exception code=0 .*WrappedHttpHandler\.php:196$/);
+    for (const secret of ['anna@example.ru', 'SECRETTOKEN', 'api_key', 'AKIA', 'userId', 'insert into']) {
+        assert.ok(!r.stdout.includes(secret), `в вывод попало «${secret}»`);
+    }
 });
