@@ -286,7 +286,7 @@ setup_services() {
         return 0
     fi
     local mc_host
-    mc_host=$(python3 -c 'import os, urllib.parse as u; q = lambda k: u.quote(os.environ[k], safe=""); print(f"http://{q(\"MINIO_ROOT_USER\")}:{q(\"MINIO_ROOT_PASSWORD\")}@127.0.0.1:9000")')
+    mc_host=$(MINIO_ROOT_USER=$MINIO_ROOT_USER MINIO_ROOT_PASSWORD=$MINIO_ROOT_PASSWORD python3 -c 'import os, urllib.parse as u; q = lambda k: u.quote(os.environ[k], safe=""); print("http://%s:%s@127.0.0.1:9000" % (q("MINIO_ROOT_USER"), q("MINIO_ROOT_PASSWORD")))')
     local mc=(docker compose --env-file "$CONF_DIR/services.env" -f "$CONF_DIR/services.compose.yaml" exec -T -e MC_HOST_root minio mc)
     MC_HOST_root=$mc_host "${mc[@]}" mb --ignore-existing "root/$bucket" >/dev/null
     # Секрет пользователя — через stdin (mc admin user add читает его, если не задан аргументом).
