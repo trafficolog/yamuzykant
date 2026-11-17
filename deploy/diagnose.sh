@@ -27,7 +27,7 @@ root=$1
 REMOTE
     declare -f error_summary
     cat <<'REMOTE'
-host=$(sed -n 's/^APP_URL="\{0,1\}https\{0,1\}:\/\/\([^"/]*\).*/\1/p' "$root/shared/.env" | head -1)
+host=$(grep -m1 '^APP_URL=' "$root/shared/.env" | sed -E "s#^APP_URL=['\"]?https?://([^'\"/]*).*#\1#")
 [ -n "$host" ] || echo "в shared/.env нет APP_URL"
 echo "== /health с сервера ($host)"
 curl -sk --max-time 15 --resolve "$host:443:127.0.0.1" "https://$host/health" || echo "(нет ответа)"
@@ -42,14 +42,17 @@ grep -h '^user\|^group' /etc/php/8.3/fpm/pool.d/ymuzykant.conf 2>/dev/null
 echo "== процессы"
 supervisorctl status 'ymuzykant:*' 2>&1 | cut -c1-120
 systemctl is-active php8.3-fpm nginx postgresql 2>&1 | paste -sd' '
-echo "== последние ошибки Laravel (время, уровень, класс, код, file:line — без текста)"
+echo "== журналы Laravel (владелец, права, размер)"
+stat -c '%U:%G %a %s %n' "$root"/shared/storage/logs/*.log 2>/dev/null | tail -3 || echo "(журналов нет)"
 log=$(ls -t "$root"/shared/storage/logs/*.log 2>/dev/null | head -1)
 if [ -n "$log" ]; then
-    echo "файл: $(basename "$log")"
-    grep -E '^\[[0-9-]+[ T][0-9:.+-]+\] [a-z]+\.(ERROR|CRITICAL|ALERT|EMERGENCY):' "$log" | tail -5 | error_summary
-else
-    echo "(журналов нет)"
+    echo "== уровни записей в $(basename "$log")"
+    grep -oE '^\[[0-9-]+[ T][0-9:.+-]+\] [a-z]+\.[A-Z]+' "$log" | sed -E 's/.*\.//' | sort | uniq -c || true
+    echo "== последние записи (время, уровень, класс, код, file:line — без текста)"
+    grep -E '^\[[0-9-]+[ T][0-9:.+-]+\] [a-z]+\.[A-Z]+:' "$log" | tail -5 | error_summary || true
 fi
+echo "== php-fpm: последние предупреждения (без текста запросов)"
+grep -hoE '(WARNING|ERROR|NOTICE): \[pool [a-z0-9_-]+\] [a-z ]+' /var/log/php8.3-fpm.log 2>/dev/null | tail -5 || true
 REMOTE
 }
 
