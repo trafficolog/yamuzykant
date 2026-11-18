@@ -405,6 +405,8 @@ server_release() {
     npm run build:ssr
     log "Миграции (падение отменяет переключение)"
     artisan migrate --force
+    # Справочники (города, категории, модели) — идемпотентно; без них регистрация не находит город.
+    artisan db:seed --class='Database\Seeders\CatalogSeeder' --force
     artisan config:cache
     artisan route:cache
     artisan view:cache
