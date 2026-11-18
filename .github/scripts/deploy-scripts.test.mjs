@@ -709,6 +709,7 @@ test(
             'npm run build\n',
             'npm run build:ssr',
             'php artisan migrate --force',
+            'php artisan db:seed --class=Database\\Seeders\\CatalogSeeder --force',
             'php artisan config:cache',
             'php artisan route:cache',
             'sudo -n systemctl reload php8.3-fpm',
