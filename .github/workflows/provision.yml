@@ -86,3 +86,13 @@ jobs:
           DEPLOY_HOST: ${{ secrets.DEPLOY_HOST }}
           DEPLOY_PORT: ${{ vars.DEPLOY_PORT }}
           DEPLOY_KNOWN_HOSTS: ${{ secrets.DEPLOY_KNOWN_HOSTS }}
+      - name: Дымовая проверка wss Reverb (deploy/bin/smoke-reverb.sh)
+        if: inputs.command == 'diagnose'
+        # Ключ Reverb публичный (он и так в HTML); пароль stage уходит в curl через stdin, не в аргументах.
+        run: |
+          host=${STAGE_URL#https://}
+          ./deploy/bin/smoke-reverb.sh "${host%%/*}" "$REVERB_APP_KEY"
+        env:
+          STAGE_URL: ${{ vars.STAGE_URL }}
+          REVERB_APP_KEY: ${{ secrets.REVERB_APP_KEY }}
+          SMOKE_BASIC_AUTH: ${{ secrets.STAGE_BASIC_AUTH_USER }}:${{ secrets.STAGE_BASIC_AUTH_PASSWORD }}

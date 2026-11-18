@@ -811,6 +811,15 @@ test('provision.yml: только ручной запуск с выбором pr
     assert.deepEqual(input.options, ['provision', 'rollback', 'diagnose']);
 });
 
+test('provision.yml: diagnose запускает smoke-reverb, пароль stage — в env, не в аргументах', () => {
+    const steps = Object.values(load('provision.yml').jobs).flatMap((j) => j.steps ?? []);
+    const smoke = steps.find((s) => s.run?.includes('smoke-reverb.sh'));
+    assert.ok(smoke, 'шаг smoke-reverb');
+    assert.equal(smoke.if, "inputs.command == 'diagnose'");
+    assert.match(smoke.env.SMOKE_BASIC_AUTH, /secrets\.STAGE_BASIC_AUTH_PASSWORD/);
+    assert.ok(!smoke.run.includes('secrets.'), 'секреты не подставляются в команду');
+});
+
 // Ожидающий run в группе concurrency заменяется следующим: ручной откат не должен молча
 // отменяться очередным мержем (ревью PR #96, п. 8). Откат — своя группа без отмены, выкатка
 // и откат на сервере разводятся flock с ожиданием (deploy-scripts.test.mjs).
