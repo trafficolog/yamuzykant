@@ -1525,7 +1525,9 @@ test('diagnose.sh: на сервере только чтение, без тек�
     assert.doesNotMatch(remote, /cat [^\n]*\.env/, 'не печатать .env');
     const wf = read(WORKFLOWS, 'provision.yml');
     assert.match(wf, /options: \[provision, rollback, diagnose\]/);
-    const step = wf.slice(wf.indexOf('./deploy/diagnose.sh'));
+    const from = wf.indexOf('./deploy/diagnose.sh');
+    // Только шаг diagnose.sh: пароль stage нужен следующему шагу smoke-reverb (workflow-guards).
+    const step = wf.slice(from, wf.indexOf('- name:', from));
     assert.doesNotMatch(step, /PASSWORD|SECRET|APP_KEY/, 'диагностике не нужны пароли');
 });
 
