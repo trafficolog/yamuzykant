@@ -907,6 +907,9 @@ test(
                 /не заданы переменные: DB_PASSWORD MAILPIT_UI_PASSWORD/,
             ],
             [{ APP_URL: 'https://bad_host!/' }, /домен/],
+            [{ AWS_ACCESS_KEY_ID: SECRETS.MINIO_ROOT_USER }, /AWS_ACCESS_KEY_ID совпадает с MINIO_ROOT_USER/],
+            [{ AWS_SECRET_ACCESS_KEY: SECRETS.MINIO_ROOT_PASSWORD }, /совпадает с MINIO_ROOT_PASSWORD/],
+            [{ AWS_SECRET_ACCESS_KEY: 'short' }, /короче 8 символов/],
         ]) {
             const r = bash(['deploy/provision.sh', 'apply'], { env: provisionEnv(bin, extra) });
             assert.equal(r.status, 1, r.out);
@@ -938,6 +941,12 @@ test('provision.sh remote: пакет по SSH с known_hosts, значения 
     assert.match(ssh[0], /provision\.sh" apply "\$d\/provision\.env"/);
     assertNoSecrets(calls(bin));
     assertNoSecrets(r.out);
+    const sameUser = bash(['deploy/provision.sh', 'remote'], {
+        env: provisionEnv(bin, { AWS_ACCESS_KEY_ID: SECRETS.MINIO_ROOT_USER }),
+    });
+    assert.equal(sameUser.status, 1, sameUser.out);
+    assert.match(sameUser.out, /совпадает с MINIO_ROOT_USER/);
+    assertNoSecrets(sameUser.out);
     const noHosts = bash(['deploy/provision.sh', 'remote'], {
         env: provisionEnv(bin, { PROVISION_DRY_RUN: '0', DEPLOY_KNOWN_HOSTS: '' }),
     });

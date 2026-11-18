@@ -41,10 +41,20 @@ REQUIRED_VARS=(
     STAGE_BASIC_AUTH_USER STAGE_BASIC_AUTH_PASSWORD MAILPIT_UI_USER MAILPIT_UI_PASSWORD
 )
 
+# Ключ приложения — отдельный пользователь MinIO: совпадение с администратором MinIO отвергает сам MinIO малопонятной ошибкой.
+check_minio_keys() {
+    [[ $AWS_ACCESS_KEY_ID != "$MINIO_ROOT_USER" ]] ||
+        die "AWS_ACCESS_KEY_ID совпадает с MINIO_ROOT_USER — задайте приложению отдельный логин (например, ymapp)"
+    [[ $AWS_SECRET_ACCESS_KEY != "$MINIO_ROOT_PASSWORD" ]] ||
+        die "AWS_SECRET_ACCESS_KEY совпадает с MINIO_ROOT_PASSWORD — задайте приложению отдельный пароль"
+    ((${#AWS_SECRET_ACCESS_KEY} >= 8)) || die "AWS_SECRET_ACCESS_KEY короче 8 символов — MinIO его не примет"
+}
+
 # ---------- раннер ----------
 
 provision_remote() {
     require_vars "${REQUIRED_VARS[@]}"
+    check_minio_keys
     local tmp name user=${PROVISION_USER:-root}
     tmp=$(mktemp -d)
     # shellcheck disable=SC2064
@@ -353,6 +363,7 @@ provision_apply() {
         set +a
     fi
     require_vars "${REQUIRED_VARS[@]}"
+    check_minio_keys
     DOMAIN=$(url_host "$APP_URL")
     [[ $DRY_RUN == 1 ]] && log "DRY-RUN: план для чистого сервера, изменений нет"
     check_os
